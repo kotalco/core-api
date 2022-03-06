@@ -69,7 +69,7 @@ func (service verificationService) GetByUserId(userId string) (*Verification, *r
 	return verification, err
 }
 
-//Verify verify token hash send to user email
+//Verify verify token hash
 func (service verificationService) Verify(userId string, token string) *restErrors.RestErr {
 	verification, err := VerificationRepository.GetByUserId(userId)
 	if err != nil {

@@ -26,6 +26,7 @@ var (
 
 func init() { UserService = &userService{} }
 
+//SignUp Creates new user
 func (service userService) SignUp(dto SignUpRequestDto) (*User, *restErrors.RestErr) {
 	hashedPassword, err := security.Hash(dto.Password, 13)
 	if err != nil {
@@ -47,6 +48,7 @@ func (service userService) SignUp(dto SignUpRequestDto) (*User, *restErrors.Rest
 	return user, nil
 }
 
+//SignIn Log user in and  returns jwt token
 func (service userService) SignIn(dto SignInRequestDto) (*string, *restErrors.RestErr) {
 	user, err := UserRepository.GetByEmail(dto.Email)
 	if err != nil {
@@ -75,6 +77,7 @@ func (service userService) SignIn(dto SignInRequestDto) (*string, *restErrors.Re
 	return &token.AccessToken, nil
 }
 
+//GetByEmail find user by email
 func (service userService) GetByEmail(email string) (*User, *restErrors.RestErr) {
 	model, err := UserRepository.GetByEmail(email)
 	if err != nil {
@@ -84,6 +87,8 @@ func (service userService) GetByEmail(email string) (*User, *restErrors.RestErr)
 	return model, nil
 }
 
+//VerifyEmail change user isVerified to true
+//user can't sign in if this field is falsy
 func (service userService) VerifyEmail(model *User) *restErrors.RestErr {
 	model.IsVerified = true
 	err := UserRepository.Update(model)
@@ -93,8 +98,8 @@ func (service userService) VerifyEmail(model *User) *restErrors.RestErr {
 	return nil
 }
 
+//ResetPassword create new password for user used after user ForgetPassword
 func (service userService) ResetPassword(model *User, password string) *restErrors.RestErr {
-
 	hashedPassword, error := security.Hash(password, 13)
 	if error != nil {
 		go logger.Error(service.ResetPassword, error)
@@ -111,6 +116,7 @@ func (service userService) ResetPassword(model *User, password string) *restErro
 	return nil
 }
 
+//ChangePassword change user password  for authenticated users
 func (service userService) ChangePassword(model *User, dto ChangePasswordRequestDto) *restErrors.RestErr {
 
 	invalidPassError := security.VerifyPassword(model.Password, dto.OldPassword)
@@ -134,6 +140,7 @@ func (service userService) ChangePassword(model *User, dto ChangePasswordRequest
 	return nil
 }
 
+//ChangeEmail change user email for authenticated users
 func (service userService) ChangeEmail(model *User, dto ChangeEmailRequestDto) *restErrors.RestErr {
 	model.Email = dto.Email
 	model.IsVerified = false
