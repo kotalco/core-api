@@ -1,0 +1,93 @@
+package user
+
+import (
+	"github.com/go-playground/validator/v10"
+	restErrors "github.com/kotalco/api/pkg/errors"
+)
+
+type SignUpRequestDto struct {
+	Email                string `json:"email" validate:"required,email,lte=100"`
+	Password             string `json:"password" validate:"gte=6,lte=100"`
+	PasswordConfirmation string `json:"password_confirmation" validate:"required,lte=255,eqcsfield=Password"`
+}
+
+type SignInRequestDto struct {
+	Email      string `json:"email" validate:"required,email,lte=100"`
+	Password   string `json:"password" validate:"required,gte=6,lte=255"`
+	RememberMe bool   `json:"remember_me"`
+}
+
+type ResetPasswordRequestDto struct {
+	Email                string `json:"email" validate:"required,email,lte=100"`
+	Password             string `json:"password" validate:"gte=6,lte=100"`
+	PasswordConfirmation string `json:"password_confirmation" validate:"required,lte=255,eqcsfield=Password"`
+	Token                string `json:"token" validate:"required,len=80"` //length of sent Token defined in env_conf
+}
+
+type ChangePasswordRequestDto struct {
+	OldPassword          string `json:"old_password" validate:"gte=6,lte=100"`
+	Password             string `json:"password" validate:"gte=6,lte=100"`
+	PasswordConfirmation string `json:"password_confirmation" validate:"required,lte=255,eqcsfield=Password"`
+}
+
+type SendEmailVerificationRequestDto struct {
+	Email string `json:"email" validate:"required,email,lte=100"`
+}
+
+type EmailVerificationRequestDto struct {
+	Email string `json:"email" validate:"required,email,lte=100"`
+	Token string `json:"token" validate:"required,len=80"` //length of sent Token defined in env_conf
+}
+
+type ChangeEmailRequestDto struct {
+	Email string `json:"email" validate:"required,email,lte=100"`
+}
+
+type UserResponseDto struct {
+	ID    string `json:"id"`
+	Email string `json:"email"`
+}
+
+type UserSessionResponseDto struct {
+	Token string `json:"token"`
+}
+
+func (dto UserResponseDto) Marshall(model *User) UserResponseDto {
+	dto.ID = model.ID
+	dto.Email = model.Email
+	return dto
+}
+
+func Validate(dto interface{}) *restErrors.RestErr {
+	newValidator := validator.New()
+	err := newValidator.Struct(dto)
+
+	if err != nil {
+		fields := map[string]string{}
+		for _, err := range err.(validator.ValidationErrors) {
+			switch err.Field() {
+			case "Email":
+				fields["email"] = "invalid email address"
+				break
+			case "Password":
+				fields["password"] = "password should be at least 6 chars"
+				break
+			case "PasswordConfirmation":
+				fields["password_confirmation"] = "password_confirmation should match password field"
+				break
+			case "Token":
+				fields["token"] = "invalid token signature"
+				break
+			case "OldPassword":
+				fields["old_password"] = "password should be at least 6 chars"
+				break
+			}
+		}
+
+		if len(fields) > 0 {
+			return restErrors.NewValidationError(fields)
+		}
+	}
+
+	return nil
+}
