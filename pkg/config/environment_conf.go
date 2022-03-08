@@ -1,22 +1,24 @@
 package config
 
+import "os"
+
 var EnvironmentConf = map[string]string{
-	"CLOUD_API_SERVER_PORT":             ":5000",
-	"ENVIRONMENT":                       "development",
-	"LOG_OUTPUT":                        "stdout",
-	"LOG_LEVEL":                         "info",
-	"SERVER_READ_TIMEOUT":               "60",
-	"ACCESS_SECRET":                     "secret",
-	"JWT_SECRET_KEY_EXPIRE_HOURS_COUNT": "24",
-	"JWT_SECRET_KEY_EXPIRE_HOURS_COUNT_REMEMBER_ME": "168",
-	"DB_SERVER_URL":                   "host=localhost port=5432 user=postgres password=somePassword dbname=cloud-api sslmode=disable",
-	"DB_MAX_CONNECTIONS":              "100",
-	"DB_MAX_IDLE_CONNECTIONS":         "100",
-	"DB_MAX_LIFETIME_CONNECTIONS":     "100",
-	"VERIFICATION_TOKEN_LENGTH":       "80", //if changed =>change at => verification_dto length role
-	"VERIFICATION_TOKEN_EXPIRY_HOURS": "24",
-	"SEND_GRID_API_KEY":               "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",
-	"EMAIL_VERIFICATION_BASE_URL":     "http://localhost:3000/",
-	"SEND_GRID_SENDER_NAME":           "Mohamed",
-	"SEND_GRID_SENDER_EMAIL":          "m.abdelrhman@kotal.co",
+	"CLOUD_API_SERVER_PORT":             os.Getenv("CLOUD_API_SERVER_PORT"),
+	"ENVIRONMENT":                       os.Getenv("ENVIRONMENT"),
+	"LOG_OUTPUT":                        os.Getenv("LOG_OUTPUT"),
+	"LOG_LEVEL":                         os.Getenv("LOG_LEVEL"),
+	"SERVER_READ_TIMEOUT":               os.Getenv("SERVER_READ_TIMEOUT"),
+	"ACCESS_SECRET":                     os.Getenv("ACCESS_SECRET"),
+	"JWT_SECRET_KEY_EXPIRE_HOURS_COUNT": os.Getenv("JWT_SECRET_KEY_EXPIRE_HOURS_COUNT"),
+	"JWT_SECRET_KEY_EXPIRE_HOURS_COUNT_REMEMBER_ME": os.Getenv("JWT_SECRET_KEY_EXPIRE_HOURS_COUNT_REMEMBER_ME"),
+	"DB_SERVER_URL":                   os.Getenv("DB_SERVER_URL"),
+	"DB_MAX_CONNECTIONS":              os.Getenv("DB_MAX_CONNECTIONS"),
+	"DB_MAX_IDLE_CONNECTIONS":         os.Getenv("DB_MAX_IDLE_CONNECTIONS"),
+	"DB_MAX_LIFETIME_CONNECTIONS":     os.Getenv("DB_MAX_LIFETIME_CONNECTIONS"),
+	"VERIFICATION_TOKEN_LENGTH":       os.Getenv("VERIFICATION_TOKEN_LENGTH"), //80 => if changed =>change at => verification_dto length role
+	"VERIFICATION_TOKEN_EXPIRY_HOURS": os.Getenv("VERIFICATION_TOKEN_EXPIRY_HOURS"),
+	"SEND_GRID_API_KEY":               os.Getenv("SEND_GRID_API_KEY"),
+	"EMAIL_VERIFICATION_BASE_URL":     os.Getenv("EMAIL_VERIFICATION_BASE_URL"),
+	"SEND_GRID_SENDER_NAME":           os.Getenv("SEND_GRID_SENDER_NAME"),
+	"SEND_GRID_SENDER_EMAIL":          os.Getenv("SEND_GRID_SENDER_EMAIL"),
 }

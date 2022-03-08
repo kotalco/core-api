@@ -1,6 +1,8 @@
 package user
 
 import (
+	"net/http"
+
 	"github.com/gofiber/fiber/v2"
 	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/kotalco/api/pkg/shared"
@@ -8,7 +10,6 @@ import (
 	"github.com/kotalco/cloud-api/internal/verification"
 	"github.com/kotalco/cloud-api/pkg/middleware"
 	"github.com/kotalco/cloud-api/pkg/sendgrid"
-	"net/http"
 )
 
 //SignUp validate dto , create user , send verification token
@@ -36,7 +37,7 @@ func SignUp(c *fiber.Ctx) error {
 
 	//send email verification
 	mailRequest := new(sendgrid.MailRequestDto)
-	mailRequest.Token = *token
+	mailRequest.Token = token
 	mailRequest.Name = model.Email //todo change to name once we add name is user model
 	mailRequest.Email = model.Email
 
@@ -64,7 +65,7 @@ func SignIn(c *fiber.Ctx) error {
 	}
 
 	session := new(user.UserSessionResponseDto)
-	session.Token = *token
+	session.Token = token
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(session))
 }
@@ -100,7 +101,7 @@ func SendEmailVerification(c *fiber.Ctx) error {
 	}
 
 	mailRequest := new(sendgrid.MailRequestDto)
-	mailRequest.Token = *token
+	mailRequest.Token = token
 	mailRequest.Name = userModel.Email //todo change to name once we add name is user model
 	mailRequest.Email = userModel.Email
 
@@ -177,7 +178,7 @@ func ForgetPassword(c *fiber.Ctx) error {
 	}
 
 	mailRequest := new(sendgrid.MailRequestDto)
-	mailRequest.Token = *token
+	mailRequest.Token = token
 	mailRequest.Name = userModel.Email //todo change to name once we add name is user model
 	mailRequest.Email = userModel.Email
 
@@ -291,7 +292,7 @@ func ChangeEmail(c *fiber.Ctx) error {
 	}
 
 	mailRequest := new(sendgrid.MailRequestDto)
-	mailRequest.Token = *token
+	mailRequest.Token = token
 	mailRequest.Name = middleware.AuthorizedUser.Email //todo change to name once we add name is user model
 	mailRequest.Email = middleware.AuthorizedUser.Email
 

@@ -2,11 +2,11 @@ package verification
 
 import (
 	"fmt"
+	"regexp"
+
 	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/kotalco/api/pkg/logger"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
-	"gorm.io/gorm"
-	"regexp"
 )
 
 type verificationRepository struct{}
@@ -19,12 +19,11 @@ type verificationRepositoryInterface interface {
 
 var (
 	VerificationRepository verificationRepositoryInterface
-	dbClient               *gorm.DB
+	dbClient               = sqlclient.OpenDBConnection()
 )
 
 func init() {
 	VerificationRepository = &verificationRepository{}
-	dbClient, _ = sqlclient.OpenDBConnection()
 }
 
 func (repo verificationRepository) Create(verification *Verification) *restErrors.RestErr {

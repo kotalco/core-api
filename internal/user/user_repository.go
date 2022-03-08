@@ -2,12 +2,12 @@ package user
 
 import (
 	"fmt"
+	"net/http"
+	"regexp"
+
 	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/kotalco/api/pkg/logger"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
-	"gorm.io/gorm"
-	"net/http"
-	"regexp"
 )
 
 type userRepository struct{}
@@ -21,12 +21,11 @@ type userRepositoryInterface interface {
 
 var (
 	UserRepository userRepositoryInterface
-	dbClient       *gorm.DB
+	dbClient       = sqlclient.OpenDBConnection()
 )
 
 func init() {
 	UserRepository = &userRepository{}
-	dbClient, _ = sqlclient.OpenDBConnection()
 }
 
 func (repo userRepository) Create(user *User) *restErrors.RestErr {

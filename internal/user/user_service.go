@@ -12,7 +12,7 @@ type userService struct{}
 
 type userServiceInterface interface {
 	SignUp(dto SignUpRequestDto) (*User, *restErrors.RestErr)
-	SignIn(dto SignInRequestDto) (*string, *restErrors.RestErr)
+	SignIn(dto SignInRequestDto) (string, *restErrors.RestErr)
 	GetByEmail(email string) (*User, *restErrors.RestErr)
 	VerifyEmail(model *User) *restErrors.RestErr
 	ResetPassword(model *User, password string) *restErrors.RestErr
@@ -49,15 +49,15 @@ func (service userService) SignUp(dto SignUpRequestDto) (*User, *restErrors.Rest
 }
 
 //SignIn Log user in and  returns jwt token
-func (service userService) SignIn(dto SignInRequestDto) (*string, *restErrors.RestErr) {
+func (service userService) SignIn(dto SignInRequestDto) (string, *restErrors.RestErr) {
 	user, err := UserRepository.GetByEmail(dto.Email)
 	if err != nil {
-		return nil, restErrors.NewUnAuthorizedError("Invalid Credentials")
+		return "", restErrors.NewUnAuthorizedError("Invalid Credentials")
 	}
 
 	if !user.IsVerified {
 		//todo change it to new forbidden once error deployed as package
-		return nil, &restErrors.RestErr{
+		return "", &restErrors.RestErr{
 			Message: "email not verified",
 			Status:  403,
 			Error:   "Forbidden",
@@ -66,15 +66,15 @@ func (service userService) SignIn(dto SignInRequestDto) (*string, *restErrors.Re
 
 	invalidPassError := security.VerifyPassword(user.Password, dto.Password)
 	if invalidPassError != nil {
-		return nil, restErrors.NewUnAuthorizedError("Invalid Credentials")
+		return "", restErrors.NewUnAuthorizedError("Invalid Credentials")
 	}
 
 	token, err := tokens.CreateToken(user.ID, dto.RememberMe)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	return &token.AccessToken, nil
+	return token.AccessToken, nil
 }
 
 //GetByEmail find user by email

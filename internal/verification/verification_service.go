@@ -2,22 +2,23 @@ package verification
 
 import (
 	"fmt"
+	"net/http"
+	"strconv"
+	"time"
+
 	"github.com/google/uuid"
 	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/kotalco/api/pkg/logger"
 	"github.com/kotalco/cloud-api/pkg/config"
 	"github.com/kotalco/cloud-api/pkg/security"
-	"net/http"
-	"strconv"
-	"time"
 )
 
 type verificationService struct{}
 
 type verificationServiceInterface interface {
-	Create(userId string) (*string, *restErrors.RestErr)
+	Create(userId string) (string, *restErrors.RestErr)
 	GetByUserId(userId string) (*Verification, *restErrors.RestErr)
-	Resend(userId string) (*string, *restErrors.RestErr)
+	Resend(userId string) (string, *restErrors.RestErr)
 	Verify(userId string, token string) *restErrors.RestErr
 }
 
@@ -28,21 +29,21 @@ var (
 func init() { VerificationService = &verificationService{} }
 
 //Create creates a new verification token for the user
-func (service verificationService) Create(userId string) (*string, *restErrors.RestErr) {
+func (service verificationService) Create(userId string) (string, *restErrors.RestErr) {
 	token, restErr := generateToken()
 	if restErr != nil {
-		return nil, restErr
+		return "", restErr
 	}
 
-	hashedToken, restErr := hashToken(*token)
+	hashedToken, restErr := hashToken(token)
 	if restErr != nil {
-		return nil, restErr
+		return "", restErr
 	}
 
 	tokenExpires, convErr := strconv.Atoi(config.EnvironmentConf["VERIFICATION_TOKEN_EXPIRY_HOURS"])
 	if convErr != nil {
 		go logger.Error(service.Create, convErr)
-		return nil, restErrors.NewInternalServerError("something went wrong")
+		return "", restErrors.NewInternalServerError("something went wrong")
 	}
 
 	verification := new(Verification)
@@ -53,7 +54,7 @@ func (service verificationService) Create(userId string) (*string, *restErrors.R
 
 	restErr = VerificationRepository.Create(verification)
 	if restErr != nil {
-		return nil, restErr
+		return "", restErr
 	}
 
 	return token, nil
@@ -101,45 +102,45 @@ func (service verificationService) Verify(userId string, token string) *restErro
 }
 
 //Resend  verification token to user
-func (service verificationService) Resend(userId string) (*string, *restErrors.RestErr) {
+func (service verificationService) Resend(userId string) (string, *restErrors.RestErr) {
 	verification, err := VerificationRepository.GetByUserId(userId)
 	if err != nil {
 		if err.Status == http.StatusNotFound {
 			return service.Create(userId)
 		}
-		return nil, err
+		return "", err
 	}
 
 	token, err := generateToken()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	hashedToken, err := hashToken(*token)
+	hashedToken, err := hashToken(token)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	verification.Completed = false
 	verification.Token = *hashedToken
 	err = VerificationRepository.Update(verification)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	return token, nil
 }
 
 //generateToken creates a random token to the user which will be send to user email
-func generateToken() (*string, *restErrors.RestErr) {
+func generateToken() (string, *restErrors.RestErr) {
 	tokenLength, err := strconv.Atoi(config.EnvironmentConf["VERIFICATION_TOKEN_LENGTH"])
 	if err != nil {
 		go logger.Error(generateToken, err)
-		return nil, restErrors.NewInternalServerError("some thing went wrong")
+		return "", restErrors.NewInternalServerError("some thing went wrong")
 	}
 
 	token := security.GenerateRandomString(tokenLength)
 
-	return &token, nil
+	return token, nil
 }
 
 //hashToken hashes the verification token before sending it to the user email

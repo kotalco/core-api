@@ -13,19 +13,18 @@ import (
 )
 
 func main() {
-
 	config := config.FiberConfig()
 	app := fiber.New(config)
 	middleware.FiberMiddleware(app)
 	api.MapUrl(app)
 
-	dbClient, err := sqlclient.OpenDBConnection()
+	dbClient := sqlclient.OpenDBConnection()
+	err := dbClient.AutoMigrate(new(user.User))
 	if err != nil {
-		go logger.Error("DATABASE_FAILED_CONNECTION", err)
+		go logger.Error("MIGRATION_FAILED", err)
 		return
 	}
 
-	err = dbClient.AutoMigrate(new(user.User))
 	err = dbClient.AutoMigrate(new(verification.Verification))
 	if err != nil {
 		go logger.Error("MIGRATION_FAILED", err)
