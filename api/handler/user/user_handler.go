@@ -111,7 +111,7 @@ func SendEmailVerification(c *fiber.Ctx) error {
 	resp := struct {
 		Message string `json:"message"`
 	}{
-		Message: "email verification sent sent successfully",
+		Message: "email verification sent successfully",
 	}
 
 	return c.Status(http.StatusCreated).JSON(shared.NewResponse(resp))
