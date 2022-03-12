@@ -8,7 +8,6 @@ import (
 	"github.com/kotalco/api/pkg/shared"
 	"github.com/kotalco/cloud-api/internal/user"
 	"github.com/kotalco/cloud-api/internal/verification"
-	"github.com/kotalco/cloud-api/pkg/middleware"
 	"github.com/kotalco/cloud-api/pkg/sendgrid"
 )
 
@@ -242,6 +241,7 @@ func ResetPassword(c *fiber.Ctx) error {
 //ChangePassword change user password
 //todo log all user tokens out
 func ChangePassword(c *fiber.Ctx) error {
+	authorizedUser := c.Locals("user").(*user.User)
 	dto := new(user.ChangePasswordRequestDto)
 	if err := c.BodyParser(dto); err != nil {
 		badReq := restErrors.NewBadRequestError("invalid request body")
@@ -253,7 +253,7 @@ func ChangePassword(c *fiber.Ctx) error {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	err = user.UserService.ChangePassword(&middleware.AuthorizedUser, dto)
+	err = user.UserService.ChangePassword(authorizedUser, dto)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -270,6 +270,7 @@ func ChangePassword(c *fiber.Ctx) error {
 
 //ChangeEmail change user email and send verification token to the user email
 func ChangeEmail(c *fiber.Ctx) error {
+	authorizedUser := c.Locals("user").(*user.User)
 	dto := new(user.ChangeEmailRequestDto)
 	if err := c.BodyParser(dto); err != nil {
 		badReq := restErrors.NewBadRequestError("invalid request body")
@@ -281,20 +282,20 @@ func ChangeEmail(c *fiber.Ctx) error {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	err = user.UserService.ChangeEmail(&middleware.AuthorizedUser, dto)
+	err = user.UserService.ChangeEmail(authorizedUser, dto)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	token, err := verification.VerificationService.Resend(middleware.AuthorizedUser.ID)
+	token, err := verification.VerificationService.Resend(authorizedUser.ID)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
 
 	mailRequest := new(sendgrid.MailRequestDto)
 	mailRequest.Token = token
-	mailRequest.Name = middleware.AuthorizedUser.Email //todo change to name once we add name is user model
-	mailRequest.Email = middleware.AuthorizedUser.Email
+	mailRequest.Name = authorizedUser.Email //todo change to name once we add name is user model
+	mailRequest.Email = authorizedUser.Email
 
 	go sendgrid.MailService.ResendEmailVerification(*mailRequest)
 

@@ -1,14 +1,13 @@
 package middleware
 
 import (
+	"net/http"
+
 	"github.com/gofiber/fiber/v2"
 	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/kotalco/cloud-api/internal/user"
 	"github.com/kotalco/cloud-api/pkg/tokens"
-	"net/http"
 )
-
-var AuthorizedUser user.User
 
 func JWTProtected(c *fiber.Ctx) error {
 	BearerToken := c.Get("Authorization")
@@ -24,7 +23,7 @@ func JWTProtected(c *fiber.Ctx) error {
 		}
 		return c.Status(err.Status).JSON(err)
 	}
-	AuthorizedUser = *user
+	c.Locals("user", user)
 	c.Next()
 	return nil
 }
