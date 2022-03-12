@@ -2,23 +2,113 @@ package config
 
 import "os"
 
-var EnvironmentConf = map[string]string{
-	"CLOUD_API_SERVER_PORT":             os.Getenv("CLOUD_API_SERVER_PORT"),
-	"ENVIRONMENT":                       os.Getenv("ENVIRONMENT"),
-	"LOG_OUTPUT":                        os.Getenv("LOG_OUTPUT"),
-	"LOG_LEVEL":                         os.Getenv("LOG_LEVEL"),
-	"SERVER_READ_TIMEOUT":               os.Getenv("SERVER_READ_TIMEOUT"),
-	"ACCESS_SECRET":                     os.Getenv("ACCESS_SECRET"),
-	"JWT_SECRET_KEY_EXPIRE_HOURS_COUNT": os.Getenv("JWT_SECRET_KEY_EXPIRE_HOURS_COUNT"),
-	"JWT_SECRET_KEY_EXPIRE_HOURS_COUNT_REMEMBER_ME": os.Getenv("JWT_SECRET_KEY_EXPIRE_HOURS_COUNT_REMEMBER_ME"),
-	"DB_SERVER_URL":                   os.Getenv("DB_SERVER_URL"),
-	"DB_MAX_CONNECTIONS":              os.Getenv("DB_MAX_CONNECTIONS"),
-	"DB_MAX_IDLE_CONNECTIONS":         os.Getenv("DB_MAX_IDLE_CONNECTIONS"),
-	"DB_MAX_LIFETIME_CONNECTIONS":     os.Getenv("DB_MAX_LIFETIME_CONNECTIONS"),
-	"VERIFICATION_TOKEN_LENGTH":       os.Getenv("VERIFICATION_TOKEN_LENGTH"), //80 => if changed =>change at => verification_dto length role
-	"VERIFICATION_TOKEN_EXPIRY_HOURS": os.Getenv("VERIFICATION_TOKEN_EXPIRY_HOURS"),
-	"SEND_GRID_API_KEY":               os.Getenv("SEND_GRID_API_KEY"),
-	"EMAIL_VERIFICATION_BASE_URL":     os.Getenv("EMAIL_VERIFICATION_BASE_URL"),
-	"SEND_GRID_SENDER_NAME":           os.Getenv("SEND_GRID_SENDER_NAME"),
-	"SEND_GRID_SENDER_EMAIL":          os.Getenv("SEND_GRID_SENDER_EMAIL"),
+var EnvironmentConf = map[string]string{}
+
+func LookUpEnv() {
+	var val string
+	var ok bool
+
+	//app config
+	val, ok = os.LookupEnv("CLOUD_API_SERVER_PORT")
+	if !ok {
+		EnvironmentConf["CLOUD_API_SERVER_PORT"] = "6000"
+	} else {
+		EnvironmentConf["CLOUD_API_SERVER_PORT"] = val
+	}
+
+	val, ok = os.LookupEnv("ENVIRONMENT")
+	if !ok {
+		EnvironmentConf["ENVIRONMENT"] = "development"
+	} else {
+		EnvironmentConf["ENVIRONMENT"] = val
+	}
+
+	val, ok = os.LookupEnv("LOG_OUTPUT")
+	if !ok {
+		EnvironmentConf["LOG_OUTPUT"] = "stdout"
+	} else {
+		EnvironmentConf["LOG_OUTPUT"] = val
+	}
+
+	val, ok = os.LookupEnv("LOG_LEVEL")
+	if !ok {
+		EnvironmentConf["LOG_LEVEL"] = "info"
+	} else {
+		EnvironmentConf["LOG_LEVEL"] = val
+	}
+
+	val, ok = os.LookupEnv("SERVER_READ_TIMEOUT")
+	if !ok {
+		EnvironmentConf["SERVER_READ_TIMEOUT"] = "60"
+	} else {
+		EnvironmentConf["SERVER_READ_TIMEOUT"] = val
+	}
+
+	//Jwt configs
+	val, ok = os.LookupEnv("ACCESS_SECRET")
+	if !ok {
+		EnvironmentConf["ACCESS_SECRET"] = "secret"
+	} else {
+		EnvironmentConf["ACCESS_SECRET"] = val
+	}
+
+	val, ok = os.LookupEnv("JWT_SECRET_KEY_EXPIRE_HOURS_COUNT")
+	if !ok {
+		EnvironmentConf["JWT_SECRET_KEY_EXPIRE_HOURS_COUNT"] = "24"
+	} else {
+		EnvironmentConf["JWT_SECRET_KEY_EXPIRE_HOURS_COUNT"] = val
+	}
+
+	val, ok = os.LookupEnv("JWT_SECRET_KEY_EXPIRE_HOURS_COUNT_REMEMBER_ME")
+	if !ok {
+		EnvironmentConf["JWT_SECRET_KEY_EXPIRE_HOURS_COUNT_REMEMBER_ME"] = "168"
+	} else {
+		EnvironmentConf["JWT_SECRET_KEY_EXPIRE_HOURS_COUNT_REMEMBER_ME"] = val
+	}
+
+	//Db configs
+	val, ok = os.LookupEnv("DB_MAX_CONNECTIONS")
+	if !ok {
+		EnvironmentConf["DB_MAX_CONNECTIONS"] = "100"
+	} else {
+		EnvironmentConf["DB_MAX_CONNECTIONS"] = val
+	}
+
+	val, ok = os.LookupEnv("DB_MAX_IDLE_CONNECTIONS")
+	if !ok {
+		EnvironmentConf["DB_MAX_IDLE_CONNECTIONS"] = "100"
+	} else {
+		EnvironmentConf["DB_MAX_IDLE_CONNECTIONS"] = val
+	}
+
+	val, ok = os.LookupEnv("DB_MAX_LIFETIME_CONNECTIONS")
+	if !ok {
+		EnvironmentConf["DB_MAX_LIFETIME_CONNECTIONS"] = "100"
+	} else {
+		EnvironmentConf["DB_MAX_LIFETIME_CONNECTIONS"] = val
+	}
+
+	//Emails configs
+	val, ok = os.LookupEnv("EMAIL_VERIFICATION_BASE_URL")
+	if !ok {
+		EnvironmentConf["EMAIL_VERIFICATION_BASE_URL"] = "http://localhost:3000/"
+	} else {
+		EnvironmentConf["EMAIL_VERIFICATION_BASE_URL"] = val
+	}
+
+	val, ok = os.LookupEnv("SEND_GRID_SENDER_NAME")
+	if !ok {
+		EnvironmentConf["SEND_GRID_SENDER_NAME"] = "Mohamed"
+	} else {
+		EnvironmentConf["SEND_GRID_SENDER_NAME"] = val
+	}
+
+	//tfa configs
+	val, ok = os.LookupEnv("2_FACTOR_SECRET")
+	if !ok {
+		EnvironmentConf["2_FACTOR_SECRET"] = "secret"
+	} else {
+		EnvironmentConf["2_FACTOR_SECRET"] = val
+	}
+
 }

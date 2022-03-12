@@ -13,8 +13,8 @@ import (
 )
 
 func main() {
-	config := config.FiberConfig()
-	app := fiber.New(config)
+	config.LookUpEnv()
+	app := fiber.New(config.FiberConfig())
 	middleware.FiberMiddleware(app)
 	api.MapUrl(app)
 
