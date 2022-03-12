@@ -10,9 +10,9 @@ import (
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
 )
 
-type userRepository struct{}
+type repository struct{}
 
-type userRepositoryInterface interface {
+type IRepository interface {
 	Create(user *User) *restErrors.RestErr
 	GetByEmail(email string) (*User, *restErrors.RestErr)
 	GetById(id string) (*User, *restErrors.RestErr)
@@ -20,15 +20,15 @@ type userRepositoryInterface interface {
 }
 
 var (
-	UserRepository userRepositoryInterface
-	dbClient       = sqlclient.OpenDBConnection()
+	dbClient = sqlclient.OpenDBConnection()
 )
 
-func init() {
-	UserRepository = &userRepository{}
+func NewRepository() IRepository {
+	newRepo := repository{}
+	return newRepo
 }
 
-func (repo userRepository) Create(user *User) *restErrors.RestErr {
+func (repository) Create(user *User) *restErrors.RestErr {
 	res := dbClient.Create(user)
 	if res.Error != nil {
 		duplicateEmail, _ := regexp.Match("duplicate key", []byte(res.Error.Error()))
@@ -40,14 +40,14 @@ func (repo userRepository) Create(user *User) *restErrors.RestErr {
 				Error:   "Conflict",
 			}
 		}
-		go logger.Error(repo.Create, res.Error)
+		go logger.Error(repository.Create, res.Error)
 		return restErrors.NewInternalServerError("can't create user")
 	}
 
 	return nil
 }
 
-func (repo userRepository) GetByEmail(email string) (*User, *restErrors.RestErr) {
+func (repository) GetByEmail(email string) (*User, *restErrors.RestErr) {
 	var user = new(User)
 
 	result := dbClient.Where("email = ?", email).First(user)
@@ -58,7 +58,7 @@ func (repo userRepository) GetByEmail(email string) (*User, *restErrors.RestErr)
 	return user, nil
 }
 
-func (repo userRepository) GetById(id string) (*User, *restErrors.RestErr) {
+func (repository) GetById(id string) (*User, *restErrors.RestErr) {
 	var user = new(User)
 
 	result := dbClient.Where("id = ?", id).First(user)
@@ -69,10 +69,10 @@ func (repo userRepository) GetById(id string) (*User, *restErrors.RestErr) {
 	return user, nil
 }
 
-func (repo userRepository) Update(user *User) *restErrors.RestErr {
+func (repository) Update(user *User) *restErrors.RestErr {
 	err := dbClient.Save(user)
 	if err.Error != nil {
-		go logger.Error(repo.Update, err.Error)
+		go logger.Error(repository.Update, err.Error)
 		return restErrors.NewInternalServerError("something went wrong")
 	}
 

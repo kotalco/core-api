@@ -54,12 +54,13 @@ func (service mailService) ResendEmailVerification(dto MailRequestDto) *restErro
 	htmlContent := fmt.Sprintf("please visit the following link to Confirm  your email address %s", baseUrl)
 	message := mail.NewSingleEmail(from, subject, to, plainTextContent, htmlContent)
 
-	_, err := client.Send(message)
+	succc, err := client.Send(message)
 	if err != nil {
 		go logger.Error(service.SignUp, err)
 		return restErrors.NewInternalServerError("some thing went wrong")
 	}
 
+	fmt.Println(succc)
 	return nil
 }
 func (service mailService) ForgetPassword(dto MailRequestDto) *restErrors.RestErr {

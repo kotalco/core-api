@@ -13,9 +13,9 @@ import (
 	"github.com/kotalco/cloud-api/pkg/security"
 )
 
-type verificationService struct{}
+type service struct{}
 
-type verificationServiceInterface interface {
+type IService interface {
 	Create(userId string) (string, *restErrors.RestErr)
 	GetByUserId(userId string) (*Verification, *restErrors.RestErr)
 	Resend(userId string) (string, *restErrors.RestErr)
@@ -23,13 +23,16 @@ type verificationServiceInterface interface {
 }
 
 var (
-	VerificationService verificationServiceInterface
+	verificationRepository = NewRepository()
 )
 
-func init() { VerificationService = &verificationService{} }
+func NewService() IService {
+	newService := &service{}
+	return newService
+}
 
 //Create creates a new verification token for the user
-func (service verificationService) Create(userId string) (string, *restErrors.RestErr) {
+func (service) Create(userId string) (string, *restErrors.RestErr) {
 	token, restErr := generateToken()
 	if restErr != nil {
 		return "", restErr
@@ -52,7 +55,7 @@ func (service verificationService) Create(userId string) (string, *restErrors.Re
 	verification.UserId = userId
 	verification.ExpiresAt = time.Now().UTC().Add(time.Duration(tokenExpires) * time.Hour).Unix()
 
-	restErr = VerificationRepository.Create(verification)
+	restErr = verificationRepository.Create(verification)
 	if restErr != nil {
 		return "", restErr
 	}
@@ -61,8 +64,8 @@ func (service verificationService) Create(userId string) (string, *restErrors.Re
 }
 
 //GetByUserId get verification by user id
-func (service verificationService) GetByUserId(userId string) (*Verification, *restErrors.RestErr) {
-	verification, err := VerificationRepository.GetByUserId(userId)
+func (service) GetByUserId(userId string) (*Verification, *restErrors.RestErr) {
+	verification, err := verificationRepository.GetByUserId(userId)
 	if err != nil {
 		return nil, restErrors.NewNotFoundError(fmt.Sprintf("No such verification"))
 	}
@@ -71,8 +74,8 @@ func (service verificationService) GetByUserId(userId string) (*Verification, *r
 }
 
 //Verify verify token hash
-func (service verificationService) Verify(userId string, token string) *restErrors.RestErr {
-	verification, err := VerificationRepository.GetByUserId(userId)
+func (service) Verify(userId string, token string) *restErrors.RestErr {
+	verification, err := verificationRepository.GetByUserId(userId)
 	if err != nil {
 		return restErrors.NewNotFoundError(fmt.Sprintf("No such verification"))
 	}
@@ -93,7 +96,7 @@ func (service verificationService) Verify(userId string, token string) *restErro
 
 	verification.Completed = true
 
-	err = VerificationRepository.Update(verification)
+	err = verificationRepository.Update(verification)
 	if err != nil {
 		return err
 	}
@@ -102,11 +105,11 @@ func (service verificationService) Verify(userId string, token string) *restErro
 }
 
 //Resend  verification token to user
-func (service verificationService) Resend(userId string) (string, *restErrors.RestErr) {
-	verification, err := VerificationRepository.GetByUserId(userId)
+func (vService service) Resend(userId string) (string, *restErrors.RestErr) {
+	verification, err := verificationRepository.GetByUserId(userId)
 	if err != nil {
 		if err.Status == http.StatusNotFound {
-			return service.Create(userId)
+			return vService.Create(userId)
 		}
 		return "", err
 	}
@@ -122,7 +125,7 @@ func (service verificationService) Resend(userId string) (string, *restErrors.Re
 
 	verification.Completed = false
 	verification.Token = *hashedToken
-	err = VerificationRepository.Update(verification)
+	err = verificationRepository.Update(verification)
 	if err != nil {
 		return "", err
 	}

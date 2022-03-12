@@ -13,7 +13,6 @@ import (
 )
 
 func main() {
-	config.LookUpEnv()
 	app := fiber.New(config.FiberConfig())
 	middleware.FiberMiddleware(app)
 	api.MapUrl(app)

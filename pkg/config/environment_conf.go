@@ -1,10 +1,12 @@
 package config
 
-import "os"
+import (
+	"os"
+)
 
 var EnvironmentConf = map[string]string{}
 
-func LookUpEnv() {
+func init() {
 	var val string
 	var ok bool
 
@@ -67,6 +69,8 @@ func LookUpEnv() {
 	}
 
 	//Db configs
+	EnvironmentConf["DB_SERVER_URL"] = os.Getenv("DB_SERVER_URL")
+
 	val, ok = os.LookupEnv("DB_MAX_CONNECTIONS")
 	if !ok {
 		EnvironmentConf["DB_MAX_CONNECTIONS"] = "100"
@@ -96,12 +100,41 @@ func LookUpEnv() {
 		EnvironmentConf["EMAIL_VERIFICATION_BASE_URL"] = val
 	}
 
+	val, ok = os.LookupEnv("VERIFICATION_TOKEN_LENGTH")
+	if !ok {
+		EnvironmentConf["VERIFICATION_TOKEN_LENGTH"] = "80"
+	} else {
+		EnvironmentConf["VERIFICATION_TOKEN_LENGTH"] = val
+	}
+
+	val, ok = os.LookupEnv("VERIFICATION_TOKEN_LENGTH")
+	if !ok {
+		EnvironmentConf["VERIFICATION_TOKEN_LENGTH"] = "80"
+	} else {
+		EnvironmentConf["VERIFICATION_TOKEN_LENGTH"] = val
+	}
+
+	val, ok = os.LookupEnv("VERIFICATION_TOKEN_EXPIRY_HOURS")
+	if !ok {
+		EnvironmentConf["VERIFICATION_TOKEN_EXPIRY_HOURS"] = "24"
+	} else {
+		EnvironmentConf["VERIFICATION_TOKEN_EXPIRY_HOURS"] = val
+	}
+
 	val, ok = os.LookupEnv("SEND_GRID_SENDER_NAME")
 	if !ok {
 		EnvironmentConf["SEND_GRID_SENDER_NAME"] = "Mohamed"
 	} else {
 		EnvironmentConf["SEND_GRID_SENDER_NAME"] = val
 	}
+	val, ok = os.LookupEnv("SEND_GRID_SENDER_EMAIL")
+	if !ok {
+		EnvironmentConf["SEND_GRID_SENDER_EMAIL"] = "m.abdelrhman@kotal.co"
+	} else {
+		EnvironmentConf["SEND_GRID_SENDER_EMAIL"] = val
+	}
+
+	EnvironmentConf["SEND_GRID_API_KEY"] = os.Getenv("SEND_GRID_API_KEY")
 
 	//tfa configs
 	val, ok = os.LookupEnv("2_FACTOR_SECRET")

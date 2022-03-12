@@ -9,13 +9,15 @@ import (
 	"github.com/kotalco/cloud-api/pkg/tokens"
 )
 
+var userRepository = user.NewRepository()
+
 func JWTProtected(c *fiber.Ctx) error {
 	BearerToken := c.Get("Authorization")
 	accessDetails, err := tokens.ExtractTokenMetadata(BearerToken)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
-	user, err := user.UserRepository.GetById(accessDetails.UserId)
+	user, err := userRepository.GetById(accessDetails.UserId)
 	if err != nil {
 		if err.Status == http.StatusNotFound {
 			unAuthErr := restErrors.NewUnAuthorizedError("no such user")

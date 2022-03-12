@@ -8,9 +8,9 @@ import (
 	"github.com/kotalco/cloud-api/pkg/tokens"
 )
 
-type userService struct{}
+type service struct{}
 
-type userServiceInterface interface {
+type IService interface {
 	SignUp(dto *SignUpRequestDto) (*User, *restErrors.RestErr)
 	SignIn(dto *SignInRequestDto) (string, *restErrors.RestErr)
 	GetByEmail(email string) (*User, *restErrors.RestErr)
@@ -21,13 +21,16 @@ type userServiceInterface interface {
 }
 
 var (
-	UserService userServiceInterface
+	userRepository = NewRepository()
 )
 
-func init() { UserService = &userService{} }
+func NewService() IService {
+	newService := &service{}
+	return newService
+}
 
 //SignUp Creates new user
-func (service userService) SignUp(dto *SignUpRequestDto) (*User, *restErrors.RestErr) {
+func (service) SignUp(dto *SignUpRequestDto) (*User, *restErrors.RestErr) {
 	hashedPassword, err := security.Hash(dto.Password, 13)
 	if err != nil {
 		go logger.Error(service.SignUp, err)
@@ -40,7 +43,7 @@ func (service userService) SignUp(dto *SignUpRequestDto) (*User, *restErrors.Res
 	user.IsVerified = false
 	user.Password = string(hashedPassword)
 
-	restErr := UserRepository.Create(user)
+	restErr := userRepository.Create(user)
 	if restErr != nil {
 		return nil, restErr
 	}
@@ -49,8 +52,8 @@ func (service userService) SignUp(dto *SignUpRequestDto) (*User, *restErrors.Res
 }
 
 //SignIn Log user in and  returns jwt token
-func (service userService) SignIn(dto *SignInRequestDto) (string, *restErrors.RestErr) {
-	user, err := UserRepository.GetByEmail(dto.Email)
+func (service) SignIn(dto *SignInRequestDto) (string, *restErrors.RestErr) {
+	user, err := userRepository.GetByEmail(dto.Email)
 	if err != nil {
 		return "", restErrors.NewUnAuthorizedError("Invalid Credentials")
 	}
@@ -78,8 +81,8 @@ func (service userService) SignIn(dto *SignInRequestDto) (string, *restErrors.Re
 }
 
 //GetByEmail find user by email
-func (service userService) GetByEmail(email string) (*User, *restErrors.RestErr) {
-	model, err := UserRepository.GetByEmail(email)
+func (service) GetByEmail(email string) (*User, *restErrors.RestErr) {
+	model, err := userRepository.GetByEmail(email)
 	if err != nil {
 		return nil, err
 	}
@@ -89,9 +92,9 @@ func (service userService) GetByEmail(email string) (*User, *restErrors.RestErr)
 
 //VerifyEmail change user isVerified to true
 //user can't sign in if this field is falsy
-func (service userService) VerifyEmail(model *User) *restErrors.RestErr {
+func (service) VerifyEmail(model *User) *restErrors.RestErr {
 	model.IsVerified = true
-	err := UserRepository.Update(model)
+	err := userRepository.Update(model)
 	if err != nil {
 		return err
 	}
@@ -99,7 +102,7 @@ func (service userService) VerifyEmail(model *User) *restErrors.RestErr {
 }
 
 //ResetPassword create new password for user used after user ForgetPassword
-func (service userService) ResetPassword(model *User, password string) *restErrors.RestErr {
+func (service) ResetPassword(model *User, password string) *restErrors.RestErr {
 	hashedPassword, error := security.Hash(password, 13)
 	if error != nil {
 		go logger.Error(service.ResetPassword, error)
@@ -108,7 +111,7 @@ func (service userService) ResetPassword(model *User, password string) *restErro
 
 	model.Password = string(hashedPassword)
 
-	err := UserRepository.Update(model)
+	err := userRepository.Update(model)
 	if err != nil {
 		return err
 	}
@@ -117,7 +120,7 @@ func (service userService) ResetPassword(model *User, password string) *restErro
 }
 
 //ChangePassword change user password  for authenticated users
-func (service userService) ChangePassword(model *User, dto *ChangePasswordRequestDto) *restErrors.RestErr {
+func (service) ChangePassword(model *User, dto *ChangePasswordRequestDto) *restErrors.RestErr {
 
 	invalidPassError := security.VerifyPassword(model.Password, dto.OldPassword)
 	if invalidPassError != nil {
@@ -132,7 +135,7 @@ func (service userService) ChangePassword(model *User, dto *ChangePasswordReques
 
 	model.Password = string(hashedPassword)
 
-	err := UserRepository.Update(model)
+	err := userRepository.Update(model)
 	if err != nil {
 		return err
 	}
@@ -141,11 +144,11 @@ func (service userService) ChangePassword(model *User, dto *ChangePasswordReques
 }
 
 //ChangeEmail change user email for authenticated users
-func (service userService) ChangeEmail(model *User, dto *ChangeEmailRequestDto) *restErrors.RestErr {
+func (service) ChangeEmail(model *User, dto *ChangeEmailRequestDto) *restErrors.RestErr {
 	model.Email = dto.Email
 	model.IsVerified = false
 
-	err := UserRepository.Update(model)
+	err := userRepository.Update(model)
 	if err != nil {
 		return err
 	}

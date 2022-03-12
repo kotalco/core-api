@@ -11,6 +11,11 @@ import (
 	"github.com/kotalco/cloud-api/pkg/sendgrid"
 )
 
+var (
+	userService         = user.NewService()
+	verificationService = verification.NewService()
+)
+
 //SignUp validate dto , create user , send verification token
 func SignUp(c *fiber.Ctx) error {
 	dto := new(user.SignUpRequestDto)
@@ -24,12 +29,12 @@ func SignUp(c *fiber.Ctx) error {
 		return c.Status(restErr.Status).JSON(restErr)
 	}
 
-	model, restErr := user.UserService.SignUp(dto)
+	model, restErr := userService.SignUp(dto)
 	if restErr != nil {
 		return c.Status(restErr.Status).JSON(restErr)
 	}
 
-	token, restErr := verification.VerificationService.Create(model.ID)
+	token, restErr := verificationService.Create(model.ID)
 	if restErr != nil {
 		return c.Status(restErr.Status).JSON(restErr)
 	}
@@ -57,7 +62,7 @@ func SignIn(c *fiber.Ctx) error {
 		return c.Status(restErr.Status).JSON(restErr)
 	}
 
-	token, restErr := user.UserService.SignIn(dto)
+	token, restErr := userService.SignIn(dto)
 	if restErr != nil {
 		return c.Status(restErr.Status).JSON(restErr)
 	}
@@ -83,7 +88,7 @@ func SendEmailVerification(c *fiber.Ctx) error {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	userModel, err := user.UserService.GetByEmail(dto.Email)
+	userModel, err := userService.GetByEmail(dto.Email)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -93,7 +98,7 @@ func SendEmailVerification(c *fiber.Ctx) error {
 		return c.Status(badReq.Status).JSON(badReq)
 	}
 
-	token, err := verification.VerificationService.Resend(userModel.ID)
+	token, err := verificationService.Resend(userModel.ID)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -127,17 +132,17 @@ func VerifyEmail(c *fiber.Ctx) error {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	userModel, err := user.UserService.GetByEmail(dto.Email)
+	userModel, err := userService.GetByEmail(dto.Email)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	err = verification.VerificationService.Verify(userModel.ID, dto.Token)
+	err = verificationService.Verify(userModel.ID, dto.Token)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	err = user.UserService.VerifyEmail(userModel)
+	err = userService.VerifyEmail(userModel)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -164,12 +169,12 @@ func ForgetPassword(c *fiber.Ctx) error {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	userModel, err := user.UserService.GetByEmail(dto.Email)
+	userModel, err := userService.GetByEmail(dto.Email)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	token, err := verification.VerificationService.Resend(userModel.ID)
+	token, err := verificationService.Resend(userModel.ID)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -202,7 +207,7 @@ func ResetPassword(c *fiber.Ctx) error {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	userModel, err := user.UserService.GetByEmail(dto.Email)
+	userModel, err := userService.GetByEmail(dto.Email)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -217,11 +222,11 @@ func ResetPassword(c *fiber.Ctx) error {
 		return c.Status(forbidErr.Status).JSON(forbidErr)
 	}
 
-	err = verification.VerificationService.Verify(userModel.ID, dto.Token)
+	err = verificationService.Verify(userModel.ID, dto.Token)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
-	err = user.UserService.ResetPassword(userModel, dto.Password)
+	err = userService.ResetPassword(userModel, dto.Password)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -250,7 +255,7 @@ func ChangePassword(c *fiber.Ctx) error {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	err = user.UserService.ChangePassword(authorizedUser, dto)
+	err = userService.ChangePassword(authorizedUser, dto)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -279,12 +284,12 @@ func ChangeEmail(c *fiber.Ctx) error {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	err = user.UserService.ChangeEmail(authorizedUser, dto)
+	err = userService.ChangeEmail(authorizedUser, dto)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	token, err := verification.VerificationService.Resend(authorizedUser.ID)
+	token, err := verificationService.Resend(authorizedUser.ID)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}

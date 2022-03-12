@@ -9,38 +9,38 @@ import (
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
 )
 
-type verificationRepository struct{}
+type repository struct{}
 
-type verificationRepositoryInterface interface {
+type IRepository interface {
 	Create(verification *Verification) *restErrors.RestErr
 	GetByUserId(userId string) (*Verification, *restErrors.RestErr)
 	Update(verification *Verification) *restErrors.RestErr
 }
 
 var (
-	VerificationRepository verificationRepositoryInterface
-	dbClient               = sqlclient.OpenDBConnection()
+	dbClient = sqlclient.OpenDBConnection()
 )
 
-func init() {
-	VerificationRepository = &verificationRepository{}
+func NewRepository() IRepository {
+	newRepository := repository{}
+	return newRepository
 }
 
-func (repo verificationRepository) Create(verification *Verification) *restErrors.RestErr {
+func (repository) Create(verification *Verification) *restErrors.RestErr {
 	res := dbClient.Create(verification)
 	if res.Error != nil {
 		duplicateEmail, _ := regexp.Match("duplicate key", []byte(res.Error.Error()))
 		if duplicateEmail {
 			return restErrors.NewBadRequestError("email already exits")
 		}
-		go logger.Error(repo.Create, res.Error)
+		go logger.Error(repository.Create, res.Error)
 		return restErrors.NewInternalServerError("can't create verification")
 	}
 
 	return nil
 }
 
-func (repo verificationRepository) GetByUserId(userId string) (*Verification, *restErrors.RestErr) {
+func (repository) GetByUserId(userId string) (*Verification, *restErrors.RestErr) {
 	var verification = new(Verification)
 
 	result := dbClient.Where("user_id = ?", userId).First(verification)
@@ -51,10 +51,10 @@ func (repo verificationRepository) GetByUserId(userId string) (*Verification, *r
 	return verification, nil
 }
 
-func (repo verificationRepository) Update(verification *Verification) *restErrors.RestErr {
+func (repository) Update(verification *Verification) *restErrors.RestErr {
 	resp := dbClient.Save(verification)
 	if resp.Error != nil {
-		go logger.Error(repo.Update, resp.Error)
+		go logger.Error(repository.Update, resp.Error)
 	}
 
 	return nil
