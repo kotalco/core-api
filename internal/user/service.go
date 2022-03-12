@@ -40,7 +40,7 @@ func (service) SignUp(dto *SignUpRequestDto) (*User, *restErrors.RestErr) {
 	user := new(User)
 	user.ID = uuid.New().String()
 	user.Email = dto.Email
-	user.IsVerified = false
+	user.IsEmailVerified = false
 	user.Password = string(hashedPassword)
 
 	restErr := userRepository.Create(user)
@@ -58,7 +58,7 @@ func (service) SignIn(dto *SignInRequestDto) (string, *restErrors.RestErr) {
 		return "", restErrors.NewUnAuthorizedError("Invalid Credentials")
 	}
 
-	if !user.IsVerified {
+	if !user.IsEmailVerified {
 		//todo change it to new forbidden once error deployed as package
 		return "", &restErrors.RestErr{
 			Message: "email not verified",
@@ -93,7 +93,7 @@ func (service) GetByEmail(email string) (*User, *restErrors.RestErr) {
 //VerifyEmail change user isVerified to true
 //user can't sign in if this field is falsy
 func (service) VerifyEmail(model *User) *restErrors.RestErr {
-	model.IsVerified = true
+	model.IsEmailVerified = true
 	err := userRepository.Update(model)
 	if err != nil {
 		return err
@@ -146,7 +146,7 @@ func (service) ChangePassword(model *User, dto *ChangePasswordRequestDto) *restE
 //ChangeEmail change user email for authenticated users
 func (service) ChangeEmail(model *User, dto *ChangeEmailRequestDto) *restErrors.RestErr {
 	model.Email = dto.Email
-	model.IsVerified = false
+	model.IsEmailVerified = false
 
 	err := userRepository.Update(model)
 	if err != nil {

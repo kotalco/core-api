@@ -93,7 +93,7 @@ func SendEmailVerification(c *fiber.Ctx) error {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	if userModel.IsVerified {
+	if userModel.IsEmailVerified {
 		badReq := restErrors.NewBadRequestError("email already verified")
 		return c.Status(badReq.Status).JSON(badReq)
 	}
@@ -212,7 +212,7 @@ func ResetPassword(c *fiber.Ctx) error {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	if !userModel.IsVerified {
+	if !userModel.IsEmailVerified {
 		//todo change it to new forbidden once error deployed as package
 		forbidErr := &restErrors.RestErr{
 			Message: "email not verified",
