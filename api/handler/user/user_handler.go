@@ -37,7 +37,6 @@ func SignUp(c *fiber.Ctx) error {
 	//send email verification
 	mailRequest := new(sendgrid.MailRequestDto)
 	mailRequest.Token = token
-	mailRequest.Name = model.Email //todo change to name once we add name is user model
 	mailRequest.Email = model.Email
 
 	go sendgrid.MailService.SignUp(*mailRequest)
@@ -101,7 +100,6 @@ func SendEmailVerification(c *fiber.Ctx) error {
 
 	mailRequest := new(sendgrid.MailRequestDto)
 	mailRequest.Token = token
-	mailRequest.Name = userModel.Email //todo change to name once we add name is user model
 	mailRequest.Email = userModel.Email
 
 	go sendgrid.MailService.ResendEmailVerification(*mailRequest)
@@ -178,7 +176,6 @@ func ForgetPassword(c *fiber.Ctx) error {
 
 	mailRequest := new(sendgrid.MailRequestDto)
 	mailRequest.Token = token
-	mailRequest.Name = userModel.Email //todo change to name once we add name is user model
 	mailRequest.Email = userModel.Email
 
 	go sendgrid.MailService.ForgetPassword(*mailRequest)
@@ -294,7 +291,6 @@ func ChangeEmail(c *fiber.Ctx) error {
 
 	mailRequest := new(sendgrid.MailRequestDto)
 	mailRequest.Token = token
-	mailRequest.Name = authorizedUser.Email //todo change to name once we add name is user model
 	mailRequest.Email = authorizedUser.Email
 
 	go sendgrid.MailService.ResendEmailVerification(*mailRequest)

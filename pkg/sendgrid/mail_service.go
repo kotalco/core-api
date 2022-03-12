@@ -2,6 +2,7 @@ package sendgrid
 
 import (
 	"fmt"
+
 	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/kotalco/api/pkg/logger"
 	"github.com/kotalco/cloud-api/pkg/config"
@@ -21,6 +22,7 @@ var (
 	client      = GetClient()
 	fromName    = config.EnvironmentConf["SEND_GRID_SENDER_NAME"]
 	fromEmail   = config.EnvironmentConf["SEND_GRID_SENDER_EMAIL"]
+	greeting    = "Hello there!" //default value for user name
 )
 
 func init() { MailService = &mailService{} }
@@ -28,7 +30,7 @@ func init() { MailService = &mailService{} }
 func (service mailService) SignUp(dto MailRequestDto) *restErrors.RestErr {
 	from := mail.NewEmail(fromName, fromEmail)
 	subject := "Welcome to Kotal! Confirm Your Email"
-	to := mail.NewEmail(dto.Name, dto.Email)
+	to := mail.NewEmail(greeting, dto.Email)
 	plainTextContent := ""
 	baseUrl := fmt.Sprintf("%s/confirm-email?email=%s&token=%s", config.EnvironmentConf["EMAIL_VERIFICATION_BASE_URL"], dto.Email, dto.Token)
 	htmlContent := fmt.Sprintf("please visit the following link to Confirm  your email address %s", baseUrl)
@@ -46,7 +48,7 @@ func (service mailService) SignUp(dto MailRequestDto) *restErrors.RestErr {
 func (service mailService) ResendEmailVerification(dto MailRequestDto) *restErrors.RestErr {
 	from := mail.NewEmail(fromName, fromEmail)
 	subject := "Confirm Your Email"
-	to := mail.NewEmail(dto.Name, dto.Email)
+	to := mail.NewEmail(greeting, dto.Email)
 	plainTextContent := ""
 	baseUrl := fmt.Sprintf("%s/confirm-email?email=%s&token=%s", config.EnvironmentConf["EMAIL_VERIFICATION_BASE_URL"], dto.Email, dto.Token)
 	htmlContent := fmt.Sprintf("please visit the following link to Confirm  your email address %s", baseUrl)
@@ -63,7 +65,7 @@ func (service mailService) ResendEmailVerification(dto MailRequestDto) *restErro
 func (service mailService) ForgetPassword(dto MailRequestDto) *restErrors.RestErr {
 	from := mail.NewEmail(fromName, fromEmail)
 	subject := "Reset Password"
-	to := mail.NewEmail(dto.Name, dto.Email)
+	to := mail.NewEmail(greeting, dto.Email)
 	plainTextContent := ""
 	baseUrl := fmt.Sprintf("%s/reset-password?email=%s&token=%s", config.EnvironmentConf["EMAIL_VERIFICATION_BASE_URL"], dto.Email, dto.Token)
 	htmlContent := fmt.Sprintf("please visit the following link to reset  your password %s", baseUrl)
