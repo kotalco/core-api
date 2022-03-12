@@ -11,13 +11,13 @@ import (
 type userService struct{}
 
 type userServiceInterface interface {
-	SignUp(dto SignUpRequestDto) (*User, *restErrors.RestErr)
-	SignIn(dto SignInRequestDto) (string, *restErrors.RestErr)
+	SignUp(dto *SignUpRequestDto) (*User, *restErrors.RestErr)
+	SignIn(dto *SignInRequestDto) (string, *restErrors.RestErr)
 	GetByEmail(email string) (*User, *restErrors.RestErr)
 	VerifyEmail(model *User) *restErrors.RestErr
 	ResetPassword(model *User, password string) *restErrors.RestErr
-	ChangePassword(model *User, dto ChangePasswordRequestDto) *restErrors.RestErr
-	ChangeEmail(model *User, dto ChangeEmailRequestDto) *restErrors.RestErr
+	ChangePassword(model *User, dto *ChangePasswordRequestDto) *restErrors.RestErr
+	ChangeEmail(model *User, dto *ChangeEmailRequestDto) *restErrors.RestErr
 }
 
 var (
@@ -27,7 +27,7 @@ var (
 func init() { UserService = &userService{} }
 
 //SignUp Creates new user
-func (service userService) SignUp(dto SignUpRequestDto) (*User, *restErrors.RestErr) {
+func (service userService) SignUp(dto *SignUpRequestDto) (*User, *restErrors.RestErr) {
 	hashedPassword, err := security.Hash(dto.Password, 13)
 	if err != nil {
 		go logger.Error(service.SignUp, err)
@@ -49,7 +49,7 @@ func (service userService) SignUp(dto SignUpRequestDto) (*User, *restErrors.Rest
 }
 
 //SignIn Log user in and  returns jwt token
-func (service userService) SignIn(dto SignInRequestDto) (string, *restErrors.RestErr) {
+func (service userService) SignIn(dto *SignInRequestDto) (string, *restErrors.RestErr) {
 	user, err := UserRepository.GetByEmail(dto.Email)
 	if err != nil {
 		return "", restErrors.NewUnAuthorizedError("Invalid Credentials")
@@ -117,7 +117,7 @@ func (service userService) ResetPassword(model *User, password string) *restErro
 }
 
 //ChangePassword change user password  for authenticated users
-func (service userService) ChangePassword(model *User, dto ChangePasswordRequestDto) *restErrors.RestErr {
+func (service userService) ChangePassword(model *User, dto *ChangePasswordRequestDto) *restErrors.RestErr {
 
 	invalidPassError := security.VerifyPassword(model.Password, dto.OldPassword)
 	if invalidPassError != nil {
@@ -141,7 +141,7 @@ func (service userService) ChangePassword(model *User, dto ChangePasswordRequest
 }
 
 //ChangeEmail change user email for authenticated users
-func (service userService) ChangeEmail(model *User, dto ChangeEmailRequestDto) *restErrors.RestErr {
+func (service userService) ChangeEmail(model *User, dto *ChangeEmailRequestDto) *restErrors.RestErr {
 	model.Email = dto.Email
 	model.IsVerified = false
 

@@ -25,7 +25,7 @@ func SignUp(c *fiber.Ctx) error {
 		return c.Status(restErr.Status).JSON(restErr)
 	}
 
-	model, restErr := user.UserService.SignUp(*dto)
+	model, restErr := user.UserService.SignUp(dto)
 	if restErr != nil {
 		return c.Status(restErr.Status).JSON(restErr)
 	}
@@ -59,7 +59,7 @@ func SignIn(c *fiber.Ctx) error {
 		return c.Status(restErr.Status).JSON(restErr)
 	}
 
-	token, restErr := user.UserService.SignIn(*dto)
+	token, restErr := user.UserService.SignIn(dto)
 	if restErr != nil {
 		return c.Status(restErr.Status).JSON(restErr)
 	}
@@ -253,7 +253,7 @@ func ChangePassword(c *fiber.Ctx) error {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	err = user.UserService.ChangePassword(&middleware.AuthorizedUser, *dto)
+	err = user.UserService.ChangePassword(&middleware.AuthorizedUser, dto)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -281,7 +281,7 @@ func ChangeEmail(c *fiber.Ctx) error {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	err = user.UserService.ChangeEmail(&middleware.AuthorizedUser, *dto)
+	err = user.UserService.ChangeEmail(&middleware.AuthorizedUser, dto)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
