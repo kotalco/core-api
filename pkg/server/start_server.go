@@ -2,11 +2,12 @@ package server
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/kotalco/api/pkg/logger"
 	"github.com/kotalco/cloud-api/pkg/config"
-	"os"
-	"os/signal"
 )
 
 // StartServerWithGracefulShutdown function for starting server with a graceful shutdown.
@@ -28,10 +29,8 @@ func StartServerWithGracefulShutdown(a *fiber.App) {
 		close(idleConnsClosed)
 	}()
 
-	port := os.Getenv("CLOUD_API_SERVER_PORT")
-	if port == "" {
-		port = config.EnvironmentConf["CLOUD_API_SERVER_PORT"]
-	}
+	port := ":" + config.EnvironmentConf["CLOUD_API_SERVER_PORT"]
+
 	if err := a.Listen(port); err != nil {
 		go logger.Info(fmt.Sprintf("Oops... Server is not running! Reason: %v", err))
 	}
