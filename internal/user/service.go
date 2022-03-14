@@ -201,6 +201,9 @@ func (service) CreateTOTP(model *User) (bytes.Buffer, *restErrors.RestErr) {
 
 //EnableTwoFactorAuth enables two-factor auth for the user after checking first time otp is valid
 func (service) EnableTwoFactorAuth(model *User, totp string) (*User, *restErrors.RestErr) {
+	if model.TwoFactorCipher == "" {
+		return nil, restErrors.NewBadRequestError("please create and register qr code first")
+	}
 	TOTPSecret, err := security.Decrypt(model.TwoFactorCipher, config.EnvironmentConf["2_FACTOR_SECRET"])
 	if err != nil {
 		go logger.Error(service.EnableTwoFactorAuth, err)
@@ -223,6 +226,10 @@ func (service) EnableTwoFactorAuth(model *User, totp string) (*User, *restErrors
 
 //VerifyTOTP used after SignIn if the user enabled the 2fa to create another bearer token
 func (service) VerifyTOTP(model *User, totp string) (*UserSessionResponseDto, *restErrors.RestErr) {
+	if !model.TwoFactorEnabled {
+		return nil, restErrors.NewBadRequestError("please enable your 2fa first")
+	}
+
 	TOTPSecret, err := security.Decrypt(model.TwoFactorCipher, config.EnvironmentConf["2_FACTOR_SECRET"])
 	if err != nil {
 		go logger.Error(service.EnableTwoFactorAuth, err)
@@ -248,6 +255,9 @@ func (service) VerifyTOTP(model *User, totp string) (*UserSessionResponseDto, *r
 
 //DisableTwoFactorAuth disables two-factor auth for the user
 func (service) DisableTwoFactorAuth(model *User) *restErrors.RestErr {
+	if !model.TwoFactorEnabled {
+		return restErrors.NewBadRequestError("2fa already disabled")
+	}
 	model.TwoFactorEnabled = false
 	model.TwoFactorCipher = ""
 	err := userRepository.Update(model)
