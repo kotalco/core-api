@@ -251,6 +251,7 @@ func (service) DisableTwoFactorAuth(model *User) *restErrors.RestErr {
 	model.TwoFactorEnabled = false
 	model.TwoFactorCipher = ""
 	err := userRepository.Update(model)
+
 	if err != nil {
 		return err
 	}
