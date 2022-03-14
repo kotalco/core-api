@@ -19,11 +19,15 @@ func MapUrl(app *fiber.App) {
 	users.Post("/forget_password", user.ForgetPassword)
 	users.Post("/reset_password", user.ResetPassword)
 	users.Post("/verify_email", user.VerifyEmail)
-	users.Use(middleware.JWTProtected)
-	users.Post("/change_password", user.ChangePassword)
-	users.Post("/change_email", user.ChangeEmail)
+
+	users.Post("/change_password", middleware.JWTProtected, middleware.TFAProtected, user.ChangePassword)
+	users.Post("/change_email", middleware.JWTProtected, middleware.TFAProtected, user.ChangeEmail)
+	users.Get("/totp", middleware.JWTProtected, user.CreateTOTP)
+	users.Post("/totp/enable", middleware.JWTProtected, user.EnableTwoFactorAuth)
+	users.Post("/totp/verify", middleware.JWTProtected, user.VerifyTOTP)
+	users.Post("/totp/disable", middleware.JWTProtected, middleware.TFAProtected, user.DisableTwoFactorAuth)
 
 	//community routes
-	app.Use(middleware.JWTProtected)
+	app.Use(middleware.JWTProtected, middleware.TFAProtected)
 	communityApis.MapUrl(app)
 }

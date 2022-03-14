@@ -1,7 +1,9 @@
 package user
 
 import (
+	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 	restErrors "github.com/kotalco/api/pkg/errors"
@@ -62,13 +64,10 @@ func SignIn(c *fiber.Ctx) error {
 		return c.Status(restErr.Status).JSON(restErr)
 	}
 
-	token, restErr := userService.SignIn(dto)
+	session, restErr := userService.SignIn(*dto)
 	if restErr != nil {
 		return c.Status(restErr.Status).JSON(restErr)
 	}
-
-	session := new(user.UserSessionResponseDto)
-	session.Token = token
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(session))
 }
@@ -306,4 +305,76 @@ func ChangeEmail(c *fiber.Ctx) error {
 		Message: "email changed successfully",
 	}
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(resp))
+}
+
+//CreateTOTP create time based one time password QR code so user can scan it with his mobile app
+func CreateTOTP(c *fiber.Ctx) error {
+	authorizedUser := c.Locals("user").(*user.User)
+
+	qr, err := userService.CreateTOTP(authorizedUser)
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
+	c.Set("Content-Type", "image/png")
+	c.Set("Content-Length", strconv.Itoa(len(qr.Bytes())))
+	if _, err := c.Write(qr.Bytes()); err != nil {
+		log.Println("unable to write image.")
+	}
+	return nil
+}
+
+//EnableTwoFactorAuth used one time when user scan the QR code to verify it scanned and configured correctly
+//then it enables two-factor auth for the user
+func EnableTwoFactorAuth(c *fiber.Ctx) error {
+	authorizedUser := c.Locals("user").(*user.User)
+
+	dto := new(user.TOTPRequestDto)
+	if err := c.BodyParser(dto); err != nil {
+		badReq := restErrors.NewBadRequestError("invalid request body")
+		return c.Status(badReq.Status).JSON(badReq)
+	}
+
+	model, err := userService.EnableTwoFactorAuth(authorizedUser, dto.TOTP)
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
+
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(new(user.UserResponseDto).Marshall(model)))
+}
+
+//VerifyTOTP used after the login if the user enabled 2fa his bearer token will be limited to specific functions including this one
+//create new bearer token for the user after totp validation
+func VerifyTOTP(c *fiber.Ctx) error {
+	authorizedUser := c.Locals("user").(*user.User)
+
+	dto := new(user.TOTPRequestDto)
+	if err := c.BodyParser(dto); err != nil {
+		badReq := restErrors.NewBadRequestError("invalid request body")
+		return c.Status(badReq.Status).JSON(badReq)
+	}
+
+	session, err := userService.VerifyTOTP(authorizedUser, dto.TOTP)
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
+
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(session))
+}
+
+func DisableTwoFactorAuth(c *fiber.Ctx) error {
+	authorizedUser := c.Locals("user").(*user.User)
+
+	err := userService.DisableTwoFactorAuth(authorizedUser)
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
+
+	resp := struct {
+		Message string `json:"message"`
+	}{
+		Message: "2FA disabled",
+	}
+
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(resp))
+
 }
