@@ -9,25 +9,27 @@ import (
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 )
 
-type mailService struct{}
+type service struct{}
 
-type mailServiceInterface interface {
+type IService interface {
 	SignUp(dto MailRequestDto) *restErrors.RestErr
 	ResendEmailVerification(dto MailRequestDto) *restErrors.RestErr
 	ForgetPassword(dto MailRequestDto) *restErrors.RestErr
 }
 
 var (
-	MailService mailServiceInterface
-	client      = GetClient()
-	fromName    = config.EnvironmentConf["SEND_GRID_SENDER_NAME"]
-	fromEmail   = config.EnvironmentConf["SEND_GRID_SENDER_EMAIL"]
-	greeting    = "Hello there!" //default value for user name
+	client    = GetClient()
+	fromName  = config.EnvironmentConf["SEND_GRID_SENDER_NAME"]
+	fromEmail = config.EnvironmentConf["SEND_GRID_SENDER_EMAIL"]
+	greeting  = "Hello there!" //default value for user name
 )
 
-func init() { MailService = &mailService{} }
+func NewService() IService {
+	newService := &service{}
+	return newService
+}
 
-func (service mailService) SignUp(dto MailRequestDto) *restErrors.RestErr {
+func (service) SignUp(dto MailRequestDto) *restErrors.RestErr {
 	from := mail.NewEmail(fromName, fromEmail)
 	subject := "Welcome to Kotal! Confirm Your Email"
 	to := mail.NewEmail(greeting, dto.Email)
@@ -45,7 +47,7 @@ func (service mailService) SignUp(dto MailRequestDto) *restErrors.RestErr {
 	return nil
 }
 
-func (service mailService) ResendEmailVerification(dto MailRequestDto) *restErrors.RestErr {
+func (service) ResendEmailVerification(dto MailRequestDto) *restErrors.RestErr {
 	from := mail.NewEmail(fromName, fromEmail)
 	subject := "Confirm Your Email"
 	to := mail.NewEmail(greeting, dto.Email)
@@ -63,7 +65,7 @@ func (service mailService) ResendEmailVerification(dto MailRequestDto) *restErro
 	fmt.Println(succc)
 	return nil
 }
-func (service mailService) ForgetPassword(dto MailRequestDto) *restErrors.RestErr {
+func (service) ForgetPassword(dto MailRequestDto) *restErrors.RestErr {
 	from := mail.NewEmail(fromName, fromEmail)
 	subject := "Reset Password"
 	to := mail.NewEmail(greeting, dto.Email)

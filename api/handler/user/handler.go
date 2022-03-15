@@ -15,6 +15,7 @@ import (
 
 var (
 	userService         = user.NewService()
+	mailService         = sendgrid.NewService()
 	verificationService = verification.NewService()
 )
 
@@ -46,7 +47,7 @@ func SignUp(c *fiber.Ctx) error {
 	mailRequest.Token = token
 	mailRequest.Email = model.Email
 
-	go sendgrid.MailService.SignUp(*mailRequest)
+	go mailService.SignUp(*mailRequest)
 
 	return c.Status(http.StatusCreated).JSON(shared.NewResponse(new(user.UserResponseDto).Marshall(model)))
 }
@@ -106,7 +107,7 @@ func SendEmailVerification(c *fiber.Ctx) error {
 	mailRequest.Token = token
 	mailRequest.Email = userModel.Email
 
-	go sendgrid.MailService.ResendEmailVerification(*mailRequest)
+	go mailService.ResendEmailVerification(*mailRequest)
 
 	//todo create shared successMessage struct in shared pkg
 	resp := struct {
@@ -182,7 +183,7 @@ func ForgetPassword(c *fiber.Ctx) error {
 	mailRequest.Token = token
 	mailRequest.Email = userModel.Email
 
-	go sendgrid.MailService.ForgetPassword(*mailRequest)
+	go mailService.ForgetPassword(*mailRequest)
 
 	resp := struct {
 		Message string `json:"message"`
@@ -297,7 +298,7 @@ func ChangeEmail(c *fiber.Ctx) error {
 	mailRequest.Token = token
 	mailRequest.Email = authorizedUser.Email
 
-	go sendgrid.MailService.ResendEmailVerification(*mailRequest)
+	go mailService.ResendEmailVerification(*mailRequest)
 
 	resp := struct {
 		Message string `json:"message"`
