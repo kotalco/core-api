@@ -12,9 +12,9 @@ import (
 type service struct{}
 
 type IService interface {
-	SignUp(dto MailRequestDto) *restErrors.RestErr
-	ResendEmailVerification(dto MailRequestDto) *restErrors.RestErr
-	ForgetPassword(dto MailRequestDto) *restErrors.RestErr
+	SignUp(dto *MailRequestDto) *restErrors.RestErr
+	ResendEmailVerification(dto *MailRequestDto) *restErrors.RestErr
+	ForgetPassword(dto *MailRequestDto) *restErrors.RestErr
 }
 
 var (
@@ -29,7 +29,7 @@ func NewService() IService {
 	return newService
 }
 
-func (service) SignUp(dto MailRequestDto) *restErrors.RestErr {
+func (service) SignUp(dto *MailRequestDto) *restErrors.RestErr {
 	from := mail.NewEmail(fromName, fromEmail)
 	subject := "Welcome to Kotal! Confirm Your Email"
 	to := mail.NewEmail(greeting, dto.Email)
@@ -47,7 +47,7 @@ func (service) SignUp(dto MailRequestDto) *restErrors.RestErr {
 	return nil
 }
 
-func (service) ResendEmailVerification(dto MailRequestDto) *restErrors.RestErr {
+func (service) ResendEmailVerification(dto *MailRequestDto) *restErrors.RestErr {
 	from := mail.NewEmail(fromName, fromEmail)
 	subject := "Confirm Your Email"
 	to := mail.NewEmail(greeting, dto.Email)
@@ -65,7 +65,7 @@ func (service) ResendEmailVerification(dto MailRequestDto) *restErrors.RestErr {
 	fmt.Println(succc)
 	return nil
 }
-func (service) ForgetPassword(dto MailRequestDto) *restErrors.RestErr {
+func (service) ForgetPassword(dto *MailRequestDto) *restErrors.RestErr {
 	from := mail.NewEmail(fromName, fromEmail)
 	subject := "Reset Password"
 	to := mail.NewEmail(greeting, dto.Email)

@@ -47,7 +47,7 @@ func SignUp(c *fiber.Ctx) error {
 	mailRequest.Token = token
 	mailRequest.Email = model.Email
 
-	go mailService.SignUp(*mailRequest)
+	go mailService.SignUp(mailRequest)
 
 	return c.Status(http.StatusCreated).JSON(shared.NewResponse(new(user.UserResponseDto).Marshall(model)))
 }
@@ -65,7 +65,7 @@ func SignIn(c *fiber.Ctx) error {
 		return c.Status(restErr.Status).JSON(restErr)
 	}
 
-	session, restErr := userService.SignIn(*dto)
+	session, restErr := userService.SignIn(dto)
 	if restErr != nil {
 		return c.Status(restErr.Status).JSON(restErr)
 	}
@@ -107,7 +107,7 @@ func SendEmailVerification(c *fiber.Ctx) error {
 	mailRequest.Token = token
 	mailRequest.Email = userModel.Email
 
-	go mailService.ResendEmailVerification(*mailRequest)
+	go mailService.ResendEmailVerification(mailRequest)
 
 	//todo create shared successMessage struct in shared pkg
 	resp := struct {
@@ -183,7 +183,7 @@ func ForgetPassword(c *fiber.Ctx) error {
 	mailRequest.Token = token
 	mailRequest.Email = userModel.Email
 
-	go mailService.ForgetPassword(*mailRequest)
+	go mailService.ForgetPassword(mailRequest)
 
 	resp := struct {
 		Message string `json:"message"`
@@ -298,7 +298,7 @@ func ChangeEmail(c *fiber.Ctx) error {
 	mailRequest.Token = token
 	mailRequest.Email = authorizedUser.Email
 
-	go mailService.ResendEmailVerification(*mailRequest)
+	go mailService.ResendEmailVerification(mailRequest)
 
 	resp := struct {
 		Message string `json:"message"`

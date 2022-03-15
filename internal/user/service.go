@@ -16,7 +16,7 @@ type service struct{}
 
 type IService interface {
 	SignUp(dto *SignUpRequestDto) (*User, *restErrors.RestErr)
-	SignIn(dto SignInRequestDto) (*UserSessionResponseDto, *restErrors.RestErr)
+	SignIn(dto *SignInRequestDto) (*UserSessionResponseDto, *restErrors.RestErr)
 	VerifyTOTP(model *User, totp string) (*UserSessionResponseDto, *restErrors.RestErr)
 	GetByEmail(email string) (*User, *restErrors.RestErr)
 	VerifyEmail(model *User) *restErrors.RestErr
@@ -60,7 +60,7 @@ func (service) SignUp(dto *SignUpRequestDto) (*User, *restErrors.RestErr) {
 }
 
 //SignIn Log user in and  returns jwt token
-func (service) SignIn(dto SignInRequestDto) (*UserSessionResponseDto, *restErrors.RestErr) {
+func (service) SignIn(dto *SignInRequestDto) (*UserSessionResponseDto, *restErrors.RestErr) {
 	user, err := userRepository.GetByEmail(dto.Email)
 	if err != nil {
 		return nil, restErrors.NewUnAuthorizedError("Invalid Credentials")
