@@ -137,6 +137,11 @@ func VerifyEmail(c *fiber.Ctx) error {
 		return c.Status(err.Status).JSON(err)
 	}
 
+	if userModel.IsEmailVerified {
+		badReq := restErrors.NewBadRequestError("email already verified")
+		return c.Status(badReq.Status).JSON(badReq)
+	}
+
 	err = verificationService.Verify(userModel.ID, dto.Token)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
