@@ -87,7 +87,8 @@ func VerifyToken(bearToken string) (*jwt.Token, *restErrors.RestErr) {
 		return []byte(config.EnvironmentConf["ACCESS_SECRET"]), nil
 	})
 	if err != nil {
-		return nil, restErrors.NewUnAuthorizedError(err.Error())
+		go logger.Error("VERIFY_TOKEN", err)
+		return nil, restErrors.NewUnAuthorizedError("invalid token")
 	}
 	return token, nil
 }
