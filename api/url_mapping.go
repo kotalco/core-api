@@ -28,6 +28,5 @@ func MapUrl(app *fiber.App) {
 	users.Post("/totp/disable", middleware.JWTProtected, middleware.TFAProtected, user.DisableTwoFactorAuth)
 
 	//community routes
-	app.Use(middleware.JWTProtected, middleware.TFAProtected)
-	communityApis.MapUrl(app)
+	communityApis.MapUrl(app, middleware.JWTProtected, middleware.TFAProtected)
 }
