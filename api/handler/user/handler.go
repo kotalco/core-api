@@ -1,9 +1,10 @@
 package user
 
 import (
-	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/kotalco/api/pkg/logger"
 
 	"github.com/gofiber/fiber/v2"
 	restErrors "github.com/kotalco/api/pkg/errors"
@@ -324,7 +325,10 @@ func CreateTOTP(c *fiber.Ctx) error {
 	c.Set("Content-Type", "image/png")
 	c.Set("Content-Length", strconv.Itoa(len(qr.Bytes())))
 	if _, err := c.Write(qr.Bytes()); err != nil {
-		log.Println("unable to write image.")
+		go logger.Error(CreateTOTP, err)
+		internalErr := restErrors.NewInternalServerError("some thing went wrong")
+		return c.Status(internalErr.Status).JSON(internalErr)
+
 	}
 	return nil
 }
