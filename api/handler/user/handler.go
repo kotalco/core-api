@@ -117,7 +117,7 @@ func SendEmailVerification(c *fiber.Ctx) error {
 		Message: "email verification sent successfully",
 	}
 
-	return c.Status(http.StatusCreated).JSON(shared.NewResponse(resp))
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(resp))
 }
 
 // VerifyEmail verify user email by email and token hash send to it's  email
@@ -327,8 +327,8 @@ func CreateTOTP(c *fiber.Ctx) error {
 	if _, err := c.Write(qr.Bytes()); err != nil {
 		go logger.Error(CreateTOTP, err)
 		internalErr := restErrors.NewInternalServerError("some thing went wrong")
-		return c.Status(internalErr.Status).JSON(internalErr)
 
+		return c.Status(internalErr.Status).JSON(internalErr)
 	}
 	return nil
 }
