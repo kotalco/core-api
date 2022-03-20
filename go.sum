@@ -377,6 +377,8 @@ github.com/konsorten/go-windows-terminal-sequences v1.0.2/go.mod h1:T0+1ngSBFLxv
 github.com/konsorten/go-windows-terminal-sequences v1.0.3/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
 github.com/kotalco/api v0.0.0-20220303001521-1ff1f5a9f696 h1:AgjdKlqJnfocbL0UhWf9q+PkY2f3AZ0PchM6Gm15bf0=
 github.com/kotalco/api v0.0.0-20220303001521-1ff1f5a9f696/go.mod h1:rB18IGSecXJz2D2njAdfnIdO1JigcAyeuPLjsjT5I4s=
+github.com/kotalco/api v0.0.0-20220316193759-5210fcd43b04 h1:1Cgt4po+tLpjhHFgRgradRxXFuJijWAaMGrrKsiNN5g=
+github.com/kotalco/api v0.0.0-20220316193759-5210fcd43b04/go.mod h1:rB18IGSecXJz2D2njAdfnIdO1JigcAyeuPLjsjT5I4s=
 github.com/kotalco/kotal v0.0.0-20220212203531-a88fa0a8809f h1:72TlvfU4wD8o5Mgcqrw7JFNt1y7AJaoBoFWM6JA0XE0=
 github.com/kotalco/kotal v0.0.0-20220212203531-a88fa0a8809f/go.mod h1:3ihDknlSy3cHeBAEE7DmXPRu3S9ffnS3E25s4CRsR0M=
 github.com/kr/fs v0.1.0/go.mod h1:FFnZGqtBN9Gxj7eW1uZ42v5BccTP0vu6NEaFoC2HwRg=

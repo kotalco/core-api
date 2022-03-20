@@ -8,7 +8,6 @@ require (
 	github.com/gofiber/fiber/v2 v2.28.0
 	github.com/gofiber/websocket/v2 v2.0.16
 	github.com/google/uuid v1.3.0
-	github.com/kotalco/api v0.0.0-20220303001521-1ff1f5a9f696
 	github.com/stretchr/testify v1.7.0
 	go.uber.org/zap v1.21.0
 	gorm.io/driver/postgres v1.3.1
@@ -46,6 +45,7 @@ require (
 	github.com/jinzhu/now v1.1.4 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.14.1 // indirect
+	github.com/kotalco/api v0.0.0-20220316193759-5210fcd43b04 // indirect
 	github.com/kotalco/kotal v0.0.0-20220212203531-a88fa0a8809f // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
