@@ -80,12 +80,12 @@ func (service) Verify(userId string, token string) *restErrors.RestErr {
 		return restErrors.NewNotFoundError(fmt.Sprintf("No such verification"))
 	}
 
-	if verification.Completed {
-		return restErrors.NewBadRequestError("user already verified")
-	}
-
 	if verification.ExpiresAt < time.Now().Unix() {
 		return restErrors.NewBadRequestError("token expired")
+	}
+
+	if verification.Completed {
+		return restErrors.NewBadRequestError("user already verified")
 	}
 
 	verifyErr := security.VerifyPassword(verification.Token, token)

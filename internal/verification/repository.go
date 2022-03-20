@@ -55,6 +55,7 @@ func (repository) Update(verification *Verification) *restErrors.RestErr {
 	resp := dbClient.Save(verification)
 	if resp.Error != nil {
 		go logger.Error(repository.Update, resp.Error)
+		return restErrors.NewInternalServerError("some thing went wrong!")
 	}
 
 	return nil

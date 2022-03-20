@@ -143,5 +143,4 @@ func init() {
 	} else {
 		EnvironmentConf["2_FACTOR_SECRET"] = val
 	}
-
 }

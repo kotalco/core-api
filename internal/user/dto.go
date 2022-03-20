@@ -43,19 +43,26 @@ type ChangeEmailRequestDto struct {
 	Email string `json:"email" validate:"required,email,lte=100"`
 }
 
+type TOTPRequestDto struct {
+	TOTP string `json:"totp"`
+}
+
 type UserResponseDto struct {
-	ID    string `json:"id"`
-	Email string `json:"email"`
+	ID               string `json:"id"`
+	Email            string `json:"email"`
+	TwoFactorEnabled bool   `json:"two_factor_enabled"`
 }
 
 type UserSessionResponseDto struct {
-	Token string `json:"token"`
+	Authorized bool
+	Token      string `json:"token"`
 }
 
 //Marshall creates user response from user model
 func (dto UserResponseDto) Marshall(model *User) UserResponseDto {
 	dto.ID = model.ID
 	dto.Email = model.Email
+	dto.TwoFactorEnabled = model.TwoFactorEnabled
 	return dto
 }
 

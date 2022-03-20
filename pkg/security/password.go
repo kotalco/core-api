@@ -8,5 +8,4 @@ func Hash(password string, cost int) ([]byte, error) {
 
 func VerifyPassword(hashedPassword, password string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
-
 }
