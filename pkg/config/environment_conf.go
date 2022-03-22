@@ -13,7 +13,7 @@ func init() {
 	//app config
 	val, ok = os.LookupEnv("CLOUD_API_SERVER_PORT")
 	if !ok {
-		EnvironmentConf["CLOUD_API_SERVER_PORT"] = "6000"
+		EnvironmentConf["CLOUD_API_SERVER_PORT"] = "8080"
 	} else {
 		EnvironmentConf["CLOUD_API_SERVER_PORT"] = val
 	}
