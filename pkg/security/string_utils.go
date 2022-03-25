@@ -8,7 +8,7 @@ import (
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 // GenerateRandomString generate a string of random characters of given length
-func GenerateRandomString(n int) string {
+var GenerateRandomString = func(n int) string {
 	sb := strings.Builder{}
 	sb.Grow(n)
 	for i := 0; i < n; i++ {

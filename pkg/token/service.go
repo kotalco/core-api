@@ -1,4 +1,4 @@
-package tokens
+package token
 
 import (
 	"fmt"
@@ -13,20 +13,21 @@ import (
 	"github.com/kotalco/cloud-api/pkg/config"
 )
 
-type Token struct {
-	AccessToken string
-	TokenUuid   string //can be used later to store token id in the database (redis for eg) to log all user tokens out and maintain the state of tokens
-	Expires     int64
-	Authorized  bool
+
+type token struct {}
+
+type IToken interface {
+	CreateToken(userId string, rememberMe bool, authorized bool) (*Token, *restErrors.RestErr)
+	ExtractTokenMetadata(bearToken string) (*AccessDetails, *restErrors.RestErr)
+
 }
 
-type AccessDetails struct {
-	TokenUuid  string
-	UserId     string
-	Authorized bool
+func NewToken() IToken {
+	newToken := &token{}
+	return newToken
 }
 
-func CreateToken(userId string, rememberMe bool, authorized bool) (*Token, *restErrors.RestErr) {
+func (token)CreateToken(userId string, rememberMe bool, authorized bool) (*Token, *restErrors.RestErr) {
 	var tokenExpires int
 	var convErr error
 	tokenExpires, convErr = strconv.Atoi(config.EnvironmentConf["JWT_SECRET_KEY_EXPIRE_HOURS_COUNT"])
@@ -57,8 +58,8 @@ func CreateToken(userId string, rememberMe bool, authorized bool) (*Token, *rest
 	return t, nil
 }
 
-func ExtractTokenMetadata(bearToken string) (*AccessDetails, *restErrors.RestErr) {
-	token, err := VerifyToken(bearToken)
+func (token)ExtractTokenMetadata(bearToken string) (*AccessDetails, *restErrors.RestErr) {
+	token, err := verifyToken(bearToken)
 	if err != nil {
 		return nil, err
 	}
@@ -77,8 +78,8 @@ func ExtractTokenMetadata(bearToken string) (*AccessDetails, *restErrors.RestErr
 	return nil, err
 }
 
-func VerifyToken(bearToken string) (*jwt.Token, *restErrors.RestErr) {
-	tokenString := ExtractToken(bearToken)
+func verifyToken(bearToken string) (*jwt.Token, *restErrors.RestErr) {
+	tokenString := extractToken(bearToken)
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		//Make sure that the token_generator method conform to "SigningMethodHMAC"
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -94,7 +95,7 @@ func VerifyToken(bearToken string) (*jwt.Token, *restErrors.RestErr) {
 }
 
 // ExtractToken  from the request body
-func ExtractToken(bearToken string) string {
+func extractToken(bearToken string) string {
 	strArr := strings.Split(bearToken, " ")
 	if len(strArr) == 2 {
 		return strArr[1]

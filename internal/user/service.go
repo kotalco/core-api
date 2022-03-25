@@ -9,7 +9,7 @@ import (
 	"github.com/kotalco/cloud-api/pkg/config"
 	"github.com/kotalco/cloud-api/pkg/security"
 	"github.com/kotalco/cloud-api/pkg/tfa"
-	"github.com/kotalco/cloud-api/pkg/tokens"
+	"github.com/kotalco/cloud-api/pkg/token"
 )
 
 type service struct{}
@@ -30,6 +30,10 @@ type IService interface {
 
 var (
 	userRepository = NewRepository()
+	encryption = security.NewEncryption()
+	hashing=security.NewHashing()
+	tfaService=tfa.NewTfa()
+	tokenService= token.NewToken()
 )
 
 func NewService() IService {
@@ -39,7 +43,7 @@ func NewService() IService {
 
 //SignUp Creates new user
 func (service) SignUp(dto *SignUpRequestDto) (*User, *restErrors.RestErr) {
-	hashedPassword, err := security.Hash(dto.Password, 13)
+	hashedPassword, err := hashing.Hash(dto.Password, 13)
 	if err != nil {
 		go logger.Error(service.SignUp, err)
 		return nil, restErrors.NewInternalServerError("something went wrong.")
@@ -75,7 +79,7 @@ func (service) SignIn(dto *SignInRequestDto) (*UserSessionResponseDto, *restErro
 		}
 	}
 
-	invalidPassError := security.VerifyPassword(user.Password, dto.Password)
+	invalidPassError := hashing.VerifyHash(user.Password, dto.Password)
 	if invalidPassError != nil {
 		return nil, restErrors.NewUnAuthorizedError("Invalid Credentials")
 	}
@@ -87,7 +91,7 @@ func (service) SignIn(dto *SignInRequestDto) (*UserSessionResponseDto, *restErro
 		authorized = true
 	}
 
-	token, err := tokens.CreateToken(user.ID, dto.RememberMe, authorized)
+	token, err := tokenService.CreateToken(user.ID, dto.RememberMe, authorized)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +126,7 @@ func (service) VerifyEmail(model *User) *restErrors.RestErr {
 
 //ResetPassword create new password for user used after user ForgetPassword
 func (service) ResetPassword(model *User, password string) *restErrors.RestErr {
-	hashedPassword, error := security.Hash(password, 13)
+	hashedPassword, error := hashing.Hash(password, 13)
 	if error != nil {
 		go logger.Error(service.ResetPassword, error)
 		return restErrors.NewInternalServerError("something went wrong.")
@@ -141,12 +145,12 @@ func (service) ResetPassword(model *User, password string) *restErrors.RestErr {
 //ChangePassword change user password  for authenticated users
 func (service) ChangePassword(model *User, dto *ChangePasswordRequestDto) *restErrors.RestErr {
 
-	invalidPassError := security.VerifyPassword(model.Password, dto.OldPassword)
+	invalidPassError := hashing.VerifyHash(model.Password, dto.OldPassword)
 	if invalidPassError != nil {
 		return restErrors.NewUnAuthorizedError("invalid old password")
 	}
 
-	hashedPassword, error := security.Hash(dto.Password, 13)
+	hashedPassword, error := hashing.Hash(dto.Password, 13)
 	if error != nil {
 		go logger.Error(service.ChangePassword, error)
 		return restErrors.NewInternalServerError("something went wrong.")
@@ -178,13 +182,13 @@ func (service) ChangeEmail(model *User, dto *ChangeEmailRequestDto) *restErrors.
 //CreateTOTP Enables two-factor auth for users using qr-code
 //if the user requested another qr code he/she has to register the new one on the 2auth-app coz the old one became invalid
 func (service) CreateTOTP(model *User) (bytes.Buffer, *restErrors.RestErr) {
-	qrBytes, secret, err := tfa.CreateQRCode(model.Email)
+	qrBytes, secret, err := tfaService.CreateQRCode(model.Email)
 	if err != nil {
 		go logger.Error(service.CreateTOTP, err)
 		return bytes.Buffer{}, restErrors.NewInternalServerError("something went wrong")
 	}
 
-	twoAuthSecretCipher, err := security.Encrypt([]byte(secret), config.EnvironmentConf["2_FACTOR_SECRET"])
+	twoAuthSecretCipher, err := encryption.Encrypt([]byte(secret), config.EnvironmentConf["2_FACTOR_SECRET"])
 	if err != nil {
 		go logger.Error(service.CreateTOTP, err)
 		return bytes.Buffer{}, restErrors.NewInternalServerError("something went wrong")
@@ -204,13 +208,13 @@ func (service) EnableTwoFactorAuth(model *User, totp string) (*User, *restErrors
 	if model.TwoFactorCipher == "" {
 		return nil, restErrors.NewBadRequestError("please create and register qr code first")
 	}
-	TOTPSecret, err := security.Decrypt(model.TwoFactorCipher, config.EnvironmentConf["2_FACTOR_SECRET"])
+	TOTPSecret, err := encryption.Decrypt(model.TwoFactorCipher, config.EnvironmentConf["2_FACTOR_SECRET"])
 	if err != nil {
 		go logger.Error(service.EnableTwoFactorAuth, err)
 		return nil, restErrors.NewInternalServerError("something went wrong")
 	}
 
-	valid := tfa.CheckOtp(TOTPSecret, totp)
+	valid := tfaService.CheckOtp(TOTPSecret, totp)
 	if !valid {
 		return nil, restErrors.NewBadRequestError("invalid totp code")
 	}
@@ -230,18 +234,18 @@ func (service) VerifyTOTP(model *User, totp string) (*UserSessionResponseDto, *r
 		return nil, restErrors.NewBadRequestError("please enable your 2fa first")
 	}
 
-	TOTPSecret, err := security.Decrypt(model.TwoFactorCipher, config.EnvironmentConf["2_FACTOR_SECRET"])
+	TOTPSecret, err := encryption.Decrypt(model.TwoFactorCipher, config.EnvironmentConf["2_FACTOR_SECRET"])
 	if err != nil {
 		go logger.Error(service.EnableTwoFactorAuth, err)
 		return nil, restErrors.NewInternalServerError("something went wrong")
 	}
 
-	valid := tfa.CheckOtp(TOTPSecret, totp)
+	valid := tfaService.CheckOtp(TOTPSecret, totp)
 	if !valid {
 		return nil, restErrors.NewBadRequestError("invalid totp code")
 	}
 
-	token, restErr := tokens.CreateToken(model.ID, true, true)
+	token, restErr := tokenService.CreateToken(model.ID, true, true)
 	if err != nil {
 		return nil, restErr
 	}
