@@ -13,13 +13,11 @@ import (
 	"github.com/kotalco/cloud-api/pkg/config"
 )
 
-
-type token struct {}
+type token struct{}
 
 type IToken interface {
 	CreateToken(userId string, rememberMe bool, authorized bool) (*Token, *restErrors.RestErr)
 	ExtractTokenMetadata(bearToken string) (*AccessDetails, *restErrors.RestErr)
-
 }
 
 func NewToken() IToken {
@@ -27,7 +25,7 @@ func NewToken() IToken {
 	return newToken
 }
 
-func (token)CreateToken(userId string, rememberMe bool, authorized bool) (*Token, *restErrors.RestErr) {
+func (token) CreateToken(userId string, rememberMe bool, authorized bool) (*Token, *restErrors.RestErr) {
 	var tokenExpires int
 	var convErr error
 	tokenExpires, convErr = strconv.Atoi(config.EnvironmentConf["JWT_SECRET_KEY_EXPIRE_HOURS_COUNT"])
@@ -58,7 +56,7 @@ func (token)CreateToken(userId string, rememberMe bool, authorized bool) (*Token
 	return t, nil
 }
 
-func (token)ExtractTokenMetadata(bearToken string) (*AccessDetails, *restErrors.RestErr) {
+func (token) ExtractTokenMetadata(bearToken string) (*AccessDetails, *restErrors.RestErr) {
 	token, err := verifyToken(bearToken)
 	if err != nil {
 		return nil, err

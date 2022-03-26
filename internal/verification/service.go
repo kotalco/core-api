@@ -24,7 +24,7 @@ type IService interface {
 
 var (
 	verificationRepository = NewRepository()
-	hashing=security.NewHashing()
+	hashing                = security.NewHashing()
 )
 
 func NewService() IService {

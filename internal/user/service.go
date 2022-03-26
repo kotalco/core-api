@@ -30,10 +30,10 @@ type IService interface {
 
 var (
 	userRepository = NewRepository()
-	encryption = security.NewEncryption()
-	hashing=security.NewHashing()
-	tfaService=tfa.NewTfa()
-	tokenService= token.NewToken()
+	encryption     = security.NewEncryption()
+	hashing        = security.NewHashing()
+	tfaService     = tfa.NewTfa()
+	tokenService   = token.NewToken()
 )
 
 func NewService() IService {
