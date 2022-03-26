@@ -7,7 +7,19 @@ import (
 	"github.com/pquerna/otp/totp"
 )
 
-func CreateQRCode(accountName string) (bytes.Buffer, string, error) {
+type tfa struct{}
+
+type ITfa interface {
+	CreateQRCode(accountName string) (bytes.Buffer, string, error)
+	CheckOtp(userTOTPSecret string, otp string) bool
+}
+
+func NewTfa() ITfa {
+	newTfa := &tfa{}
+	return newTfa
+}
+
+func (tfa) CreateQRCode(accountName string) (bytes.Buffer, string, error) {
 	key, err := totp.Generate(
 		totp.GenerateOpts{
 			Issuer:      "kotal.co",
@@ -28,7 +40,7 @@ func CreateQRCode(accountName string) (bytes.Buffer, string, error) {
 	return qrCode, key.Secret(), nil
 }
 
-func CheckOtp(userTOTPSecret string, otp string) bool {
+func (tfa) CheckOtp(userTOTPSecret string, otp string) bool {
 	valid := totp.Validate(otp, userTOTPSecret)
 	if valid {
 		return true

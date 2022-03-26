@@ -247,7 +247,7 @@ func ResetPassword(c *fiber.Ctx) error {
 }
 
 //ChangePassword change user password
-//todo log all user tokens out
+//todo log all user token out
 func ChangePassword(c *fiber.Ctx) error {
 	authorizedUser := c.Locals("user").(*user.User)
 	dto := new(user.ChangePasswordRequestDto)

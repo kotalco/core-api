@@ -24,6 +24,7 @@ type IService interface {
 
 var (
 	verificationRepository = NewRepository()
+	hashing                = security.NewHashing()
 )
 
 func NewService() IService {
@@ -88,7 +89,7 @@ func (service) Verify(userId string, token string) *restErrors.RestErr {
 		return restErrors.NewBadRequestError("user already verified")
 	}
 
-	verifyErr := security.VerifyPassword(verification.Token, token)
+	verifyErr := hashing.VerifyHash(verification.Token, token)
 
 	if verifyErr != nil {
 		return restErrors.NewBadRequestError("invalid token")
@@ -148,7 +149,7 @@ func generateToken() (string, *restErrors.RestErr) {
 
 //hashToken hashes the verification token before sending it to the user email
 func hashToken(token string) (*string, *restErrors.RestErr) {
-	hashedToken, err := security.Hash(token, 6)
+	hashedToken, err := hashing.Hash(token, 6)
 	if err != nil {
 		go logger.Error(generateToken, err)
 		return nil, restErrors.NewInternalServerError("some thing went wrong")

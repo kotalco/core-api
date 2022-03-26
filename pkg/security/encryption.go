@@ -10,13 +10,25 @@ import (
 	"io"
 )
 
+type encryption struct{}
+
+type IEncryption interface {
+	Encrypt(data []byte, passphrase string) (string, error)
+	Decrypt(encodedCipher string, passphrase string) (string, error)
+}
+
+func NewEncryption() IEncryption {
+	newEncryption := &encryption{}
+	return newEncryption
+}
+
 func createHash(key string) string {
 	hasher := md5.New()
 	hasher.Write([]byte(key))
 	return hex.EncodeToString(hasher.Sum(nil))
 }
 
-func Encrypt(data []byte, passphrase string) (string, error) {
+func (encryption) Encrypt(data []byte, passphrase string) (string, error) {
 	block, _ := aes.NewCipher([]byte(createHash(passphrase)))
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
@@ -31,7 +43,7 @@ func Encrypt(data []byte, passphrase string) (string, error) {
 	return base32.StdEncoding.EncodeToString(ciphertext), nil
 }
 
-func Decrypt(encodedCipher string, passphrase string) (string, error) {
+func (encryption) Decrypt(encodedCipher string, passphrase string) (string, error) {
 	data, err := base32.StdEncoding.DecodeString(encodedCipher)
 	if err != nil {
 		return "", err

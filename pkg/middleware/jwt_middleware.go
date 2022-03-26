@@ -6,14 +6,15 @@ import (
 	"github.com/gofiber/fiber/v2"
 	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/kotalco/cloud-api/internal/user"
-	"github.com/kotalco/cloud-api/pkg/tokens"
+	"github.com/kotalco/cloud-api/pkg/token"
 )
 
 var userRepository = user.NewRepository()
+var tokenService = token.NewToken()
 
 func JWTProtected(c *fiber.Ctx) error {
 	BearerToken := c.Get("Authorization")
-	accessDetails, err := tokens.ExtractTokenMetadata(BearerToken)
+	accessDetails, err := tokenService.ExtractTokenMetadata(BearerToken)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
