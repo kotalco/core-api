@@ -52,7 +52,7 @@ func (service) Create(userId string) (string, *restErrors.RestErr) {
 
 	verification := new(Verification)
 	verification.ID = uuid.New().String()
-	verification.Token = *hashedToken
+	verification.Token = hashedToken
 	verification.UserId = userId
 	verification.ExpiresAt = time.Now().UTC().Add(time.Duration(tokenExpires) * time.Hour).Unix()
 
@@ -125,37 +125,42 @@ func (vService service) Resend(userId string) (string, *restErrors.RestErr) {
 	}
 
 	verification.Completed = false
-	verification.Token = *hashedToken
+	verification.Token = hashedToken
 	err = verificationRepository.Update(verification)
 	if err != nil {
 		return "", err
 	}
 
+	fmt.Println("token: ", token)
+
 	return token, nil
 }
 
-//generateToken creates a random token to the user which will be send to user email
-func generateToken() (string, *restErrors.RestErr) {
+//generateToken creates a random token to the user which will be sent to user email
+var generateToken = func() (string, *restErrors.RestErr) {
 	tokenLength, err := strconv.Atoi(config.EnvironmentConf["VERIFICATION_TOKEN_LENGTH"])
 	if err != nil {
-		go logger.Error(generateToken, err)
+		go logger.Error("generateToken", err)
 		return "", restErrors.NewInternalServerError("some thing went wrong")
 	}
 
 	token := security.GenerateRandomString(tokenLength)
 
+	fmt.Println("this is the generated token ", token)
+
 	return token, nil
 }
 
 //hashToken hashes the verification token before sending it to the user email
-func hashToken(token string) (*string, *restErrors.RestErr) {
+var hashToken = func(token string) (string, *restErrors.RestErr) {
+
 	hashedToken, err := hashing.Hash(token, 6)
 	if err != nil {
-		go logger.Error(generateToken, err)
-		return nil, restErrors.NewInternalServerError("some thing went wrong")
+		go logger.Error("hashToken", err)
+		return "", restErrors.NewInternalServerError("some thing went wrong")
 	}
 
 	stringifyToken := string(hashedToken)
 
-	return &stringifyToken, nil
+	return stringifyToken, nil
 }

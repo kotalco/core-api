@@ -2,7 +2,6 @@ package user
 
 import (
 	"bytes"
-
 	"github.com/google/uuid"
 	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/kotalco/api/pkg/logger"
@@ -246,7 +245,8 @@ func (service) VerifyTOTP(model *User, totp string) (*UserSessionResponseDto, *r
 	}
 
 	token, restErr := tokenService.CreateToken(model.ID, true, true)
-	if err != nil {
+
+	if restErr != nil {
 		return nil, restErr
 	}
 
