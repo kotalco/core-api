@@ -2,6 +2,7 @@ package user
 
 import (
 	"fmt"
+	"gorm.io/gorm"
 	"net/http"
 	"regexp"
 
@@ -20,10 +21,11 @@ type IRepository interface {
 }
 
 var (
-	dbClient = sqlclient.OpenDBConnection()
+	dbClient *gorm.DB
 )
 
 func NewRepository() IRepository {
+	dbClient = sqlclient.OpenDBConnection()
 	newRepo := repository{}
 	return newRepo
 }
