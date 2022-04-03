@@ -107,13 +107,6 @@ func init() {
 		EnvironmentConf["VERIFICATION_TOKEN_LENGTH"] = val
 	}
 
-	val, ok = os.LookupEnv("VERIFICATION_TOKEN_LENGTH")
-	if !ok {
-		EnvironmentConf["VERIFICATION_TOKEN_LENGTH"] = "80"
-	} else {
-		EnvironmentConf["VERIFICATION_TOKEN_LENGTH"] = val
-	}
-
 	val, ok = os.LookupEnv("VERIFICATION_TOKEN_EXPIRY_HOURS")
 	if !ok {
 		EnvironmentConf["VERIFICATION_TOKEN_EXPIRY_HOURS"] = "24"
