@@ -2,50 +2,21 @@ package user
 
 import (
 	"github.com/google/uuid"
-	"github.com/kotalco/api/pkg/logger"
-	"github.com/kotalco/cloud-api/pkg/config"
 	"github.com/kotalco/cloud-api/pkg/security"
 	"github.com/stretchr/testify/assert"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 	"net/http"
-	"sync"
 	"testing"
 )
 
 var (
-	testingClientOnce sync.Once
-	DbTestingClient   *gorm.DB
-	repo              IRepository
+	repo = NewRepository()
 )
 
-func OpenTestingDBConnection() *gorm.DB {
-	testingClientOnce.Do(func() {
-		db, err := gorm.Open(postgres.Open(config.EnvironmentConf["DB_TESTING_SERVER_URL"]), &gorm.Config{})
-		if err != nil {
-			go logger.Panic("TESTING_DATABASE_CONNECTION_ERROR", err)
-			panic(err)
-		}
-		DbTestingClient = db
-	})
-	return DbTestingClient
-}
-
-func setupTest(t *testing.T) func(t *testing.T) {
-	repo = NewRepository()
-	dbClient = OpenTestingDBConnection()
-	err := dbClient.AutoMigrate(User{})
-	if err != nil {
-		panic(err.Error())
-	}
-	return func(t *testing.T) {
-		dbClient = OpenTestingDBConnection()
-		dbClient.Exec("TRUNCATE TABLE users;")
-	}
+func cleanUp(t *testing.T) {
+	dbClient.Exec("TRUNCATE TABLE users;")
 }
 
 func TestRepository_Create(t *testing.T) {
-	cleanUp := setupTest(t)
 	t.Run("Create_Should_Pass", func(t *testing.T) {
 		user := createUser(t)
 		assert.NotNil(t, user)
@@ -66,7 +37,6 @@ func TestRepository_Create(t *testing.T) {
 }
 
 func TestRepository_GetByEmail(t *testing.T) {
-	cleanUp := setupTest(t)
 	t.Run("Get_By_Email_Should_Pass", func(t *testing.T) {
 		user := createUser(t)
 
@@ -87,7 +57,6 @@ func TestRepository_GetByEmail(t *testing.T) {
 }
 
 func TestRepository_GetById(t *testing.T) {
-	cleanUp := setupTest(t)
 	t.Run("Get_By_Id_Should_Pass", func(t *testing.T) {
 		user := createUser(t)
 
@@ -108,7 +77,6 @@ func TestRepository_GetById(t *testing.T) {
 }
 
 func TestRepository_Update(t *testing.T) {
-	setupTest(t)
 	t.Run("Update_Should_Pass", func(t *testing.T) {
 		user := createUser(t)
 		user.Email = security.GenerateRandomString(5) + "@test.com"

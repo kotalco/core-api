@@ -3,51 +3,20 @@ package verification
 import (
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/kotalco/api/pkg/logger"
-	"github.com/kotalco/cloud-api/pkg/config"
 	"github.com/stretchr/testify/assert"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 	"net/http"
-	"sync"
 	"testing"
 )
 
 var (
-	testingClientOnce sync.Once
-	DbTestingClient   *gorm.DB
-	repo              IRepository
+	repo = NewRepository()
 )
 
-func OpenTestingDBConnection() *gorm.DB {
-	testingClientOnce.Do(func() {
-		db, err := gorm.Open(postgres.Open(config.EnvironmentConf["DB_TESTING_SERVER_URL"]), &gorm.Config{})
-		if err != nil {
-			go logger.Panic("TESTING_DATABASE_CONNECTION_ERROR", err)
-			panic(err)
-		}
-		DbTestingClient = db
-	})
-	return DbTestingClient
-}
-
-func setupTest(t *testing.T) func(t *testing.T) {
-	repo = NewRepository()
-
-	dbClient = OpenTestingDBConnection()
-	err := dbClient.AutoMigrate(Verification{})
-	if err != nil {
-		panic(err.Error())
-	}
-
-	return func(t *testing.T) {
-		dbClient = OpenTestingDBConnection()
-		dbClient.Exec("TRUNCATE TABLE users;")
-	}
+func cleanUp(t *testing.T) {
+	dbClient.Exec("TRUNCATE TABLE users;")
 }
 
 func TestRepository_Create(t *testing.T) {
-	cleanUp := setupTest(t)
 	t.Run("Create_Should_Pass", func(t *testing.T) {
 		verification := createVerification(t)
 		assert.EqualValues(t, false, verification.Completed)
@@ -62,7 +31,6 @@ func TestRepository_Create(t *testing.T) {
 }
 
 func TestRepository_GetByUserId(t *testing.T) {
-	cleanUp := setupTest(t)
 	t.Run("Get_Use_By_Id_Should_Pass", func(t *testing.T) {
 		verification := createVerification(t)
 		result, restErr := repo.GetByUserId(verification.UserId)
@@ -80,7 +48,6 @@ func TestRepository_GetByUserId(t *testing.T) {
 }
 
 func TestRepository_Update(t *testing.T) {
-	cleanUp := setupTest(t)
 	t.Run("Update_Should_Pass", func(t *testing.T) {
 		verification := createVerification(t)
 		verification.Completed = true
