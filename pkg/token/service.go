@@ -40,9 +40,10 @@ func (token) CreateToken(userId string, rememberMe bool, authorized bool) (*Toke
 	t := new(Token)
 	t.Expires = time.Now().UTC().Add(time.Duration(tokenExpires) * time.Hour).Unix()
 	t.TokenUuid = uuid.New().String()
+	t.Authorized = authorized
 	//Creating Access Token
 	tClaims := jwt.MapClaims{}
-	tClaims["authorized"] = authorized
+	tClaims["authorized"] = t.Authorized
 	tClaims["access_uuid"] = t.TokenUuid
 	tClaims["user_id"] = userId
 	tClaims["exp"] = t.Expires
