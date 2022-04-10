@@ -71,6 +71,13 @@ func init() {
 	//Db configs
 	EnvironmentConf["DB_SERVER_URL"] = os.Getenv("DB_SERVER_URL")
 
+	val, ok = os.LookupEnv("DB_TESTING_SERVER_URL")
+	if !ok {
+		EnvironmentConf["DB_TESTING_SERVER_URL"] = "host=localhost port=5432 user=postgres password=somePassword dbname=testing-cloud-api sslmode=disable"
+	} else {
+		EnvironmentConf["DB_TESTING_SERVER_URL"] = val
+	}
+
 	val, ok = os.LookupEnv("DB_MAX_CONNECTIONS")
 	if !ok {
 		EnvironmentConf["DB_MAX_CONNECTIONS"] = "100"

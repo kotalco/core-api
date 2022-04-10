@@ -2,6 +2,7 @@ package verification
 
 import (
 	"fmt"
+	"gorm.io/gorm"
 	"regexp"
 
 	restErrors "github.com/kotalco/api/pkg/errors"
@@ -18,10 +19,11 @@ type IRepository interface {
 }
 
 var (
-	dbClient = sqlclient.OpenDBConnection()
+	dbClient *gorm.DB
 )
 
 func NewRepository() IRepository {
+	dbClient = sqlclient.OpenDBConnection()
 	newRepository := repository{}
 	return newRepository
 }
@@ -31,7 +33,7 @@ func (repository) Create(verification *Verification) *restErrors.RestErr {
 	if res.Error != nil {
 		duplicateEmail, _ := regexp.Match("duplicate key", []byte(res.Error.Error()))
 		if duplicateEmail {
-			return restErrors.NewBadRequestError("email already exits")
+			return restErrors.NewBadRequestError("verification already exits")
 		}
 		go logger.Error(repository.Create, res.Error)
 		return restErrors.NewInternalServerError("can't create verification")

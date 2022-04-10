@@ -2,18 +2,32 @@ package security
 
 import (
 	"math/rand"
-	"strings"
+	"time"
+	"unsafe"
 )
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+const (
+	letterIdxBits = 6
+	letterIdxMask = 1<<letterIdxBits - 1
+	letterIdxMax  = 63 / letterIdxBits
+)
 
-// GenerateRandomString generate a string of random characters of given length
-var GenerateRandomString = func(n int) string {
-	sb := strings.Builder{}
-	sb.Grow(n)
-	for i := 0; i < n; i++ {
-		idx := rand.Int63() % int64(len(letterBytes))
-		sb.WriteByte(letterBytes[idx])
+var src = rand.NewSource(time.Now().UnixNano())
+
+func GenerateRandomString(n int) string {
+	b := make([]byte, n)
+	for i, cache, remain := n-1, src.Int63(), letterIdxMax; i >= 0; {
+		if remain == 0 {
+			cache, remain = src.Int63(), letterIdxMax
+		}
+		if idx := int(cache & letterIdxMask); idx < len(letterBytes) {
+			b[i] = letterBytes[idx]
+			i--
+		}
+		cache >>= letterIdxBits
+		remain--
 	}
-	return sb.String()
+
+	return *(*string)(unsafe.Pointer(&b))
 }
