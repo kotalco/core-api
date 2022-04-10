@@ -12,6 +12,13 @@ var (
 	repo = NewRepository()
 )
 
+func init() {
+	err := dbClient.AutoMigrate(new(User))
+	if err != nil {
+		panic(err.Error())
+	}
+}
+
 func cleanUp(t *testing.T) {
 	dbClient.Exec("TRUNCATE TABLE users;")
 }
