@@ -1,6 +1,7 @@
 package sendgrid
 
 import (
+	"errors"
 	"fmt"
 
 	restErrors "github.com/kotalco/api/pkg/errors"
@@ -38,9 +39,13 @@ func (service) SignUp(dto *MailRequestDto) *restErrors.RestErr {
 	htmlContent := fmt.Sprintf("please visit the following link to Confirm  your email address %s", baseUrl)
 	message := mail.NewSingleEmail(from, subject, to, plainTextContent, htmlContent)
 
-	_, err := client.Send(message)
+	restResponse, err := client.Send(message)
 	if err != nil {
 		go logger.Error(service.SignUp, err)
+		return restErrors.NewInternalServerError("some thing went wrong")
+	}
+	if restResponse.StatusCode >= 400 {
+		go logger.Error(service.SignUp, errors.New(restResponse.Body))
 		return restErrors.NewInternalServerError("some thing went wrong")
 	}
 
@@ -56,15 +61,19 @@ func (service) ResendEmailVerification(dto *MailRequestDto) *restErrors.RestErr 
 	htmlContent := fmt.Sprintf("please visit the following link to Confirm  your email address %s", baseUrl)
 	message := mail.NewSingleEmail(from, subject, to, plainTextContent, htmlContent)
 
-	succc, err := client.Send(message)
+	restResponse, err := client.Send(message)
 	if err != nil {
 		go logger.Error(service.SignUp, err)
 		return restErrors.NewInternalServerError("some thing went wrong")
 	}
+	if restResponse.StatusCode >= 400 {
+		go logger.Error(service.SignUp, errors.New(restResponse.Body))
+		return restErrors.NewInternalServerError("some thing went wrong")
+	}
 
-	fmt.Println(succc)
 	return nil
 }
+
 func (service) ForgetPassword(dto *MailRequestDto) *restErrors.RestErr {
 	from := mail.NewEmail(fromName, fromEmail)
 	subject := "Reset Password"
@@ -74,9 +83,13 @@ func (service) ForgetPassword(dto *MailRequestDto) *restErrors.RestErr {
 	htmlContent := fmt.Sprintf("please visit the following link to reset  your password %s", baseUrl)
 	message := mail.NewSingleEmail(from, subject, to, plainTextContent, htmlContent)
 
-	_, err := client.Send(message)
+	restResponse, err := client.Send(message)
 	if err != nil {
 		go logger.Error(service.SignUp, err)
+		return restErrors.NewInternalServerError("some thing went wrong")
+	}
+	if restResponse.StatusCode >= 400 {
+		go logger.Error(service.SignUp, errors.New(restResponse.Body))
 		return restErrors.NewInternalServerError("some thing went wrong")
 	}
 
