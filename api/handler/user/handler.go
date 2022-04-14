@@ -326,8 +326,19 @@ func Whoami(c *fiber.Ctx) error {
 //CreateTOTP create time based one time password QR code so user can scan it with his mobile app
 func CreateTOTP(c *fiber.Ctx) error {
 	authorizedUser := c.Locals("user").(*user.User)
+	dto := new(user.CreateTOTPRequestDto)
 
-	qr, err := userService.CreateTOTP(authorizedUser)
+	if err := c.BodyParser(dto); err != nil {
+		badReq := restErrors.NewBadRequestError("invalid request body")
+		return c.Status(badReq.Status).JSON(badReq)
+	}
+
+	err := user.Validate(dto)
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
+
+	qr, err := userService.CreateTOTP(authorizedUser, dto)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -383,7 +394,19 @@ func VerifyTOTP(c *fiber.Ctx) error {
 func DisableTwoFactorAuth(c *fiber.Ctx) error {
 	authorizedUser := c.Locals("user").(*user.User)
 
-	err := userService.DisableTwoFactorAuth(authorizedUser)
+	dto := new(user.DisableTOTPRequestDto)
+
+	if err := c.BodyParser(dto); err != nil {
+		badReq := restErrors.NewBadRequestError("invalid request body")
+		return c.Status(badReq.Status).JSON(badReq)
+	}
+
+	err := user.Validate(dto)
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
+
+	err = userService.DisableTwoFactorAuth(authorizedUser, dto)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}

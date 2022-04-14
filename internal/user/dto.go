@@ -44,6 +44,14 @@ type ChangeEmailRequestDto struct {
 	Password string `json:"password" validate:"required,gte=6,lte=100"`
 }
 
+type CreateTOTPRequestDto struct {
+	Password string `json:"password" validate:"required,gte=6,lte=100"`
+}
+
+type DisableTOTPRequestDto struct {
+	Password string `json:"password" validate:"required,gte=6,lte=100"`
+}
+
 type TOTPRequestDto struct {
 	TOTP string `json:"totp"`
 }

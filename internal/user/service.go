@@ -22,9 +22,9 @@ type IService interface {
 	ResetPassword(model *User, password string) *restErrors.RestErr
 	ChangePassword(model *User, dto *ChangePasswordRequestDto) *restErrors.RestErr
 	ChangeEmail(model *User, dto *ChangeEmailRequestDto) *restErrors.RestErr
-	CreateTOTP(model *User) (bytes.Buffer, *restErrors.RestErr)
+	CreateTOTP(model *User, dto *CreateTOTPRequestDto) (bytes.Buffer, *restErrors.RestErr)
 	EnableTwoFactorAuth(model *User, totp string) (*User, *restErrors.RestErr)
-	DisableTwoFactorAuth(model *User) *restErrors.RestErr
+	DisableTwoFactorAuth(model *User, dto *DisableTOTPRequestDto) *restErrors.RestErr
 }
 
 var (
@@ -186,7 +186,13 @@ func (service) ChangeEmail(model *User, dto *ChangeEmailRequestDto) *restErrors.
 
 //CreateTOTP Enables two-factor auth for users using qr-code
 //if the user requested another qr code he/she has to register the new one on the 2auth-app coz the old one became invalid
-func (service) CreateTOTP(model *User) (bytes.Buffer, *restErrors.RestErr) {
+func (service) CreateTOTP(model *User, dto *CreateTOTPRequestDto) (bytes.Buffer, *restErrors.RestErr) {
+
+	invalidPassError := hashing.VerifyHash(model.Password, dto.Password)
+	if invalidPassError != nil {
+		return bytes.Buffer{}, restErrors.NewBadRequestError("Invalid password")
+	}
+
 	qrBytes, secret, err := tfaService.CreateQRCode(model.Email)
 	if err != nil {
 		go logger.Error(service.CreateTOTP, err)
@@ -264,7 +270,12 @@ func (service) VerifyTOTP(model *User, totp string) (*UserSessionResponseDto, *r
 }
 
 //DisableTwoFactorAuth disables two-factor auth for the user
-func (service) DisableTwoFactorAuth(model *User) *restErrors.RestErr {
+func (service) DisableTwoFactorAuth(model *User, dto *DisableTOTPRequestDto) *restErrors.RestErr {
+	invalidPassError := hashing.VerifyHash(model.Password, dto.Password)
+	if invalidPassError != nil {
+		return restErrors.NewBadRequestError("Invalid password")
+	}
+
 	if !model.TwoFactorEnabled {
 		return restErrors.NewBadRequestError("2fa already disabled")
 	}
