@@ -167,6 +167,12 @@ func (service) ChangePassword(model *User, dto *ChangePasswordRequestDto) *restE
 
 //ChangeEmail change user email for authenticated users
 func (service) ChangeEmail(model *User, dto *ChangeEmailRequestDto) *restErrors.RestErr {
+
+	invalidPassError := hashing.VerifyHash(model.Password, dto.Password)
+	if invalidPassError != nil {
+		return restErrors.NewBadRequestError("invalid password")
+	}
+
 	model.Email = dto.Email
 	model.IsEmailVerified = false
 
