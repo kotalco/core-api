@@ -1121,6 +1121,28 @@ func TestChangeEmail(t *testing.T) {
 
 }
 
+func TestWhoami(t *testing.T) {
+	t.Run("Whoami_Should_Pass", func(t *testing.T) {
+		newUser := new(user.User)
+		newUser.Email = "test@test.com"
+		newUser.IsEmailVerified = true
+		var locals = map[string]interface{}{}
+		locals["user"] = newUser
+
+		body, resp := newFiberCtx(new(interface{}), Whoami, locals)
+
+		var result map[string]user.UserResponseDto
+
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		assert.EqualValues(t, newUser.Email, result["data"].Email)
+		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
+	})
+}
+
 func TestCreateTOTP(t *testing.T) {
 	newUser := new(user.User)
 	newUser.Email = "test@test.com"
