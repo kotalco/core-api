@@ -22,6 +22,8 @@ func MapUrl(app *fiber.App) {
 
 	users.Post("/change_password", middleware.JWTProtected, middleware.TFAProtected, user.ChangePassword)
 	users.Post("/change_email", middleware.JWTProtected, middleware.TFAProtected, user.ChangeEmail)
+	users.Get("/whoami", middleware.JWTProtected, middleware.TFAProtected, user.Whoami)
+
 	users.Get("/totp", middleware.JWTProtected, user.CreateTOTP)
 	users.Post("/totp/enable", middleware.JWTProtected, user.EnableTwoFactorAuth)
 	users.Post("/totp/verify", middleware.JWTProtected, user.VerifyTOTP)

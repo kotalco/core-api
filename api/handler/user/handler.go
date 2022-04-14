@@ -314,6 +314,15 @@ func ChangeEmail(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(resp))
 }
 
+func Whoami(c *fiber.Ctx) error {
+	authorizedUser := c.Locals("user").(*user.User)
+	dto := new(user.UserResponseDto)
+	dto.ID = authorizedUser.ID
+	dto.Email = authorizedUser.Email
+	dto.TwoFactorEnabled = authorizedUser.TwoFactorEnabled
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(dto))
+}
+
 //CreateTOTP create time based one time password QR code so user can scan it with his mobile app
 func CreateTOTP(c *fiber.Ctx) error {
 	authorizedUser := c.Locals("user").(*user.User)
