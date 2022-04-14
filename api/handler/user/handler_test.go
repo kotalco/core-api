@@ -33,9 +33,9 @@ var (
 	ResetPasswordFunc        func(model *user.User, password string) *restErrors.RestErr
 	ChangePasswordFunc       func(model *user.User, dto *user.ChangePasswordRequestDto) *restErrors.RestErr
 	ChangeEmailFunc          func(model *user.User, dto *user.ChangeEmailRequestDto) *restErrors.RestErr
-	CreateTOTPFunc           func(model *user.User) (bytes.Buffer, *restErrors.RestErr)
+	CreateTOTPFunc           func(model *user.User, dto *user.CreateTOTPRequestDto) (bytes.Buffer, *restErrors.RestErr)
 	EnableTwoFactorAuthFunc  func(model *user.User, totp string) (*user.User, *restErrors.RestErr)
-	DisableTwoFactorAuthFunc func(model *user.User) *restErrors.RestErr
+	DisableTwoFactorAuthFunc func(model *user.User, dto *user.DisableTOTPRequestDto) *restErrors.RestErr
 )
 
 type userServiceMock struct{}
@@ -68,8 +68,8 @@ func (userServiceMock) ChangeEmail(model *user.User, dto *user.ChangeEmailReques
 	return ChangeEmailFunc(model, dto)
 }
 
-func (userServiceMock) CreateTOTP(model *user.User) (bytes.Buffer, *restErrors.RestErr) {
-	return CreateTOTPFunc(model)
+func (userServiceMock) CreateTOTP(model *user.User, dto *user.CreateTOTPRequestDto) (bytes.Buffer, *restErrors.RestErr) {
+	return CreateTOTPFunc(model, dto)
 }
 
 func (userServiceMock) EnableTwoFactorAuth(model *user.User, totp string) (*user.User, *restErrors.RestErr) {
@@ -80,8 +80,8 @@ func (userServiceMock) VerifyTOTP(model *user.User, totp string) (*user.UserSess
 	return VerifyTOTPFunc(model, totp)
 }
 
-func (userServiceMock) DisableTwoFactorAuth(model *user.User) *restErrors.RestErr {
-	return DisableTwoFactorAuthFunc(model)
+func (userServiceMock) DisableTwoFactorAuth(model *user.User, dto *user.DisableTOTPRequestDto) *restErrors.RestErr {
+	return DisableTwoFactorAuthFunc(model, dto)
 }
 
 /*
@@ -1014,10 +1014,12 @@ func TestChangePassword(t *testing.T) {
 
 func TestChangeEmail(t *testing.T) {
 	validDto := map[string]string{
-		"email": "test@test.com",
+		"email":    "test@test.com",
+		"password": "123456",
 	}
 	inValidDto := map[string]string{
-		"email": "testcom",
+		"email":    "testcom",
+		"password": "123",
 	}
 	newUser := new(user.User)
 	newUser.Email = "test@test.com"
@@ -1063,6 +1065,7 @@ func TestChangeEmail(t *testing.T) {
 
 		var fields = map[string]string{}
 		fields["email"] = "invalid email address"
+		fields["password"] = "password should be at least 6 chars"
 
 		badReqErr := restErrors.NewValidationError(fields)
 
@@ -1150,21 +1153,48 @@ func TestCreateTOTP(t *testing.T) {
 	var locals = map[string]interface{}{}
 	locals["user"] = newUser
 
+	dto := new(user.CreateTOTPRequestDto)
+	dto.Password = "123456"
+
 	t.Run("Create_TOTP_Should_Pass", func(t *testing.T) {
-		CreateTOTPFunc = func(model *user.User) (bytes.Buffer, *restErrors.RestErr) {
+		CreateTOTPFunc = func(model *user.User, dto *user.CreateTOTPRequestDto) (bytes.Buffer, *restErrors.RestErr) {
 			return bytes.Buffer{}, nil
 		}
 
-		_, resp := newFiberCtx("", CreateTOTP, locals)
+		_, resp := newFiberCtx(dto, CreateTOTP, locals)
 		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
+	})
+	t.Run("Create_TOTP_Should_Throw_Invalid_Request_Body", func(t *testing.T) {
+		_, resp := newFiberCtx("", CreateTOTP, locals)
+		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
+	})
+
+	t.Run("Create_TOTP_Should_Throw_Validation_Errors", func(t *testing.T) {
+		invalidDto := new(user.CreateTOTPRequestDto)
+		invalidDto.Password = "123"
+		body, resp := newFiberCtx(invalidDto, CreateTOTP, locals)
+
+		var result restErrors.RestErr
+
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+		var fields = map[string]string{}
+		fields["password"] = "password should be at least 6 chars"
+
+		badReqErr := restErrors.NewValidationError(fields)
+
+		assert.EqualValues(t, badReqErr.Status, resp.StatusCode)
+		assert.Equal(t, *badReqErr, result)
 	})
 
 	t.Run("Create_TOTP_Should_Throw_If_User_Service_Throws", func(t *testing.T) {
-		CreateTOTPFunc = func(model *user.User) (bytes.Buffer, *restErrors.RestErr) {
+		CreateTOTPFunc = func(model *user.User, dto *user.CreateTOTPRequestDto) (bytes.Buffer, *restErrors.RestErr) {
 			return bytes.Buffer{}, restErrors.NewBadRequestError("user service errors")
 		}
 
-		body, resp := newFiberCtx("", CreateTOTP, locals)
+		body, resp := newFiberCtx(dto, CreateTOTP, locals)
 
 		var result restErrors.RestErr
 		err := json.Unmarshal(body, &result)
@@ -1302,15 +1332,18 @@ func TestDisableTwoFactorAuth(t *testing.T) {
 	newUser := new(user.User)
 	newUser.Email = "test@test.com"
 	newUser.IsEmailVerified = true
+
+	dto := new(user.DisableTOTPRequestDto)
+	dto.Password = "123456"
 	var locals = map[string]interface{}{}
 	locals["user"] = newUser
 
 	t.Run("Disable_Two_Factor_Auth_Should_Pass", func(t *testing.T) {
-		DisableTwoFactorAuthFunc = func(model *user.User) *restErrors.RestErr {
+		DisableTwoFactorAuthFunc = func(model *user.User, dto *user.DisableTOTPRequestDto) *restErrors.RestErr {
 			return nil
 		}
 
-		body, resp := newFiberCtx("", DisableTwoFactorAuth, locals)
+		body, resp := newFiberCtx(dto, DisableTwoFactorAuth, locals)
 
 		type message struct {
 			Message string
@@ -1324,13 +1357,49 @@ func TestDisableTwoFactorAuth(t *testing.T) {
 		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
 		assert.EqualValues(t, "2FA disabled", result["data"].Message)
 	})
+	t.Run("Disable_Two_Factor_Auth_Should_Throw_Invalid_Request_Body", func(t *testing.T) {
+
+		body, resp := newFiberCtx("", DisableTwoFactorAuth, locals)
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
+		assert.EqualValues(t, http.StatusBadRequest, result.Status)
+		assert.EqualValues(t, "invalid request body", result.Message)
+	})
+
+	t.Run("Disable_Two_Factor_Auth_Should_Throw_validation_Errors", func(t *testing.T) {
+		DisableTwoFactorAuthFunc = func(model *user.User, dto *user.DisableTOTPRequestDto) *restErrors.RestErr {
+			return nil
+		}
+		invalidDto := new(user.DisableTOTPRequestDto)
+		invalidDto.Password = "123"
+
+		body, resp := newFiberCtx(invalidDto, DisableTwoFactorAuth, locals)
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		var fields = map[string]string{}
+		fields["password"] = "password should be at least 6 chars"
+
+		badReqErr := restErrors.NewValidationError(fields)
+
+		assert.EqualValues(t, badReqErr.Status, resp.StatusCode)
+		assert.Equal(t, *badReqErr, result)
+	})
 
 	t.Run("Disable_Two_Factor_Auth_Should_Throw_If_2Fa_Already_Disable", func(t *testing.T) {
-		DisableTwoFactorAuthFunc = func(model *user.User) *restErrors.RestErr {
+		DisableTwoFactorAuthFunc = func(model *user.User, dto *user.DisableTOTPRequestDto) *restErrors.RestErr {
 			return restErrors.NewBadRequestError("2fa already disabled")
 		}
 
-		body, resp := newFiberCtx("", DisableTwoFactorAuth, locals)
+		body, resp := newFiberCtx(dto, DisableTwoFactorAuth, locals)
 
 		var result restErrors.RestErr
 		err := json.Unmarshal(body, &result)
