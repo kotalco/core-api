@@ -6,6 +6,7 @@ import (
 	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/kotalco/cloud-api/pkg/config"
 	"github.com/stretchr/testify/assert"
+	"gorm.io/gorm"
 	"os"
 	"testing"
 	"time"
@@ -16,6 +17,7 @@ var (
 	CreateFunc          func(verification *Verification) *restErrors.RestErr
 	GetByUserIdFunc     func(userId string) (*Verification, *restErrors.RestErr)
 	UpdateFunc          func(verification *Verification) *restErrors.RestErr
+	WithTransactionFunc func(txHandle *gorm.DB) IRepository
 
 	HashFunc       func(password string, cost int) ([]byte, error)
 	VerifyHashFunc func(hashedPassword, password string) error
@@ -25,6 +27,10 @@ type verificationRepositoryMock struct{}
 type hashingServiceMock struct{}
 
 //verification repository methods
+func (vRepository verificationRepositoryMock) WithTransaction(txHandle *gorm.DB) IRepository {
+	return vRepository
+}
+
 func (verificationRepositoryMock) Create(verification *Verification) *restErrors.RestErr {
 	return CreateFunc(verification)
 }

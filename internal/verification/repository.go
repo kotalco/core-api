@@ -13,6 +13,7 @@ import (
 type repository struct{}
 
 type IRepository interface {
+	WithTransaction(txHandle *gorm.DB) IRepository
 	Create(verification *Verification) *restErrors.RestErr
 	GetByUserId(userId string) (*Verification, *restErrors.RestErr)
 	Update(verification *Verification) *restErrors.RestErr
@@ -26,6 +27,11 @@ func NewRepository() IRepository {
 	dbClient = sqlclient.OpenDBConnection()
 	newRepository := repository{}
 	return newRepository
+}
+
+func (uRepository repository) WithTransaction(txHandle *gorm.DB) IRepository {
+	dbClient = txHandle
+	return uRepository
 }
 
 func (repository) Create(verification *Verification) *restErrors.RestErr {
