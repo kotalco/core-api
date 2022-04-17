@@ -427,6 +427,10 @@ func TestService_ChangeEmail(t *testing.T) {
 	dto := new(ChangeEmailRequestDto)
 
 	t.Run("Change_Email_Should_Pass", func(t *testing.T) {
+		VerifyHashFunc = func(hashedPassword, password string) error {
+			return nil
+		}
+
 		UpdateFunc = func(user *User) *restErrors.RestErr {
 			return nil
 		}
@@ -435,7 +439,21 @@ func TestService_ChangeEmail(t *testing.T) {
 		assert.Nil(t, err)
 	})
 
+	t.Run("Change_Email_Should_Throw_If_Password_Is_Invalid", func(t *testing.T) {
+		VerifyHashFunc = func(hashedPassword, password string) error {
+			return errors.New("invalid password")
+		}
+
+		err := userService.ChangeEmail(user, dto)
+		assert.EqualValues(t, "invalid password", err.Message)
+		assert.EqualValues(t, http.StatusBadRequest, err.Status)
+	})
+
 	t.Run("Change_Email_Should_Throws_If_Repo_Throws", func(t *testing.T) {
+		VerifyHashFunc = func(hashedPassword, password string) error {
+			return nil
+		}
+
 		UpdateFunc = func(user *User) *restErrors.RestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
@@ -445,7 +463,13 @@ func TestService_ChangeEmail(t *testing.T) {
 }
 
 func TestService_CreateTOTP(t *testing.T) {
+	dto := new(CreateTOTPRequestDto)
+	dto.Password = "123456"
 	t.Run("Create_TOTP_Should_Pass", func(t *testing.T) {
+		VerifyHashFunc = func(hashedPassword, password string) error {
+			return nil
+		}
+
 		CreateQRCodeFunc = func(accountName string) (bytes.Buffer, string, error) {
 			return bytes.Buffer{}, "", nil
 		}
@@ -460,22 +484,41 @@ func TestService_CreateTOTP(t *testing.T) {
 
 		user := new(User)
 		user.Email = "test@test.com"
-		buffer, err := userService.CreateTOTP(user)
+		buffer, err := userService.CreateTOTP(user, dto)
 		assert.Nil(t, err)
 		assert.NotNil(t, buffer)
 		assert.NotNil(t, user.TwoFactorCipher)
 	})
 
+	t.Run("Create_TOTP_Should_Throw_If_Password_Invalid", func(t *testing.T) {
+		VerifyHashFunc = func(hashedPassword, password string) error {
+			return errors.New("invalid password")
+		}
+		user := new(User)
+		_, err := userService.CreateTOTP(user, dto)
+		assert.EqualValues(t, "Invalid password", err.Message)
+		assert.EqualValues(t, http.StatusBadRequest, err.Status)
+
+	})
+
 	t.Run("Create_TOTP_Should_Throw_If_Create_Qr_Code_Throws", func(t *testing.T) {
+		VerifyHashFunc = func(hashedPassword, password string) error {
+			return nil
+		}
+
 		CreateQRCodeFunc = func(accountName string) (bytes.Buffer, string, error) {
 			return bytes.Buffer{}, "", errors.New("")
 		}
 		user := new(User)
-		_, err := userService.CreateTOTP(user)
+		_, err := userService.CreateTOTP(user, dto)
 		assert.EqualValues(t, "something went wrong", err.Message)
 	})
 
 	t.Run("Create_TOTP_Should_Throw_If_Encryption_service_Throws", func(t *testing.T) {
+		VerifyHashFunc = func(hashedPassword, password string) error {
+			return nil
+		}
+
 		CreateQRCodeFunc = func(accountName string) (bytes.Buffer, string, error) {
 			return bytes.Buffer{}, "", nil
 		}
@@ -484,11 +527,15 @@ func TestService_CreateTOTP(t *testing.T) {
 			return "", errors.New("")
 		}
 		user := new(User)
-		_, err := userService.CreateTOTP(user)
+		_, err := userService.CreateTOTP(user, dto)
 		assert.EqualValues(t, "something went wrong", err.Message)
 	})
 
 	t.Run("Create_TOTP_Should_Throw_If_Repo_Throws", func(t *testing.T) {
+		VerifyHashFunc = func(hashedPassword, password string) error {
+			return nil
+		}
+
 		CreateQRCodeFunc = func(accountName string) (bytes.Buffer, string, error) {
 			return bytes.Buffer{}, "", nil
 		}
@@ -503,7 +550,7 @@ func TestService_CreateTOTP(t *testing.T) {
 
 		user := new(User)
 		user.Email = "test@test.com"
-		buffer, err := userService.CreateTOTP(user)
+		buffer, err := userService.CreateTOTP(user, dto)
 
 		assert.EqualValues(t, bytes.Buffer{}, buffer)
 		assert.EqualValues(t, "something went wrong", err.Message)
@@ -511,7 +558,6 @@ func TestService_CreateTOTP(t *testing.T) {
 }
 
 func TestService_EnableTwoFactorAuth(t *testing.T) {
-
 	t.Run("Enable_Two_Factor_Auth_Should_Pass", func(t *testing.T) {
 		DecryptFunc = func(encodedCipher string, passphrase string) (string, error) {
 			return "", nil
@@ -666,39 +712,64 @@ func TestService_VerifyTOTP(t *testing.T) {
 }
 
 func TestService_DisableTwoFactorAuth(t *testing.T) {
+	dto := new(DisableTOTPRequestDto)
+	dto.Password = "123456"
 	t.Run("Disable_Tfa_Should_Pass", func(t *testing.T) {
+		VerifyHashFunc = func(hashedPassword, password string) error {
+			return nil
+		}
+
 		UpdateFunc = func(user *User) *restErrors.RestErr {
 			return nil
 		}
 
 		user := new(User)
 		user.TwoFactorEnabled = true
-		err := userService.DisableTwoFactorAuth(user)
+		err := userService.DisableTwoFactorAuth(user, dto)
 
 		assert.Nil(t, err)
 		assert.EqualValues(t, false, user.TwoFactorEnabled)
 	})
 
+	t.Run("Disable_Tfa_Should_Throw_If_Password_isInvalid", func(t *testing.T) {
+		VerifyHashFunc = func(hashedPassword, password string) error {
+			return errors.New("invalid password")
+		}
+		user := new(User)
+		user.TwoFactorEnabled = true
+		err := userService.DisableTwoFactorAuth(user, dto)
+
+		assert.EqualValues(t, "Invalid password", err.Message)
+		assert.EqualValues(t, http.StatusBadRequest, err.Status)
+	})
 	t.Run("Disable_Tfa_Should_Throw_If_Already_Disabled", func(t *testing.T) {
+		VerifyHashFunc = func(hashedPassword, password string) error {
+			return nil
+		}
+
 		UpdateFunc = func(user *User) *restErrors.RestErr {
 			return nil
 		}
 
 		user := new(User)
 		user.TwoFactorEnabled = false
-		err := userService.DisableTwoFactorAuth(user)
+		err := userService.DisableTwoFactorAuth(user, dto)
 
 		assert.EqualValues(t, "2fa already disabled", err.Message)
 	})
 
 	t.Run("Disable_Tfa_Should_Throw_If_Repo_Throws", func(t *testing.T) {
+		VerifyHashFunc = func(hashedPassword, password string) error {
+			return nil
+		}
+
 		UpdateFunc = func(user *User) *restErrors.RestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 
 		user := new(User)
 		user.TwoFactorEnabled = true
-		err := userService.DisableTwoFactorAuth(user)
+		err := userService.DisableTwoFactorAuth(user, dto)
 
 		assert.EqualValues(t, "something went wrong", err.Message)
 	})

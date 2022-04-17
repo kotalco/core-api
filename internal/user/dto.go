@@ -40,7 +40,16 @@ type EmailVerificationRequestDto struct {
 }
 
 type ChangeEmailRequestDto struct {
-	Email string `json:"email" validate:"required,email,lte=100"`
+	Email    string `json:"email" validate:"required,email,lte=100"`
+	Password string `json:"password" validate:"required,gte=6,lte=100"`
+}
+
+type CreateTOTPRequestDto struct {
+	Password string `json:"password" validate:"required,gte=6,lte=100"`
+}
+
+type DisableTOTPRequestDto struct {
+	Password string `json:"password" validate:"required,gte=6,lte=100"`
 }
 
 type TOTPRequestDto struct {
