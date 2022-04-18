@@ -22,7 +22,7 @@ jobs:
       run: go build -v ./...
 
     - name: Run Postgres Database
-      run: docker run --name kotal-database -p 5432:5432 -e POSTGRES_PASSWORD=secret postgres
+      run: docker run -d --name kotal-database -p 5432:5432 -e POSTGRES_PASSWORD=secret postgres
     
     - name: Test
       run: DB_SERVER_URL=postgres://postgres:secret@localhost:5432/postgres go test -v ./...
