@@ -10,6 +10,22 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_DB: postgres        
+          POSTGRES_PASSWORD: secret
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
     - uses: actions/checkout@v3
 
@@ -20,9 +36,6 @@ jobs:
 
     - name: Build
       run: go build -v ./...
-
-    - name: Run Postgres Database
-      run: docker run -d --name kotal-database -p 5432:5432 -e POSTGRES_PASSWORD=secret postgres
     
     - name: Test
       run: DB_SERVER_URL=postgres://postgres:secret@localhost:5432/postgres go test -v ./...
