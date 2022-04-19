@@ -9,11 +9,13 @@ import (
 	"github.com/kotalco/cloud-api/pkg/security"
 	"github.com/kotalco/cloud-api/pkg/tfa"
 	"github.com/kotalco/cloud-api/pkg/token"
+	"gorm.io/gorm"
 )
 
 type service struct{}
 
 type IService interface {
+	WithTransaction(txHandle *gorm.DB) IService
 	SignUp(dto *SignUpRequestDto) (*User, *restErrors.RestErr)
 	SignIn(dto *SignInRequestDto) (*UserSessionResponseDto, *restErrors.RestErr)
 	VerifyTOTP(model *User, totp string) (*UserSessionResponseDto, *restErrors.RestErr)
@@ -38,6 +40,11 @@ var (
 func NewService() IService {
 	newService := &service{}
 	return newService
+}
+
+func (uService service) WithTransaction(txHandle *gorm.DB) IService {
+	userRepository = userRepository.WithTransaction(txHandle)
+	return uService
 }
 
 //SignUp Creates new user

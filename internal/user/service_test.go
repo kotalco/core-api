@@ -7,17 +7,19 @@ import (
 	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/kotalco/cloud-api/pkg/token"
 	"github.com/stretchr/testify/assert"
+	"gorm.io/gorm"
 	"net/http"
 	"os"
 	"testing"
 )
 
 var (
-	userService    IService
-	CreateFunc     func(user *User) *restErrors.RestErr
-	GetByEmailFunc func(email string) (*User, *restErrors.RestErr)
-	GetByIdFunc    func(id string) (*User, *restErrors.RestErr)
-	UpdateFunc     func(user *User) *restErrors.RestErr
+	userService         IService
+	CreateFunc          func(user *User) *restErrors.RestErr
+	GetByEmailFunc      func(email string) (*User, *restErrors.RestErr)
+	GetByIdFunc         func(id string) (*User, *restErrors.RestErr)
+	UpdateFunc          func(user *User) *restErrors.RestErr
+	WithTransactionFunc func(txHandle *gorm.DB) IRepository
 
 	EncryptFunc func(data []byte, passphrase string) (string, error)
 	DecryptFunc func(encodedCipher string, passphrase string) (string, error)
@@ -39,6 +41,10 @@ type tokenServiceMock struct{}
 type tfaServiceMock struct{}
 
 //user repository methods
+func (r userRepositoryMock) WithTransaction(txHandle *gorm.DB) IRepository {
+	return r
+}
+
 func (userRepositoryMock) Create(user *User) *restErrors.RestErr {
 	return CreateFunc(user)
 }

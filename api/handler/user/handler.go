@@ -1,6 +1,7 @@
 package user
 
 import (
+	"github.com/kotalco/cloud-api/pkg/sqlclient"
 	"net/http"
 	"strconv"
 
@@ -33,15 +34,20 @@ func SignUp(c *fiber.Ctx) error {
 		return c.Status(restErr.Status).JSON(restErr)
 	}
 
-	model, restErr := userService.SignUp(dto)
+	txHandle := sqlclient.BeginTx()
+	model, restErr := userService.WithTransaction(txHandle).SignUp(dto)
 	if restErr != nil {
+		txHandle.Rollback()
 		return c.Status(restErr.Status).JSON(restErr)
 	}
 
-	token, restErr := verificationService.Create(model.ID)
+	token, restErr := verificationService.WithTransaction(txHandle).Create(model.ID)
 	if restErr != nil {
+		txHandle.Rollback()
 		return c.Status(restErr.Status).JSON(restErr)
 	}
+
+	txHandle.Commit()
 
 	//send email verification
 	mailRequest := new(sendgrid.MailRequestDto)
@@ -143,15 +149,20 @@ func VerifyEmail(c *fiber.Ctx) error {
 		return c.Status(badReq.Status).JSON(badReq)
 	}
 
-	err = verificationService.Verify(userModel.ID, dto.Token)
+	txHandle := sqlclient.BeginTx()
+	err = verificationService.WithTransaction(txHandle).Verify(userModel.ID, dto.Token)
 	if err != nil {
+		txHandle.Rollback()
 		return c.Status(err.Status).JSON(err)
 	}
 
-	err = userService.VerifyEmail(userModel)
+	err = userService.WithTransaction(txHandle).VerifyEmail(userModel)
 	if err != nil {
+		txHandle.Rollback()
 		return c.Status(err.Status).JSON(err)
 	}
+
+	txHandle.Commit()
 
 	resp := struct {
 		Message string `json:"message"`
@@ -228,14 +239,20 @@ func ResetPassword(c *fiber.Ctx) error {
 		return c.Status(forbidErr.Status).JSON(forbidErr)
 	}
 
-	err = verificationService.Verify(userModel.ID, dto.Token)
+	txHandle := sqlclient.BeginTx()
+
+	err = verificationService.WithTransaction(txHandle).Verify(userModel.ID, dto.Token)
 	if err != nil {
+		txHandle.Rollback()
 		return c.Status(err.Status).JSON(err)
 	}
-	err = userService.ResetPassword(userModel, dto.Password)
+	err = userService.WithTransaction(txHandle).ResetPassword(userModel, dto.Password)
 	if err != nil {
+		txHandle.Rollback()
 		return c.Status(err.Status).JSON(err)
 	}
+
+	txHandle.Commit()
 
 	resp := struct {
 		Message string `json:"message"`
@@ -290,15 +307,21 @@ func ChangeEmail(c *fiber.Ctx) error {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	err = userService.ChangeEmail(authorizedUser, dto)
+	txHandle := sqlclient.BeginTx()
+
+	err = userService.WithTransaction(txHandle).ChangeEmail(authorizedUser, dto)
 	if err != nil {
+		txHandle.Rollback()
 		return c.Status(err.Status).JSON(err)
 	}
 
-	token, err := verificationService.Resend(authorizedUser.ID)
+	token, err := verificationService.WithTransaction(txHandle).Resend(authorizedUser.ID)
 	if err != nil {
+		txHandle.Rollback()
 		return c.Status(err.Status).JSON(err)
 	}
+
+	txHandle.Commit()
 
 	mailRequest := new(sendgrid.MailRequestDto)
 	mailRequest.Token = token

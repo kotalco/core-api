@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"gorm.io/gorm"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -36,9 +37,14 @@ var (
 	CreateTOTPFunc           func(model *user.User, dto *user.CreateTOTPRequestDto) (bytes.Buffer, *restErrors.RestErr)
 	EnableTwoFactorAuthFunc  func(model *user.User, totp string) (*user.User, *restErrors.RestErr)
 	DisableTwoFactorAuthFunc func(model *user.User, dto *user.DisableTOTPRequestDto) *restErrors.RestErr
+	UserWithTransactionFunc  func(txHandle *gorm.DB) user.IService
 )
 
 type userServiceMock struct{}
+
+func (uService userServiceMock) WithTransaction(txHandle *gorm.DB) user.IService {
+	return uService
+}
 
 func (userServiceMock) SignUp(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr) {
 	return SignUpFunc(dto)
@@ -88,13 +94,18 @@ func (userServiceMock) DisableTwoFactorAuth(model *user.User, dto *user.DisableT
 Verification service Mocks
 */
 var (
-	CreateFunc      func(userId string) (string, *restErrors.RestErr)
-	GetByUserIdFunc func(userId string) (*verification.Verification, *restErrors.RestErr)
-	ResendFunc      func(userId string) (string, *restErrors.RestErr)
-	VerifyFunc      func(userId string, token string) *restErrors.RestErr
+	CreateFunc                      func(userId string) (string, *restErrors.RestErr)
+	GetByUserIdFunc                 func(userId string) (*verification.Verification, *restErrors.RestErr)
+	ResendFunc                      func(userId string) (string, *restErrors.RestErr)
+	VerifyFunc                      func(userId string, token string) *restErrors.RestErr
+	VerificationWithTransactionFunc func(txHandle *gorm.DB) verification.IService
 )
 
 type verificationServiceMock struct{}
+
+func (vService verificationServiceMock) WithTransaction(txHandle *gorm.DB) verification.IService {
+	return vService
+}
 
 func (verificationServiceMock) Create(userId string) (string, *restErrors.RestErr) {
 	return CreateFunc(userId)

@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 	restErrors "github.com/kotalco/api/pkg/errors"
@@ -24,10 +23,8 @@ func FiberConfig() fiber.Config {
 //logs resterror using logger pkg
 //return custom error struct using restError pkg
 var defaultErrorHandler = func(c *fiber.Ctx, err error) error {
-	go logger.Panic("PANICKING", err)
-	fmt.Println(err)
-
-	internalErr := restErrors.NewInternalServerError("some thing went wrong...")
+	go logger.Panic("PANICKING_UNHANDLED_ERROR", err)
+	internalErr := restErrors.NewInternalServerError("some thing went wrong")
 
 	return c.Status(internalErr.Status).JSON(internalErr)
 }

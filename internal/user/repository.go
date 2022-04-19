@@ -18,6 +18,7 @@ type IRepository interface {
 	GetByEmail(email string) (*User, *restErrors.RestErr)
 	GetById(id string) (*User, *restErrors.RestErr)
 	Update(user *User) *restErrors.RestErr
+	WithTransaction(txHandle *gorm.DB) IRepository
 }
 
 var (
@@ -28,6 +29,11 @@ func NewRepository() IRepository {
 	dbClient = sqlclient.OpenDBConnection()
 	newRepo := repository{}
 	return newRepo
+}
+
+func (r repository) WithTransaction(txHandle *gorm.DB) IRepository {
+	dbClient = txHandle
+	return r
 }
 
 func (repository) Create(user *User) *restErrors.RestErr {

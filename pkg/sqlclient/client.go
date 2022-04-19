@@ -26,3 +26,8 @@ func OpenDBConnection() *gorm.DB {
 
 	return DbClient
 }
+
+func BeginTx() *gorm.DB {
+	OpenDBConnection()
+	return DbClient.Begin()
+}

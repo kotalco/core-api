@@ -2,6 +2,7 @@ package verification
 
 import (
 	"fmt"
+	"gorm.io/gorm"
 	"net/http"
 	"strconv"
 	"time"
@@ -16,6 +17,7 @@ import (
 type service struct{}
 
 type IService interface {
+	WithTransaction(txHandle *gorm.DB) IService
 	Create(userId string) (string, *restErrors.RestErr)
 	GetByUserId(userId string) (*Verification, *restErrors.RestErr)
 	Resend(userId string) (string, *restErrors.RestErr)
@@ -30,6 +32,11 @@ var (
 func NewService() IService {
 	newService := &service{}
 	return newService
+}
+
+func (vService service) WithTransaction(txHandle *gorm.DB) IService {
+	verificationRepository = verificationRepository.WithTransaction(txHandle)
+	return vService
 }
 
 //Create creates a new verification token for the user
