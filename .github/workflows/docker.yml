@@ -1,0 +1,27 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Log in DigitalOcean Container Registry
+      env:
+        DO_CR_USERNAME: ${{ secrets.DIGITAL_OCEAN_CONTAINER_REGISTRY_USERNAME }}
+        DO_CR_PASSWORD: ${{ secrets.DIGITAL_OCEAN_CONTAINER_REGISTRY_PASSWORD }}
+      run: docker login --username $DO_CR_USERNAME --password $DO_CR_PASSWORD
+
+    - name: Build the Docker image
+      env:
+        GITHUB_SHA: ${{ env.GITHUB_SHA }}
+      run: docker buildx build --platform linux/amd64,linux/arm64 --push -t registry.digitalocean.com/kotal/cloud-api:$GITHUB_SHA .
