@@ -19,7 +19,7 @@ jobs:
       env:
         DO_CR_USERNAME: ${{ secrets.DIGITAL_OCEAN_CONTAINER_REGISTRY_USERNAME }}
         DO_CR_PASSWORD: ${{ secrets.DIGITAL_OCEAN_CONTAINER_REGISTRY_PASSWORD }}
-      run: docker login --username $DO_CR_USERNAME --password $DO_CR_PASSWORD
+      run: echo $DO_CR_PASSWORD | docker login --username $DO_CR_USERNAME --password-stdin
 
     - name: Build the Docker image
       env:
