@@ -20,6 +20,7 @@ func All() []Seed {
 		Seed{
 			Name: "CreateDefaultUser",
 			Run: func(db *gorm.DB) error {
+				db.AutoMigrate(user.User{})
 				hashedPassword, err := hashing.Hash("123456", 13)
 				if err != nil {
 
