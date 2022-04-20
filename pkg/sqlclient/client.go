@@ -30,17 +30,17 @@ func OpenDBConnection() *gorm.DB {
 	return DbClient
 }
 
-func BeginTx() *gorm.DB {
-	OpenDBConnection()
+func Begin() *gorm.DB {
+	DbClient = dbConnection
 	return DbClient.Begin()
 }
 
-func RollbackTx(txHandle *gorm.DB) {
+func Rollback(txHandle *gorm.DB) {
 	txHandle.Rollback()
-	OpenDBConnection()
+	DbClient = dbConnection
 }
 
-func CommitTx(txHandle *gorm.DB) {
+func Commit(txHandle *gorm.DB) {
 	txHandle.Commit()
-	OpenDBConnection()
+	DbClient = dbConnection
 }
