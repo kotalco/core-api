@@ -19,23 +19,18 @@ type IRepository interface {
 	Update(verification *Verification) *restErrors.RestErr
 }
 
-var (
-	dbClient *gorm.DB
-)
-
 func NewRepository() IRepository {
-	dbClient = sqlclient.OpenDBConnection()
 	newRepository := repository{}
 	return newRepository
 }
 
 func (uRepository repository) WithTransaction(txHandle *gorm.DB) IRepository {
-	dbClient = txHandle
+	sqlclient.DbClient = txHandle
 	return uRepository
 }
 
 func (repository) Create(verification *Verification) *restErrors.RestErr {
-	res := dbClient.Create(verification)
+	res := sqlclient.DbClient.Create(verification)
 	if res.Error != nil {
 		duplicateEmail, _ := regexp.Match("duplicate key", []byte(res.Error.Error()))
 		if duplicateEmail {
@@ -51,7 +46,7 @@ func (repository) Create(verification *Verification) *restErrors.RestErr {
 func (repository) GetByUserId(userId string) (*Verification, *restErrors.RestErr) {
 	var verification = new(Verification)
 
-	result := dbClient.Where("user_id = ?", userId).First(verification)
+	result := sqlclient.DbClient.Where("user_id = ?", userId).First(verification)
 	if result.Error != nil {
 		return nil, restErrors.NewNotFoundError(fmt.Sprintf("can't find verification with userId  %s", userId))
 	}
@@ -60,7 +55,7 @@ func (repository) GetByUserId(userId string) (*Verification, *restErrors.RestErr
 }
 
 func (repository) Update(verification *Verification) *restErrors.RestErr {
-	resp := dbClient.Save(verification)
+	resp := sqlclient.DbClient.Save(verification)
 	if resp.Error != nil {
 		go logger.Error(repository.Update, resp.Error)
 		return restErrors.NewInternalServerError("some thing went wrong!")

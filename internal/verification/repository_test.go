@@ -3,6 +3,7 @@ package verification
 import (
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/kotalco/cloud-api/pkg/sqlclient"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
@@ -13,14 +14,14 @@ var (
 )
 
 func init() {
-	err := dbClient.AutoMigrate(new(Verification))
+	err := sqlclient.OpenDBConnection().AutoMigrate(new(Verification))
 	if err != nil {
 		panic(err.Error())
 	}
 }
 
 func cleanUp(t *testing.T) {
-	dbClient.Exec("TRUNCATE TABLE users;")
+	sqlclient.DbClient.Exec("TRUNCATE TABLE users;")
 }
 
 func TestRepository_Create(t *testing.T) {
