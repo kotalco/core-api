@@ -98,13 +98,13 @@ func (tfaServiceMock) CheckOtp(userTOTPSecret string, otp string) bool {
 }
 
 func TestMain(m *testing.M) {
+	userService = NewService()
 	userRepository = &userRepositoryMock{}
 	encryption = &encryptionServiceMock{}
 	hashing = &hashingServiceMock{}
 	tokenService = &tokenServiceMock{}
 	tfaService = &tfaServiceMock{}
 
-	userService = NewService()
 	code := m.Run()
 	os.Exit(code)
 }

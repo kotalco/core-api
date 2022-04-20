@@ -12,8 +12,9 @@ func MapUrl(app *fiber.App) {
 	api := app.Group("api")
 	v1 := api.Group("v1")
 	//users group
-	v1.Post("sessions", user.SignIn)
+	v1.Post("sessions", user.NewUserHandler, user.SignIn)
 	users := v1.Group("users")
+	users.Use(user.NewUserHandler)
 	users.Post("/", user.SignUp)
 	users.Post("/resend_email_verification", user.SendEmailVerification)
 	users.Post("/forget_password", user.ForgetPassword)

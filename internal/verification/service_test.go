@@ -51,9 +51,9 @@ func (hashingServiceMock) VerifyHash(hashedPassword, password string) error {
 }
 
 func TestMain(m *testing.M) {
+	verificationService = NewService()
 	verificationRepository = &verificationRepositoryMock{}
 	hashing = &hashingServiceMock{}
-	verificationService = NewService()
 	code := m.Run()
 	os.Exit(code)
 }

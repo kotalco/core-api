@@ -16,9 +16,9 @@ import (
 )
 
 var (
-	userService         = user.NewService()
-	mailService         = sendgrid.NewService()
-	verificationService = verification.NewService()
+	userService         user.IService
+	mailService         sendgrid.IService
+	verificationService verification.IService
 )
 
 //SignUp validate dto , create user , send verification token
@@ -442,4 +442,12 @@ func DisableTwoFactorAuth(c *fiber.Ctx) error {
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(resp))
 
+}
+
+func NewUserHandler(c *fiber.Ctx) error {
+	userService = user.NewService()
+	mailService = sendgrid.NewService()
+	verificationService = verification.NewService()
+	c.Next()
+	return nil
 }

@@ -25,11 +25,12 @@ type IService interface {
 }
 
 var (
-	verificationRepository = NewRepository()
+	verificationRepository IRepository
 	hashing                = security.NewHashing()
 )
 
 func NewService() IService {
+	verificationRepository = NewRepository()
 	newService := &service{}
 	return newService
 }
