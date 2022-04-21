@@ -21,23 +21,18 @@ type IRepository interface {
 	WithTransaction(txHandle *gorm.DB) IRepository
 }
 
-var (
-	dbClient *gorm.DB
-)
-
 func NewRepository() IRepository {
-	dbClient = sqlclient.OpenDBConnection()
 	newRepo := repository{}
 	return newRepo
 }
 
 func (r repository) WithTransaction(txHandle *gorm.DB) IRepository {
-	dbClient = txHandle
+	sqlclient.DbClient = txHandle
 	return r
 }
 
 func (repository) Create(user *User) *restErrors.RestErr {
-	res := dbClient.Create(user)
+	res := sqlclient.DbClient.Create(user)
 	if res.Error != nil {
 		duplicateEmail, _ := regexp.Match("duplicate key", []byte(res.Error.Error()))
 		if duplicateEmail {
@@ -58,7 +53,7 @@ func (repository) Create(user *User) *restErrors.RestErr {
 func (repository) GetByEmail(email string) (*User, *restErrors.RestErr) {
 	var user = new(User)
 
-	result := dbClient.Where("email = ?", email).First(user)
+	result := sqlclient.DbClient.Where("email = ?", email).First(user)
 	if result.Error != nil {
 		return nil, restErrors.NewNotFoundError(fmt.Sprintf("can't find user with email  %s", email))
 	}
@@ -69,7 +64,7 @@ func (repository) GetByEmail(email string) (*User, *restErrors.RestErr) {
 func (repository) GetById(id string) (*User, *restErrors.RestErr) {
 	var user = new(User)
 
-	result := dbClient.Where("id = ?", id).First(user)
+	result := sqlclient.DbClient.Where("id = ?", id).First(user)
 	if result.Error != nil {
 		return nil, restErrors.NewNotFoundError(fmt.Sprintf("no such user"))
 	}
@@ -78,7 +73,7 @@ func (repository) GetById(id string) (*User, *restErrors.RestErr) {
 }
 
 func (repository) Update(user *User) *restErrors.RestErr {
-	err := dbClient.Save(user)
+	err := sqlclient.DbClient.Save(user)
 	if err.Error != nil {
 		go logger.Error(repository.Update, err.Error)
 		return restErrors.NewInternalServerError("something went wrong")

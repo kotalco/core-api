@@ -10,24 +10,37 @@ import (
 )
 
 var (
-	DbClient   *gorm.DB
-	clientOnce sync.Once
+	DbClient     *gorm.DB
+	dbConnection *gorm.DB
+	clientOnce   sync.Once
+	err          error
 )
 
 func OpenDBConnection() *gorm.DB {
 	clientOnce.Do(func() {
-		db, err := gorm.Open(postgres.Open(config.EnvironmentConf["DB_SERVER_URL"]), &gorm.Config{})
+		dbConnection, err = gorm.Open(postgres.Open(config.EnvironmentConf["DB_SERVER_URL"]), &gorm.Config{})
 		if err != nil {
 			go logger.Panic("DATABASE_CONNECTION_ERROR", err)
 			panic(err)
 		}
-		DbClient = db
+		DbClient = dbConnection
 	})
+	DbClient = dbConnection
 
 	return DbClient
 }
 
-func BeginTx() *gorm.DB {
-	OpenDBConnection()
+func Begin() *gorm.DB {
+	DbClient = dbConnection
 	return DbClient.Begin()
+}
+
+func Rollback(txHandle *gorm.DB) {
+	txHandle.Rollback()
+	DbClient = dbConnection
+}
+
+func Commit(txHandle *gorm.DB) {
+	txHandle.Commit()
+	DbClient = dbConnection
 }

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/kotalco/cloud-api/pkg/sqlclient"
 	"gorm.io/gorm"
 	"io/ioutil"
 	"net/http"
@@ -146,6 +147,7 @@ func TestMain(m *testing.M) {
 	userService = &userServiceMock{}
 	verificationService = &verificationServiceMock{}
 	mailService = &mailServiceMock{}
+	sqlclient.OpenDBConnection()
 
 	code := m.Run()
 	os.Exit(code)
