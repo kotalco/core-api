@@ -6,10 +6,13 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-playground/validator/v10 v10.10.0
 	github.com/gofiber/fiber/v2 v2.28.0
-	github.com/gofiber/websocket/v2 v2.0.16
 	github.com/google/uuid v1.3.0
+	github.com/jackc/pgconn v1.10.1
+	github.com/kotalco/api v0.0.0-20220403191146-92e267e0f099
+	github.com/pquerna/otp v1.3.0
+	github.com/sendgrid/sendgrid-go v3.11.0+incompatible
 	github.com/stretchr/testify v1.7.0
-	go.uber.org/zap v1.21.0
+	golang.org/x/crypto v0.0.0-20220112180741-5e0467b6c7ce
 	gorm.io/driver/postgres v1.3.1
 	gorm.io/gorm v1.23.2
 )
@@ -26,6 +29,7 @@ require (
 	github.com/go-logr/logr v1.2.0 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
+	github.com/gofiber/websocket/v2 v2.0.16 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
@@ -34,7 +38,6 @@ require (
 	github.com/googleapis/gnostic v0.5.5 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
-	github.com/jackc/pgconn v1.10.1 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgproto3/v2 v2.2.0 // indirect
@@ -45,7 +48,6 @@ require (
 	github.com/jinzhu/now v1.1.4 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.14.1 // indirect
-	github.com/kotalco/api v0.0.0-20220316193759-5210fcd43b04 // indirect
 	github.com/kotalco/kotal v0.0.0-20220212203531-a88fa0a8809f // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
@@ -53,14 +55,12 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/pquerna/otp v1.3.0 // indirect
 	github.com/prometheus/client_golang v1.11.0 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.28.0 // indirect
 	github.com/prometheus/procfs v0.6.0 // indirect
 	github.com/savsgio/gotils v0.0.0-20211223103454-d0aaa54c5899 // indirect
 	github.com/sendgrid/rest v2.6.8+incompatible // indirect
-	github.com/sendgrid/sendgrid-go v3.11.0+incompatible // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.33.0 // indirect
@@ -68,16 +68,13 @@ require (
 	github.com/ybbus/jsonrpc/v2 v2.1.6 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
-	golang.org/x/crypto v0.0.0-20220112180741-5e0467b6c7ce // indirect
-	golang.org/x/mod v0.5.1 // indirect
+	go.uber.org/zap v1.21.0 // indirect
 	golang.org/x/net v0.0.0-20220111093109-d55c255bac03 // indirect
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f // indirect
 	golang.org/x/sys v0.0.0-20220111092808-5a964db01320 // indirect
 	golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
-	golang.org/x/tools v0.1.9 // indirect
-	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect

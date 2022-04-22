@@ -7,6 +7,7 @@ import (
 	"github.com/kotalco/cloud-api/pkg/config"
 	"github.com/kotalco/cloud-api/pkg/middleware"
 	"github.com/kotalco/cloud-api/pkg/migration"
+	"github.com/kotalco/cloud-api/pkg/seeder"
 	"github.com/kotalco/cloud-api/pkg/server"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
 )
@@ -20,6 +21,13 @@ func main() {
 	if config.EnvironmentConf["ENVIRONMENT"] == "development" {
 		migrationService := migration.NewService(dbClient)
 		for _, definition := range migrationService.Migrate() {
+			if err := definition.Run(); err != nil {
+				go logger.Error(definition.Name, err)
+			}
+		}
+
+		seederService := seeder.NewService(dbClient)
+		for _, definition := range seederService.Seed() {
 			if err := definition.Run(); err != nil {
 				go logger.Error(definition.Name, err)
 			}
