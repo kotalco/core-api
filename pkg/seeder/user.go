@@ -1,4 +1,4 @@
-package seeds
+package seeder
 
 import (
 	"github.com/kotalco/cloud-api/internal/user"
@@ -6,5 +6,5 @@ import (
 )
 
 func CreateUser(db *gorm.DB, user *user.User) error {
-	return db.Create(user).Error
+	return db.FirstOrCreate(user).Error
 }
