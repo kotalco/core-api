@@ -40,7 +40,7 @@ func (repository) Create(user *User) *restErrors.RestErr {
 			return &restErrors.RestErr{
 				Message: "email already exits",
 				Status:  http.StatusConflict,
-				Error:   "Conflict",
+				Name:    "Conflict",
 			}
 		}
 		go logger.Error(repository.Create, res.Error)

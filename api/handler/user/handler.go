@@ -234,7 +234,7 @@ func ResetPassword(c *fiber.Ctx) error {
 		forbidErr := &restErrors.RestErr{
 			Message: "email not verified",
 			Status:  403,
-			Error:   "Forbidden",
+			Name:    "Forbidden",
 		}
 		return c.Status(forbidErr.Status).JSON(forbidErr)
 	}

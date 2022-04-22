@@ -81,7 +81,7 @@ func (service) SignIn(dto *SignInRequestDto) (*UserSessionResponseDto, *restErro
 		return nil, &restErrors.RestErr{
 			Message: "email not verified",
 			Status:  403,
-			Error:   "Forbidden",
+			Name:    "Forbidden",
 		}
 	}
 
