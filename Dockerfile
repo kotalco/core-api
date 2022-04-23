@@ -1,4 +1,4 @@
-FROM golang:1.18-alpine AS builder
+FROM golang:1.17-alpine AS builder
 
 RUN apk add --no-cache curl tar
 ENV K8S_VERSION=1.21.2
@@ -10,7 +10,7 @@ WORKDIR /api
 
 COPY . .
 
-RUN CGO_ENABLED=0 go build -buildvcs=false -v -o server
+RUN CGO_ENABLED=0 go build -v -o server
 
 FROM alpine
 # required by api server to determine config/crds path
