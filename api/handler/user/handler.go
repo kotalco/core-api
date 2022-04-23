@@ -1,9 +1,10 @@
 package user
 
 import (
-	"github.com/kotalco/cloud-api/pkg/sqlclient"
 	"net/http"
 	"strconv"
+
+	"github.com/kotalco/cloud-api/pkg/sqlclient"
 
 	"github.com/kotalco/api/pkg/logger"
 
@@ -234,7 +235,7 @@ func ResetPassword(c *fiber.Ctx) error {
 		forbidErr := &restErrors.RestErr{
 			Message: "email not verified",
 			Status:  403,
-			Error:   "Forbidden",
+			Name:    "Forbidden",
 		}
 		return c.Status(forbidErr.Status).JSON(forbidErr)
 	}
