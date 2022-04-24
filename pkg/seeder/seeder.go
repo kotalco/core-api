@@ -19,9 +19,7 @@ type seeder struct {
 
 type ISeeder interface {
 	SeedUserTable(users *user.User) error
-	TruncateUserTable() error
 	SeedVerificationTable(verifications *verification.Verification) error
-	TruncateVerificationTable() error
 }
 
 func NewSeeder(dbClient *gorm.DB) ISeeder {
@@ -43,24 +41,8 @@ func (s seeder) SeedUserTable(user *user.User) error {
 	return nil
 }
 
-func (s seeder) TruncateUserTable() error {
-	res := s.dbClient.Exec("TRUNCATE TABLE users;")
-	if res.Error != nil {
-		return res.Error
-	}
-	return nil
-}
-
 func (s seeder) SeedVerificationTable(verification *verification.Verification) error {
 	res := s.dbClient.FirstOrCreate(verification)
-	if res.Error != nil {
-		return res.Error
-	}
-	return nil
-}
-
-func (s seeder) TruncateVerificationTable() error {
-	res := s.dbClient.Exec("TRUNCATE TABLE verifications;")
 	if res.Error != nil {
 		return res.Error
 	}

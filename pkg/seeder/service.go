@@ -12,7 +12,6 @@ type service struct{}
 
 type IService interface {
 	Seed() []Definition
-	Truncate() []Definition
 }
 
 var (
@@ -41,23 +40,6 @@ func (s service) Seed() []Definition {
 				developUser.IsEmailVerified = true
 				developUser.Password = string(hashedPassword)
 				return seeders.SeedUserTable(developUser)
-			},
-		},
-	}
-}
-
-func (s service) Truncate() []Definition {
-	return []Definition{
-		Definition{
-			Name: "TruncateUserTable",
-			Run: func() error {
-				return seeders.TruncateUserTable()
-			},
-		},
-		Definition{
-			Name: "TruncateVerificationTable",
-			Run: func() error {
-				return seeders.TruncateVerificationTable()
 			},
 		},
 	}

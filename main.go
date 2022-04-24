@@ -18,18 +18,17 @@ func main() {
 	api.MapUrl(app)
 
 	dbClient := sqlclient.OpenDBConnection()
-	if config.EnvironmentConf["ENVIRONMENT"] == "development" {
-		migrationService := migration.NewService(dbClient)
-		for _, definition := range migrationService.Migrate() {
-			if err := definition.Run(); err != nil {
-				go logger.Error(definition.Name, err)
-			}
+	migrationService := migration.NewService(dbClient)
+	for _, step := range migrationService.Migrate() {
+		if err := step.Run(); err != nil {
+			go logger.Error(step.Name, err)
 		}
-
+	}
+	if config.EnvironmentConf["ENVIRONMENT"] == "development" {
 		seederService := seeder.NewService(dbClient)
-		for _, definition := range seederService.Seed() {
-			if err := definition.Run(); err != nil {
-				go logger.Error(definition.Name, err)
+		for _, step := range seederService.Seed() {
+			if err := step.Run(); err != nil {
+				go logger.Error(step.Name, err)
 			}
 		}
 	}

@@ -9,7 +9,6 @@ type service struct {
 
 type IService interface {
 	Migrate() []Definition
-	Drop() []Definition
 }
 
 var migrations IMigration
@@ -34,23 +33,6 @@ func (service) Migrate() []Definition {
 			Name: "CreateVerificationTable",
 			Run: func() error {
 				return migrations.CreateVerificationTable()
-			},
-		},
-	}
-}
-
-func (service) Drop() []Definition {
-	return []Definition{
-		Definition{
-			Name: "DropUserTable",
-			Run: func() error {
-				return migrations.DropUserTable()
-			},
-		},
-		Definition{
-			Name: "DropVerificationTable",
-			Run: func() error {
-				return migrations.DropVerificationTable()
 			},
 		},
 	}

@@ -18,10 +18,7 @@ type migration struct {
 
 type IMigration interface {
 	CreateUserTable() error
-	DropUserTable() error
-
 	CreateVerificationTable() error
-	DropVerificationTable() error
 }
 
 func NewMigration(dbClient *gorm.DB) IMigration {
@@ -39,27 +36,11 @@ func (m migration) CreateUserTable() error {
 	return nil
 }
 
-func (m migration) DropUserTable() error {
-	res := m.dbClient.Exec("DROP TABLE users;")
-	if res.Error != nil {
-		return res.Error
-	}
-	return nil
-}
-
 func (m migration) CreateVerificationTable() error {
 	exits := m.dbClient.Migrator().HasTable(verification.Verification{})
 	if !exits {
 		go logger.Info("CreateVerificationTable")
 		return m.dbClient.AutoMigrate(verification.Verification{})
-	}
-	return nil
-}
-
-func (m migration) DropVerificationTable() error {
-	res := m.dbClient.Exec("DROP TABLE verifications;")
-	if res.Error != nil {
-		return res.Error
 	}
 	return nil
 }
