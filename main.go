@@ -4,10 +4,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/kotalco/api/pkg/logger"
 	"github.com/kotalco/cloud-api/api"
-	"github.com/kotalco/cloud-api/internal/user"
-	"github.com/kotalco/cloud-api/internal/verification"
 	"github.com/kotalco/cloud-api/pkg/config"
 	"github.com/kotalco/cloud-api/pkg/middleware"
+	"github.com/kotalco/cloud-api/pkg/migration"
+	"github.com/kotalco/cloud-api/pkg/seeder"
 	"github.com/kotalco/cloud-api/pkg/server"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
 )
@@ -18,16 +18,19 @@ func main() {
 	api.MapUrl(app)
 
 	dbClient := sqlclient.OpenDBConnection()
-	err := dbClient.AutoMigrate(new(user.User))
-	if err != nil {
-		go logger.Error("MIGRATION_FAILED", err)
-		return
+	migrationService := migration.NewService(dbClient)
+	for _, step := range migrationService.Migrations() {
+		if err := step.Run(); err != nil {
+			go logger.Error(step.Name, err)
+		}
 	}
-
-	err = dbClient.AutoMigrate(new(verification.Verification))
-	if err != nil {
-		go logger.Error("MIGRATION_FAILED", err)
-		return
+	if config.EnvironmentConf["ENVIRONMENT"] == "development" {
+		seederService := seeder.NewService(dbClient)
+		for _, step := range seederService.Seeds() {
+			if err := step.Run(); err != nil {
+				go logger.Error(step.Name, err)
+			}
+		}
 	}
 
 	server.StartServerWithGracefulShutdown(app)
