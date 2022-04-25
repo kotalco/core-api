@@ -19,14 +19,14 @@ func main() {
 
 	dbClient := sqlclient.OpenDBConnection()
 	migrationService := migration.NewService(dbClient)
-	for _, step := range migrationService.Migrate() {
+	for _, step := range migrationService.Migrations() {
 		if err := step.Run(); err != nil {
 			go logger.Error(step.Name, err)
 		}
 	}
 	if config.EnvironmentConf["ENVIRONMENT"] == "development" {
 		seederService := seeder.NewService(dbClient)
-		for _, step := range seederService.Seed() {
+		for _, step := range seederService.Seeds() {
 			if err := step.Run(); err != nil {
 				go logger.Error(step.Name, err)
 			}

@@ -11,7 +11,7 @@ import (
 type service struct{}
 
 type IService interface {
-	Seed() []Definition
+	Seeds() []Definition
 }
 
 var (
@@ -25,7 +25,7 @@ func NewService(dbClient *gorm.DB) IService {
 	return newService
 }
 
-func (s service) Seed() []Definition {
+func (s service) Seeds() []Definition {
 	return []Definition{
 		Definition{
 			Name: "SeedUsersTable",

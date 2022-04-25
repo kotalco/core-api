@@ -8,31 +8,31 @@ type service struct {
 }
 
 type IService interface {
-	Migrate() []Definition
+	Migrations() []Definition
 }
 
-var migrations IMigration
+var migrator IMigration
 
 func NewService(dbClient *gorm.DB) IService {
-	migrations = NewMigration(dbClient)
+	migrator = NewMigration(dbClient)
 
 	newService := new(service)
 	return newService
 
 }
 
-func (service) Migrate() []Definition {
+func (service) Migrations() []Definition {
 	return []Definition{
 		Definition{
 			Name: "CreateUserTable",
 			Run: func() error {
-				return migrations.CreateUserTable()
+				return migrator.CreateUserTable()
 			},
 		},
 		Definition{
 			Name: "CreateVerificationTable",
 			Run: func() error {
-				return migrations.CreateVerificationTable()
+				return migrator.CreateVerificationTable()
 			},
 		},
 	}
