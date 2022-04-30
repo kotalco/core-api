@@ -4,6 +4,7 @@ import (
 	"github.com/kotalco/api/pkg/logger"
 	"github.com/kotalco/cloud-api/internal/user"
 	"github.com/kotalco/cloud-api/internal/verification"
+	"github.com/kotalco/cloud-api/internal/workspace"
 	"gorm.io/gorm"
 )
 
@@ -19,6 +20,7 @@ type migration struct {
 type IMigration interface {
 	CreateUserTable() error
 	CreateVerificationTable() error
+	CreateWorkspaceTable() error
 }
 
 func NewMigration(dbClient *gorm.DB) IMigration {
@@ -41,6 +43,15 @@ func (m migration) CreateVerificationTable() error {
 	if !exits {
 		go logger.Info("CreateVerificationTable")
 		return m.dbClient.AutoMigrate(verification.Verification{})
+	}
+	return nil
+}
+
+func (m migration) CreateWorkspaceTable() error {
+	exits := m.dbClient.Migrator().HasTable(workspace.Workspace{})
+	if !exits {
+		go logger.Info("CreateWorkspaceTable")
+		return m.dbClient.AutoMigrate(workspace.Workspace{})
 	}
 	return nil
 }

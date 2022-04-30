@@ -35,5 +35,11 @@ func (service) Migrations() []Definition {
 				return migrator.CreateVerificationTable()
 			},
 		},
+		Definition{
+			Name: "CreateWorkspaceTable",
+			Run: func() error {
+				return migrator.CreateWorkspaceTable()
+			},
+		},
 	}
 }
