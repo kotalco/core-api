@@ -41,5 +41,10 @@ func (service) Migrations() []Definition {
 				return migrator.CreateWorkspaceTable()
 			},
 		},
+		Definition{Name: "CreateWorkspaceUserTable",
+			Run: func() error {
+				return migrator.CreateWorkspaceUserTable()
+			},
+		},
 	}
 }
