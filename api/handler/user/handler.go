@@ -1,6 +1,7 @@
 package user
 
 import (
+	"github.com/kotalco/cloud-api/internal/workspace"
 	"net/http"
 	"strconv"
 
@@ -20,9 +21,10 @@ var (
 	userService         = user.NewService()
 	mailService         = sendgrid.NewService()
 	verificationService = verification.NewService()
+	workspaceService    = workspace.NewService()
 )
 
-//SignUp validate dto , create user , send verification token
+//SignUp validate dto , create user , send verification token, create the default namespace and create the default workspace
 func SignUp(c *fiber.Ctx) error {
 	dto := new(user.SignUpRequestDto)
 	if err := c.BodyParser(dto); err != nil {
@@ -50,12 +52,27 @@ func SignUp(c *fiber.Ctx) error {
 
 	sqlclient.Commit(txHandle)
 
-	//send email verification
-	mailRequest := new(sendgrid.MailRequestDto)
-	mailRequest.Token = token
-	mailRequest.Email = model.Email
+	//section that user don't need to wait for
+	go func() {
+		//Create Workspace
+		//Don't Roll back created user , but create if not exits when user creates its first node
+		txHandle = sqlclient.Begin()
+		_, err := workspaceService.WithTransaction(txHandle).Create(new(workspace.CreateWorkspaceRequestDto), model.ID)
+		if err != nil {
+			sqlclient.Rollback(txHandle)
+			go logger.Error("USER_HANDLER_SIGN_UP", err)
+		}
 
-	go mailService.SignUp(mailRequest)
+		//TODO create k8s namespace
+		sqlclient.Commit(txHandle)
+
+		//send email verification
+		mailRequest := new(sendgrid.MailRequestDto)
+		mailRequest.Token = token
+		mailRequest.Email = model.Email
+
+		mailService.SignUp(mailRequest)
+	}()
 
 	return c.Status(http.StatusCreated).JSON(shared.NewResponse(new(user.UserResponseDto).Marshall(model)))
 }
