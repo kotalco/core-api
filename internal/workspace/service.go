@@ -6,6 +6,7 @@ import (
 	"github.com/kotalco/cloud-api/internal/workspaceuser"
 	"gorm.io/gorm"
 	"net/http"
+	"strings"
 )
 
 type service struct{}
@@ -46,7 +47,7 @@ func (service) Create(dto *CreateWorkspaceRequestDto, userId string) (*Workspace
 	workspace.ID = uuid.New().String()
 
 	workspace.Name = dto.Name
-	workspace.K8sNamespace = uuid.New().String()
+	workspace.K8sNamespace = strings.Replace(uuid.New().String(), "-", "", -1)
 	workspace.UserId = userId
 
 	err = workspaceRepo.Create(workspace)

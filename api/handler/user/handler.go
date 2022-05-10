@@ -2,6 +2,7 @@ package user
 
 import (
 	"github.com/kotalco/cloud-api/internal/workspace"
+	"github.com/kotalco/cloud-api/pkg/k8s"
 	"net/http"
 	"strconv"
 
@@ -22,6 +23,7 @@ var (
 	mailService         = sendgrid.NewService()
 	verificationService = verification.NewService()
 	workspaceService    = workspace.NewService()
+	namespaceService    = k8s.NewNamespace()
 )
 
 //SignUp validate dto , create user , send verification token, create the default namespace and create the default workspace
@@ -55,15 +57,20 @@ func SignUp(c *fiber.Ctx) error {
 	//section that user don't need to wait for
 	go func() {
 		//Create Workspace
-		//Don't Roll back created user , but create if not exits when user creates its first node
+		//Don't Roll back created user , but try to create the default workspace later  if not exits when user creates its first node
 		txHandle = sqlclient.Begin()
-		_, err := workspaceService.WithTransaction(txHandle).Create(new(workspace.CreateWorkspaceRequestDto), model.ID)
+		workspaceModel, err := workspaceService.WithTransaction(txHandle).Create(new(workspace.CreateWorkspaceRequestDto), model.ID)
 		if err != nil {
 			sqlclient.Rollback(txHandle)
 			go logger.Error("USER_HANDLER_SIGN_UP", err)
 		}
 
-		//TODO create k8s namespace
+		err = namespaceService.Create(workspaceModel.K8sNamespace)
+		if err != nil {
+			sqlclient.Rollback(txHandle)
+			go logger.Error("USER_HANDLER_SIGN_UP", err)
+		}
+
 		sqlclient.Commit(txHandle)
 
 		//send email verification

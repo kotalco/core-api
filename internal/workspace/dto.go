@@ -12,13 +12,14 @@ type CreateWorkspaceRequestDto struct {
 type WorkspaceResponseDto struct {
 	ID           string `json:"id"`
 	Name         string `json:"name"`
-	K8sNamespace string `json:"k8S_Namespace"`
+	K8sNamespace string `json:"k8s_Namespace"`
 }
 
 //Marshall creates workspace response from workspace model
 func (dto *WorkspaceResponseDto) Marshall(model *Workspace) *WorkspaceResponseDto {
 	dto.ID = model.ID
 	dto.Name = model.Name
+	dto.K8sNamespace = model.K8sNamespace
 	return dto
 }
 
