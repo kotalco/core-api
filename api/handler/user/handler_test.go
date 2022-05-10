@@ -9,6 +9,7 @@ import (
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
 	"gorm.io/gorm"
 	"io/ioutil"
+	corev1 "k8s.io/api/core/v1"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -173,11 +174,36 @@ func (wService workspaceServiceMock) WithTransaction(txHandle *gorm.DB) workspac
 	return wService
 }
 
+/*
+Namespace service Mocks
+*/
+
+var (
+	CreateNamespaceFunc func(name string) *restErrors.RestErr
+	GetNamespaceFunc    func(name string) (*corev1.Namespace, *restErrors.RestErr)
+	DeleteNamespaceFunc func(name string) *restErrors.RestErr
+)
+
+type namespaceServiceMock struct{}
+
+func (namespaceServiceMock) Create(name string) *restErrors.RestErr {
+	return CreateNamespaceFunc(name)
+}
+
+func (namespaceServiceMock) Get(name string) (*corev1.Namespace, *restErrors.RestErr) {
+	return GetNamespaceFunc(name)
+}
+
+func (namespaceServiceMock) Delete(name string) *restErrors.RestErr {
+	return DeleteNamespaceFunc(name)
+}
+
 func TestMain(m *testing.M) {
 	userService = &userServiceMock{}
 	verificationService = &verificationServiceMock{}
 	mailService = &mailServiceMock{}
 	workspaceService = &workspaceServiceMock{}
+	namespaceService = &namespaceServiceMock{}
 
 	sqlclient.OpenDBConnection()
 
@@ -245,6 +271,10 @@ func TestSignUp(t *testing.T) {
 			return responseDto, nil
 		}
 
+		CreateNamespaceFunc = func(name string) *restErrors.RestErr {
+			return nil
+		}
+
 		SignUpMailFunc = func(dto *sendgrid.MailRequestDto) *restErrors.RestErr {
 			return nil
 		}
@@ -291,8 +321,47 @@ func TestSignUp(t *testing.T) {
 		assert.EqualValues(t, http.StatusCreated, resp.StatusCode)
 		assert.EqualValues(t, "test@test.com", result["data"].Email)
 	})
+	t.Run("Sign_Up_Should_Pass_Even_If_Can't_Create_Namespace", func(t *testing.T) {
+		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr) {
+			newUser := new(user.User)
+			newUser.Email = "test@test.com"
+			return newUser, nil
+		}
+
+		CreateFunc = func(userId string) (string, *restErrors.RestErr) {
+			return "JWT-token", nil
+		}
+
+		CreateWorkspaceFunc = func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.WorkspaceResponseDto, *restErrors.RestErr) {
+			responseDto := new(workspace.WorkspaceResponseDto)
+			responseDto.ID = uuid.New().String()
+			responseDto.Name = "testNamespace"
+			responseDto.K8sNamespace = "testNamespace" + "-" + responseDto.ID
+			return responseDto, nil
+		}
+
+		CreateNamespaceFunc = func(name string) *restErrors.RestErr {
+			return restErrors.NewInternalServerError("can't create namespace")
+		}
+
+		SignUpMailFunc = func(dto *sendgrid.MailRequestDto) *restErrors.RestErr {
+			return nil
+		}
+
+		body, resp := newFiberCtx(validDto, SignUp, map[string]interface{}{})
+
+		var result map[string]user.UserResponseDto
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		assert.EqualValues(t, http.StatusCreated, resp.StatusCode)
+		assert.EqualValues(t, "test@test.com", result["data"].Email)
+	})
 
 	t.Run("Sign_Up_Should_Throw_Validation_Errors", func(t *testing.T) {
+
 		body, resp := newFiberCtx(invalidDto, SignUp, map[string]interface{}{})
 
 		var result restErrors.RestErr
@@ -312,6 +381,7 @@ func TestSignUp(t *testing.T) {
 	})
 
 	t.Run("Sing_Up_Should_Throw_Invalid_Request_Error", func(t *testing.T) {
+
 		body, resp := newFiberCtx("", SignUp, map[string]interface{}{})
 
 		var result restErrors.RestErr

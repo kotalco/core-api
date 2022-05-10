@@ -63,15 +63,15 @@ func SignUp(c *fiber.Ctx) error {
 		if err != nil {
 			sqlclient.Rollback(txHandle)
 			go logger.Error("USER_HANDLER_SIGN_UP", err)
+		} else {
+			k8err := namespaceService.Create(workspaceModel.K8sNamespace)
+			if k8err != nil {
+				sqlclient.Rollback(txHandle)
+				go logger.Error("USER_HANDLER_SIGN_UP", k8err)
+			} else {
+				sqlclient.Commit(txHandle)
+			}
 		}
-
-		err = namespaceService.Create(workspaceModel.K8sNamespace)
-		if err != nil {
-			sqlclient.Rollback(txHandle)
-			go logger.Error("USER_HANDLER_SIGN_UP", err)
-		}
-
-		sqlclient.Commit(txHandle)
 
 		//send email verification
 		mailRequest := new(sendgrid.MailRequestDto)

@@ -6,7 +6,7 @@ import (
 )
 
 type CreateWorkspaceRequestDto struct {
-	Name string `json:"name"`
+	Name string `json:"name" validate:"regexp=[a-z0-9]([-a-z0-9]*[a-z0-9])?"`
 }
 
 type WorkspaceResponseDto struct {
@@ -33,12 +33,12 @@ func Validate(dto interface{}) *restErrors.RestErr {
 		for _, err := range err.(validator.ValidationErrors) {
 			switch err.Field() {
 			case "Name":
-				fields["name"] = "invalid name format"
+				fields["name"] = "name can only have lowercase, alphanumeric or hyphen values"
 				break
 			}
 		}
 		if len(fields) > 0 {
-			restErrors.NewValidationError(fields)
+			return restErrors.NewValidationError(fields)
 		}
 	}
 	return nil

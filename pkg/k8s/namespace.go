@@ -11,6 +11,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+//namespace service communicates with k8s from community-api to create namespaces for different nodes
+// in combination with workspace-module they form (workspace exposed to the user which is the namespace behind the scenes)
 type namespace struct{}
 
 type INamespace interface {
@@ -19,6 +21,7 @@ type INamespace interface {
 	Delete(name string) *restErrors.RestErr
 }
 
+// NewNamespace returns new instance of the namespace service
 func NewNamespace() INamespace {
 	newNamespace := &namespace{}
 	return newNamespace
@@ -26,6 +29,7 @@ func NewNamespace() INamespace {
 
 var clientSet = communityK8s.Clientset()
 
+//Create creates new namespace from a given name using the clientSet from community-api microservice
 func (service *namespace) Create(name string) *restErrors.RestErr {
 	nsName := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
@@ -45,6 +49,7 @@ func (service *namespace) Create(name string) *restErrors.RestErr {
 	return nil
 }
 
+//Get returns a namespace if exits
 func (service *namespace) Get(name string) (*corev1.Namespace, *restErrors.RestErr) {
 	workspace, err := clientSet.CoreV1().Namespaces().Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
@@ -57,6 +62,7 @@ func (service *namespace) Get(name string) (*corev1.Namespace, *restErrors.RestE
 	return workspace, nil
 }
 
+//Delete deletes a namespace if exits
 func (service *namespace) Delete(name string) *restErrors.RestErr {
 	err := clientSet.CoreV1().Namespaces().Delete(context.Background(), name, metav1.DeleteOptions{})
 	if err != nil {

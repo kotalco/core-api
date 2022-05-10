@@ -30,7 +30,9 @@ func (wService service) WithTransaction(txHandle *gorm.DB) IService {
 	return wService
 }
 
+//Create creates new workspace and workspace-user record  from a given dto ,
 func (service) Create(dto *CreateWorkspaceRequestDto, userId string) (*WorkspaceResponseDto, *restErrors.RestErr) {
+
 	if dto.Name == "" {
 		dto.Name = "default"
 	}
@@ -55,6 +57,7 @@ func (service) Create(dto *CreateWorkspaceRequestDto, userId string) (*Workspace
 		return nil, err
 	}
 
+	//create workspace-user record
 	workspaceuser := new(workspaceuser.WorkspaceUser)
 	workspaceuser.ID = uuid.New().String()
 	workspaceuser.WorkspaceId = workspace.ID
