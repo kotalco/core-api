@@ -27,8 +27,6 @@ func NewNamespace() INamespace {
 	return newNamespace
 }
 
-var clientSet = communityK8s.Clientset()
-
 //Create creates new namespace from a given name using the clientSet from community-api microservice
 func (service *namespace) Create(name string) *restErrors.RestErr {
 	nsName := &corev1.Namespace{
@@ -36,7 +34,7 @@ func (service *namespace) Create(name string) *restErrors.RestErr {
 			Name: name,
 		},
 	}
-	_, err := clientSet.CoreV1().Namespaces().Create(context.Background(), nsName, metav1.CreateOptions{})
+	_, err := communityK8s.Clientset().CoreV1().Namespaces().Create(context.Background(), nsName, metav1.CreateOptions{})
 	if err != nil {
 		if errors.IsAlreadyExists(err) {
 			return restErrors.NewConflictError("namespace already exits")
@@ -51,7 +49,7 @@ func (service *namespace) Create(name string) *restErrors.RestErr {
 
 //Get returns a namespace if exits
 func (service *namespace) Get(name string) (*corev1.Namespace, *restErrors.RestErr) {
-	workspace, err := clientSet.CoreV1().Namespaces().Get(context.Background(), name, metav1.GetOptions{})
+	workspace, err := communityK8s.Clientset().CoreV1().Namespaces().Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil, restErrors.NewNotFoundError(fmt.Sprintf("can't find namespace %s", name))
@@ -64,7 +62,7 @@ func (service *namespace) Get(name string) (*corev1.Namespace, *restErrors.RestE
 
 //Delete deletes a namespace if exits
 func (service *namespace) Delete(name string) *restErrors.RestErr {
-	err := clientSet.CoreV1().Namespaces().Delete(context.Background(), name, metav1.DeleteOptions{})
+	err := communityK8s.Clientset().CoreV1().Namespaces().Delete(context.Background(), name, metav1.DeleteOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return restErrors.NewNotFoundError(fmt.Sprintf("namespace %s  does't exit", name))
