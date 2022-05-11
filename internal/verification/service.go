@@ -153,8 +153,6 @@ var generateToken = func() (string, *restErrors.RestErr) {
 
 	token := security.GenerateRandomString(tokenLength)
 
-	fmt.Println("this is the generated token ", token)
-
 	return token, nil
 }
 

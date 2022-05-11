@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/kotalco/cloud-api/internal/workspace"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
+	"github.com/kotalco/cloud-api/pkg/token"
 	"gorm.io/gorm"
 	"io/ioutil"
 	corev1 "k8s.io/api/core/v1"
@@ -1088,11 +1089,11 @@ func TestChangePassword(t *testing.T) {
 		"password_confirmation": "1234",
 	}
 
-	newUser := new(user.User)
+	newUser := new(token.AuthorizedUser)
 	newUser.Email = "test@test.com"
 	newUser.IsEmailVerified = true
 	var locals = map[string]interface{}{}
-	locals["user"] = newUser
+	locals["user"] = *newUser
 
 	t.Run("Change_Password_Should_Password", func(t *testing.T) {
 		ChangePasswordFunc = func(model *user.User, dto *user.ChangePasswordRequestDto) *restErrors.RestErr {
@@ -1176,11 +1177,11 @@ func TestChangeEmail(t *testing.T) {
 		"email":    "testcom",
 		"password": "123",
 	}
-	newUser := new(user.User)
+	newUser := new(token.AuthorizedUser)
 	newUser.Email = "test@test.com"
 	newUser.IsEmailVerified = true
 	var locals = map[string]interface{}{}
-	locals["user"] = newUser
+	locals["user"] = *newUser
 
 	t.Run("Change_Email_Should_Pass", func(t *testing.T) {
 		ChangeEmailFunc = func(model *user.User, dto *user.ChangeEmailRequestDto) *restErrors.RestErr {
@@ -1281,11 +1282,11 @@ func TestChangeEmail(t *testing.T) {
 
 func TestWhoami(t *testing.T) {
 	t.Run("Whoami_Should_Pass", func(t *testing.T) {
-		newUser := new(user.User)
+		newUser := new(token.AuthorizedUser)
 		newUser.Email = "test@test.com"
 		newUser.IsEmailVerified = true
 		var locals = map[string]interface{}{}
-		locals["user"] = newUser
+		locals["user"] = *newUser
 
 		body, resp := newFiberCtx(new(interface{}), Whoami, locals)
 
@@ -1302,11 +1303,11 @@ func TestWhoami(t *testing.T) {
 }
 
 func TestCreateTOTP(t *testing.T) {
-	newUser := new(user.User)
+	newUser := new(token.AuthorizedUser)
 	newUser.Email = "test@test.com"
 	newUser.IsEmailVerified = true
 	var locals = map[string]interface{}{}
-	locals["user"] = newUser
+	locals["user"] = *newUser
 
 	dto := new(user.CreateTOTPRequestDto)
 	dto.Password = "123456"
@@ -1364,11 +1365,11 @@ func TestCreateTOTP(t *testing.T) {
 }
 
 func TestEnableTwoFactorAuth(t *testing.T) {
-	newUser := new(user.User)
+	newUser := new(token.AuthorizedUser)
 	newUser.Email = "test@test.com"
 	newUser.IsEmailVerified = true
 	var locals = map[string]interface{}{}
-	locals["user"] = newUser
+	locals["user"] = *newUser
 
 	validDto := map[string]string{
 		"totop": "123456",
@@ -1377,7 +1378,8 @@ func TestEnableTwoFactorAuth(t *testing.T) {
 	t.Run("Enable_Two_Factor_Auth_Should_Pass", func(t *testing.T) {
 		EnableTwoFactorAuthFunc = func(model *user.User, totp string) (*user.User, *restErrors.RestErr) {
 			newUser.TwoFactorEnabled = true
-			return newUser, nil
+			user := user.User(*newUser)
+			return &user, nil
 		}
 
 		body, resp := newFiberCtx(validDto, EnableTwoFactorAuth, locals)
@@ -1425,11 +1427,11 @@ func TestEnableTwoFactorAuth(t *testing.T) {
 }
 
 func TestVerifyTOTP(t *testing.T) {
-	newUser := new(user.User)
+	newUser := new(token.AuthorizedUser)
 	newUser.Email = "test@test.com"
 	newUser.IsEmailVerified = true
 	var locals = map[string]interface{}{}
-	locals["user"] = newUser
+	locals["user"] = *newUser
 
 	validDto := map[string]string{
 		"totop": "123456",
@@ -1484,14 +1486,14 @@ func TestVerifyTOTP(t *testing.T) {
 }
 
 func TestDisableTwoFactorAuth(t *testing.T) {
-	newUser := new(user.User)
+	newUser := new(token.AuthorizedUser)
 	newUser.Email = "test@test.com"
 	newUser.IsEmailVerified = true
 
 	dto := new(user.DisableTOTPRequestDto)
 	dto.Password = "123456"
 	var locals = map[string]interface{}{}
-	locals["user"] = newUser
+	locals["user"] = *newUser
 
 	t.Run("Disable_Two_Factor_Auth_Should_Pass", func(t *testing.T) {
 		DisableTwoFactorAuthFunc = func(model *user.User, dto *user.DisableTOTPRequestDto) *restErrors.RestErr {
