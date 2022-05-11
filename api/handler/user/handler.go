@@ -312,6 +312,7 @@ func ChangePassword(c *fiber.Ctx) error {
 	}
 
 	err = userService.ChangePassword(userDetails, dto)
+
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -348,6 +349,7 @@ func ChangeEmail(c *fiber.Ctx) error {
 	txHandle := sqlclient.Begin()
 
 	err = userService.WithTransaction(txHandle).ChangeEmail(userDetails, dto)
+
 	if err != nil {
 		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
@@ -383,6 +385,7 @@ func Whoami(c *fiber.Ctx) error {
 	}
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(userDetails))
+
 }
 
 //CreateTOTP create time based one time password QR code so user can scan it with his mobile app
@@ -406,6 +409,7 @@ func CreateTOTP(c *fiber.Ctx) error {
 	}
 
 	qr, err := userService.CreateTOTP(userDetails, dto)
+
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -436,6 +440,7 @@ func EnableTwoFactorAuth(c *fiber.Ctx) error {
 	}
 
 	model, err := userService.EnableTwoFactorAuth(userDetails, dto.TOTP)
+
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -459,6 +464,7 @@ func VerifyTOTP(c *fiber.Ctx) error {
 	}
 
 	session, err := userService.VerifyTOTP(userDetails, dto.TOTP)
+
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -486,6 +492,7 @@ func DisableTwoFactorAuth(c *fiber.Ctx) error {
 	}
 
 	err = userService.DisableTwoFactorAuth(userDetails, dto)
+
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}

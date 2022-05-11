@@ -1476,6 +1476,7 @@ func TestEnableTwoFactorAuth(t *testing.T) {
 			user := new(user.User)
 			user.TwoFactorEnabled = true
 			return user, nil
+
 		}
 
 		body, resp := newFiberCtx(validDto, EnableTwoFactorAuth, locals)
