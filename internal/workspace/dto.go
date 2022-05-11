@@ -3,6 +3,7 @@ package workspace
 import (
 	"github.com/go-playground/validator/v10"
 	restErrors "github.com/kotalco/api/pkg/errors"
+	"regexp"
 )
 
 type CreateWorkspaceRequestDto struct {
@@ -26,7 +27,23 @@ func (dto *WorkspaceResponseDto) Marshall(model *Workspace) *WorkspaceResponseDt
 //Validate validates workspace requests fields
 func Validate(dto interface{}) *restErrors.RestErr {
 	newValidator := validator.New()
-	err := newValidator.Struct(dto)
+
+	//create custom validation tag for validate with regexp
+	err := newValidator.RegisterValidation("regexp", func(fl validator.FieldLevel) bool {
+		field := fl.Field().String()
+		if field == "" {
+			return false
+		}
+		regexString := fl.Param()
+		regex := regexp.MustCompile(regexString)
+		match := regex.MatchString(field)
+		return match
+	})
+	if err != nil {
+		return restErrors.NewInternalServerError("something went wrong")
+	}
+
+	err = newValidator.Struct(dto)
 
 	if err != nil {
 		fields := map[string]string{}

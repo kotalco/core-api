@@ -3,7 +3,6 @@ package workspace
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"github.com/gofiber/fiber/v2"
 	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/kotalco/cloud-api/internal/workspace"
@@ -114,12 +113,13 @@ func TestCreateWorkspace(t *testing.T) {
 	userDetails.ID = "test@test.com"
 	var locals = map[string]interface{}{}
 	locals["user"] = *userDetails
+
 	var validDto = map[string]string{
 		"name": "testnamespace",
 	}
-	//var invalidDto = map[string]string{
-	//	"email": "Invalid_Name",
-	//}
+	var invalidDto = map[string]string{
+		"email": "Invalid_Name",
+	}
 	t.Run("create_workspace_should_pass", func(t *testing.T) {
 		CreateNamespaceFunc = func(name string) *restErrors.RestErr {
 			return nil
@@ -134,7 +134,6 @@ func TestCreateWorkspace(t *testing.T) {
 
 		body, resp := newFiberCtx(validDto, Create, locals)
 
-		fmt.Println(string(body), resp.StatusCode)
 		var result map[string]workspace.WorkspaceResponseDto
 		err := json.Unmarshal(body, &result)
 		if err != nil {
@@ -143,5 +142,76 @@ func TestCreateWorkspace(t *testing.T) {
 
 		assert.EqualValues(t, http.StatusCreated, resp.StatusCode)
 		assert.EqualValues(t, "testName", result["data"].Name)
+
+	})
+
+	t.Run("create_workspace_should_throw_validation_error", func(t *testing.T) {
+		body, resp := newFiberCtx(invalidDto, Create, locals)
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+		var fields = map[string]string{}
+		fields["name"] = "name can only have lowercase, alphanumeric or hyphen values"
+		badReqErr := restErrors.NewValidationError(fields)
+
+		assert.EqualValues(t, badReqErr.Status, resp.StatusCode)
+		assert.Equal(t, *badReqErr, result)
+	})
+
+	t.Run("Create_workspace_Should_Throw_Invalid_Request_Error", func(t *testing.T) {
+		body, resp := newFiberCtx("", Create, locals)
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
+		assert.EqualValues(t, "invalid request body", result.Message)
+	})
+
+	t.Run("Create_Workspace_Should_Throw_If_workspace_Service_Throw", func(t *testing.T) {
+		CreateWorkspaceFunc = func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr) {
+			return nil, restErrors.NewBadRequestError("workspace service error")
+
+		}
+
+		body, resp := newFiberCtx(validDto, Create, locals)
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
+		assert.EqualValues(t, "workspace service error", result.Message)
+	})
+
+	t.Run("create_workspace_should_throw_if_can't_create_namespace", func(t *testing.T) {
+
+		CreateWorkspaceFunc = func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr) {
+			model := new(workspace.Workspace)
+			model.ID = "1"
+			model.Name = "testName"
+			return model, nil
+		}
+		CreateNamespaceFunc = func(name string) *restErrors.RestErr {
+			return restErrors.NewInternalServerError("can't create namespace")
+		}
+
+		body, resp := newFiberCtx(validDto, Create, locals)
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
+		assert.EqualValues(t, "can't create namespace", result.Message)
 	})
 }

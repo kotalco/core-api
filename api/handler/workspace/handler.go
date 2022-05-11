@@ -27,22 +27,22 @@ func Create(c *fiber.Ctx) error {
 		return c.Status(badReq.Status).JSON(badReq)
 	}
 
-	restErr := workspace.Validate(dto)
-	if restErr != nil {
-		return c.Status(restErr.Status).JSON(restErr)
+	err := workspace.Validate(dto)
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
 	}
 
 	txHandle := sqlclient.Begin()
-	model, restErr := workspaceService.WithTransaction(txHandle).Create(dto, userId)
-	if restErr != nil {
+	model, err := workspaceService.WithTransaction(txHandle).Create(dto, userId)
+	if err != nil {
 		sqlclient.Rollback(txHandle)
-		return c.Status(restErr.Status).JSON(restErr)
+		return c.Status(err.Status).JSON(err)
 	}
 
-	restErr = namespaceService.Create(model.K8sNamespace)
-	if restErr != nil {
+	err = namespaceService.Create(model.K8sNamespace)
+	if err != nil {
 		sqlclient.Rollback(txHandle)
-		return c.Status(restErr.Status).JSON(restErr)
+		return c.Status(err.Status).JSON(err)
 	}
 
 	sqlclient.Commit(txHandle)
