@@ -23,7 +23,7 @@ var (
 	mailService         = sendgrid.NewService()
 	verificationService = verification.NewService()
 	workspaceService    = workspace.NewService()
-	namespaceService    = k8s.NewNamespace()
+	namespaceService    = k8s.NewNamespaceService()
 )
 
 //SignUp validate dto , create user , send verification token, create the default namespace and create the default workspace
@@ -59,7 +59,9 @@ func SignUp(c *fiber.Ctx) error {
 		//Create Workspace
 		//Don't Roll back created user , but try to create the default workspace later  if not exits when user creates its first node
 		txHandle = sqlclient.Begin()
-		workspaceModel, err := workspaceService.WithTransaction(txHandle).Create(new(workspace.CreateWorkspaceRequestDto), model.ID)
+		workspaceDto := new(workspace.CreateWorkspaceRequestDto)
+		workspaceDto.Name = "default"
+		workspaceModel, err := workspaceService.WithTransaction(txHandle).Create(workspaceDto, model.ID)
 		if err != nil {
 			sqlclient.Rollback(txHandle)
 			go logger.Error("USER_HANDLER_SIGN_UP", err)

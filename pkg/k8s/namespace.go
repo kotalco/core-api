@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 	restErrors "github.com/kotalco/api/pkg/errors"
-	communityK8s "github.com/kotalco/api/pkg/k8s"
+	"github.com/kotalco/api/pkg/k8s"
 	"github.com/kotalco/api/pkg/logger"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 //namespace service communicates with k8s from community-api to create namespaces for different nodes
@@ -21,20 +22,20 @@ type INamespace interface {
 	Delete(name string) *restErrors.RestErr
 }
 
-// NewNamespace returns new instance of the namespace service
-func NewNamespace() INamespace {
+// NewNamespaceService returns new instance of the namespace service
+func NewNamespaceService() INamespace {
 	newNamespace := &namespace{}
 	return newNamespace
 }
 
 //Create creates new namespace from a given name using the clientSet from community-api microservice
 func (service *namespace) Create(name string) *restErrors.RestErr {
-	nsName := &corev1.Namespace{
+	ns := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 		},
 	}
-	_, err := communityK8s.Clientset().CoreV1().Namespaces().Create(context.Background(), nsName, metav1.CreateOptions{})
+	err := k8s.Client().Create(context.Background(), ns)
 	if err != nil {
 		if errors.IsAlreadyExists(err) {
 			return restErrors.NewConflictError("namespace already exits")
@@ -49,7 +50,13 @@ func (service *namespace) Create(name string) *restErrors.RestErr {
 
 //Get returns a namespace if exits
 func (service *namespace) Get(name string) (*corev1.Namespace, *restErrors.RestErr) {
-	workspace, err := communityK8s.Clientset().CoreV1().Namespaces().Get(context.Background(), name, metav1.GetOptions{})
+	ns := corev1.Namespace{}
+
+	key := types.NamespacedName{}
+	key.Namespace = name
+	key.Name = name
+
+	err := k8s.Client().Get(context.Background(), key, &ns)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil, restErrors.NewNotFoundError(fmt.Sprintf("can't find namespace %s", name))
@@ -57,15 +64,21 @@ func (service *namespace) Get(name string) (*corev1.Namespace, *restErrors.RestE
 		logger.Error(service.Get, err)
 		return nil, restErrors.NewInternalServerError("something went wrong")
 	}
-	return workspace, nil
+	return &ns, nil
 }
 
 //Delete deletes a namespace if exits
 func (service *namespace) Delete(name string) *restErrors.RestErr {
-	err := communityK8s.Clientset().CoreV1().Namespaces().Delete(context.Background(), name, metav1.DeleteOptions{})
+	ns := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+	}
+
+	err := k8s.Client().Delete(context.Background(), ns)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return restErrors.NewNotFoundError(fmt.Sprintf("namespace %s  does't exit", name))
+			return restErrors.NewNotFoundError(fmt.Sprintf("namespace %s does't exit", name))
 		}
 		logger.Error(service.Delete, err)
 		return restErrors.NewInternalServerError("something went wrong!")

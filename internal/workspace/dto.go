@@ -6,13 +6,13 @@ import (
 )
 
 type CreateWorkspaceRequestDto struct {
-	Name string `json:"name" validate:"regexp=[a-z0-9]([-a-z0-9]*[a-z0-9])?"`
+	Name string `json:"name"  validate:"required,gte=1,lte=100"`
 }
 
 type WorkspaceResponseDto struct {
 	ID           string `json:"id"`
 	Name         string `json:"name"`
-	K8sNamespace string `json:"k8s_Namespace"`
+	K8sNamespace string `json:"k8s_namespace"`
 }
 
 //Marshall creates workspace response from workspace model
@@ -33,7 +33,7 @@ func Validate(dto interface{}) *restErrors.RestErr {
 		for _, err := range err.(validator.ValidationErrors) {
 			switch err.Field() {
 			case "Name":
-				fields["name"] = "name can only have lowercase, alphanumeric or hyphen values"
+				fields["name"] = "name should be greater than 1 char and less than 100 char"
 				break
 			}
 		}
