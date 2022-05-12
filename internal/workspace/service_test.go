@@ -82,7 +82,7 @@ func TestService_Create(t *testing.T) {
 			return nil
 		}
 
-		model, err := workspaceTestService.Create(&CreateWorkspaceRequestDto{}, "1")
+		model, err := workspaceTestService.Create(&CreateWorkspaceRequestDto{Name: "default"}, "1")
 		assert.Nil(t, err)
 		assert.EqualValues(t, "default", model.Name)
 	})
