@@ -1,6 +1,8 @@
 package user
 
 import (
+	"github.com/kotalco/cloud-api/internal/workspace"
+	"github.com/kotalco/cloud-api/pkg/k8s"
 	"net/http"
 	"strconv"
 
@@ -20,9 +22,11 @@ var (
 	userService         = user.NewService()
 	mailService         = sendgrid.NewService()
 	verificationService = verification.NewService()
+	workspaceService    = workspace.NewService()
+	namespaceService    = k8s.NewNamespaceService()
 )
 
-//SignUp validate dto , create user , send verification token
+//SignUp validate dto , create user , send verification token, create the default namespace and create the default workspace
 func SignUp(c *fiber.Ctx) error {
 	dto := new(user.SignUpRequestDto)
 	if err := c.BodyParser(dto); err != nil {
@@ -50,12 +54,34 @@ func SignUp(c *fiber.Ctx) error {
 
 	sqlclient.Commit(txHandle)
 
-	//send email verification
-	mailRequest := new(sendgrid.MailRequestDto)
-	mailRequest.Token = token
-	mailRequest.Email = model.Email
+	//section that user don't need to wait for
+	go func() {
+		//Create Workspace
+		//Don't Roll back created user , but try to create the default workspace later  if not exits when user creates its first node
+		txHandle = sqlclient.Begin()
+		workspaceDto := new(workspace.CreateWorkspaceRequestDto)
+		workspaceDto.Name = "default"
+		workspaceModel, err := workspaceService.WithTransaction(txHandle).Create(workspaceDto, model.ID)
+		if err != nil {
+			sqlclient.Rollback(txHandle)
+			go logger.Error("USER_HANDLER_SIGN_UP", err)
+		} else {
+			k8err := namespaceService.Create(workspaceModel.K8sNamespace)
+			if k8err != nil {
+				sqlclient.Rollback(txHandle)
+				go logger.Error("USER_HANDLER_SIGN_UP", k8err)
+			} else {
+				sqlclient.Commit(txHandle)
+			}
+		}
 
-	go mailService.SignUp(mailRequest)
+		//send email verification
+		mailRequest := new(sendgrid.MailRequestDto)
+		mailRequest.Token = token
+		mailRequest.Email = model.Email
+
+		mailService.SignUp(mailRequest)
+	}()
 
 	return c.Status(http.StatusCreated).JSON(shared.NewResponse(new(user.UserResponseDto).Marshall(model)))
 }
