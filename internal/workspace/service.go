@@ -37,7 +37,7 @@ func (service) Create(dto *CreateWorkspaceRequestDto, userId string) (*Workspace
 	}
 
 	if exist != nil {
-		return nil, restErrors.NewConflictError("workspace already exits")
+		return nil, restErrors.NewConflictError("workspace already exist")
 	}
 
 	workspace := new(Workspace)
