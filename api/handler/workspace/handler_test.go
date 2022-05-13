@@ -118,7 +118,7 @@ func TestCreateWorkspace(t *testing.T) {
 		"name": "testnamespace",
 	}
 	var invalidDto = map[string]string{
-		"email": "Invalid_Name",
+		"email": "1",
 	}
 	t.Run("create_workspace_should_pass", func(t *testing.T) {
 		CreateNamespaceFunc = func(name string) *restErrors.RestErr {
@@ -153,7 +153,7 @@ func TestCreateWorkspace(t *testing.T) {
 			panic(err.Error())
 		}
 		var fields = map[string]string{}
-		fields["name"] = "name can only have lowercase, alphanumeric or hyphen values"
+		fields["name"] = "name should be greater than 1 char and less than 100 char"
 		badReqErr := restErrors.NewValidationError(fields)
 
 		assert.EqualValues(t, badReqErr.Status, resp.StatusCode)
