@@ -13,12 +13,7 @@ type AccessDetails struct {
 	Authorized bool
 }
 
-// AuthorizedUser Dto used to define user type that we get from locals in  *.handlers instead of using user struct from users pkg
-type AuthorizedUser struct {
-	ID               string
-	Email            string
-	IsEmailVerified  bool
-	Password         string
-	TwoFactorCipher  string
-	TwoFactorEnabled bool
+// UserDetails Dto used to get needed user details
+type UserDetails struct {
+	ID string
 }

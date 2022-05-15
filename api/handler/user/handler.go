@@ -294,7 +294,11 @@ func ResetPassword(c *fiber.Ctx) error {
 //ChangePassword change user password
 //todo log all user token out
 func ChangePassword(c *fiber.Ctx) error {
-	authorizedUser := user.User(c.Locals("user").(token.AuthorizedUser))
+	userId := c.Locals("user").(token.UserDetails).ID
+	userDetails, err := userService.GetById(userId)
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
 
 	dto := new(user.ChangePasswordRequestDto)
 	if err := c.BodyParser(dto); err != nil {
@@ -302,12 +306,12 @@ func ChangePassword(c *fiber.Ctx) error {
 		return c.Status(badReq.Status).JSON(badReq)
 	}
 
-	err := user.Validate(dto)
+	err = user.Validate(dto)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	err = userService.ChangePassword(&authorizedUser, dto)
+	err = userService.ChangePassword(userDetails, dto)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -324,7 +328,11 @@ func ChangePassword(c *fiber.Ctx) error {
 
 //ChangeEmail change user email and send verification token to the user email
 func ChangeEmail(c *fiber.Ctx) error {
-	authorizedUser := user.User(c.Locals("user").(token.AuthorizedUser))
+	userId := c.Locals("user").(token.UserDetails).ID
+	userDetails, err := userService.GetById(userId)
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
 
 	dto := new(user.ChangeEmailRequestDto)
 	if err := c.BodyParser(dto); err != nil {
@@ -332,20 +340,20 @@ func ChangeEmail(c *fiber.Ctx) error {
 		return c.Status(badReq.Status).JSON(badReq)
 	}
 
-	err := user.Validate(dto)
+	err = user.Validate(dto)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
 
 	txHandle := sqlclient.Begin()
 
-	err = userService.WithTransaction(txHandle).ChangeEmail(&authorizedUser, dto)
+	err = userService.WithTransaction(txHandle).ChangeEmail(userDetails, dto)
 	if err != nil {
 		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
 
-	token, err := verificationService.WithTransaction(txHandle).Resend(authorizedUser.ID)
+	token, err := verificationService.WithTransaction(txHandle).Resend(userDetails.ID)
 	if err != nil {
 		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
@@ -355,7 +363,7 @@ func ChangeEmail(c *fiber.Ctx) error {
 
 	mailRequest := new(sendgrid.MailRequestDto)
 	mailRequest.Token = token
-	mailRequest.Email = authorizedUser.Email
+	mailRequest.Email = userDetails.Email
 
 	go mailService.ResendEmailVerification(mailRequest)
 
@@ -368,18 +376,22 @@ func ChangeEmail(c *fiber.Ctx) error {
 }
 
 func Whoami(c *fiber.Ctx) error {
-	authorizedUser := c.Locals("user").(token.AuthorizedUser)
+	userId := c.Locals("user").(token.UserDetails).ID
+	userDetails, err := userService.GetById(userId)
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
 
-	dto := new(user.UserResponseDto)
-	dto.ID = authorizedUser.ID
-	dto.Email = authorizedUser.Email
-	dto.TwoFactorEnabled = authorizedUser.TwoFactorEnabled
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(dto))
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(userDetails))
 }
 
 //CreateTOTP create time based one time password QR code so user can scan it with his mobile app
 func CreateTOTP(c *fiber.Ctx) error {
-	authorizedUser := user.User(c.Locals("user").(token.AuthorizedUser))
+	userId := c.Locals("user").(token.UserDetails).ID
+	userDetails, err := userService.GetById(userId)
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
 
 	dto := new(user.CreateTOTPRequestDto)
 
@@ -388,12 +400,12 @@ func CreateTOTP(c *fiber.Ctx) error {
 		return c.Status(badReq.Status).JSON(badReq)
 	}
 
-	err := user.Validate(dto)
+	err = user.Validate(dto)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	qr, err := userService.CreateTOTP(&authorizedUser, dto)
+	qr, err := userService.CreateTOTP(userDetails, dto)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -411,7 +423,11 @@ func CreateTOTP(c *fiber.Ctx) error {
 //EnableTwoFactorAuth used one time when user scan the QR code to verify it scanned and configured correctly
 //then it enables two-factor auth for the user
 func EnableTwoFactorAuth(c *fiber.Ctx) error {
-	authorizedUser := user.User(c.Locals("user").(token.AuthorizedUser))
+	userId := c.Locals("user").(token.UserDetails).ID
+	userDetails, err := userService.GetById(userId)
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
 
 	dto := new(user.TOTPRequestDto)
 	if err := c.BodyParser(dto); err != nil {
@@ -419,7 +435,7 @@ func EnableTwoFactorAuth(c *fiber.Ctx) error {
 		return c.Status(badReq.Status).JSON(badReq)
 	}
 
-	model, err := userService.EnableTwoFactorAuth(&authorizedUser, dto.TOTP)
+	model, err := userService.EnableTwoFactorAuth(userDetails, dto.TOTP)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -430,7 +446,11 @@ func EnableTwoFactorAuth(c *fiber.Ctx) error {
 //VerifyTOTP used after the login if the user enabled 2fa his bearer token will be limited to specific functions including this one
 //create new bearer token for the user after totp validation
 func VerifyTOTP(c *fiber.Ctx) error {
-	authorizedUser := user.User(c.Locals("user").(token.AuthorizedUser))
+	userId := c.Locals("user").(token.UserDetails).ID
+	userDetails, err := userService.GetById(userId)
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
 
 	dto := new(user.TOTPRequestDto)
 	if err := c.BodyParser(dto); err != nil {
@@ -438,7 +458,7 @@ func VerifyTOTP(c *fiber.Ctx) error {
 		return c.Status(badReq.Status).JSON(badReq)
 	}
 
-	session, err := userService.VerifyTOTP(&authorizedUser, dto.TOTP)
+	session, err := userService.VerifyTOTP(userDetails, dto.TOTP)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -447,7 +467,11 @@ func VerifyTOTP(c *fiber.Ctx) error {
 }
 
 func DisableTwoFactorAuth(c *fiber.Ctx) error {
-	authorizedUser := user.User(c.Locals("user").(token.AuthorizedUser))
+	userId := c.Locals("user").(token.UserDetails).ID
+	userDetails, err := userService.GetById(userId)
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
 
 	dto := new(user.DisableTOTPRequestDto)
 
@@ -456,12 +480,12 @@ func DisableTwoFactorAuth(c *fiber.Ctx) error {
 		return c.Status(badReq.Status).JSON(badReq)
 	}
 
-	err := user.Validate(dto)
+	err = user.Validate(dto)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	err = userService.DisableTwoFactorAuth(&authorizedUser, dto)
+	err = userService.DisableTwoFactorAuth(userDetails, dto)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}

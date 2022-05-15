@@ -26,7 +26,9 @@ func JWTProtected(c *fiber.Ctx) error {
 		}
 		return c.Status(err.Status).JSON(err)
 	}
-	c.Locals("user", token.AuthorizedUser(*user))
+	userDetails := new(token.UserDetails)
+	userDetails.ID = user.ID
+	c.Locals("user", *userDetails)
 	c.Next()
 	return nil
 }

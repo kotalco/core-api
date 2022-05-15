@@ -35,6 +35,7 @@ var (
 	SignInFunc               func(dto *user.SignInRequestDto) (*user.UserSessionResponseDto, *restErrors.RestErr)
 	VerifyTOTPFunc           func(model *user.User, totp string) (*user.UserSessionResponseDto, *restErrors.RestErr)
 	GetByEmailFunc           func(email string) (*user.User, *restErrors.RestErr)
+	GetByIdFunc              func(Id string) (*user.User, *restErrors.RestErr)
 	VerifyEmailFunc          func(model *user.User) *restErrors.RestErr
 	ResetPasswordFunc        func(model *user.User, password string) *restErrors.RestErr
 	ChangePasswordFunc       func(model *user.User, dto *user.ChangePasswordRequestDto) *restErrors.RestErr
@@ -61,6 +62,10 @@ func (userServiceMock) SignIn(dto *user.SignInRequestDto) (*user.UserSessionResp
 
 func (userServiceMock) GetByEmail(email string) (*user.User, *restErrors.RestErr) {
 	return GetByEmailFunc(email)
+}
+
+func (userServiceMock) GetById(Id string) (*user.User, *restErrors.RestErr) {
+	return GetByIdFunc(Id)
 }
 
 func (userServiceMock) VerifyEmail(model *user.User) *restErrors.RestErr {
@@ -1089,17 +1094,18 @@ func TestChangePassword(t *testing.T) {
 		"password_confirmation": "1234",
 	}
 
-	newUser := new(token.AuthorizedUser)
-	newUser.Email = "test@test.com"
-	newUser.IsEmailVerified = true
+	userDetails := new(token.UserDetails)
+	userDetails.ID = "test@test.com"
 	var locals = map[string]interface{}{}
-	locals["user"] = *newUser
+	locals["user"] = *userDetails
 
-	t.Run("Change_Password_Should_Password", func(t *testing.T) {
+	t.Run("Change_Password_Should_Pass", func(t *testing.T) {
 		ChangePasswordFunc = func(model *user.User, dto *user.ChangePasswordRequestDto) *restErrors.RestErr {
 			return nil
 		}
-
+		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+			return new(user.User), nil
+		}
 		body, resp := newFiberCtx(validDto, ChangePassword, locals)
 
 		type message struct {
@@ -1117,6 +1123,9 @@ func TestChangePassword(t *testing.T) {
 	})
 
 	t.Run("Change_Password_Should_Throw_Validation_Errors", func(t *testing.T) {
+		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+			return new(user.User), nil
+		}
 		body, resp := newFiberCtx(invalidDto, ChangePassword, locals)
 
 		var result restErrors.RestErr
@@ -1137,6 +1146,9 @@ func TestChangePassword(t *testing.T) {
 	})
 
 	t.Run("Change_Password_Should_Throw_Invalid_Request_Error", func(t *testing.T) {
+		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+			return new(user.User), nil
+		}
 		body, resp := newFiberCtx("", ChangePassword, locals)
 
 		var result restErrors.RestErr
@@ -1150,6 +1162,9 @@ func TestChangePassword(t *testing.T) {
 	})
 
 	t.Run("Change_Password_Should_Throw_If_User_Service_Throw", func(t *testing.T) {
+		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+			return new(user.User), nil
+		}
 		ChangePasswordFunc = func(model *user.User, dto *user.ChangePasswordRequestDto) *restErrors.RestErr {
 			return restErrors.NewBadRequestError("user service error")
 		}
@@ -1165,6 +1180,22 @@ func TestChangePassword(t *testing.T) {
 		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
 		assert.EqualValues(t, "user service error", result.Message)
 	})
+	t.Run("Change_Password_Should_Throw_If_User_Does_not_exist", func(t *testing.T) {
+		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+			return nil, restErrors.NewNotFoundError("no such user")
+		}
+
+		body, resp := newFiberCtx(validDto, ChangePassword, locals)
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		assert.EqualValues(t, http.StatusNotFound, resp.StatusCode)
+		assert.EqualValues(t, "no such user", result.Message)
+	})
 
 }
 
@@ -1177,11 +1208,11 @@ func TestChangeEmail(t *testing.T) {
 		"email":    "testcom",
 		"password": "123",
 	}
-	newUser := new(token.AuthorizedUser)
-	newUser.Email = "test@test.com"
-	newUser.IsEmailVerified = true
+
+	userDetails := new(token.UserDetails)
+	userDetails.ID = "test@test.com"
 	var locals = map[string]interface{}{}
-	locals["user"] = *newUser
+	locals["user"] = *userDetails
 
 	t.Run("Change_Email_Should_Pass", func(t *testing.T) {
 		ChangeEmailFunc = func(model *user.User, dto *user.ChangeEmailRequestDto) *restErrors.RestErr {
@@ -1192,6 +1223,9 @@ func TestChangeEmail(t *testing.T) {
 		}
 		ResendEmailVerificationFunc = func(dto *sendgrid.MailRequestDto) *restErrors.RestErr {
 			return nil
+		}
+		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+			return new(user.User), nil
 		}
 
 		body, resp := newFiberCtx(validDto, ChangeEmail, locals)
@@ -1211,6 +1245,9 @@ func TestChangeEmail(t *testing.T) {
 	})
 
 	t.Run("Change_Email_Should_Throw_Validation_Errors", func(t *testing.T) {
+		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+			return new(user.User), nil
+		}
 		body, resp := newFiberCtx(inValidDto, ChangeEmail, locals)
 
 		var result restErrors.RestErr
@@ -1230,6 +1267,9 @@ func TestChangeEmail(t *testing.T) {
 	})
 
 	t.Run("Change_Email_Should_Throw_Invalid_Request_Error", func(t *testing.T) {
+		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+			return new(user.User), nil
+		}
 		body, resp := newFiberCtx("", ChangeEmail, locals)
 
 		var result restErrors.RestErr
@@ -1243,6 +1283,9 @@ func TestChangeEmail(t *testing.T) {
 	})
 
 	t.Run("Change_Email_Should_Throw_If_User_Service_Throw", func(t *testing.T) {
+		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+			return new(user.User), nil
+		}
 		ChangeEmailFunc = func(model *user.User, dto *user.ChangeEmailRequestDto) *restErrors.RestErr {
 			return restErrors.NewBadRequestError("change email user service error")
 		}
@@ -1259,6 +1302,9 @@ func TestChangeEmail(t *testing.T) {
 		assert.EqualValues(t, "change email user service error", result.Message)
 	})
 	t.Run("Change_Email_Should_Throw_If_Verification_Service_Throw", func(t *testing.T) {
+		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+			return new(user.User), nil
+		}
 		ChangeEmailFunc = func(model *user.User, dto *user.ChangeEmailRequestDto) *restErrors.RestErr {
 			return nil
 		}
@@ -1277,16 +1323,36 @@ func TestChangeEmail(t *testing.T) {
 		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
 		assert.EqualValues(t, "verification service error", result.Message)
 	})
+	t.Run("Change_Email_Should_Throw_If_User_Not_Found", func(t *testing.T) {
+		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+			return nil, restErrors.NewNotFoundError("no such user")
+		}
+
+		body, resp := newFiberCtx(validDto, ChangeEmail, locals)
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		assert.EqualValues(t, http.StatusNotFound, resp.StatusCode)
+		assert.EqualValues(t, "no such user", result.Message)
+	})
 
 }
 
 func TestWhoami(t *testing.T) {
 	t.Run("Whoami_Should_Pass", func(t *testing.T) {
-		newUser := new(token.AuthorizedUser)
-		newUser.Email = "test@test.com"
-		newUser.IsEmailVerified = true
+		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+			model := new(user.User)
+			model.ID = "1"
+			return model, nil
+		}
+		userDetails := new(token.UserDetails)
+		userDetails.ID = "1"
 		var locals = map[string]interface{}{}
-		locals["user"] = *newUser
+		locals["user"] = *userDetails
 
 		body, resp := newFiberCtx(new(interface{}), Whoami, locals)
 
@@ -1297,22 +1363,24 @@ func TestWhoami(t *testing.T) {
 			panic(err.Error())
 		}
 
-		assert.EqualValues(t, newUser.Email, result["data"].Email)
+		assert.EqualValues(t, userDetails.ID, result["data"].ID)
 		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
 	})
 }
 
 func TestCreateTOTP(t *testing.T) {
-	newUser := new(token.AuthorizedUser)
-	newUser.Email = "test@test.com"
-	newUser.IsEmailVerified = true
+	userDetails := new(token.UserDetails)
+	userDetails.ID = "1"
 	var locals = map[string]interface{}{}
-	locals["user"] = *newUser
+	locals["user"] = *userDetails
 
 	dto := new(user.CreateTOTPRequestDto)
 	dto.Password = "123456"
 
 	t.Run("Create_TOTP_Should_Pass", func(t *testing.T) {
+		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+			return new(user.User), nil
+		}
 		CreateTOTPFunc = func(model *user.User, dto *user.CreateTOTPRequestDto) (bytes.Buffer, *restErrors.RestErr) {
 			return bytes.Buffer{}, nil
 		}
@@ -1321,11 +1389,17 @@ func TestCreateTOTP(t *testing.T) {
 		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
 	})
 	t.Run("Create_TOTP_Should_Throw_Invalid_Request_Body", func(t *testing.T) {
+		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+			return new(user.User), nil
+		}
 		_, resp := newFiberCtx("", CreateTOTP, locals)
 		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
 	})
 
 	t.Run("Create_TOTP_Should_Throw_Validation_Errors", func(t *testing.T) {
+		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+			return new(user.User), nil
+		}
 		invalidDto := new(user.CreateTOTPRequestDto)
 		invalidDto.Password = "123"
 		body, resp := newFiberCtx(invalidDto, CreateTOTP, locals)
@@ -1346,6 +1420,9 @@ func TestCreateTOTP(t *testing.T) {
 	})
 
 	t.Run("Create_TOTP_Should_Throw_If_User_Service_Throws", func(t *testing.T) {
+		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+			return new(user.User), nil
+		}
 		CreateTOTPFunc = func(model *user.User, dto *user.CreateTOTPRequestDto) (bytes.Buffer, *restErrors.RestErr) {
 			return bytes.Buffer{}, restErrors.NewBadRequestError("user service errors")
 		}
@@ -1361,25 +1438,44 @@ func TestCreateTOTP(t *testing.T) {
 		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
 		assert.EqualValues(t, result.Message, result.Message)
 	})
+	t.Run("Create_TOTP_Should_Throw_If_User_Not_Found", func(t *testing.T) {
+		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+			return nil, restErrors.NewNotFoundError("no such user")
+		}
+
+		body, resp := newFiberCtx(dto, CreateTOTP, locals)
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		assert.EqualValues(t, http.StatusNotFound, resp.StatusCode)
+		assert.EqualValues(t, "no such user", result.Message)
+	})
 
 }
 
 func TestEnableTwoFactorAuth(t *testing.T) {
-	newUser := new(token.AuthorizedUser)
-	newUser.Email = "test@test.com"
-	newUser.IsEmailVerified = true
+	userDetails := new(token.UserDetails)
+	userDetails.ID = "1"
 	var locals = map[string]interface{}{}
-	locals["user"] = *newUser
+	locals["user"] = *userDetails
 
 	validDto := map[string]string{
 		"totop": "123456",
 	}
 
 	t.Run("Enable_Two_Factor_Auth_Should_Pass", func(t *testing.T) {
+
+		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+			return new(user.User), nil
+		}
 		EnableTwoFactorAuthFunc = func(model *user.User, totp string) (*user.User, *restErrors.RestErr) {
-			newUser.TwoFactorEnabled = true
-			user := user.User(*newUser)
-			return &user, nil
+			user := new(user.User)
+			user.TwoFactorEnabled = true
+			return user, nil
 		}
 
 		body, resp := newFiberCtx(validDto, EnableTwoFactorAuth, locals)
@@ -1391,10 +1487,12 @@ func TestEnableTwoFactorAuth(t *testing.T) {
 		}
 
 		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
-		assert.EqualValues(t, "test@test.com", result["data"].Email)
 	})
 
 	t.Run("Enable_Two_Factor_Auth_Should_Throw_Invalid_Request_Body", func(t *testing.T) {
+		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+			return new(user.User), nil
+		}
 		body, resp := newFiberCtx("", EnableTwoFactorAuth, locals)
 
 		var result restErrors.RestErr
@@ -1408,6 +1506,9 @@ func TestEnableTwoFactorAuth(t *testing.T) {
 	})
 
 	t.Run("Enable_Two_Factor_Auth_Should_Throw_if_user_Service_Throws", func(t *testing.T) {
+		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+			return new(user.User), nil
+		}
 		EnableTwoFactorAuthFunc = func(model *user.User, totp string) (*user.User, *restErrors.RestErr) {
 			return nil, restErrors.NewBadRequestError("user service errors")
 		}
@@ -1423,21 +1524,39 @@ func TestEnableTwoFactorAuth(t *testing.T) {
 		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
 		assert.EqualValues(t, "user service errors", result.Message)
 	})
+	t.Run("Enable_Two_Factor_Auth_Should_Throw_if_user_Not_Found", func(t *testing.T) {
+		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+			return nil, restErrors.NewNotFoundError("no such user")
+		}
+
+		body, resp := newFiberCtx(validDto, EnableTwoFactorAuth, locals)
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		assert.EqualValues(t, http.StatusNotFound, resp.StatusCode)
+		assert.EqualValues(t, "no such user", result.Message)
+	})
 
 }
 
 func TestVerifyTOTP(t *testing.T) {
-	newUser := new(token.AuthorizedUser)
-	newUser.Email = "test@test.com"
-	newUser.IsEmailVerified = true
+	userDetails := new(token.UserDetails)
+	userDetails.ID = "1"
 	var locals = map[string]interface{}{}
-	locals["user"] = *newUser
+	locals["user"] = *userDetails
 
 	validDto := map[string]string{
 		"totop": "123456",
 	}
 
 	t.Run("Verify_TOTP_Should_Pass", func(t *testing.T) {
+		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+			return new(user.User), nil
+		}
 		VerifyTOTPFunc = func(model *user.User, totp string) (*user.UserSessionResponseDto, *restErrors.RestErr) {
 			return new(user.UserSessionResponseDto), nil
 		}
@@ -1454,6 +1573,9 @@ func TestVerifyTOTP(t *testing.T) {
 	})
 
 	t.Run("Verify_TOTP_Should_Throw_Invalid_Request_Body", func(t *testing.T) {
+		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+			return new(user.User), nil
+		}
 		body, resp := newFiberCtx("", VerifyTOTP, locals)
 
 		var result restErrors.RestErr
@@ -1467,6 +1589,9 @@ func TestVerifyTOTP(t *testing.T) {
 	})
 
 	t.Run("Verify_TOTP_Should_Throw_If_User_Service_Throws", func(t *testing.T) {
+		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+			return new(user.User), nil
+		}
 		VerifyTOTPFunc = func(model *user.User, totp string) (*user.UserSessionResponseDto, *restErrors.RestErr) {
 			return nil, restErrors.NewBadRequestError("user service can't verify otp")
 		}
@@ -1482,20 +1607,38 @@ func TestVerifyTOTP(t *testing.T) {
 		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
 		assert.EqualValues(t, "user service can't verify otp", result.Message)
 	})
+	t.Run("Verify_TOTP_Should_Throw_If_User_Not_Found", func(t *testing.T) {
+		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+			return nil, restErrors.NewNotFoundError("no such user")
+		}
+
+		body, resp := newFiberCtx(validDto, VerifyTOTP, locals)
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		assert.EqualValues(t, http.StatusNotFound, resp.StatusCode)
+		assert.EqualValues(t, "no such user", result.Message)
+	})
 
 }
 
 func TestDisableTwoFactorAuth(t *testing.T) {
-	newUser := new(token.AuthorizedUser)
-	newUser.Email = "test@test.com"
-	newUser.IsEmailVerified = true
+	userDetails := new(token.UserDetails)
+	userDetails.ID = "1"
+	var locals = map[string]interface{}{}
+	locals["user"] = *userDetails
 
 	dto := new(user.DisableTOTPRequestDto)
 	dto.Password = "123456"
-	var locals = map[string]interface{}{}
-	locals["user"] = *newUser
 
 	t.Run("Disable_Two_Factor_Auth_Should_Pass", func(t *testing.T) {
+		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+			return new(user.User), nil
+		}
 		DisableTwoFactorAuthFunc = func(model *user.User, dto *user.DisableTOTPRequestDto) *restErrors.RestErr {
 			return nil
 		}
@@ -1515,6 +1658,9 @@ func TestDisableTwoFactorAuth(t *testing.T) {
 		assert.EqualValues(t, "2FA disabled", result["data"].Message)
 	})
 	t.Run("Disable_Two_Factor_Auth_Should_Throw_Invalid_Request_Body", func(t *testing.T) {
+		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+			return new(user.User), nil
+		}
 
 		body, resp := newFiberCtx("", DisableTwoFactorAuth, locals)
 		var result restErrors.RestErr
@@ -1529,6 +1675,10 @@ func TestDisableTwoFactorAuth(t *testing.T) {
 	})
 
 	t.Run("Disable_Two_Factor_Auth_Should_Throw_validation_Errors", func(t *testing.T) {
+		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+			return new(user.User), nil
+		}
+
 		DisableTwoFactorAuthFunc = func(model *user.User, dto *user.DisableTOTPRequestDto) *restErrors.RestErr {
 			return nil
 		}
@@ -1552,6 +1702,10 @@ func TestDisableTwoFactorAuth(t *testing.T) {
 	})
 
 	t.Run("Disable_Two_Factor_Auth_Should_Throw_If_2Fa_Already_Disable", func(t *testing.T) {
+		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+			return new(user.User), nil
+		}
+
 		DisableTwoFactorAuthFunc = func(model *user.User, dto *user.DisableTOTPRequestDto) *restErrors.RestErr {
 			return restErrors.NewBadRequestError("2fa already disabled")
 		}
@@ -1567,4 +1721,26 @@ func TestDisableTwoFactorAuth(t *testing.T) {
 		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
 		assert.EqualValues(t, "2fa already disabled", result.Message)
 	})
+
+	t.Run("Disable_Two_Factor_Auth_Should_Throw_If_user_not_found", func(t *testing.T) {
+		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+			return nil, restErrors.NewNotFoundError("no such user")
+		}
+
+		DisableTwoFactorAuthFunc = func(model *user.User, dto *user.DisableTOTPRequestDto) *restErrors.RestErr {
+			return restErrors.NewBadRequestError("2fa already disabled")
+		}
+
+		body, resp := newFiberCtx(dto, DisableTwoFactorAuth, locals)
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		assert.EqualValues(t, http.StatusNotFound, resp.StatusCode)
+		assert.EqualValues(t, "no such user", result.Message)
+	})
+
 }
