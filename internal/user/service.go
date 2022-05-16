@@ -21,6 +21,7 @@ type IService interface {
 	SignIn(dto *SignInRequestDto) (*UserSessionResponseDto, *restErrors.RestErr)
 	VerifyTOTP(model *User, totp string) (*UserSessionResponseDto, *restErrors.RestErr)
 	GetByEmail(email string) (*User, *restErrors.RestErr)
+	GetById(ID string) (*User, *restErrors.RestErr)
 	VerifyEmail(model *User) *restErrors.RestErr
 	ResetPassword(model *User, password string) *restErrors.RestErr
 	ChangePassword(model *User, dto *ChangePasswordRequestDto) *restErrors.RestErr
@@ -113,6 +114,16 @@ func (service) SignIn(dto *SignInRequestDto) (*UserSessionResponseDto, *restErro
 //GetByEmail find user by email
 func (service) GetByEmail(email string) (*User, *restErrors.RestErr) {
 	model, err := userRepository.GetByEmail(email)
+	if err != nil {
+		return nil, err
+	}
+
+	return model, nil
+}
+
+//GetById get user by Id
+func (service) GetById(ID string) (*User, *restErrors.RestErr) {
+	model, err := userRepository.GetById(ID)
 	if err != nil {
 		return nil, err
 	}

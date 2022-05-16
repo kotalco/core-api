@@ -12,3 +12,8 @@ type AccessDetails struct {
 	UserId     string
 	Authorized bool
 }
+
+// UserDetails Dto used to get needed user details
+type UserDetails struct {
+	ID string
+}
