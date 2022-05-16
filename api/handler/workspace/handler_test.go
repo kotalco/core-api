@@ -23,8 +23,6 @@ Workspace service Mocks
 */
 var (
 	CreateWorkspaceFunc      func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr)
-	ListWorkspacesFunc       func(userId string) ([]*workspace.WorkspaceResponseDto, *restErrors.RestErr)
-	DeleteWorkspace          func(id string) *restErrors.RestErr
 	WorkspaceWithTransaction func(txHandle *gorm.DB) workspace.IService
 )
 
@@ -32,14 +30,6 @@ type workspaceServiceMock struct{}
 
 func (workspaceServiceMock) Create(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr) {
 	return CreateWorkspaceFunc(dto, userId)
-}
-
-func (workspaceServiceMock) List(userId string) ([]*workspace.WorkspaceResponseDto, *restErrors.RestErr) {
-	return ListWorkspacesFunc(userId)
-}
-
-func (workspaceServiceMock) Delete(id string) *restErrors.RestErr {
-	return DeleteWorkspace(id)
 }
 
 func (wService workspaceServiceMock) WithTransaction(txHandle *gorm.DB) workspace.IService {
