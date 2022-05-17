@@ -26,22 +26,21 @@ func init() {
 
 }
 
-func cleanUp(t *testing.T) {
-	sqlclient.DbClient.Exec("TRUNCATE TABLE workspaces;")
-	sqlclient.DbClient.Exec("TRUNCATE TABLE workspace_users;")
+func cleanUp(workspace Workspace) {
+	sqlclient.DbClient.Delete(workspace)
 }
 
 func TestRepository_Create(t *testing.T) {
 	t.Run("Create_Should_Pass", func(t *testing.T) {
-		createWorkspace(t)
-		cleanUp(t)
+		workspace := createWorkspace(t)
+		cleanUp(workspace)
 	})
 
 	t.Run("Create_Should_Throw_If_something_went_wrong_like_primary_id_duplication", func(t *testing.T) {
 		workspace := createWorkspace(t)
-		restErr := repo.Create(workspace)
+		restErr := repo.Create(&workspace)
 		assert.EqualValues(t, "can't create workspace", restErr.Message)
-		cleanUp(t)
+		cleanUp(workspace)
 	})
 }
 
@@ -51,18 +50,17 @@ func TestRepository_GetByNameAndUserId(t *testing.T) {
 		resp, err := repo.GetByNameAndUserId(workspace.Name, workspace.UserId)
 		assert.Nil(t, err)
 		assert.NotNil(t, resp)
-		cleanUp(t)
+		cleanUp(workspace)
 	})
 
 	t.Run("Get_Workspace_By_Name_Should_Throw_if_Record_Not_Found", func(t *testing.T) {
 		resp, err := repo.GetByNameAndUserId("invalidName", "id")
 		assert.Nil(t, resp)
 		assert.EqualValues(t, http.StatusNotFound, err.Status)
-		cleanUp(t)
 	})
 }
 
-func createWorkspace(t *testing.T) *Workspace {
+func createWorkspace(t *testing.T) Workspace {
 	workspace := new(Workspace)
 	workspace.ID = uuid.New().String()
 	workspace.UserId = uuid.New().String()
@@ -70,5 +68,5 @@ func createWorkspace(t *testing.T) *Workspace {
 	workspace.K8sNamespace = workspace.ID
 	restErr := repo.Create(workspace)
 	assert.Nil(t, restErr)
-	return workspace
+	return *workspace
 }
