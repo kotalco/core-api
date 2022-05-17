@@ -156,7 +156,7 @@ func (mailServiceMock) ForgetPassword(dto *sendgrid.MailRequestDto) *restErrors.
 Workspace service Mocks
 */
 var (
-	CreateWorkspaceFunc      func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.WorkspaceResponseDto, *restErrors.RestErr)
+	CreateWorkspaceFunc      func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr)
 	ListWorkspacesFunc       func(userId string) ([]*workspace.WorkspaceResponseDto, *restErrors.RestErr)
 	DeleteWorkspace          func(id string) *restErrors.RestErr
 	WorkspaceWithTransaction func(txHandle *gorm.DB) workspace.IService
@@ -164,7 +164,7 @@ var (
 
 type workspaceServiceMock struct{}
 
-func (workspaceServiceMock) Create(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.WorkspaceResponseDto, *restErrors.RestErr) {
+func (workspaceServiceMock) Create(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr) {
 	return CreateWorkspaceFunc(dto, userId)
 }
 
@@ -269,8 +269,8 @@ func TestSignUp(t *testing.T) {
 			return "JWT-token", nil
 		}
 
-		CreateWorkspaceFunc = func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.WorkspaceResponseDto, *restErrors.RestErr) {
-			responseDto := new(workspace.WorkspaceResponseDto)
+		CreateWorkspaceFunc = func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr) {
+			responseDto := new(workspace.Workspace)
 			responseDto.ID = uuid.New().String()
 			responseDto.Name = "testNamespace"
 			responseDto.K8sNamespace = "testNamespace" + "-" + responseDto.ID
@@ -308,7 +308,7 @@ func TestSignUp(t *testing.T) {
 			return "JWT-token", nil
 		}
 
-		CreateWorkspaceFunc = func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.WorkspaceResponseDto, *restErrors.RestErr) {
+		CreateWorkspaceFunc = func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr) {
 			return nil, restErrors.NewInternalServerError("can't create workspace")
 		}
 
@@ -338,8 +338,8 @@ func TestSignUp(t *testing.T) {
 			return "JWT-token", nil
 		}
 
-		CreateWorkspaceFunc = func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.WorkspaceResponseDto, *restErrors.RestErr) {
-			responseDto := new(workspace.WorkspaceResponseDto)
+		CreateWorkspaceFunc = func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr) {
+			responseDto := new(workspace.Workspace)
 			responseDto.ID = uuid.New().String()
 			responseDto.Name = "testNamespace"
 			responseDto.K8sNamespace = "testNamespace" + "-" + responseDto.ID
@@ -1476,6 +1476,7 @@ func TestEnableTwoFactorAuth(t *testing.T) {
 			user := new(user.User)
 			user.TwoFactorEnabled = true
 			return user, nil
+
 		}
 
 		body, resp := newFiberCtx(validDto, EnableTwoFactorAuth, locals)

@@ -4,6 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	communityApis "github.com/kotalco/api/api"
 	"github.com/kotalco/cloud-api/api/handler/user"
+	"github.com/kotalco/cloud-api/api/handler/workspace"
 	"github.com/kotalco/cloud-api/pkg/middleware"
 )
 
@@ -29,6 +30,10 @@ func MapUrl(app *fiber.App) {
 	users.Post("/totp/verify", middleware.JWTProtected, user.VerifyTOTP)
 	users.Post("/totp/disable", middleware.JWTProtected, middleware.TFAProtected, user.DisableTwoFactorAuth)
 
+	//workspace group
+	workspaces := v1.Group("workspaces")
+	workspaces.Use(middleware.JWTProtected, middleware.TFAProtected)
+	workspaces.Post("/", workspace.Create)
 	//community routes
 	communityApis.MapUrl(app, middleware.JWTProtected, middleware.TFAProtected)
 }

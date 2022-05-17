@@ -11,7 +11,7 @@ import (
 type service struct{}
 
 type IService interface {
-	Create(dto *CreateWorkspaceRequestDto, userId string) (*WorkspaceResponseDto, *restErrors.RestErr)
+	Create(dto *CreateWorkspaceRequestDto, userId string) (*Workspace, *restErrors.RestErr)
 	WithTransaction(txHandle *gorm.DB) IService
 }
 
@@ -30,7 +30,7 @@ func (wService service) WithTransaction(txHandle *gorm.DB) IService {
 }
 
 //Create creates new workspace and workspace-user record  from a given dto ,
-func (service) Create(dto *CreateWorkspaceRequestDto, userId string) (*WorkspaceResponseDto, *restErrors.RestErr) {
+func (service) Create(dto *CreateWorkspaceRequestDto, userId string) (*Workspace, *restErrors.RestErr) {
 	exist, err := workspaceRepo.GetByNameAndUserId(dto.Name, userId)
 	if err != nil && err.Status != http.StatusNotFound {
 		return nil, err
@@ -62,5 +62,5 @@ func (service) Create(dto *CreateWorkspaceRequestDto, userId string) (*Workspace
 		return nil, err
 	}
 
-	return new(WorkspaceResponseDto).Marshall(workspace), nil
+	return workspace, nil
 }

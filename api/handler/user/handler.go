@@ -383,6 +383,7 @@ func Whoami(c *fiber.Ctx) error {
 	}
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(userDetails))
+
 }
 
 //CreateTOTP create time based one time password QR code so user can scan it with his mobile app
@@ -409,6 +410,7 @@ func CreateTOTP(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
+
 	c.Set("Content-Type", "image/png")
 	c.Set("Content-Length", strconv.Itoa(len(qr.Bytes())))
 	if _, err := c.Write(qr.Bytes()); err != nil {
@@ -497,5 +499,4 @@ func DisableTwoFactorAuth(c *fiber.Ctx) error {
 	}
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(resp))
-
 }

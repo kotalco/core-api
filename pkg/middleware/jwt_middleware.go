@@ -29,6 +29,7 @@ func JWTProtected(c *fiber.Ctx) error {
 	userDetails := new(token.UserDetails)
 	userDetails.ID = user.ID
 	c.Locals("user", *userDetails)
+
 	c.Next()
 	return nil
 }
