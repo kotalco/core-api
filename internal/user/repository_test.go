@@ -1,6 +1,7 @@
 package user
 
 import (
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/kotalco/cloud-api/pkg/security"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
@@ -20,27 +21,27 @@ func init() {
 	}
 }
 
-func cleanUp(t *testing.T) {
-	sqlclient.DbClient.Exec("TRUNCATE TABLE users;")
+func cleanUp(user User) {
+	sqlclient.DbClient.Delete(user)
 }
 
 func TestRepository_Create(t *testing.T) {
 	t.Run("Create_Should_Pass", func(t *testing.T) {
 		user := createUser(t)
 		assert.NotNil(t, user)
-		cleanUp(t)
+		cleanUp(user)
 	})
 
 	t.Run("Create_Should_Throw_If_Email_Already_Exits", func(t *testing.T) {
 		user := createUser(t)
 
 		user.ID = uuid.New().String()
-		restErr := repo.Create(user)
+		restErr := repo.Create(&user)
 
 		assert.EqualValues(t, "email already exits", restErr.Message)
 		assert.EqualValues(t, http.StatusConflict, restErr.Status)
 
-		cleanUp(t)
+		cleanUp(user)
 	})
 }
 
@@ -51,9 +52,10 @@ func TestRepository_GetByEmail(t *testing.T) {
 		result, restErr := repo.GetByEmail(user.Email)
 
 		assert.Nil(t, restErr)
+		fmt.Println(result, user)
 		assert.EqualValues(t, user.Email, result.Email)
 
-		cleanUp(t)
+		cleanUp(user)
 	})
 
 	t.Run("Get_By_Email_Should_Throw_If_User_With_This_Email_Doesnt'_Exit", func(t *testing.T) {
@@ -73,7 +75,7 @@ func TestRepository_GetById(t *testing.T) {
 		assert.Nil(t, restErr)
 		assert.EqualValues(t, user.ID, result.ID)
 
-		cleanUp(t)
+		cleanUp(user)
 	})
 
 	t.Run("Get_By_Id_Should_Throw_If_Id_Does't_Exits", func(t *testing.T) {
@@ -89,17 +91,17 @@ func TestRepository_Update(t *testing.T) {
 		user := createUser(t)
 		user.Email = security.GenerateRandomString(5) + "@test.com"
 
-		restErr := repo.Update(user)
+		restErr := repo.Update(&user)
 		assert.Nil(t, restErr)
+		cleanUp(user)
 	})
-	//cleanUp(t)
 }
 
-func createUser(t *testing.T) *User {
+func createUser(t *testing.T) User {
 	user := new(User)
 	user.ID = uuid.New().String()
 	user.Email = security.GenerateRandomString(10) + "@test.com"
 	restErr := repo.Create(user)
 	assert.Nil(t, restErr)
-	return user
+	return *user
 }
