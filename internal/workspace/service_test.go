@@ -16,6 +16,7 @@ var (
 	GetByNameAndUserIdFunc func(name string, userId string) (*Workspace, *restErrors.RestErr)
 	GetByIdFunc            func(Id string) (*Workspace, *restErrors.RestErr)
 	DeleteFunc             func(workspace *Workspace) *restErrors.RestErr
+	GetByUserIdFunc        func(userId string) ([]Workspace, *restErrors.RestErr)
 	WithTransactionFunc    func(txHandle *gorm.DB) IRepository
 )
 
@@ -38,6 +39,10 @@ func (workspaceRepositoryMock) GetById(Id string) (*Workspace, *restErrors.RestE
 
 func (workspaceRepositoryMock) Delete(workspace *Workspace) *restErrors.RestErr {
 	return DeleteFunc(workspace)
+}
+
+func (workspaceRepositoryMock) GetByUserId(userId string) ([]Workspace, *restErrors.RestErr) {
+	return GetByUserIdFunc(userId)
 }
 
 func (r workspaceRepositoryMock) WithTransaction(txHandle *gorm.DB) IRepository {
