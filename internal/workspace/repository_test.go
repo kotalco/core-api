@@ -2,7 +2,6 @@ package workspace
 
 import (
 	"github.com/google/uuid"
-	"github.com/kotalco/cloud-api/internal/workspaceuser"
 	"github.com/kotalco/cloud-api/pkg/security"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
 	"github.com/stretchr/testify/assert"
@@ -15,7 +14,7 @@ var (
 )
 
 func init() {
-	err := sqlclient.OpenDBConnection().AutoMigrate(new(workspaceuser.WorkspaceUser))
+	err := sqlclient.OpenDBConnection().AutoMigrate(new(Workspace))
 	if err != nil {
 		panic(err.Error())
 	}

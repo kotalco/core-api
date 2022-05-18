@@ -1,6 +1,7 @@
 package workspace
 
 import (
+	"github.com/google/uuid"
 	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/kotalco/cloud-api/internal/workspaceuser"
 	"github.com/stretchr/testify/assert"
@@ -15,7 +16,7 @@ var (
 	CreateWorkspaceFunc    func(workspace *Workspace) *restErrors.RestErr
 	UpdateWorkspaceFunc    func(workspace *Workspace) *restErrors.RestErr
 	GetByNameAndUserIdFunc func(name string, userId string) (*Workspace, *restErrors.RestErr)
-	GetById                func(Id string) (*Workspace, *restErrors.RestErr)
+	GetByIdFunc            func(Id string) (*Workspace, *restErrors.RestErr)
 	WithTransactionFunc    func(txHandle *gorm.DB) IRepository
 
 	CreateWorkspaceUserFunc func(workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr
@@ -35,7 +36,7 @@ func (workspaceRepositoryMock) GetByNameAndUserId(name string, userId string) (*
 	return GetByNameAndUserIdFunc(name, userId)
 }
 func (workspaceRepositoryMock) GetById(Id string) (*Workspace, *restErrors.RestErr) {
-	return GetById(Id)
+	return GetByIdFunc(Id)
 }
 
 func (r workspaceRepositoryMock) WithTransaction(txHandle *gorm.DB) IRepository {
@@ -139,35 +140,40 @@ func TestService_Create(t *testing.T) {
 func TestService_Update(t *testing.T) {
 	dto := new(UpdateWorkspaceRequestDto)
 	dto.Name = "testName"
+	newUserId := uuid.New().String()
 	t.Run("Update_Workspace_Should_Pass", func(t *testing.T) {
-		GetById = func(userId string) (*Workspace, *restErrors.RestErr) {
-			return new(Workspace), nil
+		GetByIdFunc = func(userId string) (*Workspace, *restErrors.RestErr) {
+			model := new(Workspace)
+			model.UserId = newUserId
+			return model, nil
 		}
 
 		UpdateWorkspaceFunc = func(workspace *Workspace) *restErrors.RestErr {
 			return nil
 		}
 
-		model, err := workspaceTestService.Update(dto, "1")
+		model, err := workspaceTestService.Update(dto, newUserId)
 		assert.Nil(t, err)
 		assert.NotNil(t, model)
 	})
 
 	t.Run("WorkspaceNameShould_Throw_If_Create_User_in_Repo_Throws", func(t *testing.T) {
-		GetById = func(userId string) (*Workspace, *restErrors.RestErr) {
-			return new(Workspace), nil
+		GetByIdFunc = func(userId string) (*Workspace, *restErrors.RestErr) {
+			model := new(Workspace)
+			model.UserId = newUserId
+			return model, nil
 		}
 		UpdateWorkspaceFunc = func(workspace *Workspace) *restErrors.RestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 
-		model, err := workspaceTestService.Update(&UpdateWorkspaceRequestDto{}, "1")
+		model, err := workspaceTestService.Update(&UpdateWorkspaceRequestDto{}, newUserId)
 		assert.Nil(t, model)
 		assert.EqualValues(t, http.StatusInternalServerError, err.Status)
 	})
 
 	t.Run("update_workspace_should_throw_if_workspace_does_not_exist", func(t *testing.T) {
-		GetById = func(userId string) (*Workspace, *restErrors.RestErr) {
+		GetByIdFunc = func(userId string) (*Workspace, *restErrors.RestErr) {
 			return nil, restErrors.NewNotFoundError("not found")
 		}
 
