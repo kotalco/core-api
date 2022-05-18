@@ -23,6 +23,7 @@ Workspace service Mocks
 */
 var (
 	CreateWorkspaceFunc      func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr)
+	UpdateWorkspaceFunc      func(dto *workspace.UpdateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr)
 	WorkspaceWithTransaction func(txHandle *gorm.DB) workspace.IService
 )
 
@@ -30,6 +31,9 @@ type workspaceServiceMock struct{}
 
 func (workspaceServiceMock) Create(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr) {
 	return CreateWorkspaceFunc(dto, userId)
+}
+func (workspaceServiceMock) Update(dto *workspace.UpdateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr) {
+	return UpdateWorkspaceFunc(dto, userId)
 }
 
 func (wService workspaceServiceMock) WithTransaction(txHandle *gorm.DB) workspace.IService {
@@ -108,7 +112,7 @@ func TestCreateWorkspace(t *testing.T) {
 		"name": "testnamespace",
 	}
 	var invalidDto = map[string]string{
-		"email": "1",
+		"name": "",
 	}
 	t.Run("create_workspace_should_pass", func(t *testing.T) {
 		CreateNamespaceFunc = func(name string) *restErrors.RestErr {
@@ -204,4 +208,86 @@ func TestCreateWorkspace(t *testing.T) {
 		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
 		assert.EqualValues(t, "can't create namespace", result.Message)
 	})
+}
+
+func TestUpdateWorkspace(t *testing.T) {
+	userDetails := new(token.UserDetails)
+	userDetails.ID = "test@test.com"
+	var locals = map[string]interface{}{}
+	locals["user"] = *userDetails
+
+	var validDto = map[string]string{
+		"name": "testnamespace",
+	}
+	var invalidDto = map[string]string{
+		"name": "",
+	}
+	t.Run("update_workspace_should_pass", func(t *testing.T) {
+
+		UpdateWorkspaceFunc = func(dto *workspace.UpdateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr) {
+			model := new(workspace.Workspace)
+			model.ID = "1"
+			model.Name = "testName"
+			return model, nil
+		}
+
+		body, resp := newFiberCtx(validDto, Update, locals)
+
+		var result map[string]workspace.WorkspaceResponseDto
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		assert.EqualValues(t, http.StatusCreated, resp.StatusCode)
+		assert.EqualValues(t, "testName", result["data"].Name)
+
+	})
+
+	t.Run("update_workspace_should_throw_validation_error", func(t *testing.T) {
+		body, resp := newFiberCtx(invalidDto, Update, locals)
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+		var fields = map[string]string{}
+		fields["name"] = "name should be greater than 1 char and less than 100 char"
+		badReqErr := restErrors.NewValidationError(fields)
+
+		assert.EqualValues(t, badReqErr.Status, resp.StatusCode)
+		assert.Equal(t, *badReqErr, result)
+	})
+
+	t.Run("Update_workspace_Should_Throw_Invalid_Request_Error", func(t *testing.T) {
+		body, resp := newFiberCtx("", Update, locals)
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
+		assert.EqualValues(t, "invalid request body", result.Message)
+	})
+
+	t.Run("Update_Workspace_Should_Throw_If_workspace_Service_Throw", func(t *testing.T) {
+		UpdateWorkspaceFunc = func(dto *workspace.UpdateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr) {
+			return nil, restErrors.NewBadRequestError("workspace service error")
+
+		}
+
+		body, resp := newFiberCtx(validDto, Update, locals)
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
+		assert.EqualValues(t, "workspace service error", result.Message)
+	})
+
 }

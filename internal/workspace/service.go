@@ -12,6 +12,7 @@ type service struct{}
 
 type IService interface {
 	Create(dto *CreateWorkspaceRequestDto, userId string) (*Workspace, *restErrors.RestErr)
+	Update(dto *UpdateWorkspaceRequestDto, userId string) (*Workspace, *restErrors.RestErr)
 	WithTransaction(txHandle *gorm.DB) IService
 }
 
@@ -58,6 +59,22 @@ func (service) Create(dto *CreateWorkspaceRequestDto, userId string) (*Workspace
 	workspaceuser.UserId = workspace.UserId
 
 	err = workspaceUserRepo.Create(workspaceuser)
+	if err != nil {
+		return nil, err
+	}
+
+	return workspace, nil
+}
+
+//Update updates the workspace name only , not allowed updating K8sNamespace ,
+func (service) Update(dto *UpdateWorkspaceRequestDto, userId string) (*Workspace, *restErrors.RestErr) {
+	workspace, err := workspaceRepo.GetById(dto.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	workspace.Name = dto.Name
+	err = workspaceRepo.Update(workspace)
 	if err != nil {
 		return nil, err
 	}

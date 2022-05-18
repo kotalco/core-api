@@ -9,6 +9,11 @@ type CreateWorkspaceRequestDto struct {
 	Name string `json:"name"  validate:"required,gte=1,lte=100"`
 }
 
+type UpdateWorkspaceRequestDto struct {
+	ID   string
+	Name string `json:"name"  validate:"required,gte=1,lte=100"`
+}
+
 type WorkspaceResponseDto struct {
 	ID           string `json:"id"`
 	Name         string `json:"name"`

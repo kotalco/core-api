@@ -14,6 +14,8 @@ type IRepository interface {
 	WithTransaction(txHandle *gorm.DB) IRepository
 	Create(workspace *Workspace) *restErrors.RestErr
 	GetByNameAndUserId(name string, userId string) (*Workspace, *restErrors.RestErr)
+	GetById(id string) (*Workspace, *restErrors.RestErr)
+	Update(workspace *Workspace) *restErrors.RestErr
 }
 
 func NewRepository() IRepository {
@@ -45,5 +47,31 @@ func (repo *repository) GetByNameAndUserId(name string, userId string) (*Workspa
 		go logger.Error(repo.GetByNameAndUserId, result.Error)
 		return nil, restErrors.NewInternalServerError("something went wrong")
 	}
+	return workspace, nil
+}
+
+func (repo *repository) Update(workspace *Workspace) *restErrors.RestErr {
+	res := sqlclient.DbClient.Save(workspace)
+	if res.Error != nil {
+		go logger.Error(repo.Update, res.Error)
+		return restErrors.NewInternalServerError(res.Error.Error())
+	}
+
+	return nil
+}
+
+func (repo repository) GetById(Id string) (*Workspace, *restErrors.RestErr) {
+	var workspace = new(Workspace)
+	workspace.ID = Id
+
+	result := sqlclient.DbClient.First(workspace)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, restErrors.NewNotFoundError("record not found")
+		}
+		go logger.Error(repo.GetById, result.Error)
+		return nil, restErrors.NewInternalServerError("something went wrong")
+	}
+
 	return workspace, nil
 }
