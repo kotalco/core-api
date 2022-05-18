@@ -1,6 +1,7 @@
 package workspace
 
 import (
+	"fmt"
 	"github.com/google/uuid"
 	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/kotalco/cloud-api/internal/workspaceuser"
@@ -34,7 +35,9 @@ func (wService service) WithTransaction(txHandle *gorm.DB) IService {
 //Create creates new workspace and workspace-user record  from a given dto.
 func (service) Create(dto *CreateWorkspaceRequestDto, userId string) (*Workspace, *restErrors.RestErr) {
 	exist, err := workspaceRepo.GetByNameAndUserId(dto.Name, userId)
+	fmt.Println(err)
 	if err != nil && err.Status != http.StatusNotFound {
+		fmt.Println("hello here....")
 		return nil, err
 	}
 

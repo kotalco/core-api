@@ -119,9 +119,7 @@ func TestService_Update(t *testing.T) {
 	})
 
 	t.Run("Update_workspace_should_throw_if_repo_update_throws", func(t *testing.T) {
-
 		model := new(Workspace)
-
 		UpdateWorkspaceFunc = func(workspace *Workspace) *restErrors.RestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
