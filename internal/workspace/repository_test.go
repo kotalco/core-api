@@ -99,6 +99,23 @@ func TestRepository_Delete(t *testing.T) {
 	})
 }
 
+func TestRepository_GetByUserId(t *testing.T) {
+	t.Run("Get_Workspaces_By_UserId_Should_Return_Workspace", func(t *testing.T) {
+		var list []Workspace
+		list = append(list, createWorkspace(t))
+		resp, err := repo.GetById(list[0].UserId)
+		assert.Nil(t, err)
+		assert.NotNil(t, resp)
+		cleanUp(list[0])
+	})
+
+	t.Run("Get_Workspace_By_Name_Should_Throw_if_Record_Not_Found", func(t *testing.T) {
+		resp, err := repo.GetByNameAndUserId("invalidName", "id")
+		assert.Nil(t, resp)
+		assert.EqualValues(t, http.StatusNotFound, err.Status)
+	})
+}
+
 func createWorkspace(t *testing.T) Workspace {
 	workspace := new(Workspace)
 	workspace.ID = uuid.New().String()
