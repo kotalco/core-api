@@ -26,6 +26,7 @@ var (
 	CreateWorkspaceFunc      func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr)
 	UpdateWorkspaceFunc      func(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) *restErrors.RestErr
 	GetWorkspaceByIdFunc     func(Id string) (*workspace.Workspace, *restErrors.RestErr)
+	DeleteWorkspaceFunc      func(workspace *workspace.Workspace) *restErrors.RestErr
 	WorkspaceWithTransaction func(txHandle *gorm.DB) workspace.IService
 )
 
@@ -37,8 +38,11 @@ func (workspaceServiceMock) Create(dto *workspace.CreateWorkspaceRequestDto, use
 func (workspaceServiceMock) Update(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) *restErrors.RestErr {
 	return UpdateWorkspaceFunc(dto, workspace)
 }
-func (workspaceServiceMock) GetById(Id string) (*workspace.Workspace, *restErrors.RestErr) {
-	return GetWorkspaceByIdFunc(Id)
+func (workspaceServiceMock) GetById(workspaceId string) (*workspace.Workspace, *restErrors.RestErr) {
+	return GetWorkspaceByIdFunc(workspaceId)
+}
+func (workspaceServiceMock) Delete(workspace *workspace.Workspace) *restErrors.RestErr {
+	return DeleteWorkspaceFunc(workspace)
 }
 
 func (wService workspaceServiceMock) WithTransaction(txHandle *gorm.DB) workspace.IService {
@@ -316,4 +320,113 @@ func TestUpdateWorkspace(t *testing.T) {
 		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
 		assert.EqualValues(t, "workspace service error", result.Message)
 	})
+}
+
+func TestDeleteWorkspace(t *testing.T) {
+	userDetails := new(token.UserDetails)
+	userDetails.ID = "11"
+	var locals = map[string]interface{}{}
+	locals["user"] = *userDetails
+
+	t.Run("Delete_Workspace_should_pass", func(t *testing.T) {
+
+		GetWorkspaceByIdFunc = func(workspaceId string) (*workspace.Workspace, *restErrors.RestErr) {
+			workspace := new(workspace.Workspace)
+			workspace.UserId = "11"
+			return workspace, nil
+		}
+		DeleteWorkspaceFunc = func(workspace *workspace.Workspace) *restErrors.RestErr {
+			return nil
+		}
+
+		DeleteNamespaceFunc = func(name string) *restErrors.RestErr {
+			return nil
+		}
+
+		_, resp := newFiberCtx("", Delete, locals)
+		assert.EqualValues(t, http.StatusNoContent, resp.StatusCode)
+	})
+
+	t.Run("Delete_Workspace_should_throw_if_workspace_not_found", func(t *testing.T) {
+		GetWorkspaceByIdFunc = func(workspaceId string) (*workspace.Workspace, *restErrors.RestErr) {
+			return nil, restErrors.NewNotFoundError("not found")
+		}
+
+		body, _ := newFiberCtx("", Delete, locals)
+
+		var restErr restErrors.RestErr
+		err := json.Unmarshal(body, &restErr)
+		if err != nil {
+			panic(err)
+		}
+		assert.EqualValues(t, http.StatusNotFound, restErr.Status)
+		assert.Error(t, restErr, "not found")
+	})
+
+	t.Run("Delete_Workspace_should_throw_if_user_id_does_not_match_workspaceUserId", func(t *testing.T) {
+		GetWorkspaceByIdFunc = func(workspaceId string) (*workspace.Workspace, *restErrors.RestErr) {
+			model := new(workspace.Workspace)
+			model.UserId = "invalid"
+			return model, nil
+		}
+
+		body, _ := newFiberCtx("", Delete, locals)
+
+		var restErr restErrors.RestErr
+		err := json.Unmarshal(body, &restErr)
+		if err != nil {
+			panic(err)
+		}
+		assert.EqualValues(t, http.StatusNotFound, restErr.Status)
+		assert.Error(t, restErr, "record not found")
+	})
+
+	t.Run("Delete_Workspace_should_throw_if_workspace_repo_throws", func(t *testing.T) {
+		GetWorkspaceByIdFunc = func(workspaceId string) (*workspace.Workspace, *restErrors.RestErr) {
+			model := new(workspace.Workspace)
+			model.UserId = "11"
+			return model, nil
+		}
+
+		DeleteWorkspaceFunc = func(workspace *workspace.Workspace) *restErrors.RestErr {
+			return restErrors.NewInternalServerError("something went wrong")
+		}
+
+		body, _ := newFiberCtx("", Delete, locals)
+
+		var restErr restErrors.RestErr
+		err := json.Unmarshal(body, &restErr)
+		if err != nil {
+			panic(err)
+		}
+		assert.EqualValues(t, http.StatusInternalServerError, restErr.Status)
+		assert.Error(t, restErr, "something went wrong")
+	})
+
+	t.Run("Delete_Workspace_should_throw_if_namespace_service_throws", func(t *testing.T) {
+		GetWorkspaceByIdFunc = func(workspaceId string) (*workspace.Workspace, *restErrors.RestErr) {
+			model := new(workspace.Workspace)
+			model.UserId = "11"
+			return model, nil
+		}
+
+		DeleteWorkspaceFunc = func(workspace *workspace.Workspace) *restErrors.RestErr {
+			return nil
+		}
+
+		DeleteNamespaceFunc = func(name string) *restErrors.RestErr {
+			return restErrors.NewInternalServerError("something went wrong")
+		}
+
+		body, _ := newFiberCtx("", Delete, locals)
+
+		var restErr restErrors.RestErr
+		err := json.Unmarshal(body, &restErr)
+		if err != nil {
+			panic(err)
+		}
+		assert.EqualValues(t, http.StatusInternalServerError, restErr.Status)
+		assert.Error(t, restErr, "something went wrong")
+	})
+
 }

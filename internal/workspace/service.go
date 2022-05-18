@@ -1,6 +1,7 @@
 package workspace
 
 import (
+	"fmt"
 	"github.com/google/uuid"
 	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/kotalco/cloud-api/internal/workspaceuser"
@@ -13,8 +14,9 @@ type service struct{}
 type IService interface {
 	Create(dto *CreateWorkspaceRequestDto, userId string) (*Workspace, *restErrors.RestErr)
 	Update(dto *UpdateWorkspaceRequestDto, workspace *Workspace) *restErrors.RestErr
-	WithTransaction(txHandle *gorm.DB) IService
+	Delete(workspace *Workspace) *restErrors.RestErr
 	GetById(Id string) (*Workspace, *restErrors.RestErr)
+	WithTransaction(txHandle *gorm.DB) IService
 }
 
 var (
@@ -33,7 +35,9 @@ func (wService service) WithTransaction(txHandle *gorm.DB) IService {
 //Create creates new workspace and workspace-user record  from a given dto.
 func (service) Create(dto *CreateWorkspaceRequestDto, userId string) (*Workspace, *restErrors.RestErr) {
 	exist, err := workspaceRepo.GetByNameAndUserId(dto.Name, userId)
+	fmt.Println(err)
 	if err != nil && err.Status != http.StatusNotFound {
+		fmt.Println("hello here....")
 		return nil, err
 	}
 
@@ -77,4 +81,14 @@ func (service) Update(dto *UpdateWorkspaceRequestDto, workspace *Workspace) *res
 //GetById gets workspace by given id.
 func (service) GetById(Id string) (*Workspace, *restErrors.RestErr) {
 	return workspaceRepo.GetById(Id)
+}
+
+//Delete workspace by given id for specific user
+func (service) Delete(workspace *Workspace) *restErrors.RestErr {
+	err := workspaceRepo.Delete(workspace)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
