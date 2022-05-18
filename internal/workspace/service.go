@@ -72,6 +72,9 @@ func (service) Update(dto *UpdateWorkspaceRequestDto, userId string) (*Workspace
 	if err != nil {
 		return nil, err
 	}
+	if workspace.UserId != userId {
+		return nil, restErrors.NewNotFoundError("no such record")
+	}
 
 	workspace.Name = dto.Name
 	err = workspaceRepo.Update(workspace)
