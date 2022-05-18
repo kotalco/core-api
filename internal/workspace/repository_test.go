@@ -15,11 +15,7 @@ var (
 )
 
 func init() {
-	err := sqlclient.OpenDBConnection().AutoMigrate(new(Workspace))
-	if err != nil {
-		panic(err.Error())
-	}
-	err = sqlclient.OpenDBConnection().AutoMigrate(new(workspaceuser.WorkspaceUser))
+	err := sqlclient.OpenDBConnection().AutoMigrate(new(workspaceuser.WorkspaceUser))
 	if err != nil {
 		panic(err.Error())
 	}
