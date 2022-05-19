@@ -94,25 +94,29 @@ func TestRepository_Delete(t *testing.T) {
 	})
 
 	t.Run("Delete_Workspace_should_throw_not_found_if_record_already_deleted", func(t *testing.T) {
-		err := repo.Delete(new(Workspace))
+		workspace := new(Workspace)
+		workspace.ID = "invalid"
+		err := repo.Delete(workspace)
 		assert.EqualValues(t, http.StatusNotFound, err.Status)
 	})
 }
 
 func TestRepository_GetByUserId(t *testing.T) {
 	t.Run("Get_Workspaces_By_UserId_Should_Return_Workspace", func(t *testing.T) {
-		var list []Workspace
-		list = append(list, createWorkspace(t))
-		resp, err := repo.GetById(list[0].UserId)
+		var list []*Workspace
+		workspace := createWorkspace(t)
+		list = append(list, &workspace)
+		resp, err := repo.GetByUserId(list[0].UserId)
 		assert.Nil(t, err)
 		assert.NotNil(t, resp)
-		cleanUp(list[0])
+		cleanUp(*list[0])
 	})
 
-	t.Run("Get_Workspace_By_Name_Should_Throw_if_Record_Not_Found", func(t *testing.T) {
-		resp, err := repo.GetByNameAndUserId("invalidName", "id")
-		assert.Nil(t, resp)
-		assert.EqualValues(t, http.StatusNotFound, err.Status)
+	t.Run("Get_Workspace_By_Name_Should_return_empty_list_when_is_invalid", func(t *testing.T) {
+		resp, err := repo.GetByUserId("invalidName")
+		assert.Nil(t, err)
+		var list = make([]*Workspace, 0)
+		assert.EqualValues(t, list, resp)
 	})
 }
 

@@ -17,7 +17,7 @@ type IRepository interface {
 	GetById(id string) (*Workspace, *restErrors.RestErr)
 	Update(workspace *Workspace) *restErrors.RestErr
 	Delete(*Workspace) *restErrors.RestErr
-	GetByUserId(userId string) ([]Workspace, *restErrors.RestErr)
+	GetByUserId(userId string) ([]*Workspace, *restErrors.RestErr)
 }
 
 func NewRepository() IRepository {
@@ -92,9 +92,9 @@ func (repo repository) Delete(workspace *Workspace) *restErrors.RestErr {
 	return nil
 }
 
-func (repo repository) GetByUserId(userId string) ([]Workspace, *restErrors.RestErr) {
-	var workspaces []Workspace
-	result := sqlclient.DbClient.Where("user_id = ?", userId, workspaces)
+func (repo repository) GetByUserId(userId string) ([]*Workspace, *restErrors.RestErr) {
+	var workspaces []*Workspace
+	result := sqlclient.DbClient.Where("user_id = ?", userId).Find(&workspaces)
 	if result.Error != nil {
 		go logger.Error(repo.GetByUserId, result.Error)
 		return nil, restErrors.NewInternalServerError("something went wrong")

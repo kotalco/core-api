@@ -101,3 +101,20 @@ func Delete(c *fiber.Ctx) error {
 
 	return c.SendStatus(http.StatusNoContent)
 }
+
+//GetByUserId find workspaces by userId
+func GetByUserId(c *fiber.Ctx) error {
+	userId := c.Locals("user").(token.UserDetails).ID
+
+	list, err := workspaceService.GetByUserId(userId)
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
+	var marshalled = make([]workspace.WorkspaceResponseDto, 0)
+	for _, v := range list {
+		record := new(workspace.WorkspaceResponseDto).Marshall(v)
+		marshalled = append(marshalled, *record)
+	}
+
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(marshalled))
+}
