@@ -51,7 +51,7 @@ func Create(c *fiber.Ctx) error {
 
 }
 
-//Update validate dto , update workspace
+//Update validate dto , validate user authenticity & update workspace
 func Update(c *fiber.Ctx) error {
 
 	userId := c.Locals("user").(token.UserDetails).ID
@@ -69,14 +69,32 @@ func Update(c *fiber.Ctx) error {
 		return c.Status(err.Status).JSON(err)
 	}
 
+	//validate user authenticity
+	model, err := workspaceService.GetById(workspaceId)
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
+
+	validUser := false
+	for _, v := range model.WorkspaceUsers {
+		if v.UserId == userId {
+			validUser = true
+			break
+		}
+	}
+	if !validUser {
+		notFoundErr := restErrors.NewNotFoundError("no such record")
+		return c.Status(notFoundErr.Status).JSON(notFoundErr)
+	}
+
 	txHandle := sqlclient.Begin()
-	model, err := workspaceService.WithTransaction(txHandle).Update(dto, userId)
+	err = workspaceService.WithTransaction(txHandle).Update(dto, model)
 	if err != nil {
 		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
 	sqlclient.Commit(txHandle)
 
-	return c.Status(http.StatusCreated).JSON(shared.NewResponse(new(workspace.WorkspaceResponseDto).Marshall(model)))
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(new(workspace.WorkspaceResponseDto).Marshall(model)))
 
 }

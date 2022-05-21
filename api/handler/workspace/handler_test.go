@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/kotalco/cloud-api/internal/workspace"
+	"github.com/kotalco/cloud-api/internal/workspaceuser"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
 	"github.com/kotalco/cloud-api/pkg/token"
 	"github.com/stretchr/testify/assert"
@@ -23,7 +25,8 @@ Workspace service Mocks
 */
 var (
 	CreateWorkspaceFunc      func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr)
-	UpdateWorkspaceFunc      func(dto *workspace.UpdateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr)
+	UpdateWorkspaceFunc      func(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) *restErrors.RestErr
+	GetWorkspaceByIdFunc     func(Id string) (*workspace.Workspace, *restErrors.RestErr)
 	WorkspaceWithTransaction func(txHandle *gorm.DB) workspace.IService
 )
 
@@ -32,8 +35,11 @@ type workspaceServiceMock struct{}
 func (workspaceServiceMock) Create(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr) {
 	return CreateWorkspaceFunc(dto, userId)
 }
-func (workspaceServiceMock) Update(dto *workspace.UpdateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr) {
-	return UpdateWorkspaceFunc(dto, userId)
+func (workspaceServiceMock) Update(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) *restErrors.RestErr {
+	return UpdateWorkspaceFunc(dto, workspace)
+}
+func (workspaceServiceMock) GetById(Id string) (*workspace.Workspace, *restErrors.RestErr) {
+	return GetWorkspaceByIdFunc(Id)
 }
 
 func (wService workspaceServiceMock) WithTransaction(txHandle *gorm.DB) workspace.IService {
@@ -224,23 +230,31 @@ func TestUpdateWorkspace(t *testing.T) {
 	}
 	t.Run("update_workspace_should_pass", func(t *testing.T) {
 
-		UpdateWorkspaceFunc = func(dto *workspace.UpdateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr) {
-			model := new(workspace.Workspace)
-			model.ID = "1"
-			model.Name = "testName"
-			return model, nil
+		newWorkspace := new(workspace.Workspace)
+		newWorkspace.UserId = userDetails.ID
+
+		newWorkspaceUser := new(workspaceuser.WorkspaceUser)
+		newWorkspaceUser.UserId = userDetails.ID
+
+		newWorkspace.WorkspaceUsers = []workspaceuser.WorkspaceUser{*newWorkspaceUser}
+
+		GetWorkspaceByIdFunc = func(Id string) (*workspace.Workspace, *restErrors.RestErr) {
+			return newWorkspace, nil
+		}
+
+		UpdateWorkspaceFunc = func(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) *restErrors.RestErr {
+			return nil
 		}
 
 		body, resp := newFiberCtx(validDto, Update, locals)
-
 		var result map[string]workspace.WorkspaceResponseDto
 		err := json.Unmarshal(body, &result)
 		if err != nil {
 			panic(err.Error())
 		}
 
-		assert.EqualValues(t, http.StatusCreated, resp.StatusCode)
-		assert.EqualValues(t, "testName", result["data"].Name)
+		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
+		assert.NotNil(t, newWorkspace.Name, result["data"].Name)
 
 	})
 
@@ -273,9 +287,20 @@ func TestUpdateWorkspace(t *testing.T) {
 	})
 
 	t.Run("Update_Workspace_Should_Throw_If_workspace_Service_Throw", func(t *testing.T) {
-		UpdateWorkspaceFunc = func(dto *workspace.UpdateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr) {
-			return nil, restErrors.NewBadRequestError("workspace service error")
+		newWorkspace := new(workspace.Workspace)
+		newWorkspace.UserId = userDetails.ID
 
+		newWorkspaceUser := new(workspaceuser.WorkspaceUser)
+		newWorkspaceUser.UserId = userDetails.ID
+
+		newWorkspace.WorkspaceUsers = []workspaceuser.WorkspaceUser{*newWorkspaceUser}
+
+		GetWorkspaceByIdFunc = func(Id string) (*workspace.Workspace, *restErrors.RestErr) {
+			return newWorkspace, nil
+		}
+
+		UpdateWorkspaceFunc = func(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) *restErrors.RestErr {
+			return restErrors.NewInternalServerError("workspace service error")
 		}
 
 		body, resp := newFiberCtx(validDto, Update, locals)
@@ -286,8 +311,31 @@ func TestUpdateWorkspace(t *testing.T) {
 			panic(err.Error())
 		}
 
-		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
+		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
 		assert.EqualValues(t, "workspace service error", result.Message)
+	})
+	t.Run("Update_Workspace_Should_Throw_If_If_user_does't_exit_in_workspace_users", func(t *testing.T) {
+		newWorkspace := new(workspace.Workspace)
+		newWorkspace.UserId = uuid.NewString()
+
+		newWorkspaceUser := new(workspaceuser.WorkspaceUser)
+		newWorkspaceUser.UserId = uuid.NewString() //new user
+
+		newWorkspace.WorkspaceUsers = []workspaceuser.WorkspaceUser{*newWorkspaceUser}
+
+		GetWorkspaceByIdFunc = func(Id string) (*workspace.Workspace, *restErrors.RestErr) {
+			return newWorkspace, nil
+		}
+
+		body, resp := newFiberCtx(validDto, Update, locals)
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		assert.EqualValues(t, http.StatusNotFound, resp.StatusCode)
 	})
 
 }

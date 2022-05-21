@@ -1,7 +1,6 @@
 package workspace
 
 import (
-	"github.com/google/uuid"
 	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
@@ -103,46 +102,48 @@ func TestService_Create(t *testing.T) {
 func TestService_Update(t *testing.T) {
 	dto := new(UpdateWorkspaceRequestDto)
 	dto.Name = "testName"
-	newUserId := uuid.New().String()
 	t.Run("Update_Workspace_Should_Pass", func(t *testing.T) {
-		GetByIdFunc = func(userId string) (*Workspace, *restErrors.RestErr) {
-			model := new(Workspace)
-			model.UserId = newUserId
-			return model, nil
-		}
-
 		UpdateWorkspaceFunc = func(workspace *Workspace) *restErrors.RestErr {
 			return nil
 		}
 
-		model, err := workspaceTestService.Update(dto, newUserId)
+		model := new(Workspace)
+		err := workspaceTestService.Update(dto, model)
+
 		assert.Nil(t, err)
-		assert.NotNil(t, model)
 	})
 
-	t.Run("WorkspaceNameShould_Throw_If_Create_User_in_Repo_Throws", func(t *testing.T) {
-		GetByIdFunc = func(userId string) (*Workspace, *restErrors.RestErr) {
-			model := new(Workspace)
-			model.UserId = newUserId
-			return model, nil
-		}
+	t.Run("Update_workspace_should_throw_if_repo_update_throws", func(t *testing.T) {
+
+		model := new(Workspace)
+
 		UpdateWorkspaceFunc = func(workspace *Workspace) *restErrors.RestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 
-		model, err := workspaceTestService.Update(&UpdateWorkspaceRequestDto{}, newUserId)
-		assert.Nil(t, model)
+		err := workspaceTestService.Update(&UpdateWorkspaceRequestDto{}, model)
 		assert.EqualValues(t, http.StatusInternalServerError, err.Status)
 	})
 
-	t.Run("update_workspace_should_throw_if_workspace_does_not_exist", func(t *testing.T) {
-		GetByIdFunc = func(userId string) (*Workspace, *restErrors.RestErr) {
+}
+
+func TestService_GetById(t *testing.T) {
+	t.Run("Get_work_space_by_id_should_pass", func(t *testing.T) {
+		GetByIdFunc = func(Id string) (*Workspace, *restErrors.RestErr) {
+			return new(Workspace), nil
+		}
+		resp, err := workspaceTestService.GetById("1")
+		assert.Nil(t, err)
+		assert.NotNil(t, resp)
+	})
+
+	t.Run("Get_work_space_by_id_should_Throw_if_repo_throws", func(t *testing.T) {
+		GetByIdFunc = func(Id string) (*Workspace, *restErrors.RestErr) {
 			return nil, restErrors.NewNotFoundError("not found")
 		}
-
-		model, err := workspaceTestService.Update(&UpdateWorkspaceRequestDto{}, "1")
-		assert.Nil(t, model)
-		assert.EqualValues(t, http.StatusNotFound, err.Status)
+		resp, err := workspaceTestService.GetById("1")
+		assert.Nil(t, resp)
+		assert.Error(t, err, "not found")
 	})
 
 }

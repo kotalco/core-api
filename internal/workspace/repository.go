@@ -55,7 +55,7 @@ func (repo *repository) Update(workspace *Workspace) *restErrors.RestErr {
 	res := sqlclient.DbClient.Save(workspace)
 	if res.Error != nil {
 		go logger.Error(repo.Update, res.Error)
-		return restErrors.NewInternalServerError(res.Error.Error())
+		return restErrors.NewInternalServerError("something went wrong")
 	}
 
 	return nil

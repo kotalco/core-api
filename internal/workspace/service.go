@@ -12,8 +12,9 @@ type service struct{}
 
 type IService interface {
 	Create(dto *CreateWorkspaceRequestDto, userId string) (*Workspace, *restErrors.RestErr)
-	Update(dto *UpdateWorkspaceRequestDto, userId string) (*Workspace, *restErrors.RestErr)
+	Update(dto *UpdateWorkspaceRequestDto, workspace *Workspace) *restErrors.RestErr
 	WithTransaction(txHandle *gorm.DB) IService
+	GetById(Id string) (*Workspace, *restErrors.RestErr)
 }
 
 var (
@@ -29,7 +30,7 @@ func (wService service) WithTransaction(txHandle *gorm.DB) IService {
 	return wService
 }
 
-//Create creates new workspace and workspace-user record  from a given dto ,
+//Create creates new workspace and workspace-user record  from a given dto.
 func (service) Create(dto *CreateWorkspaceRequestDto, userId string) (*Workspace, *restErrors.RestErr) {
 	exist, err := workspaceRepo.GetByNameAndUserId(dto.Name, userId)
 	if err != nil && err.Status != http.StatusNotFound {
@@ -62,21 +63,18 @@ func (service) Create(dto *CreateWorkspaceRequestDto, userId string) (*Workspace
 	return workspace, nil
 }
 
-//Update updates the workspace name only , not allowed updating K8sNamespace ,
-func (service) Update(dto *UpdateWorkspaceRequestDto, userId string) (*Workspace, *restErrors.RestErr) {
-	workspace, err := workspaceRepo.GetById(dto.ID)
-	if err != nil {
-		return nil, err
-	}
-	if workspace.UserId != userId {
-		return nil, restErrors.NewNotFoundError("no such record")
-	}
-
+//Update updates the workspace name only ,updating K8sNamespace not allowed.
+func (service) Update(dto *UpdateWorkspaceRequestDto, workspace *Workspace) *restErrors.RestErr {
 	workspace.Name = dto.Name
-	err = workspaceRepo.Update(workspace)
+	err := workspaceRepo.Update(workspace)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return workspace, nil
+	return nil
+}
+
+//GetById gets workspace by given id.
+func (service) GetById(Id string) (*Workspace, *restErrors.RestErr) {
+	return workspaceRepo.GetById(Id)
 }
