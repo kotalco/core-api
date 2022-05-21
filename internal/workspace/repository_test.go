@@ -1,7 +1,9 @@
 package workspace
 
 import (
+	"fmt"
 	"github.com/google/uuid"
+	"github.com/kotalco/cloud-api/internal/workspaceuser"
 	"github.com/kotalco/cloud-api/pkg/security"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
 	"github.com/stretchr/testify/assert"
@@ -14,11 +16,10 @@ var (
 )
 
 func init() {
-	err := sqlclient.OpenDBConnection().AutoMigrate(new(Workspace))
+	err := sqlclient.OpenDBConnection().AutoMigrate(new(Workspace), new(workspaceuser.WorkspaceUser))
 	if err != nil {
 		panic(err.Error())
 	}
-
 }
 
 func cleanUp(workspace Workspace) {
@@ -69,6 +70,7 @@ func TestRepository_GetById(t *testing.T) {
 	t.Run("Get_Workspace_By_Id_Should_Return_Workspace", func(t *testing.T) {
 		workspace := createWorkspace(t)
 		resp, err := repo.GetById(workspace.ID)
+		fmt.Println(workspace.WorkspaceUsers)
 		assert.Nil(t, err)
 		assert.NotNil(t, resp)
 		cleanUp(workspace)
@@ -87,6 +89,12 @@ func createWorkspace(t *testing.T) Workspace {
 	workspace.UserId = uuid.New().String()
 	workspace.Name = security.GenerateRandomString(10)
 	workspace.K8sNamespace = workspace.ID
+
+	newWorkspaceUser := new(workspaceuser.WorkspaceUser)
+	newWorkspaceUser.ID = uuid.New().String()
+	newWorkspaceUser.WorkspaceID = workspace.ID
+	newWorkspaceUser.UserId = workspace.UserId
+	workspace.WorkspaceUsers = append(workspace.WorkspaceUsers, *newWorkspaceUser)
 	restErr := repo.Create(workspace)
 	assert.Nil(t, restErr)
 	return *workspace

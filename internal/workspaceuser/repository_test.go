@@ -34,7 +34,7 @@ func createWorkspaceUser(t *testing.T) WorkspaceUser {
 	model := new(WorkspaceUser)
 	model.ID = uuid.New().String()
 	model.UserId = uuid.New().String()
-	model.WorkspaceId = uuid.New().String()
+	model.WorkspaceID = uuid.New().String()
 	restErr := repo.Create(model)
 	assert.Nil(t, restErr)
 	return *model

@@ -37,6 +37,7 @@ func (repo *repository) Create(workspace *Workspace) *restErrors.RestErr {
 	return nil
 }
 
+//GetByNameAndUserId used to get workspace by name to check if workspace name exits for the same owner(userId)
 func (repo *repository) GetByNameAndUserId(name string, userId string) (*Workspace, *restErrors.RestErr) {
 	var workspace = new(Workspace)
 	result := sqlclient.DbClient.Where("user_id = ? AND name = ?", userId, name).First(workspace)
@@ -64,7 +65,7 @@ func (repo repository) GetById(Id string) (*Workspace, *restErrors.RestErr) {
 	var workspace = new(Workspace)
 	workspace.ID = Id
 
-	result := sqlclient.DbClient.First(workspace)
+	result := sqlclient.DbClient.Preload("WorkspaceUsers").First(workspace)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, restErrors.NewNotFoundError("record not found")

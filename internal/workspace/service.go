@@ -17,8 +17,7 @@ type IService interface {
 }
 
 var (
-	workspaceRepo     = NewRepository()
-	workspaceUserRepo = workspaceuser.NewRepository()
+	workspaceRepo = NewRepository()
 )
 
 func NewService() IService {
@@ -47,18 +46,15 @@ func (service) Create(dto *CreateWorkspaceRequestDto, userId string) (*Workspace
 	workspace.K8sNamespace = uuid.New().String()
 	workspace.UserId = userId
 
-	err = workspaceRepo.Create(workspace)
-	if err != nil {
-		return nil, err
-	}
-
 	//create workspace-user record
 	workspaceuser := new(workspaceuser.WorkspaceUser)
 	workspaceuser.ID = uuid.New().String()
-	workspaceuser.WorkspaceId = workspace.ID
+	workspaceuser.WorkspaceID = workspace.ID
 	workspaceuser.UserId = workspace.UserId
 
-	err = workspaceUserRepo.Create(workspaceuser)
+	workspace.WorkspaceUsers = append(workspace.WorkspaceUsers, *workspaceuser)
+
+	err = workspaceRepo.Create(workspace)
 	if err != nil {
 		return nil, err
 	}

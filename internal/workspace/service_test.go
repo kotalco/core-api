@@ -3,7 +3,6 @@ package workspace
 import (
 	"github.com/google/uuid"
 	restErrors "github.com/kotalco/api/pkg/errors"
-	"github.com/kotalco/cloud-api/internal/workspaceuser"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 	"net/http"
@@ -18,8 +17,6 @@ var (
 	GetByNameAndUserIdFunc func(name string, userId string) (*Workspace, *restErrors.RestErr)
 	GetByIdFunc            func(Id string) (*Workspace, *restErrors.RestErr)
 	WithTransactionFunc    func(txHandle *gorm.DB) IRepository
-
-	CreateWorkspaceUserFunc func(workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr
 )
 
 type workspaceRepositoryMock struct{}
@@ -43,19 +40,8 @@ func (r workspaceRepositoryMock) WithTransaction(txHandle *gorm.DB) IRepository 
 	return r
 }
 
-type workspaceuserRepositoryMock struct{}
-
-func (workspaceuserRepositoryMock) Create(workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr {
-	return CreateWorkspaceUserFunc(workspaceUser)
-}
-func (r workspaceuserRepositoryMock) WithTransaction(txHandle *gorm.DB) workspaceuser.IRepository {
-	return r
-}
-
 func TestMain(m *testing.M) {
 	workspaceRepo = &workspaceRepositoryMock{}
-	workspaceUserRepo = &workspaceuserRepositoryMock{}
-
 	workspaceTestService = NewService()
 	code := m.Run()
 	os.Exit(code)
@@ -67,9 +53,6 @@ func TestService_Create(t *testing.T) {
 	t.Run("Create_Workspace_Should_Pass", func(t *testing.T) {
 		GetByNameAndUserIdFunc = func(name string, userId string) (*Workspace, *restErrors.RestErr) {
 			return nil, nil
-		}
-		CreateWorkspaceUserFunc = func(workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr {
-			return nil
 		}
 		CreateWorkspaceFunc = func(workspace *Workspace) *restErrors.RestErr {
 			return nil
@@ -83,9 +66,6 @@ func TestService_Create(t *testing.T) {
 	t.Run("WorkspaceNameShould_Default_if_no_Name_Passed", func(t *testing.T) {
 		GetByNameAndUserIdFunc = func(name string, userId string) (*Workspace, *restErrors.RestErr) {
 			return nil, nil
-		}
-		CreateWorkspaceUserFunc = func(workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr {
-			return nil
 		}
 		CreateWorkspaceFunc = func(workspace *Workspace) *restErrors.RestErr {
 			return nil
@@ -125,9 +105,6 @@ func TestService_Create(t *testing.T) {
 		}
 		CreateWorkspaceFunc = func(workspace *Workspace) *restErrors.RestErr {
 			return nil
-		}
-		CreateWorkspaceUserFunc = func(workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr {
-			return restErrors.NewInternalServerError("something went wrong")
 		}
 
 		model, err := workspaceTestService.Create(&CreateWorkspaceRequestDto{}, "1")
