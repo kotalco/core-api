@@ -98,20 +98,6 @@ func TestService_Create(t *testing.T) {
 		assert.Nil(t, model)
 		assert.EqualValues(t, http.StatusInternalServerError, err.Status)
 	})
-
-	t.Run("WorkspaceNameShould_Throw_If_Create_User_in_Workspace_User_Repo_Throws", func(t *testing.T) {
-		GetByNameAndUserIdFunc = func(name string, userId string) (*Workspace, *restErrors.RestErr) {
-			return nil, nil
-		}
-		CreateWorkspaceFunc = func(workspace *Workspace) *restErrors.RestErr {
-			return nil
-		}
-
-		model, err := workspaceTestService.Create(&CreateWorkspaceRequestDto{}, "1")
-		assert.Nil(t, model)
-		assert.EqualValues(t, http.StatusInternalServerError, err.Status)
-	})
-
 }
 
 func TestService_Update(t *testing.T) {
