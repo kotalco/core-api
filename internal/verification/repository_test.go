@@ -20,20 +20,20 @@ func init() {
 	}
 }
 
-func cleanUp(t *testing.T) {
-	sqlclient.DbClient.Exec("TRUNCATE TABLE users;")
+func cleanUp(verification Verification) {
+	sqlclient.DbClient.Delete(verification)
 }
 
 func TestRepository_Create(t *testing.T) {
 	t.Run("Create_Should_Pass", func(t *testing.T) {
 		verification := createVerification(t)
 		assert.EqualValues(t, false, verification.Completed)
-		cleanUp(t)
+		cleanUp(verification)
 	})
 
 	t.Run("Create_Should_Throw_If_Already_Exits", func(t *testing.T) {
 		verification := createVerification(t)
-		restErr := repo.Create(verification)
+		restErr := repo.Create(&verification)
 		assert.EqualValues(t, "verification already exits", restErr.Message)
 	})
 }
@@ -44,6 +44,7 @@ func TestRepository_GetByUserId(t *testing.T) {
 		result, restErr := repo.GetByUserId(verification.UserId)
 		assert.Nil(t, restErr)
 		assert.EqualValues(t, verification.ID, result.ID)
+		cleanUp(verification)
 	})
 	t.Run("Get_User_By_Id_Should_Throw_If_Verification_With_User_Id_Does't_Exit", func(t *testing.T) {
 		verification, restErr := repo.GetByUserId("")
@@ -52,7 +53,7 @@ func TestRepository_GetByUserId(t *testing.T) {
 		assert.EqualValues(t, fmt.Sprintf("can't find verification with userId  %s", ""), restErr.Message)
 		assert.EqualValues(t, http.StatusNotFound, restErr.Status)
 	})
-	cleanUp(t)
+
 }
 
 func TestRepository_Update(t *testing.T) {
@@ -60,18 +61,18 @@ func TestRepository_Update(t *testing.T) {
 		verification := createVerification(t)
 		verification.Completed = true
 
-		restErr := repo.Update(verification)
+		restErr := repo.Update(&verification)
 
 		assert.Nil(t, restErr)
-		cleanUp(t)
+		cleanUp(verification)
 	})
 }
 
-func createVerification(t *testing.T) *Verification {
+func createVerification(t *testing.T) Verification {
 	verification := new(Verification)
 	verification.ID = uuid.New().String()
 	verification.UserId = uuid.New().String()
 	restErr := repo.Create(verification)
 	assert.Nil(t, restErr)
-	return verification
+	return *verification
 }
