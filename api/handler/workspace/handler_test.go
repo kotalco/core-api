@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
 	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/kotalco/cloud-api/internal/workspace"
 	"github.com/kotalco/cloud-api/internal/workspaceuser"
@@ -220,7 +219,14 @@ func TestUpdateWorkspace(t *testing.T) {
 	userDetails := new(token.UserDetails)
 	userDetails.ID = "test@test.com"
 	var locals = map[string]interface{}{}
+
+	workspaceModelLocals := new(workspace.Workspace)
+	workspaceUserModelLocals := new(workspaceuser.WorkspaceUser)
+	workspaceUserModelLocals.UserId = userDetails.ID
+	workspaceModelLocals.WorkspaceUsers = []workspaceuser.WorkspaceUser{*workspaceUserModelLocals}
+
 	locals["user"] = *userDetails
+	locals["workspace"] = *workspaceModelLocals
 
 	var validDto = map[string]string{
 		"name": "testnamespace",
@@ -237,10 +243,6 @@ func TestUpdateWorkspace(t *testing.T) {
 		newWorkspaceUser.UserId = userDetails.ID
 
 		newWorkspace.WorkspaceUsers = []workspaceuser.WorkspaceUser{*newWorkspaceUser}
-
-		GetWorkspaceByIdFunc = func(Id string) (*workspace.Workspace, *restErrors.RestErr) {
-			return newWorkspace, nil
-		}
 
 		UpdateWorkspaceFunc = func(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) *restErrors.RestErr {
 			return nil
@@ -314,28 +316,4 @@ func TestUpdateWorkspace(t *testing.T) {
 		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
 		assert.EqualValues(t, "workspace service error", result.Message)
 	})
-	t.Run("Update_Workspace_Should_Throw_If_If_user_does't_exit_in_workspace_users", func(t *testing.T) {
-		newWorkspace := new(workspace.Workspace)
-		newWorkspace.UserId = uuid.NewString()
-
-		newWorkspaceUser := new(workspaceuser.WorkspaceUser)
-		newWorkspaceUser.UserId = uuid.NewString() //new user
-
-		newWorkspace.WorkspaceUsers = []workspaceuser.WorkspaceUser{*newWorkspaceUser}
-
-		GetWorkspaceByIdFunc = func(Id string) (*workspace.Workspace, *restErrors.RestErr) {
-			return newWorkspace, nil
-		}
-
-		body, resp := newFiberCtx(validDto, Update, locals)
-
-		var result restErrors.RestErr
-		err := json.Unmarshal(body, &result)
-		if err != nil {
-			panic(err.Error())
-		}
-
-		assert.EqualValues(t, http.StatusNotFound, resp.StatusCode)
-	})
-
 }
