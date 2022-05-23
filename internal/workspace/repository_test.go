@@ -1,6 +1,7 @@
 package workspace
 
 import (
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/kotalco/cloud-api/internal/workspaceuser"
 	"github.com/kotalco/cloud-api/pkg/security"
@@ -15,15 +16,10 @@ var (
 )
 
 func init() {
-	err := sqlclient.OpenDBConnection().AutoMigrate(new(Workspace))
+	err := sqlclient.OpenDBConnection().AutoMigrate(new(Workspace), new(workspaceuser.WorkspaceUser))
 	if err != nil {
 		panic(err.Error())
 	}
-	err = sqlclient.OpenDBConnection().AutoMigrate(new(workspaceuser.WorkspaceUser))
-	if err != nil {
-		panic(err.Error())
-	}
-
 }
 
 func cleanUp(workspace Workspace) {
@@ -44,6 +40,16 @@ func TestRepository_Create(t *testing.T) {
 	})
 }
 
+func TestWorkspaceRepository_Update(t *testing.T) {
+	t.Run("update_should_pass", func(t *testing.T) {
+		workspace := createWorkspace(t)
+		workspace.Name = "newname"
+		err := repo.Update(&workspace)
+		assert.Nil(t, err)
+		cleanUp(workspace)
+	})
+}
+
 func TestRepository_GetByNameAndUserId(t *testing.T) {
 	t.Run("Get_Workspace_By_Name_Should_Return_Workspace", func(t *testing.T) {
 		workspace := createWorkspace(t)
@@ -60,12 +66,35 @@ func TestRepository_GetByNameAndUserId(t *testing.T) {
 	})
 }
 
+func TestRepository_GetById(t *testing.T) {
+	t.Run("Get_Workspace_By_Id_Should_Return_Workspace", func(t *testing.T) {
+		workspace := createWorkspace(t)
+		resp, err := repo.GetById(workspace.ID)
+		fmt.Println(workspace.WorkspaceUsers)
+		assert.Nil(t, err)
+		assert.NotNil(t, resp)
+		cleanUp(workspace)
+	})
+
+	t.Run("Get_Workspace_By_Name_Should_Throw_if_Record_Not_Found", func(t *testing.T) {
+		resp, err := repo.GetById("invalidName")
+		assert.Nil(t, resp)
+		assert.EqualValues(t, http.StatusNotFound, err.Status)
+	})
+}
+
 func createWorkspace(t *testing.T) Workspace {
 	workspace := new(Workspace)
 	workspace.ID = uuid.New().String()
 	workspace.UserId = uuid.New().String()
 	workspace.Name = security.GenerateRandomString(10)
 	workspace.K8sNamespace = workspace.ID
+
+	newWorkspaceUser := new(workspaceuser.WorkspaceUser)
+	newWorkspaceUser.ID = uuid.New().String()
+	newWorkspaceUser.WorkspaceID = workspace.ID
+	newWorkspaceUser.UserId = workspace.UserId
+	workspace.WorkspaceUsers = append(workspace.WorkspaceUsers, *newWorkspaceUser)
 	restErr := repo.Create(workspace)
 	assert.Nil(t, restErr)
 	return *workspace

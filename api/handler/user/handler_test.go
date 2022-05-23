@@ -157,8 +157,8 @@ Workspace service Mocks
 */
 var (
 	CreateWorkspaceFunc      func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr)
-	ListWorkspacesFunc       func(userId string) ([]*workspace.WorkspaceResponseDto, *restErrors.RestErr)
-	DeleteWorkspace          func(id string) *restErrors.RestErr
+	UpdateWorkspaceFunc      func(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) *restErrors.RestErr
+	GetWorkspaceByIdFund     func(id string) (*workspace.Workspace, *restErrors.RestErr)
 	WorkspaceWithTransaction func(txHandle *gorm.DB) workspace.IService
 )
 
@@ -168,12 +168,12 @@ func (workspaceServiceMock) Create(dto *workspace.CreateWorkspaceRequestDto, use
 	return CreateWorkspaceFunc(dto, userId)
 }
 
-func (workspaceServiceMock) List(userId string) ([]*workspace.WorkspaceResponseDto, *restErrors.RestErr) {
-	return ListWorkspacesFunc(userId)
+func (workspaceServiceMock) Update(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) *restErrors.RestErr {
+	return UpdateWorkspaceFunc(dto, workspace)
 }
 
-func (workspaceServiceMock) Delete(id string) *restErrors.RestErr {
-	return DeleteWorkspace(id)
+func (workspaceServiceMock) GetById(id string) (*workspace.Workspace, *restErrors.RestErr) {
+	return GetWorkspaceByIdFund(id)
 }
 
 func (wService workspaceServiceMock) WithTransaction(txHandle *gorm.DB) workspace.IService {

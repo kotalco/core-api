@@ -50,3 +50,32 @@ func Create(c *fiber.Ctx) error {
 	return c.Status(http.StatusCreated).JSON(shared.NewResponse(new(workspace.WorkspaceResponseDto).Marshall(model)))
 
 }
+
+//Update validate dto , validate user authenticity & update workspace
+func Update(c *fiber.Ctx) error {
+
+	model := c.Locals("workspace").(workspace.Workspace)
+
+	dto := new(workspace.UpdateWorkspaceRequestDto)
+	dto.ID = model.ID
+
+	if err := c.BodyParser(dto); err != nil {
+		badReq := restErrors.NewBadRequestError("invalid request body")
+		return c.Status(badReq.Status).JSON(badReq)
+	}
+
+	err := workspace.Validate(dto)
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
+
+	txHandle := sqlclient.Begin()
+	err = workspaceService.WithTransaction(txHandle).Update(dto, &model)
+	if err != nil {
+		sqlclient.Rollback(txHandle)
+		return c.Status(err.Status).JSON(err)
+	}
+	sqlclient.Commit(txHandle)
+
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(new(workspace.WorkspaceResponseDto).Marshall(&model)))
+}
