@@ -1,7 +1,7 @@
 package sqlclient
 
 import (
-	logger2 "gorm.io/gorm/logger"
+	glogger "gorm.io/gorm/logger"
 	"sync"
 
 	"github.com/kotalco/api/pkg/logger"
@@ -20,7 +20,7 @@ var (
 func OpenDBConnection() *gorm.DB {
 	clientOnce.Do(func() {
 		dbConnection, err = gorm.Open(postgres.Open(config.EnvironmentConf["DB_SERVER_URL"]), &gorm.Config{
-			Logger: logger2.Default.LogMode(logger2.Silent),
+			Logger: glogger.Default.LogMode(glogger.Silent),
 		})
 		if err != nil {
 			go logger.Panic("DATABASE_CONNECTION_ERROR", err)
