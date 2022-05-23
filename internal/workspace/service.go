@@ -13,8 +13,9 @@ type service struct{}
 type IService interface {
 	Create(dto *CreateWorkspaceRequestDto, userId string) (*Workspace, *restErrors.RestErr)
 	Update(dto *UpdateWorkspaceRequestDto, workspace *Workspace) *restErrors.RestErr
-	WithTransaction(txHandle *gorm.DB) IService
+	Delete(workspace *Workspace) *restErrors.RestErr
 	GetById(Id string) (*Workspace, *restErrors.RestErr)
+	WithTransaction(txHandle *gorm.DB) IService
 }
 
 var (
@@ -77,4 +78,14 @@ func (service) Update(dto *UpdateWorkspaceRequestDto, workspace *Workspace) *res
 //GetById gets workspace by given id.
 func (service) GetById(Id string) (*Workspace, *restErrors.RestErr) {
 	return workspaceRepo.GetById(Id)
+}
+
+//Delete workspace by given id for specific user
+func (service) Delete(workspace *Workspace) *restErrors.RestErr {
+	err := workspaceRepo.Delete(workspace)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

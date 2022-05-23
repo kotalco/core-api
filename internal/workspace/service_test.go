@@ -15,6 +15,7 @@ var (
 	UpdateWorkspaceFunc    func(workspace *Workspace) *restErrors.RestErr
 	GetByNameAndUserIdFunc func(name string, userId string) (*Workspace, *restErrors.RestErr)
 	GetByIdFunc            func(Id string) (*Workspace, *restErrors.RestErr)
+	DeleteFunc             func(workspace *Workspace) *restErrors.RestErr
 	WithTransactionFunc    func(txHandle *gorm.DB) IRepository
 )
 
@@ -33,6 +34,10 @@ func (workspaceRepositoryMock) GetByNameAndUserId(name string, userId string) (*
 }
 func (workspaceRepositoryMock) GetById(Id string) (*Workspace, *restErrors.RestErr) {
 	return GetByIdFunc(Id)
+}
+
+func (workspaceRepositoryMock) Delete(workspace *Workspace) *restErrors.RestErr {
+	return DeleteFunc(workspace)
 }
 
 func (r workspaceRepositoryMock) WithTransaction(txHandle *gorm.DB) IRepository {
@@ -146,4 +151,23 @@ func TestService_GetById(t *testing.T) {
 		assert.Error(t, err, "not found")
 	})
 
+}
+
+func TestService_Delete(t *testing.T) {
+	t.Run("Delete_workspace_should_pass", func(t *testing.T) {
+		DeleteFunc = func(workspace *Workspace) *restErrors.RestErr {
+			return nil
+		}
+		err := workspaceTestService.Delete(new(Workspace))
+		assert.Nil(t, err)
+	})
+
+	t.Run("Delete_workspace_should_throw_if_repo_throws", func(t *testing.T) {
+		DeleteFunc = func(workspace *Workspace) *restErrors.RestErr {
+			return restErrors.NewNotFoundError("not found")
+		}
+
+		err := workspaceTestService.Delete(new(Workspace))
+		assert.Error(t, err, "not found")
+	})
 }

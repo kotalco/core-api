@@ -83,6 +83,22 @@ func TestRepository_GetById(t *testing.T) {
 	})
 }
 
+func TestRepository_Delete(t *testing.T) {
+	t.Run("Delete_work_space_should_pass", func(t *testing.T) {
+		workspace := createWorkspace(t)
+		err := repo.Delete(&workspace)
+		assert.Nil(t, err)
+		model, err := repo.GetById(workspace.ID)
+		assert.Nil(t, model)
+		assert.Error(t, err)
+	})
+
+	t.Run("Delete_Workspace_should_throw_not_found_if_record_already_deleted", func(t *testing.T) {
+		err := repo.Delete(new(Workspace))
+		assert.EqualValues(t, http.StatusNotFound, err.Status)
+	})
+}
+
 func createWorkspace(t *testing.T) Workspace {
 	workspace := new(Workspace)
 	workspace.ID = uuid.New().String()

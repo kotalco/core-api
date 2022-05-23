@@ -79,3 +79,25 @@ func Update(c *fiber.Ctx) error {
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(new(workspace.WorkspaceResponseDto).Marshall(&model)))
 }
+
+//Delete deletes user workspace and associated namespace
+func Delete(c *fiber.Ctx) error {
+	model := c.Locals("workspace").(workspace.Workspace)
+
+	txHandle := sqlclient.Begin()
+	err := workspaceService.WithTransaction(txHandle).Delete(&model)
+	if err != nil {
+		sqlclient.Rollback(txHandle)
+		return c.Status(err.Status).JSON(err)
+	}
+
+	err = namespaceService.Delete(model.K8sNamespace)
+	if err != nil {
+		sqlclient.Rollback(txHandle)
+		return c.Status(err.Status).JSON(err)
+	}
+
+	sqlclient.Commit(txHandle)
+
+	return c.SendStatus(http.StatusNoContent)
+}
