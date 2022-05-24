@@ -11,12 +11,13 @@ import (
 type service struct{}
 
 type IService interface {
+	WithTransaction(txHandle *gorm.DB) IService
 	Create(dto *CreateWorkspaceRequestDto, userId string) (*Workspace, *restErrors.RestErr)
 	Update(dto *UpdateWorkspaceRequestDto, workspace *Workspace) *restErrors.RestErr
 	Delete(workspace *Workspace) *restErrors.RestErr
 	GetById(Id string) (*Workspace, *restErrors.RestErr)
-	WithTransaction(txHandle *gorm.DB) IService
 	GetByUserId(UserId string) ([]*Workspace, *restErrors.RestErr)
+	AddWorkspaceMember(memberId string, workspace *Workspace) *restErrors.RestErr
 }
 
 var (
@@ -94,4 +95,14 @@ func (service) Delete(workspace *Workspace) *restErrors.RestErr {
 //GetByUserId Finds workspaces by given userId
 func (service) GetByUserId(userId string) ([]*Workspace, *restErrors.RestErr) {
 	return workspaceRepo.GetByUserId(userId)
+}
+
+//AddWorkspaceMember creates new workspaceUser record for a given workspace
+func (service) AddWorkspaceMember(memberId string, workspace *Workspace) *restErrors.RestErr {
+	newWorkspaceUser := new(workspaceuser.WorkspaceUser)
+	newWorkspaceUser.ID = uuid.NewString()
+	newWorkspaceUser.WorkspaceID = workspace.ID
+	newWorkspaceUser.UserId = memberId
+
+	return workspaceRepo.AddWorkspaceMember(workspace, newWorkspaceUser)
 }

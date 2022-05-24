@@ -100,11 +100,11 @@ func init() {
 	}
 
 	//Emails configs
-	val, ok = os.LookupEnv("EMAIL_VERIFICATION_BASE_URL")
+	val, ok = os.LookupEnv("FRONT_BASE_URL")
 	if !ok {
-		EnvironmentConf["EMAIL_VERIFICATION_BASE_URL"] = "http://localhost:3000/"
+		EnvironmentConf["FRONT_BASE_URL"] = "http://localhost:3000/"
 	} else {
-		EnvironmentConf["EMAIL_VERIFICATION_BASE_URL"] = val
+		EnvironmentConf["FRONT_BASE_URL"] = val
 	}
 
 	val, ok = os.LookupEnv("VERIFICATION_TOKEN_LENGTH")

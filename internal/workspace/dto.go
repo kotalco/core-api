@@ -20,6 +20,10 @@ type WorkspaceResponseDto struct {
 	K8sNamespace string `json:"k8s_namespace"`
 }
 
+type AddWorkspaceMemberDto struct {
+	Email string `json:"email" validate:"required,email"`
+}
+
 //Marshall creates workspace response from workspace model
 func (dto *WorkspaceResponseDto) Marshall(model *Workspace) *WorkspaceResponseDto {
 	dto.ID = model.ID
@@ -39,6 +43,9 @@ func Validate(dto interface{}) *restErrors.RestErr {
 			switch err.Field() {
 			case "Name":
 				fields["name"] = "name should be greater than 1 char and less than 100 char"
+				break
+			case "Email":
+				fields["email"] = "email should be a valid email address"
 				break
 			}
 		}
