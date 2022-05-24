@@ -156,11 +156,12 @@ func (mailServiceMock) ForgetPassword(dto *sendgrid.MailRequestDto) *restErrors.
 Workspace service Mocks
 */
 var (
-	CreateWorkspaceFunc      func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr)
-	UpdateWorkspaceFunc      func(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) *restErrors.RestErr
-	DeleteWorkspace          func(workspace *workspace.Workspace) *restErrors.RestErr
-	GetWorkspaceByIdFunc     func(Id string) (*workspace.Workspace, *restErrors.RestErr)
-	WorkspaceWithTransaction func(txHandle *gorm.DB) workspace.IService
+	CreateWorkspaceFunc       func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr)
+	UpdateWorkspaceFunc       func(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) *restErrors.RestErr
+	DeleteWorkspace           func(workspace *workspace.Workspace) *restErrors.RestErr
+	GetWorkspaceByIdFunc      func(Id string) (*workspace.Workspace, *restErrors.RestErr)
+	GetWorkspacesByUserIdFunc func(userId string) ([]*workspace.Workspace, *restErrors.RestErr)
+	WorkspaceWithTransaction  func(txHandle *gorm.DB) workspace.IService
 )
 
 type workspaceServiceMock struct{}
@@ -179,6 +180,10 @@ func (workspaceServiceMock) Delete(workspace *workspace.Workspace) *restErrors.R
 
 func (workspaceServiceMock) GetById(id string) (*workspace.Workspace, *restErrors.RestErr) {
 	return GetWorkspaceByIdFunc(id)
+}
+
+func (workspaceServiceMock) GetByUserId(userId string) ([]*workspace.Workspace, *restErrors.RestErr) {
+	return GetWorkspacesByUserIdFunc(userId)
 }
 
 func (wService workspaceServiceMock) WithTransaction(txHandle *gorm.DB) workspace.IService {

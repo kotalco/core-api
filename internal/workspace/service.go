@@ -16,6 +16,7 @@ type IService interface {
 	Delete(workspace *Workspace) *restErrors.RestErr
 	GetById(Id string) (*Workspace, *restErrors.RestErr)
 	WithTransaction(txHandle *gorm.DB) IService
+	GetByUserId(UserId string) ([]*Workspace, *restErrors.RestErr)
 }
 
 var (
@@ -88,4 +89,9 @@ func (service) Delete(workspace *Workspace) *restErrors.RestErr {
 	}
 
 	return nil
+}
+
+//GetByUserId Finds workspaces by given userId
+func (service) GetByUserId(userId string) ([]*Workspace, *restErrors.RestErr) {
+	return workspaceRepo.GetByUserId(userId)
 }

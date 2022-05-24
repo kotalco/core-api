@@ -16,6 +16,7 @@ var (
 	GetByNameAndUserIdFunc func(name string, userId string) (*Workspace, *restErrors.RestErr)
 	GetByIdFunc            func(Id string) (*Workspace, *restErrors.RestErr)
 	DeleteFunc             func(workspace *Workspace) *restErrors.RestErr
+	GetByUserIdFunc        func(userId string) ([]*Workspace, *restErrors.RestErr)
 	WithTransactionFunc    func(txHandle *gorm.DB) IRepository
 )
 
@@ -38,6 +39,10 @@ func (workspaceRepositoryMock) GetById(Id string) (*Workspace, *restErrors.RestE
 
 func (workspaceRepositoryMock) Delete(workspace *Workspace) *restErrors.RestErr {
 	return DeleteFunc(workspace)
+}
+
+func (workspaceRepositoryMock) GetByUserId(userId string) ([]*Workspace, *restErrors.RestErr) {
+	return GetByUserIdFunc(userId)
 }
 
 func (r workspaceRepositoryMock) WithTransaction(txHandle *gorm.DB) IRepository {
@@ -119,9 +124,7 @@ func TestService_Update(t *testing.T) {
 	})
 
 	t.Run("Update_workspace_should_throw_if_repo_update_throws", func(t *testing.T) {
-
 		model := new(Workspace)
-
 		UpdateWorkspaceFunc = func(workspace *Workspace) *restErrors.RestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
@@ -169,5 +172,29 @@ func TestService_Delete(t *testing.T) {
 
 		err := workspaceTestService.Delete(new(Workspace))
 		assert.Error(t, err, "not found")
+	})
+}
+
+func TestService_GetByUserId(t *testing.T) {
+	t.Run("Get_by_user_id_should_pass", func(t *testing.T) {
+		var list = make([]*Workspace, 0)
+		workspace := new(Workspace)
+		list = append(list, workspace)
+		GetByUserIdFunc = func(userId string) ([]*Workspace, *restErrors.RestErr) {
+			return list, nil
+		}
+		result, err := workspaceTestService.GetByUserId("1")
+		assert.Nil(t, err)
+		assert.EqualValues(t, list, result)
+	})
+
+	t.Run("Get_by_user_id_should_throw_if_repo_throws", func(t *testing.T) {
+		GetByUserIdFunc = func(Id string) ([]*Workspace, *restErrors.RestErr) {
+			return nil, restErrors.NewInternalServerError("something went wrong")
+		}
+		result, err := workspaceTestService.GetByUserId("1")
+		assert.Nil(t, result)
+
+		assert.Error(t, err, "something went wrong")
 	})
 }

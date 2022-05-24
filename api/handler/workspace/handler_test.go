@@ -27,6 +27,7 @@ var (
 	UpdateWorkspaceFunc      func(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) *restErrors.RestErr
 	GetWorkspaceByIdFunc     func(Id string) (*workspace.Workspace, *restErrors.RestErr)
 	DeleteWorkspaceFunc      func(workspace *workspace.Workspace) *restErrors.RestErr
+	GetWorkspaceByUserId     func(userId string) ([]*workspace.Workspace, *restErrors.RestErr)
 	WorkspaceWithTransaction func(txHandle *gorm.DB) workspace.IService
 )
 
@@ -43,6 +44,10 @@ func (workspaceServiceMock) GetById(workspaceId string) (*workspace.Workspace, *
 }
 func (workspaceServiceMock) Delete(workspace *workspace.Workspace) *restErrors.RestErr {
 	return DeleteWorkspaceFunc(workspace)
+}
+
+func (workspaceServiceMock) GetByUserId(workspaceId string) ([]*workspace.Workspace, *restErrors.RestErr) {
+	return GetWorkspaceByUserId(workspaceId)
 }
 
 func (wService workspaceServiceMock) WithTransaction(txHandle *gorm.DB) workspace.IService {
@@ -383,6 +388,45 @@ func TestDeleteWorkspace(t *testing.T) {
 		}
 		assert.EqualValues(t, http.StatusInternalServerError, restErr.Status)
 		assert.Error(t, restErr, "something went wrong")
+	})
+
+}
+
+func TestGetWorkspaceByUserId(t *testing.T) {
+	userDetails := new(token.UserDetails)
+	userDetails.ID = "11"
+	var locals = map[string]interface{}{}
+	locals["user"] = *userDetails
+
+	t.Run("Get_workspace_by_user_is_should_pass", func(t *testing.T) {
+		GetWorkspaceByUserId = func(userId string) ([]*workspace.Workspace, *restErrors.RestErr) {
+			var list = make([]*workspace.Workspace, 0)
+			record := new(workspace.Workspace)
+			list = append(list, record)
+			return list, nil
+		}
+
+		result, resp := newFiberCtx("", GetByUserId, locals)
+		var workspaceList map[string][]workspace.Workspace
+		err := json.Unmarshal(result, &workspaceList)
+		if err != nil {
+			panic(err)
+		}
+		assert.NotNil(t, workspaceList)
+		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
+	})
+
+	t.Run("Get_workspace_by_user_is_should_throw_if_workspace_service_throws", func(t *testing.T) {
+		GetWorkspaceByUserId = func(userId string) ([]*workspace.Workspace, *restErrors.RestErr) {
+			return nil, restErrors.NewInternalServerError("something went wrong")
+		}
+		result, _ := newFiberCtx("", GetByUserId, locals)
+		var restErr restErrors.RestErr
+		err := json.Unmarshal(result, &restErr)
+		if err != nil {
+			panic(err)
+		}
+		assert.EqualValues(t, http.StatusInternalServerError, restErr.Status)
 	})
 
 }
