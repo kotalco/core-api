@@ -4,6 +4,7 @@ import (
 	"errors"
 	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/kotalco/api/pkg/logger"
+	"github.com/kotalco/cloud-api/internal/workspaceuser"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
 	"gorm.io/gorm"
 )
@@ -29,6 +30,7 @@ func (repo *repository) WithTransaction(txHandle *gorm.DB) IRepository {
 	return repo
 }
 
+//Create creates a new workspace record with its first workspaceUser record
 func (repo *repository) Create(workspace *Workspace) *restErrors.RestErr {
 	res := sqlclient.DbClient.Create(workspace)
 	if res.Error != nil {
@@ -53,6 +55,7 @@ func (repo *repository) GetByNameAndUserId(name string, userId string) (*Workspa
 	return workspace, nil
 }
 
+//Update updates workspace record
 func (repo *repository) Update(workspace *Workspace) *restErrors.RestErr {
 	res := sqlclient.DbClient.Save(workspace)
 	if res.Error != nil {
@@ -63,6 +66,7 @@ func (repo *repository) Update(workspace *Workspace) *restErrors.RestErr {
 	return nil
 }
 
+//GetById gets workspace record and preloads workspaceUser records
 func (repo repository) GetById(Id string) (*Workspace, *restErrors.RestErr) {
 	var workspace = new(Workspace)
 	workspace.ID = Id
@@ -79,6 +83,7 @@ func (repo repository) GetById(Id string) (*Workspace, *restErrors.RestErr) {
 	return workspace, nil
 }
 
+//Delete deletes workspace record and cascades workspaceUser records with it
 func (repo repository) Delete(workspace *Workspace) *restErrors.RestErr {
 	result := sqlclient.DbClient.First(workspace).Delete(workspace)
 	if result.Error != nil {
@@ -92,9 +97,11 @@ func (repo repository) Delete(workspace *Workspace) *restErrors.RestErr {
 	return nil
 }
 
+//GetByUserId get workspaces where user assigned to member or owner by sub-query over workspaceUser table
 func (repo repository) GetByUserId(userId string) ([]*Workspace, *restErrors.RestErr) {
 	var workspaces []*Workspace
-	result := sqlclient.DbClient.Where("user_id = ?", userId).Find(&workspaces)
+	subQuery := sqlclient.DbClient.Model(workspaceuser.WorkspaceUser{}).Where("user_id = ?", userId).Select("workspace_id")
+	result := sqlclient.DbClient.Where("id IN (?)", subQuery).Find(&workspaces)
 	if result.Error != nil {
 		go logger.Error(repo.GetByUserId, result.Error)
 		return nil, restErrors.NewInternalServerError("something went wrong")
