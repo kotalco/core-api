@@ -37,6 +37,7 @@ func MapUrl(app *fiber.App) {
 	workspaces.Patch("/:id", middleware.IsWorkspace, workspace.Update)
 	workspaces.Delete("/:id", middleware.IsWorkspace, workspace.Delete)
 	workspaces.Get("/", workspace.GetByUserId)
+
 	//community routes
 	communityApis.MapUrl(app, middleware.JWTProtected, middleware.TFAProtected)
 }
