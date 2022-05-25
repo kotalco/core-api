@@ -382,7 +382,7 @@ func Whoami(c *fiber.Ctx) error {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(userDetails))
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(new(user.UserResponseDto).Marshall(userDetails)))
 
 }
 
