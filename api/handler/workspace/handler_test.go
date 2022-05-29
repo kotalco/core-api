@@ -189,7 +189,7 @@ func (mailServiceMock) WorkspaceInvitation(dto *sendgrid.WorkspaceInvitationMail
 
 func newFiberCtx(dto interface{}, method func(c *fiber.Ctx) error, locals map[string]interface{}) ([]byte, *http.Response) {
 	app := fiber.New()
-	app.Post("/test", func(c *fiber.Ctx) error {
+	app.Post("/test/", func(c *fiber.Ctx) error {
 		for key, element := range locals {
 			c.Locals(key, element)
 		}
@@ -730,6 +730,73 @@ func TestLeaveWorkspace(t *testing.T) {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 		result, resp := newFiberCtx("", Leave, locals)
+		var restErr restErrors.RestErr
+		err := json.Unmarshal(result, &restErr)
+		if err != nil {
+			panic(err)
+		}
+		assert.EqualValues(t, "something went wrong", restErr.Message)
+		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
+	})
+
+}
+
+func TestRemoveMemberWorkspace(t *testing.T) {
+	userDetails := new(token.UserDetails)
+	userDetails.ID = "11"
+
+	workspaceModelLocals := new(workspace.Workspace)
+	workspaceModelLocals.UserId = "11"
+
+	workspaceUserModelLocals := new(workspaceuser.WorkspaceUser)
+	workspaceUserModelLocals.UserId = ""
+	workspaceModelLocals.WorkspaceUsers = []workspaceuser.WorkspaceUser{*workspaceUserModelLocals}
+
+	var locals = map[string]interface{}{}
+	locals["user"] = *userDetails
+	locals["workspace"] = *workspaceModelLocals
+
+	t.Run("remove_workspace_user_should_pass", func(t *testing.T) {
+		DeleteWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
+			return nil
+		}
+
+		result, resp := newFiberCtx("", RemoveMember, locals)
+		var responseMessage map[string]shared.SuccessMessage
+		err := json.Unmarshal(result, &responseMessage)
+		if err != nil {
+			panic(err)
+		}
+
+		assert.EqualValues(t, "User has been removed from workspace", responseMessage["data"].Message)
+		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
+	})
+	t.Run("remove_workspace_user_should_throw_if_the_normal_member_tries_to_remove_another_member", func(t *testing.T) {
+		workspaceModelWhenUserIsNotOwner := *workspaceModelLocals
+		workspaceModelWhenUserIsNotOwner.UserId = "12"
+		locals["workspace"] = workspaceModelWhenUserIsNotOwner
+
+		DeleteWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
+			return nil
+		}
+
+		result, resp := newFiberCtx("", RemoveMember, locals)
+		var restErr restErrors.RestErr
+		err := json.Unmarshal(result, &restErr)
+		if err != nil {
+			panic(err)
+		}
+		assert.EqualValues(t, "you can only delete users from your own workspace", restErr.Message)
+		assert.EqualValues(t, http.StatusForbidden, resp.StatusCode)
+		locals["workspace"] = *workspaceModelLocals
+
+	})
+
+	t.Run("leave_workspace_should_throw_if_service_Throw", func(t *testing.T) {
+		DeleteWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
+			return restErrors.NewInternalServerError("something went wrong")
+		}
+		result, resp := newFiberCtx("", RemoveMember, locals)
 		var restErr restErrors.RestErr
 		err := json.Unmarshal(result, &restErr)
 		if err != nil {

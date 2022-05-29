@@ -1,6 +1,7 @@
 package workspace
 
 import (
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/kotalco/api/pkg/shared"
@@ -191,5 +192,48 @@ func Leave(c *fiber.Ctx) error {
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{
 		Message: "You're no longer member of this workspace",
+	}))
+}
+
+//RemoveMember workspace owner removes workspace member form his/her workspace
+func RemoveMember(c *fiber.Ctx) error {
+	model := c.Locals("workspace").(workspace.Workspace)
+	userId := c.Locals("user").(token.UserDetails).ID
+	memberId := c.Params("user_id")
+
+	fmt.Printf("userId%s, memberId%s, modelUserId%s", userId, memberId, model.UserId)
+	if model.UserId != userId { //check if the user is the owner
+		err := restErrors.NewForbiddenError("you can only delete users from your own workspace")
+		return c.Status(err.Status).JSON(err)
+	}
+
+	if model.UserId == memberId { //check if the-to-be deleted user isn't the owner of the workspace
+		err := restErrors.NewForbiddenError("you can't leave your own workspace")
+		return c.Status(err.Status).JSON(err)
+	}
+
+	exist := false //check if the to-be-delete user exists in the workspace
+	for _, v := range model.WorkspaceUsers {
+		if v.UserId == memberId {
+			exist = true
+			break
+		}
+	}
+	if !exist {
+		notFoundErr := restErrors.NewNotFoundError("user isn't a member of the workspace")
+		return c.Status(notFoundErr.Status).JSON(notFoundErr)
+	}
+
+	txHandle := sqlclient.Begin()
+	err := workspaceService.WithTransaction(txHandle).DeleteWorkspaceMember(&model, userId)
+	if err != nil {
+		sqlclient.Rollback(txHandle)
+		return c.Status(err.Status).JSON(err)
+	}
+
+	sqlclient.Commit(txHandle)
+
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{
+		Message: "User has been removed from workspace",
 	}))
 }
