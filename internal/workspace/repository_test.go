@@ -138,6 +138,32 @@ func TestRepository_AddWorkspaceMember(t *testing.T) {
 	})
 }
 
+func TestRepository_DeleteWorkspaceMember(t *testing.T) {
+	t.Run("delete_workspace_member_should_pass", func(t *testing.T) {
+		workspace := createWorkspace(t)
+		err := repo.DeleteWorkspaceMember(&workspace, &workspace.WorkspaceUsers[0])
+		assert.Nil(t, err)
+
+		model, err := repo.GetById(workspace.ID)
+		assert.Nil(t, err)
+		assert.EqualValues(t, 0, len(model.WorkspaceUsers))
+
+		cleanUp(workspace)
+	})
+}
+
+func TestRepository_GetWorkspaceMemberByWorkspaceIdAndUserId(t *testing.T) {
+	t.Run("get_workspace_member_by_workspace_id_and_user_id_should_pass", func(t *testing.T) {
+		workspace := createWorkspace(t)
+		workspaceUser, err := repo.GetWorkspaceMemberByWorkspaceIdAndUserId(workspace.ID, workspace.WorkspaceUsers[0].UserId)
+
+		assert.Nil(t, err)
+		assert.EqualValues(t, workspace.WorkspaceUsers[0], *workspaceUser)
+
+		cleanUp(workspace)
+	})
+}
+
 func createWorkspace(t *testing.T) Workspace {
 	workspace := new(Workspace)
 	workspace.ID = uuid.New().String()

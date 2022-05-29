@@ -151,7 +151,7 @@ func AddMember(c *fiber.Ctx) error {
 	}
 
 	txHandle := sqlclient.Begin()
-	err = workspaceService.WithTransaction(txHandle).AddWorkspaceMember(member.ID, &model)
+	err = workspaceService.WithTransaction(txHandle).AddWorkspaceMember(&model, member.ID)
 	if err != nil {
 		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
@@ -167,5 +167,29 @@ func AddMember(c *fiber.Ctx) error {
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{
 		Message: "user has been added to the workspace",
+	}))
+}
+
+//Leave removes workspace member from workspace
+func Leave(c *fiber.Ctx) error {
+	model := c.Locals("workspace").(workspace.Workspace)
+	userId := c.Locals("user").(token.UserDetails).ID
+
+	if model.UserId == userId {
+		err := restErrors.NewForbiddenError("you can't leave your own workspace")
+		return c.Status(err.Status).JSON(err)
+	}
+
+	txHandle := sqlclient.Begin()
+	err := workspaceService.WithTransaction(txHandle).DeleteWorkspaceMember(&model, userId)
+	if err != nil {
+		sqlclient.Rollback(txHandle)
+		return c.Status(err.Status).JSON(err)
+	}
+
+	sqlclient.Commit(txHandle)
+
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{
+		Message: "You're no longer member of this workspace",
 	}))
 }

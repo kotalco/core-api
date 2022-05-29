@@ -11,15 +11,17 @@ import (
 )
 
 var (
-	WithTransactionFunc    func(txHandle *gorm.DB) IRepository
-	workspaceTestService   IService
-	CreateWorkspaceFunc    func(workspace *Workspace) *restErrors.RestErr
-	UpdateWorkspaceFunc    func(workspace *Workspace) *restErrors.RestErr
-	GetByNameAndUserIdFunc func(name string, userId string) (*Workspace, *restErrors.RestErr)
-	GetByIdFunc            func(Id string) (*Workspace, *restErrors.RestErr)
-	DeleteFunc             func(workspace *Workspace) *restErrors.RestErr
-	GetByUserIdFunc        func(userId string) ([]*Workspace, *restErrors.RestErr)
-	addWorkspaceMemberFunc func(workspace *Workspace, workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr
+	WithTransactionFunc                          func(txHandle *gorm.DB) IRepository
+	workspaceTestService                         IService
+	CreateWorkspaceFunc                          func(workspace *Workspace) *restErrors.RestErr
+	UpdateWorkspaceFunc                          func(workspace *Workspace) *restErrors.RestErr
+	GetByNameAndUserIdFunc                       func(name string, userId string) (*Workspace, *restErrors.RestErr)
+	GetByIdFunc                                  func(Id string) (*Workspace, *restErrors.RestErr)
+	DeleteFunc                                   func(workspace *Workspace) *restErrors.RestErr
+	GetByUserIdFunc                              func(userId string) ([]*Workspace, *restErrors.RestErr)
+	addWorkspaceMemberFunc                       func(workspace *Workspace, workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr
+	DeleteWorkspaceMemberFunc                    func(workspace *Workspace, workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr
+	GetWorkspaceMemberByWorkspaceIdAndUserIdFunc func(workspaceId string, userId string) (*workspaceuser.WorkspaceUser, *restErrors.RestErr)
 )
 
 type workspaceRepositoryMock struct{}
@@ -53,6 +55,13 @@ func (workspaceRepositoryMock) GetByUserId(userId string) ([]*Workspace, *restEr
 
 func (workspaceRepositoryMock) AddWorkspaceMember(workspace *Workspace, workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr {
 	return addWorkspaceMemberFunc(workspace, workspaceUser)
+}
+
+func (workspaceRepositoryMock) DeleteWorkspaceMember(workspace *Workspace, workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr {
+	return DeleteWorkspaceMemberFunc(workspace, workspaceUser)
+}
+func (workspaceRepositoryMock) GetWorkspaceMemberByWorkspaceIdAndUserId(workspaceId string, userId string) (*workspaceuser.WorkspaceUser, *restErrors.RestErr) {
+	return GetWorkspaceMemberByWorkspaceIdAndUserIdFunc(workspaceId, userId)
 }
 
 func TestMain(m *testing.M) {
@@ -210,7 +219,7 @@ func TestService_AddWorkspaceMember(t *testing.T) {
 		addWorkspaceMemberFunc = func(workspace *Workspace, workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr {
 			return nil
 		}
-		err := workspaceTestService.AddWorkspaceMember("1", new(Workspace))
+		err := workspaceTestService.AddWorkspaceMember(new(Workspace), "1")
 		assert.Nil(t, err)
 	})
 
@@ -219,7 +228,39 @@ func TestService_AddWorkspaceMember(t *testing.T) {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 
-		err := workspaceTestService.AddWorkspaceMember("1", new(Workspace))
+		err := workspaceTestService.AddWorkspaceMember(new(Workspace), "1")
+		assert.Error(t, err, "something went wrong")
+	})
+}
+func TestService_DeleteWorkspaceMember(t *testing.T) {
+	t.Run("delete_workspace_member_should_pass", func(t *testing.T) {
+		GetWorkspaceMemberByWorkspaceIdAndUserIdFunc = func(workspaceId string, userId string) (*workspaceuser.WorkspaceUser, *restErrors.RestErr) {
+			return new(workspaceuser.WorkspaceUser), nil
+		}
+		DeleteWorkspaceMemberFunc = func(workspace *Workspace, workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr {
+			return nil
+		}
+		err := workspaceTestService.DeleteWorkspaceMember(new(Workspace), "1")
+		assert.Nil(t, err)
+	})
+
+	t.Run("delete_workspace_member_should_throw_if_workspace_member_doesnt_exist", func(t *testing.T) {
+		GetWorkspaceMemberByWorkspaceIdAndUserIdFunc = func(workspaceId string, userId string) (*workspaceuser.WorkspaceUser, *restErrors.RestErr) {
+			return nil, restErrors.NewNotFoundError("no such record")
+		}
+
+		err := workspaceTestService.DeleteWorkspaceMember(new(Workspace), "1")
+		assert.Error(t, err, "no such record")
+	})
+
+	t.Run("delete_workspace_member_should_throw_if_repo_throws", func(t *testing.T) {
+		GetWorkspaceMemberByWorkspaceIdAndUserIdFunc = func(workspaceId string, userId string) (*workspaceuser.WorkspaceUser, *restErrors.RestErr) {
+			return new(workspaceuser.WorkspaceUser), nil
+		}
+		DeleteWorkspaceMemberFunc = func(workspace *Workspace, workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr {
+			return restErrors.NewInternalServerError("something went wrong")
+		}
+		err := workspaceTestService.DeleteWorkspaceMember(new(Workspace), "1")
 		assert.Error(t, err, "something went wrong")
 	})
 }
