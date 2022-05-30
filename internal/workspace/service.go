@@ -110,10 +110,10 @@ func (service) AddWorkspaceMember(workspace *Workspace, memberId string) *restEr
 
 //DeleteWorkspaceMember removes workspaceUser record for a given workspace
 func (service) DeleteWorkspaceMember(workspace *Workspace, memberId string) *restErrors.RestErr {
-	newWorkspaceUser, err := workspaceRepo.GetWorkspaceMemberByWorkspaceIdAndUserId(workspace.ID, memberId)
+	member, err := workspaceRepo.GetWorkspaceMemberByWorkspaceIdAndUserId(workspace.ID, memberId)
 	if err != nil {
 		return err
 	}
 
-	return workspaceRepo.DeleteWorkspaceMember(workspace, newWorkspaceUser)
+	return workspaceRepo.DeleteWorkspaceMember(workspace, member)
 }
