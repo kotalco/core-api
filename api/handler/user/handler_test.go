@@ -138,6 +138,7 @@ var (
 	SignUpMailFunc              func(dto *sendgrid.MailRequestDto) *restErrors.RestErr
 	ResendEmailVerificationFunc func(dto *sendgrid.MailRequestDto) *restErrors.RestErr
 	ForgetPasswordMailFunc      func(dto *sendgrid.MailRequestDto) *restErrors.RestErr
+	WorkspaceInvitationFunc     func(dto *sendgrid.WorkspaceInvitationMailRequestDto) *restErrors.RestErr
 )
 
 type mailServiceMock struct{}
@@ -151,20 +152,28 @@ func (mailServiceMock) ResendEmailVerification(dto *sendgrid.MailRequestDto) *re
 func (mailServiceMock) ForgetPassword(dto *sendgrid.MailRequestDto) *restErrors.RestErr {
 	return ForgetPasswordMailFunc(dto)
 }
+func (mailServiceMock) WorkspaceInvitation(dto *sendgrid.WorkspaceInvitationMailRequestDto) *restErrors.RestErr {
+	return WorkspaceInvitationFunc(dto)
+}
 
 /*
 Workspace service Mocks
 */
 var (
+	WorkspaceWithTransaction  func(txHandle *gorm.DB) workspace.IService
 	CreateWorkspaceFunc       func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr)
 	UpdateWorkspaceFunc       func(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) *restErrors.RestErr
 	DeleteWorkspace           func(workspace *workspace.Workspace) *restErrors.RestErr
 	GetWorkspaceByIdFunc      func(Id string) (*workspace.Workspace, *restErrors.RestErr)
 	GetWorkspacesByUserIdFunc func(userId string) ([]*workspace.Workspace, *restErrors.RestErr)
-	WorkspaceWithTransaction  func(txHandle *gorm.DB) workspace.IService
+	addWorkspaceMemberFunc    func(memberId string, workspace *workspace.Workspace) *restErrors.RestErr
 )
 
 type workspaceServiceMock struct{}
+
+func (wService workspaceServiceMock) WithTransaction(txHandle *gorm.DB) workspace.IService {
+	return wService
+}
 
 func (workspaceServiceMock) Create(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr) {
 	return CreateWorkspaceFunc(dto, userId)
@@ -186,8 +195,8 @@ func (workspaceServiceMock) GetByUserId(userId string) ([]*workspace.Workspace, 
 	return GetWorkspacesByUserIdFunc(userId)
 }
 
-func (wService workspaceServiceMock) WithTransaction(txHandle *gorm.DB) workspace.IService {
-	return wService
+func (workspaceServiceMock) AddWorkspaceMember(memberId string, workspace *workspace.Workspace) *restErrors.RestErr {
+	return addWorkspaceMemberFunc(memberId, workspace)
 }
 
 /*

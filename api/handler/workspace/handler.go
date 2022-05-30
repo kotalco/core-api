@@ -4,8 +4,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/kotalco/api/pkg/shared"
+	"github.com/kotalco/cloud-api/internal/user"
 	"github.com/kotalco/cloud-api/internal/workspace"
 	"github.com/kotalco/cloud-api/pkg/k8s"
+	"github.com/kotalco/cloud-api/pkg/sendgrid"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
 	"github.com/kotalco/cloud-api/pkg/token"
 	"net/http"
@@ -14,6 +16,8 @@ import (
 var (
 	workspaceService = workspace.NewService()
 	namespaceService = k8s.NewNamespaceService()
+	userService      = user.NewService()
+	mailService      = sendgrid.NewService()
 )
 
 //Create validate dto , create new workspace, creates new namespace in k8
@@ -117,4 +121,51 @@ func GetByUserId(c *fiber.Ctx) error {
 	}
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(marshalled))
+}
+
+//AddMember adds new member to workspace
+func AddMember(c *fiber.Ctx) error {
+	dto := new(workspace.AddWorkspaceMemberDto)
+	if err := c.BodyParser(dto); err != nil {
+		badReq := restErrors.NewBadRequestError("invalid request body")
+		return c.Status(badReq.Status).JSON(badReq)
+	}
+
+	err := workspace.Validate(dto)
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
+
+	member, err := userService.GetByEmail(dto.Email)
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
+
+	model := c.Locals("workspace").(workspace.Workspace)
+
+	for _, v := range model.WorkspaceUsers {
+		if v.UserId == member.ID {
+			conflictErr := restErrors.NewConflictError("User is already a member of the workspace")
+			return c.Status(conflictErr.Status).JSON(conflictErr)
+		}
+	}
+
+	txHandle := sqlclient.Begin()
+	err = workspaceService.WithTransaction(txHandle).AddWorkspaceMember(member.ID, &model)
+	if err != nil {
+		sqlclient.Rollback(txHandle)
+		return c.Status(err.Status).JSON(err)
+	}
+
+	sqlclient.Commit(txHandle)
+
+	mailRequestDto := new(sendgrid.WorkspaceInvitationMailRequestDto)
+	mailRequestDto.Email = dto.Email
+	mailRequestDto.WorkspaceName = model.Name
+	mailRequestDto.WorkspaceId = model.ID
+	go mailService.WorkspaceInvitation(mailRequestDto)
+
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{
+		Message: "user has been added to the workspace",
+	}))
 }

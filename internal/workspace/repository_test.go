@@ -120,6 +120,24 @@ func TestRepository_GetByUserId(t *testing.T) {
 	})
 }
 
+func TestRepository_AddWorkspaceMember(t *testing.T) {
+	t.Run("Add_workspace_member_should_pass", func(t *testing.T) {
+		workspace := createWorkspace(t)
+		newRecord := new(workspaceuser.WorkspaceUser)
+		newRecord.ID = uuid.NewString()
+		newRecord.WorkspaceID = workspace.ID
+		newRecord.UserId = workspace.UserId
+		err := repo.AddWorkspaceMember(&workspace, newRecord)
+		assert.Nil(t, err)
+
+		model, err := repo.GetById(workspace.ID)
+		assert.Nil(t, err)
+		assert.EqualValues(t, 2, len(model.WorkspaceUsers))
+
+		cleanUp(workspace)
+	})
+}
+
 func createWorkspace(t *testing.T) Workspace {
 	workspace := new(Workspace)
 	workspace.ID = uuid.New().String()

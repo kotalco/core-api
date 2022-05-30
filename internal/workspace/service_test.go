@@ -2,6 +2,7 @@ package workspace
 
 import (
 	restErrors "github.com/kotalco/api/pkg/errors"
+	"github.com/kotalco/cloud-api/internal/workspaceuser"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 )
 
 var (
+	WithTransactionFunc    func(txHandle *gorm.DB) IRepository
 	workspaceTestService   IService
 	CreateWorkspaceFunc    func(workspace *Workspace) *restErrors.RestErr
 	UpdateWorkspaceFunc    func(workspace *Workspace) *restErrors.RestErr
@@ -17,10 +19,14 @@ var (
 	GetByIdFunc            func(Id string) (*Workspace, *restErrors.RestErr)
 	DeleteFunc             func(workspace *Workspace) *restErrors.RestErr
 	GetByUserIdFunc        func(userId string) ([]*Workspace, *restErrors.RestErr)
-	WithTransactionFunc    func(txHandle *gorm.DB) IRepository
+	addWorkspaceMemberFunc func(workspace *Workspace, workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr
 )
 
 type workspaceRepositoryMock struct{}
+
+func (r workspaceRepositoryMock) WithTransaction(txHandle *gorm.DB) IRepository {
+	return r
+}
 
 func (workspaceRepositoryMock) Create(workspace *Workspace) *restErrors.RestErr {
 	return CreateWorkspaceFunc(workspace)
@@ -45,8 +51,8 @@ func (workspaceRepositoryMock) GetByUserId(userId string) ([]*Workspace, *restEr
 	return GetByUserIdFunc(userId)
 }
 
-func (r workspaceRepositoryMock) WithTransaction(txHandle *gorm.DB) IRepository {
-	return r
+func (workspaceRepositoryMock) AddWorkspaceMember(workspace *Workspace, workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr {
+	return addWorkspaceMemberFunc(workspace, workspaceUser)
 }
 
 func TestMain(m *testing.M) {
@@ -195,6 +201,25 @@ func TestService_GetByUserId(t *testing.T) {
 		result, err := workspaceTestService.GetByUserId("1")
 		assert.Nil(t, result)
 
+		assert.Error(t, err, "something went wrong")
+	})
+}
+
+func TestService_AddWorkspaceMember(t *testing.T) {
+	t.Run("add_member_to_workspace_should_pass", func(t *testing.T) {
+		addWorkspaceMemberFunc = func(workspace *Workspace, workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr {
+			return nil
+		}
+		err := workspaceTestService.AddWorkspaceMember("1", new(Workspace))
+		assert.Nil(t, err)
+	})
+
+	t.Run("add_member_to_workspace_should_throw_if_repo_throws", func(t *testing.T) {
+		addWorkspaceMemberFunc = func(workspace *Workspace, workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr {
+			return restErrors.NewInternalServerError("something went wrong")
+		}
+
+		err := workspaceTestService.AddWorkspaceMember("1", new(Workspace))
 		assert.Error(t, err, "something went wrong")
 	})
 }

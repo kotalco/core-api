@@ -5,8 +5,11 @@ import (
 	"encoding/json"
 	"github.com/gofiber/fiber/v2"
 	restErrors "github.com/kotalco/api/pkg/errors"
+	"github.com/kotalco/api/pkg/shared"
+	"github.com/kotalco/cloud-api/internal/user"
 	"github.com/kotalco/cloud-api/internal/workspace"
 	"github.com/kotalco/cloud-api/internal/workspaceuser"
+	"github.com/kotalco/cloud-api/pkg/sendgrid"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
 	"github.com/kotalco/cloud-api/pkg/token"
 	"github.com/stretchr/testify/assert"
@@ -20,18 +23,96 @@ import (
 )
 
 /*
+User service Mocks
+*/
+var (
+	SignUpFunc               func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr)
+	SignInFunc               func(dto *user.SignInRequestDto) (*user.UserSessionResponseDto, *restErrors.RestErr)
+	VerifyTOTPFunc           func(model *user.User, totp string) (*user.UserSessionResponseDto, *restErrors.RestErr)
+	GetByEmailFunc           func(email string) (*user.User, *restErrors.RestErr)
+	GetByIdFunc              func(Id string) (*user.User, *restErrors.RestErr)
+	VerifyEmailFunc          func(model *user.User) *restErrors.RestErr
+	ResetPasswordFunc        func(model *user.User, password string) *restErrors.RestErr
+	ChangePasswordFunc       func(model *user.User, dto *user.ChangePasswordRequestDto) *restErrors.RestErr
+	ChangeEmailFunc          func(model *user.User, dto *user.ChangeEmailRequestDto) *restErrors.RestErr
+	CreateTOTPFunc           func(model *user.User, dto *user.CreateTOTPRequestDto) (bytes.Buffer, *restErrors.RestErr)
+	EnableTwoFactorAuthFunc  func(model *user.User, totp string) (*user.User, *restErrors.RestErr)
+	DisableTwoFactorAuthFunc func(model *user.User, dto *user.DisableTOTPRequestDto) *restErrors.RestErr
+	UserWithTransactionFunc  func(txHandle *gorm.DB) user.IService
+)
+
+type userServiceMock struct{}
+
+func (uService userServiceMock) WithTransaction(txHandle *gorm.DB) user.IService {
+	return uService
+}
+
+func (userServiceMock) SignUp(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr) {
+	return SignUpFunc(dto)
+}
+
+func (userServiceMock) SignIn(dto *user.SignInRequestDto) (*user.UserSessionResponseDto, *restErrors.RestErr) {
+	return SignInFunc(dto)
+}
+
+func (userServiceMock) GetByEmail(email string) (*user.User, *restErrors.RestErr) {
+	return GetByEmailFunc(email)
+}
+
+func (userServiceMock) GetById(Id string) (*user.User, *restErrors.RestErr) {
+	return GetByIdFunc(Id)
+}
+
+func (userServiceMock) VerifyEmail(model *user.User) *restErrors.RestErr {
+	return VerifyEmailFunc(model)
+}
+
+func (userServiceMock) ResetPassword(model *user.User, password string) *restErrors.RestErr {
+	return ResetPasswordFunc(model, password)
+}
+
+func (userServiceMock) ChangePassword(model *user.User, dto *user.ChangePasswordRequestDto) *restErrors.RestErr {
+	return ChangePasswordFunc(model, dto)
+}
+
+func (userServiceMock) ChangeEmail(model *user.User, dto *user.ChangeEmailRequestDto) *restErrors.RestErr {
+	return ChangeEmailFunc(model, dto)
+}
+
+func (userServiceMock) CreateTOTP(model *user.User, dto *user.CreateTOTPRequestDto) (bytes.Buffer, *restErrors.RestErr) {
+	return CreateTOTPFunc(model, dto)
+}
+
+func (userServiceMock) EnableTwoFactorAuth(model *user.User, totp string) (*user.User, *restErrors.RestErr) {
+	return EnableTwoFactorAuthFunc(model, totp)
+}
+
+func (userServiceMock) VerifyTOTP(model *user.User, totp string) (*user.UserSessionResponseDto, *restErrors.RestErr) {
+	return VerifyTOTPFunc(model, totp)
+}
+
+func (userServiceMock) DisableTwoFactorAuth(model *user.User, dto *user.DisableTOTPRequestDto) *restErrors.RestErr {
+	return DisableTwoFactorAuthFunc(model, dto)
+}
+
+/*
 Workspace service Mocks
 */
 var (
+	WorkspaceWithTransaction func(txHandle *gorm.DB) workspace.IService
 	CreateWorkspaceFunc      func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr)
 	UpdateWorkspaceFunc      func(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) *restErrors.RestErr
 	GetWorkspaceByIdFunc     func(Id string) (*workspace.Workspace, *restErrors.RestErr)
 	DeleteWorkspaceFunc      func(workspace *workspace.Workspace) *restErrors.RestErr
-	GetWorkspaceByUserId     func(userId string) ([]*workspace.Workspace, *restErrors.RestErr)
-	WorkspaceWithTransaction func(txHandle *gorm.DB) workspace.IService
+	GetWorkspaceByUserIdFunc func(userId string) ([]*workspace.Workspace, *restErrors.RestErr)
+	AddWorkspaceMemberFunc   func(memberId string, workspace *workspace.Workspace) *restErrors.RestErr
 )
 
 type workspaceServiceMock struct{}
+
+func (wService workspaceServiceMock) WithTransaction(txHandle *gorm.DB) workspace.IService {
+	return wService
+}
 
 func (workspaceServiceMock) Create(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr) {
 	return CreateWorkspaceFunc(dto, userId)
@@ -47,11 +128,11 @@ func (workspaceServiceMock) Delete(workspace *workspace.Workspace) *restErrors.R
 }
 
 func (workspaceServiceMock) GetByUserId(workspaceId string) ([]*workspace.Workspace, *restErrors.RestErr) {
-	return GetWorkspaceByUserId(workspaceId)
+	return GetWorkspaceByUserIdFunc(workspaceId)
 }
 
-func (wService workspaceServiceMock) WithTransaction(txHandle *gorm.DB) workspace.IService {
-	return wService
+func (workspaceServiceMock) AddWorkspaceMember(memberId string, workspace *workspace.Workspace) *restErrors.RestErr {
+	return AddWorkspaceMemberFunc(memberId, workspace)
 }
 
 /*
@@ -76,6 +157,29 @@ func (namespaceServiceMock) Get(name string) (*corev1.Namespace, *restErrors.Res
 
 func (namespaceServiceMock) Delete(name string) *restErrors.RestErr {
 	return DeleteNamespaceFunc(name)
+}
+
+//Mail Service mocks
+var (
+	SignUpMailFunc              func(dto *sendgrid.MailRequestDto) *restErrors.RestErr
+	ResendEmailVerificationFunc func(dto *sendgrid.MailRequestDto) *restErrors.RestErr
+	ForgetPasswordMailFunc      func(dto *sendgrid.MailRequestDto) *restErrors.RestErr
+	WorkspaceInvitationFunc     func(dto *sendgrid.WorkspaceInvitationMailRequestDto) *restErrors.RestErr
+)
+
+type mailServiceMock struct{}
+
+func (mailServiceMock) SignUp(dto *sendgrid.MailRequestDto) *restErrors.RestErr {
+	return SignUpMailFunc(dto)
+}
+func (mailServiceMock) ResendEmailVerification(dto *sendgrid.MailRequestDto) *restErrors.RestErr {
+	return ResendEmailVerificationFunc(dto)
+}
+func (mailServiceMock) ForgetPassword(dto *sendgrid.MailRequestDto) *restErrors.RestErr {
+	return ForgetPasswordMailFunc(dto)
+}
+func (mailServiceMock) WorkspaceInvitation(dto *sendgrid.WorkspaceInvitationMailRequestDto) *restErrors.RestErr {
+	return WorkspaceInvitationFunc(dto)
 }
 
 func newFiberCtx(dto interface{}, method func(c *fiber.Ctx) error, locals map[string]interface{}) ([]byte, *http.Response) {
@@ -110,6 +214,8 @@ func newFiberCtx(dto interface{}, method func(c *fiber.Ctx) error, locals map[st
 func TestMain(m *testing.M) {
 	workspaceService = &workspaceServiceMock{}
 	namespaceService = &namespaceServiceMock{}
+	mailService = &mailServiceMock{}
+	userService = &userServiceMock{}
 	sqlclient.OpenDBConnection()
 
 	code := m.Run()
@@ -399,7 +505,7 @@ func TestGetWorkspaceByUserId(t *testing.T) {
 	locals["user"] = *userDetails
 
 	t.Run("Get_workspace_by_user_is_should_pass", func(t *testing.T) {
-		GetWorkspaceByUserId = func(userId string) ([]*workspace.Workspace, *restErrors.RestErr) {
+		GetWorkspaceByUserIdFunc = func(userId string) ([]*workspace.Workspace, *restErrors.RestErr) {
 			var list = make([]*workspace.Workspace, 0)
 			record := new(workspace.Workspace)
 			list = append(list, record)
@@ -417,7 +523,7 @@ func TestGetWorkspaceByUserId(t *testing.T) {
 	})
 
 	t.Run("Get_workspace_by_user_is_should_throw_if_workspace_service_throws", func(t *testing.T) {
-		GetWorkspaceByUserId = func(userId string) ([]*workspace.Workspace, *restErrors.RestErr) {
+		GetWorkspaceByUserIdFunc = func(userId string) ([]*workspace.Workspace, *restErrors.RestErr) {
 			return nil, restErrors.NewInternalServerError("something went wrong")
 		}
 		result, _ := newFiberCtx("", GetByUserId, locals)
@@ -427,6 +533,141 @@ func TestGetWorkspaceByUserId(t *testing.T) {
 			panic(err)
 		}
 		assert.EqualValues(t, http.StatusInternalServerError, restErr.Status)
+	})
+
+}
+
+func TestAddMemberToWorkspace(t *testing.T) {
+	userDetails := new(token.UserDetails)
+	userDetails.ID = "11"
+
+	workspaceModelLocals := new(workspace.Workspace)
+	workspaceUserModelLocals := new(workspaceuser.WorkspaceUser)
+	workspaceUserModelLocals.UserId = userDetails.ID
+	workspaceModelLocals.WorkspaceUsers = []workspaceuser.WorkspaceUser{*workspaceUserModelLocals}
+
+	var locals = map[string]interface{}{}
+	locals["user"] = *userDetails
+	locals["workspace"] = *workspaceModelLocals
+
+	var validDto = map[string]string{
+		"email": "test@test.com",
+	}
+	var invalidDto = map[string]string{
+		"email": "invalid",
+	}
+
+	t.Run("add_member_to_workspace_should_pass", func(t *testing.T) {
+		GetByEmailFunc = func(email string) (*user.User, *restErrors.RestErr) {
+			return new(user.User), nil
+		}
+
+		WorkspaceInvitationFunc = func(dto *sendgrid.WorkspaceInvitationMailRequestDto) *restErrors.RestErr {
+			return nil
+		}
+
+		AddWorkspaceMemberFunc = func(memberId string, workspace *workspace.Workspace) *restErrors.RestErr {
+			return nil
+		}
+
+		result, resp := newFiberCtx(validDto, AddMember, locals)
+		var responseMessage map[string]shared.SuccessMessage
+		err := json.Unmarshal(result, &responseMessage)
+		if err != nil {
+			panic(err)
+		}
+		assert.EqualValues(t, "user has been added to the workspace", responseMessage["data"].Message)
+		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
+	})
+
+	t.Run("add_member_to_workspace_should_throw_validation_err", func(t *testing.T) {
+		body, resp := newFiberCtx(invalidDto, AddMember, locals)
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+		var fields = map[string]string{}
+		fields["email"] = "email should be a valid email address"
+		badReqErr := restErrors.NewValidationError(fields)
+
+		assert.EqualValues(t, badReqErr.Status, resp.StatusCode)
+		assert.Equal(t, *badReqErr, result)
+	})
+
+	t.Run("Update_workspace_Should_Throw_Invalid_Request_Error", func(t *testing.T) {
+		body, resp := newFiberCtx("", AddMember, locals)
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
+		assert.EqualValues(t, "invalid request body", result.Message)
+	})
+
+	t.Run("add_member_to_workspace_should_throw_if_user_already_a_member_of_the_workspace", func(t *testing.T) {
+		GetByEmailFunc = func(email string) (*user.User, *restErrors.RestErr) {
+			member := new(user.User)
+			member.ID = userDetails.ID
+			return member, nil
+		}
+
+		WorkspaceInvitationFunc = func(dto *sendgrid.WorkspaceInvitationMailRequestDto) *restErrors.RestErr {
+			return nil
+		}
+
+		AddWorkspaceMemberFunc = func(memberId string, workspace *workspace.Workspace) *restErrors.RestErr {
+			return nil
+		}
+
+		result, _ := newFiberCtx(validDto, AddMember, locals)
+		var restErr restErrors.RestErr
+		err := json.Unmarshal(result, &restErr)
+		if err != nil {
+			panic(err)
+		}
+		assert.EqualValues(t, "User is already a member of the workspace", restErr.Message)
+		assert.EqualValues(t, http.StatusConflict, restErr.Status)
+	})
+
+	t.Run("add_member_to_workspace_should_throw_if_member_does'not_exit", func(t *testing.T) {
+		GetByEmailFunc = func(email string) (*user.User, *restErrors.RestErr) {
+			return nil, restErrors.NewInternalServerError("something went wrong")
+		}
+
+		body, resp := newFiberCtx(validDto, AddMember, locals)
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err)
+		}
+		assert.EqualValues(t, http.StatusInternalServerError, result.Status)
+		assert.EqualValues(t, "something went wrong", result.Message)
+		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
+	})
+	t.Run("add_member_to_workspace_should_throw_if_workspace_service_throw", func(t *testing.T) {
+		GetByEmailFunc = func(email string) (*user.User, *restErrors.RestErr) {
+			return new(user.User), nil
+		}
+
+		WorkspaceInvitationFunc = func(dto *sendgrid.WorkspaceInvitationMailRequestDto) *restErrors.RestErr {
+			return nil
+		}
+
+		AddWorkspaceMemberFunc = func(memberId string, workspace *workspace.Workspace) *restErrors.RestErr {
+			return restErrors.NewInternalServerError("something went wrong")
+		}
+
+		body, resp := newFiberCtx(validDto, AddMember, locals)
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err)
+		}
+		assert.EqualValues(t, http.StatusInternalServerError, result.Status)
+		assert.EqualValues(t, "something went wrong", result.Message)
+		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
 	})
 
 }
