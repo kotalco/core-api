@@ -143,6 +143,13 @@ func AddMember(c *fiber.Ctx) error {
 
 	model := c.Locals("workspace").(workspace.Workspace)
 
+	for _, v := range model.WorkspaceUsers {
+		if v.UserId == member.ID {
+			conflictErr := restErrors.NewConflictError("User is already a member of the workspace")
+			return c.Status(conflictErr.Status).JSON(conflictErr)
+		}
+	}
+
 	txHandle := sqlclient.Begin()
 	err = workspaceService.WithTransaction(txHandle).AddWorkspaceMember(member.ID, &model)
 	if err != nil {

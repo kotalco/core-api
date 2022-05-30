@@ -606,6 +606,31 @@ func TestAddMemberToWorkspace(t *testing.T) {
 		assert.EqualValues(t, "invalid request body", result.Message)
 	})
 
+	t.Run("add_member_to_workspace_should_throw_if_user_already_a_member_of_the_workspace", func(t *testing.T) {
+		GetByEmailFunc = func(email string) (*user.User, *restErrors.RestErr) {
+			member := new(user.User)
+			member.ID = userDetails.ID
+			return member, nil
+		}
+
+		WorkspaceInvitationFunc = func(dto *sendgrid.WorkspaceInvitationMailRequestDto) *restErrors.RestErr {
+			return nil
+		}
+
+		AddWorkspaceMemberFunc = func(memberId string, workspace *workspace.Workspace) *restErrors.RestErr {
+			return nil
+		}
+
+		result, _ := newFiberCtx(validDto, AddMember, locals)
+		var restErr restErrors.RestErr
+		err := json.Unmarshal(result, &restErr)
+		if err != nil {
+			panic(err)
+		}
+		assert.EqualValues(t, "User is already a member of the workspace", restErr.Message)
+		assert.EqualValues(t, http.StatusConflict, restErr.Status)
+	})
+
 	t.Run("add_member_to_workspace_should_throw_if_member_does'not_exit", func(t *testing.T) {
 		GetByEmailFunc = func(email string) (*user.User, *restErrors.RestErr) {
 			return nil, restErrors.NewInternalServerError("something went wrong")
