@@ -622,7 +622,7 @@ func TestAddMemberToWorkspace(t *testing.T) {
 			return nil
 		}
 
-		AddWorkspaceMemberFunc = func(memberId string, workspace *workspace.Workspace) *restErrors.RestErr {
+		AddWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
 			return nil
 		}
 
