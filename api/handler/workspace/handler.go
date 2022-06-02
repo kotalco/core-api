@@ -1,7 +1,6 @@
 package workspace
 
 import (
-	"fmt"
 	"github.com/gofiber/fiber/v2"
 	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/kotalco/api/pkg/shared"
@@ -201,7 +200,6 @@ func RemoveMember(c *fiber.Ctx) error {
 	userId := c.Locals("user").(token.UserDetails).ID
 	memberId := c.Params("user_id")
 
-	fmt.Printf("userId%s, memberId%s, modelUserId%s", userId, memberId, model.UserId)
 	if model.UserId != userId { //check if the user is the owner
 		err := restErrors.NewForbiddenError("you can only delete users from your own workspace")
 		return c.Status(err.Status).JSON(err)
