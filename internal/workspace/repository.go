@@ -20,6 +20,8 @@ type IRepository interface {
 	Delete(*Workspace) *restErrors.RestErr
 	GetByUserId(userId string) ([]*Workspace, *restErrors.RestErr)
 	AddWorkspaceMember(workspace *Workspace, workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr
+	DeleteWorkspaceMember(workspace *Workspace, workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr
+	GetWorkspaceMemberByWorkspaceIdAndUserId(workspaceId string, userId string) (*workspaceuser.WorkspaceUser, *restErrors.RestErr)
 }
 
 func NewRepository() IRepository {
@@ -120,4 +122,29 @@ func (repo *repository) AddWorkspaceMember(workspace *Workspace, workspaceUser *
 	}
 
 	return nil
+}
+
+//DeleteWorkspaceMember removes existing workspaceUser record through association with workspace
+func (repo *repository) DeleteWorkspaceMember(workspace *Workspace, workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr {
+	err := sqlclient.DbClient.Model(workspace).Association("WorkspaceUsers").Delete(workspaceUser)
+	if err != nil {
+		go logger.Error(repo.DeleteWorkspaceMember, err)
+		return restErrors.NewInternalServerError("something went wrong")
+	}
+
+	return nil
+}
+
+//GetWorkspaceMemberByWorkspaceIdAndUserId finds workspace member by workspaceId and userId
+func (repo *repository) GetWorkspaceMemberByWorkspaceIdAndUserId(workspaceId string, userId string) (*workspaceuser.WorkspaceUser, *restErrors.RestErr) {
+	var workspaceUser = new(workspaceuser.WorkspaceUser)
+	result := sqlclient.DbClient.Where("user_id = ? AND workspace_id = ?", userId, workspaceId).First(workspaceUser)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, restErrors.NewNotFoundError("record not found")
+		}
+		go logger.Error(repo.GetWorkspaceMemberByWorkspaceIdAndUserId, result.Error)
+		return nil, restErrors.NewInternalServerError("something went wrong")
+	}
+	return workspaceUser, nil
 }

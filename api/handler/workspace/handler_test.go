@@ -99,13 +99,14 @@ func (userServiceMock) DisableTwoFactorAuth(model *user.User, dto *user.DisableT
 Workspace service Mocks
 */
 var (
-	WorkspaceWithTransaction func(txHandle *gorm.DB) workspace.IService
-	CreateWorkspaceFunc      func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr)
-	UpdateWorkspaceFunc      func(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) *restErrors.RestErr
-	GetWorkspaceByIdFunc     func(Id string) (*workspace.Workspace, *restErrors.RestErr)
-	DeleteWorkspaceFunc      func(workspace *workspace.Workspace) *restErrors.RestErr
-	GetWorkspaceByUserIdFunc func(userId string) ([]*workspace.Workspace, *restErrors.RestErr)
-	AddWorkspaceMemberFunc   func(memberId string, workspace *workspace.Workspace) *restErrors.RestErr
+	WorkspaceWithTransaction  func(txHandle *gorm.DB) workspace.IService
+	CreateWorkspaceFunc       func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr)
+	UpdateWorkspaceFunc       func(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) *restErrors.RestErr
+	GetWorkspaceByIdFunc      func(Id string) (*workspace.Workspace, *restErrors.RestErr)
+	DeleteWorkspaceFunc       func(workspace *workspace.Workspace) *restErrors.RestErr
+	GetWorkspaceByUserIdFunc  func(userId string) ([]*workspace.Workspace, *restErrors.RestErr)
+	AddWorkspaceMemberFunc    func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr
+	DeleteWorkspaceMemberFunc func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr
 )
 
 type workspaceServiceMock struct{}
@@ -131,8 +132,12 @@ func (workspaceServiceMock) GetByUserId(workspaceId string) ([]*workspace.Worksp
 	return GetWorkspaceByUserIdFunc(workspaceId)
 }
 
-func (workspaceServiceMock) AddWorkspaceMember(memberId string, workspace *workspace.Workspace) *restErrors.RestErr {
-	return AddWorkspaceMemberFunc(memberId, workspace)
+func (workspaceServiceMock) AddWorkspaceMember(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
+	return AddWorkspaceMemberFunc(workspace, memberId)
+}
+
+func (workspaceServiceMock) DeleteWorkspaceMember(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
+	return DeleteWorkspaceMemberFunc(workspace, memberId)
 }
 
 /*
@@ -566,7 +571,7 @@ func TestAddMemberToWorkspace(t *testing.T) {
 			return nil
 		}
 
-		AddWorkspaceMemberFunc = func(memberId string, workspace *workspace.Workspace) *restErrors.RestErr {
+		AddWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
 			return nil
 		}
 
@@ -617,7 +622,7 @@ func TestAddMemberToWorkspace(t *testing.T) {
 			return nil
 		}
 
-		AddWorkspaceMemberFunc = func(memberId string, workspace *workspace.Workspace) *restErrors.RestErr {
+		AddWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
 			return nil
 		}
 
@@ -655,7 +660,7 @@ func TestAddMemberToWorkspace(t *testing.T) {
 			return nil
 		}
 
-		AddWorkspaceMemberFunc = func(memberId string, workspace *workspace.Workspace) *restErrors.RestErr {
+		AddWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 
@@ -667,6 +672,70 @@ func TestAddMemberToWorkspace(t *testing.T) {
 		}
 		assert.EqualValues(t, http.StatusInternalServerError, result.Status)
 		assert.EqualValues(t, "something went wrong", result.Message)
+		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
+	})
+
+}
+
+func TestLeaveWorkspace(t *testing.T) {
+	userDetails := new(token.UserDetails)
+	userDetails.ID = "11"
+
+	workspaceModelLocals := new(workspace.Workspace)
+	workspaceModelLocals.UserId = "ownerId"
+
+	workspaceUserModelLocals := new(workspaceuser.WorkspaceUser)
+	workspaceUserModelLocals.UserId = userDetails.ID
+	workspaceModelLocals.WorkspaceUsers = []workspaceuser.WorkspaceUser{*workspaceUserModelLocals}
+
+	var locals = map[string]interface{}{}
+	locals["user"] = *userDetails
+	locals["workspace"] = *workspaceModelLocals
+
+	t.Run("leave_workspace_should_pass", func(t *testing.T) {
+		DeleteWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
+			return nil
+		}
+		result, resp := newFiberCtx("", Leave, locals)
+		var responseMessage map[string]shared.SuccessMessage
+		err := json.Unmarshal(result, &responseMessage)
+		if err != nil {
+			panic(err)
+		}
+		assert.EqualValues(t, "You're no longer member of this workspace", responseMessage["data"].Message)
+		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
+	})
+
+	t.Run("leave_workspace_should_throw_if_the_owner_tries_to_leave_the_workspace", func(t *testing.T) {
+		workspaceModelWhenUserIsOwner := *workspaceModelLocals
+		workspaceModelWhenUserIsOwner.UserId = userDetails.ID
+		locals["workspace"] = workspaceModelWhenUserIsOwner
+		DeleteWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
+			return nil
+		}
+		result, resp := newFiberCtx("", Leave, locals)
+		var restErr restErrors.RestErr
+		err := json.Unmarshal(result, &restErr)
+		if err != nil {
+			panic(err)
+		}
+		assert.EqualValues(t, "you can't leave your own workspace", restErr.Message)
+		assert.EqualValues(t, http.StatusForbidden, resp.StatusCode)
+		locals["workspace"] = *workspaceModelLocals
+
+	})
+
+	t.Run("leave_workspace_should_throw_if_service_Throw", func(t *testing.T) {
+		DeleteWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
+			return restErrors.NewInternalServerError("something went wrong")
+		}
+		result, resp := newFiberCtx("", Leave, locals)
+		var restErr restErrors.RestErr
+		err := json.Unmarshal(result, &restErr)
+		if err != nil {
+			panic(err)
+		}
+		assert.EqualValues(t, "something went wrong", restErr.Message)
 		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
 	})
 

@@ -166,7 +166,8 @@ var (
 	DeleteWorkspace           func(workspace *workspace.Workspace) *restErrors.RestErr
 	GetWorkspaceByIdFunc      func(Id string) (*workspace.Workspace, *restErrors.RestErr)
 	GetWorkspacesByUserIdFunc func(userId string) ([]*workspace.Workspace, *restErrors.RestErr)
-	addWorkspaceMemberFunc    func(memberId string, workspace *workspace.Workspace) *restErrors.RestErr
+	addWorkspaceMemberFunc    func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr
+	DeleteWorkspaceMemberFunc func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr
 )
 
 type workspaceServiceMock struct{}
@@ -195,8 +196,12 @@ func (workspaceServiceMock) GetByUserId(userId string) ([]*workspace.Workspace, 
 	return GetWorkspacesByUserIdFunc(userId)
 }
 
-func (workspaceServiceMock) AddWorkspaceMember(memberId string, workspace *workspace.Workspace) *restErrors.RestErr {
-	return addWorkspaceMemberFunc(memberId, workspace)
+func (workspaceServiceMock) AddWorkspaceMember(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
+	return addWorkspaceMemberFunc(workspace, memberId)
+}
+
+func (workspaceServiceMock) DeleteWorkspaceMember(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
+	return DeleteWorkspaceMemberFunc(workspace, memberId)
 }
 
 /*
