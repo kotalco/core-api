@@ -786,7 +786,7 @@ func TestRemoveMemberWorkspace(t *testing.T) {
 		if err != nil {
 			panic(err)
 		}
-		assert.EqualValues(t, "you can only delete users from your own workspace", restErr.Message)
+		assert.EqualValues(t, "you can only delete other users from your own workspace", restErr.Message)
 		assert.EqualValues(t, http.StatusForbidden, resp.StatusCode)
 		locals["workspace"] = *workspaceModelLocals
 
