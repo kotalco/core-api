@@ -131,6 +131,11 @@ func (repo *repository) DeleteWorkspaceMember(workspace *Workspace, workspaceUse
 		go logger.Error(repo.DeleteWorkspaceMember, err)
 		return restErrors.NewInternalServerError("something went wrong")
 	}
+	result := sqlclient.DbClient.Delete(workspaceUser)
+	if result.Error != nil {
+		go logger.Error(repo.DeleteWorkspaceMember, result.Error)
+		return restErrors.NewInternalServerError("something went wrong")
+	}
 
 	return nil
 }

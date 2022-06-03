@@ -223,7 +223,7 @@ func RemoveMember(c *fiber.Ctx) error {
 	}
 
 	txHandle := sqlclient.Begin()
-	err := workspaceService.WithTransaction(txHandle).DeleteWorkspaceMember(&model, userId)
+	err := workspaceService.WithTransaction(txHandle).DeleteWorkspaceMember(&model, memberId)
 	if err != nil {
 		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
