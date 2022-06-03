@@ -20,7 +20,7 @@ var (
 func OpenDBConnection() *gorm.DB {
 	clientOnce.Do(func() {
 		dbConnection, err = gorm.Open(postgres.Open(config.EnvironmentConf["DB_SERVER_URL"]), &gorm.Config{
-			Logger: glogger.Default.LogMode(glogger.Silent),
+			Logger: glogger.Default.LogMode(glogger.Error),
 		})
 		if err != nil {
 			go logger.Panic("DATABASE_CONNECTION_ERROR", err)

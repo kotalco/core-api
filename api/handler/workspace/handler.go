@@ -235,3 +235,24 @@ func RemoveMember(c *fiber.Ctx) error {
 		Message: "User has been removed from workspace",
 	}))
 }
+
+//Members returns a list of workspace members
+func Members(c *fiber.Ctx) error {
+	model := c.Locals("workspace").(workspace.Workspace)
+	userIds := make([]string, len(model.WorkspaceUsers))
+	for k, v := range model.WorkspaceUsers {
+		userIds[k] = v.UserId
+	}
+
+	workspaceMembersList, err := userService.FindWhereIdInSlice(userIds)
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
+
+	result := make([]user.PublicUserResponseDto, len(workspaceMembersList))
+	for k, v := range workspaceMembersList {
+		result[k] = new(user.PublicUserResponseDto).Marshall(v)
+	}
+
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(result))
+}

@@ -15,11 +15,12 @@ import (
 type repository struct{}
 
 type IRepository interface {
+	WithTransaction(txHandle *gorm.DB) IRepository
 	Create(user *User) *restErrors.RestErr
 	GetByEmail(email string) (*User, *restErrors.RestErr)
 	GetById(id string) (*User, *restErrors.RestErr)
 	Update(user *User) *restErrors.RestErr
-	WithTransaction(txHandle *gorm.DB) IRepository
+	FindWhereIdInSlice(ids []string) ([]*User, *restErrors.RestErr)
 }
 
 func NewRepository() IRepository {
@@ -81,4 +82,14 @@ func (repository) Update(user *User) *restErrors.RestErr {
 	}
 
 	return nil
+}
+
+func (repository) FindWhereIdInSlice(ids []string) ([]*User, *restErrors.RestErr) {
+	var users []*User
+	result := sqlclient.DbClient.Where("id IN (?)", ids).Find(&users)
+	if result.Error != nil {
+		go logger.Error(repository.FindWhereIdInSlice, result.Error)
+		return nil, restErrors.NewInternalServerError("something went wrong")
+	}
+	return users, nil
 }
