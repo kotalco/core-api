@@ -201,7 +201,7 @@ func RemoveMember(c *fiber.Ctx) error {
 	memberId := c.Params("user_id")
 
 	if model.UserId != userId { //check if the user is the owner
-		err := restErrors.NewForbiddenError("you can only delete other users from your own workspac")
+		err := restErrors.NewForbiddenError("you can only delete other users from your own workspace")
 		return c.Status(err.Status).JSON(err)
 	}
 
