@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/kotalco/api/pkg/shared"
 	"github.com/kotalco/cloud-api/internal/user"
@@ -26,6 +27,7 @@ import (
 User service Mocks
 */
 var (
+	UserWithTransactionFunc  func(txHandle *gorm.DB) user.IService
 	SignUpFunc               func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr)
 	SignInFunc               func(dto *user.SignInRequestDto) (*user.UserSessionResponseDto, *restErrors.RestErr)
 	VerifyTOTPFunc           func(model *user.User, totp string) (*user.UserSessionResponseDto, *restErrors.RestErr)
@@ -38,7 +40,7 @@ var (
 	CreateTOTPFunc           func(model *user.User, dto *user.CreateTOTPRequestDto) (bytes.Buffer, *restErrors.RestErr)
 	EnableTwoFactorAuthFunc  func(model *user.User, totp string) (*user.User, *restErrors.RestErr)
 	DisableTwoFactorAuthFunc func(model *user.User, dto *user.DisableTOTPRequestDto) *restErrors.RestErr
-	UserWithTransactionFunc  func(txHandle *gorm.DB) user.IService
+	FindWhereIdInSliceFunc   func(ids []string) ([]*user.User, *restErrors.RestErr)
 )
 
 type userServiceMock struct{}
@@ -93,6 +95,10 @@ func (userServiceMock) VerifyTOTP(model *user.User, totp string) (*user.UserSess
 
 func (userServiceMock) DisableTwoFactorAuth(model *user.User, dto *user.DisableTOTPRequestDto) *restErrors.RestErr {
 	return DisableTwoFactorAuthFunc(model, dto)
+}
+
+func (userServiceMock) FindWhereIdInSlice(ids []string) ([]*user.User, *restErrors.RestErr) {
+	return FindWhereIdInSliceFunc(ids)
 }
 
 /*
@@ -806,4 +812,55 @@ func TestRemoveMemberWorkspace(t *testing.T) {
 		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
 	})
 
+}
+
+func TestMembers(t *testing.T) {
+	userDetails := new(token.UserDetails)
+	userDetails.ID = uuid.NewString()
+
+	workspaceModelLocals := new(workspace.Workspace)
+	workspaceUserModelLocals := new(workspaceuser.WorkspaceUser)
+	workspaceUserModelLocals.UserId = userDetails.ID
+	workspaceModelLocals.WorkspaceUsers = []workspaceuser.WorkspaceUser{*workspaceUserModelLocals}
+
+	var locals = map[string]interface{}{}
+	locals["user"] = *userDetails
+	locals["workspace"] = *workspaceModelLocals
+
+	t.Run("list_workspace_members_should_pass", func(t *testing.T) {
+		FindWhereIdInSliceFunc = func(ids []string) ([]*user.User, *restErrors.RestErr) {
+			user1 := new(user.User)
+			user1.Email = "email@test.com"
+			user1.ID = uuid.NewString()
+			return []*user.User{user1}, nil
+		}
+
+		body, resp := newFiberCtx("", Members, locals)
+		var result map[string][]user.PublicUserResponseDto
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err)
+		}
+
+		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
+		assert.Len(t, result["data"], 1)
+		assert.EqualValues(t, result["data"][0].Email, "email@test.com")
+	})
+
+	t.Run("list_workspace_members_should_throw_if_service_throw", func(t *testing.T) {
+		FindWhereIdInSliceFunc = func(ids []string) ([]*user.User, *restErrors.RestErr) {
+			return nil, restErrors.NewInternalServerError("something went wrong")
+		}
+
+		body, resp := newFiberCtx("", Members, locals)
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err)
+		}
+
+		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
+		assert.EqualValues(t, http.StatusInternalServerError, result.Status)
+		assert.EqualValues(t, "something went wrong", result.Message)
+	})
 }

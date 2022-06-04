@@ -97,6 +97,18 @@ func TestRepository_Update(t *testing.T) {
 	})
 }
 
+func TestRepository_FindWhereIdInSlice(t *testing.T) {
+	t.Run("find-where-in-array-should-pass", func(t *testing.T) {
+		user1 := createUser(t)
+		user2 := createUser(t)
+		list := []*User{&user1, &user2}
+
+		users, err := repo.FindWhereIdInSlice([]string{user1.ID, user2.ID})
+		assert.Nil(t, err)
+		assert.ElementsMatch(t, list, users)
+	})
+}
+
 func createUser(t *testing.T) User {
 	user := new(User)
 	user.ID = uuid.New().String()

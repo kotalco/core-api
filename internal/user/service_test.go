@@ -14,12 +14,13 @@ import (
 )
 
 var (
-	userService         IService
-	CreateFunc          func(user *User) *restErrors.RestErr
-	GetByEmailFunc      func(email string) (*User, *restErrors.RestErr)
-	GetByIdFunc         func(id string) (*User, *restErrors.RestErr)
-	UpdateFunc          func(user *User) *restErrors.RestErr
-	WithTransactionFunc func(txHandle *gorm.DB) IRepository
+	WithTransactionFunc    func(txHandle *gorm.DB) IRepository
+	userService            IService
+	CreateFunc             func(user *User) *restErrors.RestErr
+	GetByEmailFunc         func(email string) (*User, *restErrors.RestErr)
+	GetByIdFunc            func(id string) (*User, *restErrors.RestErr)
+	UpdateFunc             func(user *User) *restErrors.RestErr
+	FindWhereIdInSliceFunc func(ids []string) ([]*User, *restErrors.RestErr)
 
 	EncryptFunc func(data []byte, passphrase string) (string, error)
 	DecryptFunc func(encodedCipher string, passphrase string) (string, error)
@@ -59,6 +60,10 @@ func (userRepositoryMock) GetById(id string) (*User, *restErrors.RestErr) {
 
 func (userRepositoryMock) Update(user *User) *restErrors.RestErr {
 	return UpdateFunc(user)
+}
+
+func (userRepositoryMock) FindWhereIdInSlice(ids []string) ([]*User, *restErrors.RestErr) {
+	return FindWhereIdInSliceFunc(ids)
 }
 
 //encryption service methods
@@ -778,5 +783,16 @@ func TestService_DisableTwoFactorAuth(t *testing.T) {
 		err := userService.DisableTwoFactorAuth(user, dto)
 
 		assert.EqualValues(t, "something went wrong", err.Message)
+	})
+}
+
+func TestService_FindWhereIdInSlice(t *testing.T) {
+	t.Run("find_users_where_id_in_slice_should_pass", func(t *testing.T) {
+		FindWhereIdInSliceFunc = func(ids []string) ([]*User, *restErrors.RestErr) {
+			return []*User{new(User), new(User)}, nil
+		}
+		list, err := userService.FindWhereIdInSlice([]string{})
+		assert.Nil(t, err)
+		assert.Len(t, list, 2)
 	})
 }

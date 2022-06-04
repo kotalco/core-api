@@ -31,6 +31,7 @@ import (
 User service Mocks
 */
 var (
+	UserWithTransactionFunc  func(txHandle *gorm.DB) user.IService
 	SignUpFunc               func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr)
 	SignInFunc               func(dto *user.SignInRequestDto) (*user.UserSessionResponseDto, *restErrors.RestErr)
 	VerifyTOTPFunc           func(model *user.User, totp string) (*user.UserSessionResponseDto, *restErrors.RestErr)
@@ -43,7 +44,7 @@ var (
 	CreateTOTPFunc           func(model *user.User, dto *user.CreateTOTPRequestDto) (bytes.Buffer, *restErrors.RestErr)
 	EnableTwoFactorAuthFunc  func(model *user.User, totp string) (*user.User, *restErrors.RestErr)
 	DisableTwoFactorAuthFunc func(model *user.User, dto *user.DisableTOTPRequestDto) *restErrors.RestErr
-	UserWithTransactionFunc  func(txHandle *gorm.DB) user.IService
+	FindWhereIdInSliceFunc   func(ids []string) ([]*user.User, *restErrors.RestErr)
 )
 
 type userServiceMock struct{}
@@ -98,6 +99,9 @@ func (userServiceMock) VerifyTOTP(model *user.User, totp string) (*user.UserSess
 
 func (userServiceMock) DisableTwoFactorAuth(model *user.User, dto *user.DisableTOTPRequestDto) *restErrors.RestErr {
 	return DisableTwoFactorAuthFunc(model, dto)
+}
+func (userServiceMock) FindWhereIdInSlice(ids []string) ([]*user.User, *restErrors.RestErr) {
+	return FindWhereIdInSliceFunc(ids)
 }
 
 /*

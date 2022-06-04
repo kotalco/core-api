@@ -2,7 +2,6 @@ package user
 
 import (
 	"bytes"
-
 	"github.com/google/uuid"
 	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/kotalco/api/pkg/logger"
@@ -29,6 +28,7 @@ type IService interface {
 	CreateTOTP(model *User, dto *CreateTOTPRequestDto) (bytes.Buffer, *restErrors.RestErr)
 	EnableTwoFactorAuth(model *User, totp string) (*User, *restErrors.RestErr)
 	DisableTwoFactorAuth(model *User, dto *DisableTOTPRequestDto) *restErrors.RestErr
+	FindWhereIdInSlice(ids []string) ([]*User, *restErrors.RestErr)
 }
 
 var (
@@ -307,4 +307,9 @@ func (service) DisableTwoFactorAuth(model *User, dto *DisableTOTPRequestDto) *re
 	}
 
 	return nil
+}
+
+//FindWhereIdInSlice returns a list of users which ids exist in the slice of ids passed as argument
+func (service) FindWhereIdInSlice(ids []string) ([]*User, *restErrors.RestErr) {
+	return userRepository.FindWhereIdInSlice(ids)
 }
