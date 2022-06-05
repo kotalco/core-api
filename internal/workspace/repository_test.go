@@ -164,6 +164,15 @@ func TestRepository_GetWorkspaceMemberByWorkspaceIdAndUserId(t *testing.T) {
 	})
 }
 
+func TestRepository_CountByUserId(t *testing.T) {
+	t.Run("count_workspace_by_user_id_should_pass", func(t *testing.T) {
+		workspace := createWorkspace(t)
+		count, err := repo.CountByUserId(workspace.UserId)
+		assert.Nil(t, err)
+		assert.EqualValues(t, 1, count)
+	})
+}
+
 func createWorkspace(t *testing.T) Workspace {
 	workspace := new(Workspace)
 	workspace.ID = uuid.New().String()

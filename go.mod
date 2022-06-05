@@ -8,7 +8,7 @@ require (
 	github.com/gofiber/fiber/v2 v2.33.0
 	github.com/google/uuid v1.3.0
 	github.com/jackc/pgconn v1.10.1
-	github.com/kotalco/api v0.0.0-20220509171745-bb457a6d0e6d
+	github.com/kotalco/api v0.0.0-20220605123637-102e2ad60910
 	github.com/pquerna/otp v1.3.0
 	github.com/sendgrid/sendgrid-go v3.11.1+incompatible
 	github.com/stretchr/testify v1.7.0
