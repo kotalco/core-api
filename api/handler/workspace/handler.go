@@ -87,9 +87,19 @@ func Update(c *fiber.Ctx) error {
 //Delete deletes user workspace and associated namespace
 func Delete(c *fiber.Ctx) error {
 	model := c.Locals("workspace").(workspace.Workspace)
+	userId := c.Locals("user").(token.UserDetails).ID
+
+	count, err := workspaceService.CountByUserId(userId)
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
+	if count == 1 {
+		badReq := restErrors.NewBadRequestError("request declined, you should have at least 1 workspace!")
+		return c.Status(badReq.Status).JSON(badReq)
+	}
 
 	txHandle := sqlclient.Begin()
-	err := workspaceService.WithTransaction(txHandle).Delete(&model)
+	err = workspaceService.WithTransaction(txHandle).Delete(&model)
 	if err != nil {
 		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)

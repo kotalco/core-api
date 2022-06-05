@@ -22,6 +22,7 @@ var (
 	addWorkspaceMemberFunc                       func(workspace *Workspace, workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr
 	DeleteWorkspaceMemberFunc                    func(workspace *Workspace, workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr
 	GetWorkspaceMemberByWorkspaceIdAndUserIdFunc func(workspaceId string, userId string) (*workspaceuser.WorkspaceUser, *restErrors.RestErr)
+	CountByUserIdFunc                            func(userId string) (int64, *restErrors.RestErr)
 )
 
 type workspaceRepositoryMock struct{}
@@ -62,6 +63,9 @@ func (workspaceRepositoryMock) DeleteWorkspaceMember(workspace *Workspace, works
 }
 func (workspaceRepositoryMock) GetWorkspaceMemberByWorkspaceIdAndUserId(workspaceId string, userId string) (*workspaceuser.WorkspaceUser, *restErrors.RestErr) {
 	return GetWorkspaceMemberByWorkspaceIdAndUserIdFunc(workspaceId, userId)
+}
+func (workspaceRepositoryMock) CountByUserId(userId string) (int64, *restErrors.RestErr) {
+	return CountByUserIdFunc(userId)
 }
 
 func TestMain(m *testing.M) {
@@ -263,4 +267,27 @@ func TestService_DeleteWorkspaceMember(t *testing.T) {
 		err := workspaceTestService.DeleteWorkspaceMember(new(Workspace), "1")
 		assert.Error(t, err, "something went wrong")
 	})
+}
+func TestService_CountWorkspacesByUserId(t *testing.T) {
+	t.Run("count_workspace_by_user_is_should_pass", func(t *testing.T) {
+		CountByUserIdFunc = func(userId string) (int64, *restErrors.RestErr) {
+			return 1, nil
+		}
+
+		result, err := workspaceTestService.CountByUserId("")
+		assert.Nil(t, err)
+		assert.EqualValues(t, 1, result)
+	})
+
+	t.Run("count_workspace_by_user_is_should_throw_if_repo_throws", func(t *testing.T) {
+		CountByUserIdFunc = func(userId string) (int64, *restErrors.RestErr) {
+			return 0, restErrors.NewInternalServerError("something went wrong")
+		}
+
+		result, err := workspaceTestService.CountByUserId("")
+		assert.EqualValues(t, http.StatusInternalServerError, err.Status)
+		assert.EqualValues(t, "something went wrong", err.Message)
+		assert.EqualValues(t, 0, result)
+	})
+
 }

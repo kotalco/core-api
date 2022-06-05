@@ -22,6 +22,7 @@ type IRepository interface {
 	AddWorkspaceMember(workspace *Workspace, workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr
 	DeleteWorkspaceMember(workspace *Workspace, workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr
 	GetWorkspaceMemberByWorkspaceIdAndUserId(workspaceId string, userId string) (*workspaceuser.WorkspaceUser, *restErrors.RestErr)
+	CountByUserId(userId string) (int64, *restErrors.RestErr)
 }
 
 func NewRepository() IRepository {
@@ -152,4 +153,15 @@ func (repo *repository) GetWorkspaceMemberByWorkspaceIdAndUserId(workspaceId str
 		return nil, restErrors.NewInternalServerError("something went wrong")
 	}
 	return workspaceUser, nil
+}
+
+//CountByUserId returns user's workspaces count
+func (repo *repository) CountByUserId(userId string) (int64, *restErrors.RestErr) {
+	var count int64
+	result := sqlclient.DbClient.Model(Workspace{}).Where("user_id = ?", userId).Count(&count)
+	if result.Error != nil {
+		go logger.Error(repo.CountByUserId, result.Error)
+		return 0, restErrors.NewInternalServerError("something went wrong")
+	}
+	return count, nil
 }

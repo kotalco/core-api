@@ -19,6 +19,7 @@ type IService interface {
 	GetByUserId(UserId string) ([]*Workspace, *restErrors.RestErr)
 	AddWorkspaceMember(workspace *Workspace, memberId string) *restErrors.RestErr
 	DeleteWorkspaceMember(workspace *Workspace, memberId string) *restErrors.RestErr
+	CountByUserId(userId string) (int64, *restErrors.RestErr)
 }
 
 var (
@@ -116,4 +117,9 @@ func (service) DeleteWorkspaceMember(workspace *Workspace, memberId string) *res
 	}
 
 	return workspaceRepo.DeleteWorkspaceMember(workspace, member)
+}
+
+//CountByUserId returns user's workspaces count
+func (service) CountByUserId(userId string) (int64, *restErrors.RestErr) {
+	return workspaceRepo.CountByUserId(userId)
 }

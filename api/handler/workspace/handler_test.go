@@ -105,14 +105,15 @@ func (userServiceMock) FindWhereIdInSlice(ids []string) ([]*user.User, *restErro
 Workspace service Mocks
 */
 var (
-	WorkspaceWithTransaction  func(txHandle *gorm.DB) workspace.IService
-	CreateWorkspaceFunc       func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr)
-	UpdateWorkspaceFunc       func(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) *restErrors.RestErr
-	GetWorkspaceByIdFunc      func(Id string) (*workspace.Workspace, *restErrors.RestErr)
-	DeleteWorkspaceFunc       func(workspace *workspace.Workspace) *restErrors.RestErr
-	GetWorkspaceByUserIdFunc  func(userId string) ([]*workspace.Workspace, *restErrors.RestErr)
-	AddWorkspaceMemberFunc    func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr
-	DeleteWorkspaceMemberFunc func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr
+	WorkspaceWithTransaction   func(txHandle *gorm.DB) workspace.IService
+	CreateWorkspaceFunc        func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr)
+	UpdateWorkspaceFunc        func(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) *restErrors.RestErr
+	GetWorkspaceByIdFunc       func(Id string) (*workspace.Workspace, *restErrors.RestErr)
+	DeleteWorkspaceFunc        func(workspace *workspace.Workspace) *restErrors.RestErr
+	GetWorkspaceByUserIdFunc   func(userId string) ([]*workspace.Workspace, *restErrors.RestErr)
+	AddWorkspaceMemberFunc     func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr
+	DeleteWorkspaceMemberFunc  func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr
+	CountWorkspaceByUserIdFunc func(userId string) (int64, *restErrors.RestErr)
 )
 
 type workspaceServiceMock struct{}
@@ -144,6 +145,9 @@ func (workspaceServiceMock) AddWorkspaceMember(workspace *workspace.Workspace, m
 
 func (workspaceServiceMock) DeleteWorkspaceMember(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
 	return DeleteWorkspaceMemberFunc(workspace, memberId)
+}
+func (workspaceServiceMock) CountByUserId(userId string) (int64, *restErrors.RestErr) {
+	return CountWorkspaceByUserIdFunc(userId)
 }
 
 /*
@@ -459,6 +463,9 @@ func TestDeleteWorkspace(t *testing.T) {
 
 	t.Run("Delete_Workspace_should_pass", func(t *testing.T) {
 
+		CountWorkspaceByUserIdFunc = func(userId string) (int64, *restErrors.RestErr) {
+			return 2, nil
+		}
 		DeleteWorkspaceFunc = func(workspace *workspace.Workspace) *restErrors.RestErr {
 			return nil
 		}
@@ -471,7 +478,37 @@ func TestDeleteWorkspace(t *testing.T) {
 		assert.EqualValues(t, http.StatusNoContent, resp.StatusCode)
 	})
 
+	t.Run("Delete_Workspace_should_throw_if_user_has_only_one_workspace", func(t *testing.T) {
+		CountWorkspaceByUserIdFunc = func(userId string) (int64, *restErrors.RestErr) {
+			return 1, nil
+		}
+
+		body, resp := newFiberCtx("", Delete, locals)
+		var restErr restErrors.RestErr
+		err := json.Unmarshal(body, &restErr)
+		assert.Nil(t, err)
+		assert.EqualValues(t, "request declined, you should have at least 1 workspace!", restErr.Message)
+		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
+	})
+
+	t.Run("Delete_Workspace_should_throw_if_count_user_workspace_throw", func(t *testing.T) {
+		CountWorkspaceByUserIdFunc = func(userId string) (int64, *restErrors.RestErr) {
+			return 0, restErrors.NewInternalServerError("something went wrong")
+		}
+
+		body, resp := newFiberCtx("", Delete, locals)
+		var restErr restErrors.RestErr
+		err := json.Unmarshal(body, &restErr)
+		assert.Nil(t, err)
+		assert.EqualValues(t, "something went wrong", restErr.Message)
+		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
+	})
+
 	t.Run("Delete_Workspace_should_throw_if_workspace_repo_throws", func(t *testing.T) {
+		CountWorkspaceByUserIdFunc = func(userId string) (int64, *restErrors.RestErr) {
+			return 2, nil
+		}
+
 		DeleteWorkspaceFunc = func(workspace *workspace.Workspace) *restErrors.RestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
@@ -488,6 +525,10 @@ func TestDeleteWorkspace(t *testing.T) {
 	})
 
 	t.Run("Delete_Workspace_should_throw_if_namespace_service_throws", func(t *testing.T) {
+		CountWorkspaceByUserIdFunc = func(userId string) (int64, *restErrors.RestErr) {
+			return 2, nil
+		}
+
 		DeleteWorkspaceFunc = func(workspace *workspace.Workspace) *restErrors.RestErr {
 			return nil
 		}
