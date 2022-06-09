@@ -54,15 +54,16 @@ func TestRepository_GetByNameAndUserId(t *testing.T) {
 	t.Run("Get_Workspace_By_Name_Should_Return_Workspace", func(t *testing.T) {
 		workspace := createWorkspace(t)
 		resp, err := repo.GetByNameAndUserId(workspace.Name, workspace.UserId)
+		fmt.Println(resp, err)
 		assert.Nil(t, err)
-		assert.NotNil(t, resp)
+		assert.EqualValues(t, 1, len(resp))
 		cleanUp(workspace)
 	})
 
-	t.Run("Get_Workspace_By_Name_Should_Throw_if_Record_Not_Found", func(t *testing.T) {
+	t.Run("Get_Workspace_By_Name_Should_return_empty_slice", func(t *testing.T) {
 		resp, err := repo.GetByNameAndUserId("invalidName", "id")
-		assert.Nil(t, resp)
-		assert.EqualValues(t, http.StatusNotFound, err.Status)
+		assert.Nil(t, err)
+		assert.EqualValues(t, 0, len(resp))
 	})
 }
 
