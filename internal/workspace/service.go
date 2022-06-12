@@ -42,7 +42,7 @@ func (service) Create(dto *CreateWorkspaceRequestDto, userId string) (*Workspace
 		return nil, err
 	}
 
-	if exist != nil {
+	if len(exist) > 0 {
 		return nil, restErrors.NewConflictError("workspace already exist")
 	}
 
@@ -70,8 +70,20 @@ func (service) Create(dto *CreateWorkspaceRequestDto, userId string) (*Workspace
 
 //Update updates the workspace name only ,updating K8sNamespace not allowed.
 func (service) Update(dto *UpdateWorkspaceRequestDto, workspace *Workspace) *restErrors.RestErr {
+	exist, err := workspaceRepo.GetByNameAndUserId(dto.Name, workspace.UserId)
+	if err != nil && err.Status != http.StatusNotFound {
+		return err
+	}
+
+	for _, v := range exist {
+		if v.ID != dto.ID {
+			return restErrors.NewConflictError("you have another workspace with the same name")
+
+		}
+	}
+
 	workspace.Name = dto.Name
-	err := workspaceRepo.Update(workspace)
+	err = workspaceRepo.Update(workspace)
 	if err != nil {
 		return err
 	}

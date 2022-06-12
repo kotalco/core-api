@@ -1,6 +1,7 @@
 package workspace
 
 import (
+	"github.com/google/uuid"
 	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/kotalco/cloud-api/internal/workspaceuser"
 	"github.com/stretchr/testify/assert"
@@ -15,7 +16,7 @@ var (
 	workspaceTestService                         IService
 	CreateWorkspaceFunc                          func(workspace *Workspace) *restErrors.RestErr
 	UpdateWorkspaceFunc                          func(workspace *Workspace) *restErrors.RestErr
-	GetByNameAndUserIdFunc                       func(name string, userId string) (*Workspace, *restErrors.RestErr)
+	GetByNameAndUserIdFunc                       func(name string, userId string) ([]*Workspace, *restErrors.RestErr)
 	GetByIdFunc                                  func(Id string) (*Workspace, *restErrors.RestErr)
 	DeleteFunc                                   func(workspace *Workspace) *restErrors.RestErr
 	GetByUserIdFunc                              func(userId string) ([]*Workspace, *restErrors.RestErr)
@@ -39,7 +40,7 @@ func (workspaceRepositoryMock) Update(workspace *Workspace) *restErrors.RestErr 
 	return UpdateWorkspaceFunc(workspace)
 }
 
-func (workspaceRepositoryMock) GetByNameAndUserId(name string, userId string) (*Workspace, *restErrors.RestErr) {
+func (workspaceRepositoryMock) GetByNameAndUserId(name string, userId string) ([]*Workspace, *restErrors.RestErr) {
 	return GetByNameAndUserIdFunc(name, userId)
 }
 func (workspaceRepositoryMock) GetById(Id string) (*Workspace, *restErrors.RestErr) {
@@ -79,8 +80,8 @@ func TestService_Create(t *testing.T) {
 	dto := new(CreateWorkspaceRequestDto)
 	dto.Name = "testName"
 	t.Run("Create_Workspace_Should_Pass", func(t *testing.T) {
-		GetByNameAndUserIdFunc = func(name string, userId string) (*Workspace, *restErrors.RestErr) {
-			return nil, nil
+		GetByNameAndUserIdFunc = func(name string, userId string) ([]*Workspace, *restErrors.RestErr) {
+			return []*Workspace{}, nil
 		}
 		CreateWorkspaceFunc = func(workspace *Workspace) *restErrors.RestErr {
 			return nil
@@ -92,8 +93,8 @@ func TestService_Create(t *testing.T) {
 	})
 
 	t.Run("WorkspaceNameShould_Default_if_no_Name_Passed", func(t *testing.T) {
-		GetByNameAndUserIdFunc = func(name string, userId string) (*Workspace, *restErrors.RestErr) {
-			return nil, nil
+		GetByNameAndUserIdFunc = func(name string, userId string) ([]*Workspace, *restErrors.RestErr) {
+			return []*Workspace{}, nil
 		}
 		CreateWorkspaceFunc = func(workspace *Workspace) *restErrors.RestErr {
 			return nil
@@ -105,8 +106,9 @@ func TestService_Create(t *testing.T) {
 	})
 
 	t.Run("Create_Workspace_Should_throw_If_Name_Already_Exits_For_The_Same_User", func(t *testing.T) {
-		GetByNameAndUserIdFunc = func(name string, userId string) (*Workspace, *restErrors.RestErr) {
-			return new(Workspace), nil
+		GetByNameAndUserIdFunc = func(name string, userId string) ([]*Workspace, *restErrors.RestErr) {
+			newWorkspace := new(Workspace)
+			return []*Workspace{newWorkspace}, nil
 		}
 
 		model, err := workspaceTestService.Create(&CreateWorkspaceRequestDto{}, "1")
@@ -115,8 +117,8 @@ func TestService_Create(t *testing.T) {
 	})
 
 	t.Run("WorkspaceNameShould_Throw_If_Create_User_in_Repo_Throws", func(t *testing.T) {
-		GetByNameAndUserIdFunc = func(name string, userId string) (*Workspace, *restErrors.RestErr) {
-			return nil, nil
+		GetByNameAndUserIdFunc = func(name string, userId string) ([]*Workspace, *restErrors.RestErr) {
+			return []*Workspace{}, nil
 		}
 		CreateWorkspaceFunc = func(workspace *Workspace) *restErrors.RestErr {
 			return restErrors.NewInternalServerError("something went wrong")
@@ -135,6 +137,9 @@ func TestService_Update(t *testing.T) {
 		UpdateWorkspaceFunc = func(workspace *Workspace) *restErrors.RestErr {
 			return nil
 		}
+		GetByNameAndUserIdFunc = func(name string, userId string) ([]*Workspace, *restErrors.RestErr) {
+			return []*Workspace{}, nil
+		}
 
 		model := new(Workspace)
 		err := workspaceTestService.Update(dto, model)
@@ -147,9 +152,41 @@ func TestService_Update(t *testing.T) {
 		UpdateWorkspaceFunc = func(workspace *Workspace) *restErrors.RestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
+		GetByNameAndUserIdFunc = func(name string, userId string) ([]*Workspace, *restErrors.RestErr) {
+			return []*Workspace{}, nil
+		}
 
 		err := workspaceTestService.Update(&UpdateWorkspaceRequestDto{}, model)
 		assert.EqualValues(t, http.StatusInternalServerError, err.Status)
+	})
+	t.Run("Update_workspace_should_throw_if_repo_get_by_name_and_user_id_throws", func(t *testing.T) {
+		model := new(Workspace)
+		UpdateWorkspaceFunc = func(workspace *Workspace) *restErrors.RestErr {
+			return nil
+		}
+		GetByNameAndUserIdFunc = func(name string, userId string) ([]*Workspace, *restErrors.RestErr) {
+			return nil, restErrors.NewInternalServerError("something went wrong")
+		}
+
+		err := workspaceTestService.Update(&UpdateWorkspaceRequestDto{}, model)
+		assert.EqualValues(t, http.StatusInternalServerError, err.Status)
+	})
+
+	t.Run("Update_Workspace_Should_Throw_if_name_to_update_already_exist_for_another_workspace_for_the_same_user", func(t *testing.T) {
+		UpdateWorkspaceFunc = func(workspace *Workspace) *restErrors.RestErr {
+			return nil
+		}
+		GetByNameAndUserIdFunc = func(name string, userId string) ([]*Workspace, *restErrors.RestErr) {
+			newWorkspace := new(Workspace)
+			newWorkspace.ID = uuid.NewString()
+			newWorkspace.Name = dto.Name
+			return []*Workspace{newWorkspace}, nil
+		}
+
+		model := new(Workspace)
+		err := workspaceTestService.Update(dto, model)
+
+		assert.EqualValues(t, "you have another workspace with the same name", err.Message)
 	})
 
 }

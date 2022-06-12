@@ -14,7 +14,7 @@ type repository struct{}
 type IRepository interface {
 	WithTransaction(txHandle *gorm.DB) IRepository
 	Create(workspace *Workspace) *restErrors.RestErr
-	GetByNameAndUserId(name string, userId string) (*Workspace, *restErrors.RestErr)
+	GetByNameAndUserId(name string, userId string) ([]*Workspace, *restErrors.RestErr)
 	GetById(id string) (*Workspace, *restErrors.RestErr)
 	Update(workspace *Workspace) *restErrors.RestErr
 	Delete(*Workspace) *restErrors.RestErr
@@ -46,17 +46,14 @@ func (repo *repository) Create(workspace *Workspace) *restErrors.RestErr {
 }
 
 //GetByNameAndUserId used to get workspace by name to check if workspace name exits for the same owner(userId)
-func (repo *repository) GetByNameAndUserId(name string, userId string) (*Workspace, *restErrors.RestErr) {
-	var workspace = new(Workspace)
-	result := sqlclient.DbClient.Where("user_id = ? AND name = ?", userId, name).First(workspace)
+func (repo *repository) GetByNameAndUserId(name string, userId string) ([]*Workspace, *restErrors.RestErr) {
+	var workspaces []*Workspace
+	result := sqlclient.DbClient.Where("user_id = ? AND name = ?", userId, name).Find(&workspaces)
 	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, restErrors.NewNotFoundError("record not found")
-		}
 		go logger.Error(repo.GetByNameAndUserId, result.Error)
 		return nil, restErrors.NewInternalServerError("something went wrong")
 	}
-	return workspace, nil
+	return workspaces, nil
 }
 
 //Update updates workspace record
