@@ -12,6 +12,10 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+var (
+	k8sClient = k8s.NewClientService()
+)
+
 //namespace service communicates with k8s from community-api to create namespaces for different nodes
 // in combination with workspace-module they form (workspace exposed to the user which is the namespace behind the scenes)
 type namespace struct{}
@@ -35,7 +39,7 @@ func (service *namespace) Create(name string) *restErrors.RestErr {
 			Name: name,
 		},
 	}
-	err := k8s.Client().Create(context.Background(), ns)
+	err := k8sClient.Create(context.Background(), ns)
 	if err != nil {
 		if errors.IsAlreadyExists(err) {
 			return restErrors.NewConflictError("namespace already exits")
@@ -56,7 +60,7 @@ func (service *namespace) Get(name string) (*corev1.Namespace, *restErrors.RestE
 	key.Namespace = name
 	key.Name = name
 
-	err := k8s.Client().Get(context.Background(), key, &ns)
+	err := k8sClient.Get(context.Background(), key, &ns)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil, restErrors.NewNotFoundError(fmt.Sprintf("can't find namespace %s", name))
@@ -75,7 +79,7 @@ func (service *namespace) Delete(name string) *restErrors.RestErr {
 		},
 	}
 
-	err := k8s.Client().Delete(context.Background(), ns)
+	err := k8sClient.Delete(context.Background(), ns)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return restErrors.NewNotFoundError(fmt.Sprintf("namespace %s does't exit", name))
