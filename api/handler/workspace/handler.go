@@ -1,7 +1,6 @@
 package workspace
 
 import (
-	"fmt"
 	"github.com/gofiber/fiber/v2"
 	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/kotalco/api/pkg/shared"
@@ -107,7 +106,6 @@ func Delete(c *fiber.Ctx) error {
 	}
 
 	err = namespaceService.Delete(model.K8sNamespace)
-	fmt.Println(err.Status, http.StatusNotFound)
 	if err != nil && err.Status != http.StatusNotFound {
 		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
