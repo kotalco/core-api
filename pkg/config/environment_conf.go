@@ -143,4 +143,13 @@ func init() {
 	} else {
 		EnvironmentConf["2_FACTOR_SECRET"] = val
 	}
+
+	//rate limiting
+	val, ok = os.LookupEnv("RATE_LIMITER_PER_MINUTE")
+	if !ok {
+		EnvironmentConf["RATE_LIMITER_PER_MINUTE"] = "10"
+	} else {
+		EnvironmentConf["RATE_LIMITER_PER_MINUTE"] = val
+	}
+
 }

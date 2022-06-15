@@ -12,6 +12,6 @@ func FiberMiddleware(a *fiber.App) {
 	a.Use(
 		recover.New(),
 		cors.New(),
-		customConfig.FiberLimiter,
+		customConfig.FiberLimiter(),
 	)
 }

@@ -29,22 +29,24 @@ var defaultErrorHandler = func(c *fiber.Ctx, err error) error {
 	return c.Status(internalErr.Status).JSON(internalErr)
 }
 
-var FiberLimiter = limiter.New(limiter.Config{
-	Max:        30,
-	Expiration: 1 * time.Minute,
-	KeyGenerator: func(c *fiber.Ctx) string {
-		return c.IP()
-	},
-	LimitReached: func(c *fiber.Ctx) error {
-		//todo create too many request newError in err package
-		limiterErr := struct {
-			Message string `json:"message"`
-		}{
-			Message: "too many requests",
-		}
-		return c.Status(fiber.StatusTooManyRequests).JSON(shared.NewResponse(limiterErr))
-	},
-	SkipFailedRequests:     false,
-	SkipSuccessfulRequests: false,
-	LimiterMiddleware:      limiter.FixedWindow{},
-})
+func FiberLimiter() fiber.Handler {
+	maxLimiter, err := strconv.Atoi(EnvironmentConf["RATE_LIMITER_PER_MINUTE"])
+	if err != nil {
+		logger.Panic("FIBER_CONFIG_LIMITER", err)
+	}
+
+	return limiter.New(limiter.Config{
+		Max:        maxLimiter,
+		Expiration: 1 * time.Minute,
+		KeyGenerator: func(c *fiber.Ctx) string {
+			return c.IP()
+		},
+		LimitReached: func(c *fiber.Ctx) error {
+			err := restErrors.NewTooManyRequestsError("too many requests")
+			return c.Status(fiber.StatusTooManyRequests).JSON(shared.NewResponse(err))
+		},
+		SkipFailedRequests:     false,
+		SkipSuccessfulRequests: false,
+		LimiterMiddleware:      limiter.FixedWindow{},
+	})
+}
