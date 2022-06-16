@@ -4,6 +4,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/kotalco/api/pkg/logger"
 	"github.com/kotalco/cloud-api/internal/user"
+	"github.com/kotalco/cloud-api/internal/workspace"
+	"github.com/kotalco/cloud-api/internal/workspaceuser"
 	"github.com/kotalco/cloud-api/pkg/security"
 	"gorm.io/gorm"
 )
@@ -26,6 +28,7 @@ func NewService(dbClient *gorm.DB) IService {
 }
 
 func (s service) Seeds() []Definition {
+	defaultUserId := uuid.NewString()
 	return []Definition{
 		Definition{
 			Name: "SeedUsersTable",
@@ -35,11 +38,30 @@ func (s service) Seeds() []Definition {
 					go logger.Error("SEEDING_HASHING_ERR", err)
 				}
 				developUser := new(user.User)
-				developUser.ID = uuid.New().String()
+				developUser.ID = defaultUserId
 				developUser.Email = "develop@kotal.co"
 				developUser.IsEmailVerified = true
 				developUser.Password = string(hashedPassword)
 				return seeders.SeedUserTable(developUser)
+			},
+		},
+		Definition{
+			Name: "SeedWorkspaceTable",
+			Run: func() error {
+				newWorkspace := new(workspace.Workspace)
+				newWorkspace.ID = uuid.New().String()
+				newWorkspace.UserId = defaultUserId
+				newWorkspace.Name = "default"
+				newWorkspace.K8sNamespace = "default"
+				//create workspace-user record
+				newWorkspaceuser := new(workspaceuser.WorkspaceUser)
+				newWorkspaceuser.ID = uuid.New().String()
+				newWorkspaceuser.WorkspaceID = newWorkspace.ID
+				newWorkspaceuser.UserId = newWorkspace.UserId
+
+				newWorkspace.WorkspaceUsers = append(newWorkspace.WorkspaceUsers, *newWorkspaceuser)
+
+				return seeders.SeedWorkspaceTable(newWorkspace)
 			},
 		},
 	}
