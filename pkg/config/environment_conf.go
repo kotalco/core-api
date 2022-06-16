@@ -147,7 +147,7 @@ func init() {
 	//rate limiting
 	val, ok = os.LookupEnv("RATE_LIMITER_PER_MINUTE")
 	if !ok {
-		EnvironmentConf["RATE_LIMITER_PER_MINUTE"] = "10"
+		EnvironmentConf["RATE_LIMITER_PER_MINUTE"] = "100"
 	} else {
 		EnvironmentConf["RATE_LIMITER_PER_MINUTE"] = val
 	}
