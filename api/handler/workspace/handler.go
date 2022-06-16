@@ -106,7 +106,7 @@ func Delete(c *fiber.Ctx) error {
 	}
 
 	err = namespaceService.Delete(model.K8sNamespace)
-	if err != nil {
+	if err != nil && err.Status != http.StatusNotFound {
 		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
