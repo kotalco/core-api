@@ -6,7 +6,9 @@ import (
 	"github.com/kotalco/api/pkg/shared"
 	"github.com/kotalco/cloud-api/internal/user"
 	"github.com/kotalco/cloud-api/internal/workspace"
+	"github.com/kotalco/cloud-api/internal/workspaceuser"
 	"github.com/kotalco/cloud-api/pkg/k8s"
+	"github.com/kotalco/cloud-api/pkg/roles"
 	"github.com/kotalco/cloud-api/pkg/sendgrid"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
 	"github.com/kotalco/cloud-api/pkg/token"
@@ -183,11 +185,22 @@ func AddMember(c *fiber.Ctx) error {
 //Leave removes workspace member from workspace
 func Leave(c *fiber.Ctx) error {
 	model := c.Locals("workspace").(workspace.Workspace)
+	workspaceUser := c.Locals("workspaceUser").(workspaceuser.WorkspaceUser)
 	userId := c.Locals("user").(token.UserDetails).ID
 
-	if model.UserId == userId {
-		err := restErrors.NewForbiddenError("you can't leave your own workspace")
-		return c.Status(err.Status).JSON(err)
+	if workspaceUser.Role == roles.Admin { //user with admin role can leave workspace only if it has another admin
+		canLeave := false
+		for _, v := range model.WorkspaceUsers {
+			if v.UserId != userId && v.Role == roles.Admin {
+				canLeave = true
+				break
+			}
+		}
+
+		if !canLeave {
+			err := restErrors.NewForbiddenError("user with admin role can leave workspace only if it has another admin")
+			return c.Status(err.Status).JSON(err)
+		}
 	}
 
 	txHandle := sqlclient.Begin()

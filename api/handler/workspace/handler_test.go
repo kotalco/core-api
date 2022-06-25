@@ -10,6 +10,7 @@ import (
 	"github.com/kotalco/cloud-api/internal/user"
 	"github.com/kotalco/cloud-api/internal/workspace"
 	"github.com/kotalco/cloud-api/internal/workspaceuser"
+	"github.com/kotalco/cloud-api/pkg/roles"
 	"github.com/kotalco/cloud-api/pkg/sendgrid"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
 	"github.com/kotalco/cloud-api/pkg/token"
@@ -736,11 +737,13 @@ func TestLeaveWorkspace(t *testing.T) {
 
 	workspaceUserModelLocals := new(workspaceuser.WorkspaceUser)
 	workspaceUserModelLocals.UserId = userDetails.ID
+	workspaceUserModelLocals.Role = roles.Reader
 	workspaceModelLocals.WorkspaceUsers = []workspaceuser.WorkspaceUser{*workspaceUserModelLocals}
 
 	var locals = map[string]interface{}{}
 	locals["user"] = *userDetails
 	locals["workspace"] = *workspaceModelLocals
+	locals["workspaceUser"] = *workspaceUserModelLocals
 
 	t.Run("leave_workspace_should_pass", func(t *testing.T) {
 		DeleteWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
@@ -756,10 +759,11 @@ func TestLeaveWorkspace(t *testing.T) {
 		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
 	})
 
-	t.Run("leave_workspace_should_throw_if_the_owner_tries_to_leave_the_workspace", func(t *testing.T) {
-		workspaceModelWhenUserIsOwner := *workspaceModelLocals
-		workspaceModelWhenUserIsOwner.UserId = userDetails.ID
-		locals["workspace"] = workspaceModelWhenUserIsOwner
+	t.Run("leave_workspace_should_throw_if_the_admin_tries_to_leave_and_there_is_no_other_admin_in_the_work_space", func(t *testing.T) {
+		workspaceUserModelLocalsIsAdmin := workspaceUserModelLocals
+		workspaceUserModelLocalsIsAdmin.Role = roles.Admin
+		locals["workspaceUser"] = *workspaceUserModelLocalsIsAdmin
+
 		DeleteWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
 			return nil
 		}
@@ -769,9 +773,10 @@ func TestLeaveWorkspace(t *testing.T) {
 		if err != nil {
 			panic(err)
 		}
-		assert.EqualValues(t, "you can't leave your own workspace", restErr.Message)
+		assert.EqualValues(t, "user with admin role can leave workspace only if it has another admin", restErr.Message)
 		assert.EqualValues(t, http.StatusForbidden, resp.StatusCode)
-		locals["workspace"] = *workspaceModelLocals
+		workspaceUserModelLocals.Role = roles.Reader
+		locals["workspaceUser"] = *workspaceUserModelLocals
 
 	})
 
