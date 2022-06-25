@@ -221,6 +221,12 @@ func Leave(c *fiber.Ctx) error {
 func RemoveMember(c *fiber.Ctx) error {
 	model := c.Locals("workspace").(workspace.Workspace)
 	memberId := c.Params("user_id")
+	userId := c.Locals("user").(token.UserDetails).ID
+
+	if memberId == userId {
+		badReq := restErrors.NewBadRequestError("you can't remove your self, try to leave workspace instead!")
+		return c.Status(badReq.Status).JSON(badReq)
+	}
 
 	exist := false //check if the to-be-delete user exists in the workspace
 	for _, v := range model.WorkspaceUsers {

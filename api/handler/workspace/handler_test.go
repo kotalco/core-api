@@ -827,6 +827,62 @@ func TestRemoveMemberWorkspace(t *testing.T) {
 		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
 	})
 
+	t.Run("user_can't_remove_him_self_from_workspace", func(t *testing.T) {
+		userDetails.ID = ""
+		locals["user"] = *userDetails
+		workspaceUserModelLocals.UserId = userDetails.ID
+		workspaceModelLocals.WorkspaceUsers = []workspaceuser.WorkspaceUser{*workspaceUserModelLocals}
+		locals["workspace"] = *workspaceModelLocals
+
+		DeleteWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
+			return nil
+		}
+
+		result, resp := newFiberCtx("", RemoveMember, locals)
+		var restErr restErrors.RestErr
+		err := json.Unmarshal(result, &restErr)
+		if err != nil {
+			panic(err)
+		}
+
+		assert.EqualValues(t, "you can't remove your self, try to leave workspace instead!", restErr.Message)
+		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
+		userDetails.ID = "11"
+		locals["user"] = *userDetails
+		workspaceUserModelLocals.UserId = ""
+		workspaceModelLocals.WorkspaceUsers = []workspaceuser.WorkspaceUser{*workspaceUserModelLocals}
+		locals["workspace"] = *workspaceModelLocals
+
+	})
+
+	t.Run("remove_member_should_throw_if_user_doesnt'_exits", func(t *testing.T) {
+		userDetails.ID = "11"
+		locals["user"] = *userDetails
+		workspaceUserModelLocals.UserId = "12"
+		workspaceModelLocals.WorkspaceUsers = []workspaceuser.WorkspaceUser{*workspaceUserModelLocals}
+		locals["workspace"] = *workspaceModelLocals
+
+		DeleteWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
+			return nil
+		}
+
+		result, resp := newFiberCtx("", RemoveMember, locals)
+		var restErr restErrors.RestErr
+		err := json.Unmarshal(result, &restErr)
+		if err != nil {
+			panic(err)
+		}
+
+		assert.EqualValues(t, "user isn't a member of the workspace", restErr.Message)
+		assert.EqualValues(t, http.StatusNotFound, resp.StatusCode)
+		userDetails.ID = "11"
+		locals["user"] = *userDetails
+		workspaceUserModelLocals.UserId = ""
+		workspaceModelLocals.WorkspaceUsers = []workspaceuser.WorkspaceUser{*workspaceUserModelLocals}
+		locals["workspace"] = *workspaceModelLocals
+
+	})
+
 	t.Run("leave_workspace_should_throw_if_service_Throw", func(t *testing.T) {
 		DeleteWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
 			return restErrors.NewInternalServerError("something went wrong")
