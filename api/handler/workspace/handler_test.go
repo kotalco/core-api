@@ -906,6 +906,7 @@ func TestMembers(t *testing.T) {
 	workspaceModelLocals := new(workspace.Workspace)
 	workspaceUserModelLocals := new(workspaceuser.WorkspaceUser)
 	workspaceUserModelLocals.UserId = userDetails.ID
+	workspaceUserModelLocals.Role = roles.Admin
 	workspaceModelLocals.WorkspaceUsers = []workspaceuser.WorkspaceUser{*workspaceUserModelLocals}
 
 	var locals = map[string]interface{}{}
@@ -916,7 +917,7 @@ func TestMembers(t *testing.T) {
 		FindWhereIdInSliceFunc = func(ids []string) ([]*user.User, *restErrors.RestErr) {
 			user1 := new(user.User)
 			user1.Email = "email@test.com"
-			user1.ID = uuid.NewString()
+			user1.ID = userDetails.ID
 			return []*user.User{user1}, nil
 		}
 
@@ -930,6 +931,7 @@ func TestMembers(t *testing.T) {
 		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
 		assert.Len(t, result["data"], 1)
 		assert.EqualValues(t, result["data"][0].Email, "email@test.com")
+		assert.EqualValues(t, roles.Admin, result["data"][0].Role)
 	})
 
 	t.Run("list_workspace_members_should_throw_if_service_throw", func(t *testing.T) {
