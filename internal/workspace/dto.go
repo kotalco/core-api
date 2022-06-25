@@ -3,6 +3,8 @@ package workspace
 import (
 	"github.com/go-playground/validator/v10"
 	restErrors "github.com/kotalco/api/pkg/errors"
+	"github.com/kotalco/api/pkg/logger"
+	"github.com/kotalco/cloud-api/pkg/roles"
 )
 
 type CreateWorkspaceRequestDto struct {
@@ -22,6 +24,7 @@ type WorkspaceResponseDto struct {
 
 type AddWorkspaceMemberDto struct {
 	Email string `json:"email" validate:"required,email"`
+	Role  string `json:"role" validate:"roles"`
 }
 
 //Marshall creates workspace response from workspace model
@@ -35,7 +38,14 @@ func (dto *WorkspaceResponseDto) Marshall(model *Workspace) *WorkspaceResponseDt
 //Validate validates workspace requests fields
 func Validate(dto interface{}) *restErrors.RestErr {
 	newValidator := validator.New()
-	err := newValidator.Struct(dto)
+	err := newValidator.RegisterValidation("roles", func(fl validator.FieldLevel) bool {
+		return roles.New().Exist(fl.Field().String())
+	})
+	if err != nil {
+		logger.Panic("USER_DTO_VALIDATE", err)
+		return restErrors.NewInternalServerError("something went wrong!")
+	}
+	err = newValidator.Struct(dto)
 
 	if err != nil {
 		fields := map[string]string{}

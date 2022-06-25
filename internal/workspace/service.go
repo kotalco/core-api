@@ -18,7 +18,7 @@ type IService interface {
 	Delete(workspace *Workspace) *restErrors.RestErr
 	GetById(Id string) (*Workspace, *restErrors.RestErr)
 	GetByUserId(UserId string) ([]*Workspace, *restErrors.RestErr)
-	AddWorkspaceMember(workspace *Workspace, memberId string) *restErrors.RestErr
+	AddWorkspaceMember(workspace *Workspace, memberId string, role string) *restErrors.RestErr
 	DeleteWorkspaceMember(workspace *Workspace, memberId string) *restErrors.RestErr
 	CountByUserId(userId string) (int64, *restErrors.RestErr)
 }
@@ -114,11 +114,12 @@ func (service) GetByUserId(userId string) ([]*Workspace, *restErrors.RestErr) {
 }
 
 //AddWorkspaceMember creates new workspaceUser record for a given workspace
-func (service) AddWorkspaceMember(workspace *Workspace, memberId string) *restErrors.RestErr {
+func (service) AddWorkspaceMember(workspace *Workspace, memberId string, role string) *restErrors.RestErr {
 	newWorkspaceUser := new(workspaceuser.WorkspaceUser)
 	newWorkspaceUser.ID = uuid.NewString()
 	newWorkspaceUser.WorkspaceID = workspace.ID
 	newWorkspaceUser.UserId = memberId
+	newWorkspaceUser.Role = role
 
 	return workspaceRepo.AddWorkspaceMember(workspace, newWorkspaceUser)
 }
