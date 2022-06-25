@@ -111,7 +111,7 @@ var (
 	GetWorkspaceByIdFunc       func(Id string) (*workspace.Workspace, *restErrors.RestErr)
 	DeleteWorkspaceFunc        func(workspace *workspace.Workspace) *restErrors.RestErr
 	GetWorkspaceByUserIdFunc   func(userId string) ([]*workspace.Workspace, *restErrors.RestErr)
-	AddWorkspaceMemberFunc     func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr
+	AddWorkspaceMemberFunc     func(workspace *workspace.Workspace, memberId string, role string) *restErrors.RestErr
 	DeleteWorkspaceMemberFunc  func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr
 	CountWorkspaceByUserIdFunc func(userId string) (int64, *restErrors.RestErr)
 )
@@ -139,8 +139,8 @@ func (workspaceServiceMock) GetByUserId(workspaceId string) ([]*workspace.Worksp
 	return GetWorkspaceByUserIdFunc(workspaceId)
 }
 
-func (workspaceServiceMock) AddWorkspaceMember(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
-	return AddWorkspaceMemberFunc(workspace, memberId)
+func (workspaceServiceMock) AddWorkspaceMember(workspace *workspace.Workspace, memberId string, role string) *restErrors.RestErr {
+	return AddWorkspaceMemberFunc(workspace, memberId, role)
 }
 
 func (workspaceServiceMock) DeleteWorkspaceMember(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
@@ -604,9 +604,11 @@ func TestAddMemberToWorkspace(t *testing.T) {
 
 	var validDto = map[string]string{
 		"email": "test@test.com",
+		"role":  "admin",
 	}
 	var invalidDto = map[string]string{
 		"email": "invalid",
+		"role":  "invalid",
 	}
 
 	t.Run("add_member_to_workspace_should_pass", func(t *testing.T) {
@@ -618,7 +620,7 @@ func TestAddMemberToWorkspace(t *testing.T) {
 			return nil
 		}
 
-		AddWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
+		AddWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string, role string) *restErrors.RestErr {
 			return nil
 		}
 
@@ -641,6 +643,7 @@ func TestAddMemberToWorkspace(t *testing.T) {
 		}
 		var fields = map[string]string{}
 		fields["email"] = "email should be a valid email address"
+		fields["role"] = "invalid role"
 		badReqErr := restErrors.NewValidationError(fields)
 
 		assert.EqualValues(t, badReqErr.Status, resp.StatusCode)
@@ -669,7 +672,7 @@ func TestAddMemberToWorkspace(t *testing.T) {
 			return nil
 		}
 
-		AddWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
+		AddWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string, role string) *restErrors.RestErr {
 			return nil
 		}
 
@@ -707,7 +710,7 @@ func TestAddMemberToWorkspace(t *testing.T) {
 			return nil
 		}
 
-		AddWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
+		AddWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string, role string) *restErrors.RestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 
