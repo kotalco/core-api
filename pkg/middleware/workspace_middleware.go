@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"github.com/gofiber/fiber/v2"
 	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/kotalco/cloud-api/internal/workspace"
@@ -25,11 +24,9 @@ func IsWorkspace(c *fiber.Ctx) error {
 	}
 
 	validUser := false
-	fmt.Println("this is is workspace middleware...")
 	for _, v := range model.WorkspaceUsers {
 		if v.UserId == userId {
 			validUser = true
-			fmt.Println(v)
 			c.Locals("workspaceUser", v)
 			break
 		}
