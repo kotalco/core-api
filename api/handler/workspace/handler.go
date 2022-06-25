@@ -261,7 +261,14 @@ func Members(c *fiber.Ctx) error {
 
 	result := make([]user.PublicUserResponseDto, len(workspaceMembersList))
 	for k, v := range workspaceMembersList {
+		//marshal user model to public response dto
 		result[k] = new(user.PublicUserResponseDto).Marshall(v)
+		//assign user role
+		for _, workspaceUser := range model.WorkspaceUsers {
+			if v.ID == workspaceUser.UserId {
+				result[k].Role = workspaceUser.Role
+			}
+		}
 	}
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(result))
