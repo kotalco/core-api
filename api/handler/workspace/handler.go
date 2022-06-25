@@ -220,18 +220,7 @@ func Leave(c *fiber.Ctx) error {
 //RemoveMember workspace owner removes workspace member form his/her workspace
 func RemoveMember(c *fiber.Ctx) error {
 	model := c.Locals("workspace").(workspace.Workspace)
-	userId := c.Locals("user").(token.UserDetails).ID
 	memberId := c.Params("user_id")
-
-	if model.UserId != userId { //check if the user is the owner
-		err := restErrors.NewForbiddenError("you can only delete other users from your own workspace")
-		return c.Status(err.Status).JSON(err)
-	}
-
-	if model.UserId == memberId { //check if the-to-be deleted user isn't the owner of the workspace
-		err := restErrors.NewForbiddenError("you can't leave your own workspace")
-		return c.Status(err.Status).JSON(err)
-	}
 
 	exist := false //check if the to-be-delete user exists in the workspace
 	for _, v := range model.WorkspaceUsers {

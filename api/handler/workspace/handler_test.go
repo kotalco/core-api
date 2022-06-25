@@ -826,26 +826,6 @@ func TestRemoveMemberWorkspace(t *testing.T) {
 		assert.EqualValues(t, "User has been removed from workspace", responseMessage["data"].Message)
 		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
 	})
-	t.Run("remove_workspace_user_should_throw_if_the_normal_member_tries_to_remove_another_member", func(t *testing.T) {
-		workspaceModelWhenUserIsNotOwner := *workspaceModelLocals
-		workspaceModelWhenUserIsNotOwner.UserId = "12"
-		locals["workspace"] = workspaceModelWhenUserIsNotOwner
-
-		DeleteWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
-			return nil
-		}
-
-		result, resp := newFiberCtx("", RemoveMember, locals)
-		var restErr restErrors.RestErr
-		err := json.Unmarshal(result, &restErr)
-		if err != nil {
-			panic(err)
-		}
-		assert.EqualValues(t, "you can only delete other users from your own workspace", restErr.Message)
-		assert.EqualValues(t, http.StatusForbidden, resp.StatusCode)
-		locals["workspace"] = *workspaceModelLocals
-
-	})
 
 	t.Run("leave_workspace_should_throw_if_service_Throw", func(t *testing.T) {
 		DeleteWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
