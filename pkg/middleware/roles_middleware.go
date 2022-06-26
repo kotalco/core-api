@@ -29,7 +29,7 @@ func IsAdmin(c *fiber.Ctx) error {
 func IsWriter(c *fiber.Ctx) error {
 	workspaceUser, err := validateWorkspaceUser(c)
 	if err != nil {
-		logger.Error("IS_WRITER_MIDDLEWARE", err)
+		logger.Error("IS_Writer_MIDDLEWARE", err)
 		internalErr := restErrors.NewInternalServerError("something went wrong")
 		return c.Status(internalErr.Status).JSON(internalErr)
 	}

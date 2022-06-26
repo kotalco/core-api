@@ -49,11 +49,21 @@ func MapUrl(app *fiber.App) {
 	workspaces.Patch("/:id", middleware.IsWorkspace, middleware.IsWriter, workspace.Update)
 	workspaces.Delete("/:id", middleware.IsWorkspace, middleware.IsWriter, workspace.Delete)
 	workspaces.Get("/", workspace.GetByUserId)
+<<<<<<< HEAD
 	workspaces.Post("/:id/members", middleware.IsWorkspace, workspace.AddMember)
 	workspaces.Post("/:id/leave", middleware.IsWorkspace, workspace.Leave)
 	workspaces.Delete("/:id/members/:user_id", middleware.IsWorkspace, workspace.RemoveMember)
 	workspaces.Get("/:id/members", middleware.IsWorkspace, workspace.Members)
 	workspaces.Patch("/:id/members/:user_id", middleware.IsWorkspace, workspace.UpdateWorkspaceUser)
+=======
+	workspaces.Get("/:id", middleware.IsWorkspace, middleware.IsReader, workspace.GetById)
+
+	workspaces.Post("/:id/members", middleware.IsWorkspace, middleware.IsWriter, workspace.AddMember)
+	workspaces.Post("/:id/leave", middleware.IsWorkspace, middleware.IsReader, workspace.Leave)
+	workspaces.Delete("/:id/members/:user_id", middleware.IsWorkspace, middleware.IsWriter, workspace.RemoveMember)
+	workspaces.Get("/:id/members", middleware.IsWorkspace, middleware.IsReader, workspace.Members)
+	workspaces.Patch("/:id/workspace-user/:workspace_userId", middleware.IsWorkspace, middleware.IsAdmin, workspace.UpdateWorkspaceUser)
+>>>>>>> 8d1909a (feat:created get workspace by id and assign role to workspace (closing #71))
 
 	//community routes
 	mapDeploymentUrl(v1)

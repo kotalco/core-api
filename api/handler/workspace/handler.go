@@ -135,6 +135,17 @@ func GetByUserId(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(marshalled))
 }
 
+//GetById find workspaces by Id
+func GetById(c *fiber.Ctx) error {
+	model := c.Locals("workspace").(workspace.Workspace)
+	workspaceUser := c.Locals("workspaceUser").(workspaceuser.WorkspaceUser)
+
+	marshalled := new(workspace.WorkspaceResponseDto).Marshall(&model)
+	marshalled.Role = workspaceUser.Role
+
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(marshalled))
+}
+
 //AddMember adds new member to workspace
 func AddMember(c *fiber.Ctx) error {
 	dto := new(workspace.AddWorkspaceMemberDto)
