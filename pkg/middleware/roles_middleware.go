@@ -64,6 +64,7 @@ func validateWorkspaceUser(c *fiber.Ctx) (workspaceuser.WorkspaceUser, *restErro
 
 	if c.Locals("workspaceUser") != nil { //check for workspace user working with cloud api handlers
 		workspaceUser = c.Locals("workspaceUser").(workspaceuser.WorkspaceUser)
+		return workspaceUser, nil
 	} else { //working with api sdk
 		if c.Query("namespace") == "" { //check if namespace appended as body field (create requests)
 			body := make(map[string]interface{})
