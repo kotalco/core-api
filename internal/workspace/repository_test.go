@@ -172,6 +172,8 @@ func TestRepository_CountByUserId(t *testing.T) {
 		count, err := repo.CountByUserId(workspace.UserId)
 		assert.Nil(t, err)
 		assert.EqualValues(t, 1, count)
+		cleanUp(workspace)
+
 	})
 }
 
@@ -180,6 +182,18 @@ func TestRepository_UpdateWorkspaceUser(t *testing.T) {
 		workspace := createWorkspace(t)
 		err := repo.UpdateWorkspaceUser(&workspace.WorkspaceUsers[0])
 		assert.Nil(t, err)
+		cleanUp(workspace)
+
+	})
+}
+
+func TestRepository_GetByNamespace(t *testing.T) {
+	t.Run("getByNamespace_should_pass", func(t *testing.T) {
+		workspace := createWorkspace(t)
+		model, err := repo.GetByNamespace(workspace.K8sNamespace)
+		assert.Nil(t, err)
+		assert.NotNil(t, model)
+		cleanUp(workspace)
 	})
 }
 

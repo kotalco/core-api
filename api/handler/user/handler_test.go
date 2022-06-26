@@ -217,6 +217,9 @@ func (workspaceServiceMock) DeleteWorkspaceMember(workspace *workspace.Workspace
 func (workspaceServiceMock) CountByUserId(userId string) (int64, *restErrors.RestErr) {
 	return CountByUserIdFunc(userId)
 }
+func (workspaceServiceMock) UpdateWorkspaceUser(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) *restErrors.RestErr {
+	return UpdateWorkspaceUserFunc(workspaceUser, dto)
+}
 
 /*
 Namespace service Mocks
