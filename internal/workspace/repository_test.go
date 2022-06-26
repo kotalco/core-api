@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/kotalco/cloud-api/internal/workspaceuser"
+	"github.com/kotalco/cloud-api/pkg/roles"
 	"github.com/kotalco/cloud-api/pkg/security"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
 	"github.com/stretchr/testify/assert"
@@ -174,6 +175,14 @@ func TestRepository_CountByUserId(t *testing.T) {
 	})
 }
 
+func TestRepository_UpdateWorkspaceUser(t *testing.T) {
+	t.Run("update_workspace_member_should_pass", func(t *testing.T) {
+		workspace := createWorkspace(t)
+		err := repo.UpdateWorkspaceUser(&workspace.WorkspaceUsers[0])
+		assert.Nil(t, err)
+	})
+}
+
 func createWorkspace(t *testing.T) Workspace {
 	workspace := new(Workspace)
 	workspace.ID = uuid.New().String()
@@ -185,6 +194,7 @@ func createWorkspace(t *testing.T) Workspace {
 	newWorkspaceUser.ID = uuid.New().String()
 	newWorkspaceUser.WorkspaceID = workspace.ID
 	newWorkspaceUser.UserId = workspace.UserId
+	newWorkspaceUser.Role = roles.Admin
 	workspace.WorkspaceUsers = append(workspace.WorkspaceUsers, *newWorkspaceUser)
 	restErr := repo.Create(workspace)
 	assert.Nil(t, restErr)
