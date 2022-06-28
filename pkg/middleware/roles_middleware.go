@@ -14,7 +14,7 @@ func IsAdmin(c *fiber.Ctx) error {
 
 	workspaceUser, err := validateWorkspaceUser(c)
 	if err != nil {
-		logger.Panic("IS_ADMIN_MIDDLEWARE", err)
+		logger.Error("IS_ADMIN_MIDDLEWARE", err)
 		internalErr := restErrors.NewInternalServerError("something went wrong")
 		return c.Status(internalErr.Status).JSON(internalErr)
 	}
@@ -29,7 +29,7 @@ func IsAdmin(c *fiber.Ctx) error {
 func IsWriter(c *fiber.Ctx) error {
 	workspaceUser, err := validateWorkspaceUser(c)
 	if err != nil {
-		logger.Panic("IS_ADMIN_MIDDLEWARE", err)
+		logger.Error("IS_WRITER_MIDDLEWARE", err)
 		internalErr := restErrors.NewInternalServerError("something went wrong")
 		return c.Status(internalErr.Status).JSON(internalErr)
 	}
@@ -44,7 +44,7 @@ func IsWriter(c *fiber.Ctx) error {
 func IsReader(c *fiber.Ctx) error {
 	workspaceUser, err := validateWorkspaceUser(c)
 	if err != nil {
-		logger.Panic("IS_ADMIN_MIDDLEWARE", err)
+		logger.Error("IS_READER_MIDDLEWARE", err)
 		internalErr := restErrors.NewInternalServerError("something went wrong")
 		return c.Status(internalErr.Status).JSON(internalErr)
 	}
@@ -57,6 +57,9 @@ func IsReader(c *fiber.Ctx) error {
 	return nil
 }
 
+// validateWorkspaceUser get the current workspace the user working with either by passing the workspace id as an id
+// in workspace module actions which will result having a local under then name workspace and workspaceUser under the name workspaceUser
+//or getting the workspace and workspaceUser for the deployments by the passed namespace as QS or passed as body field
 func validateWorkspaceUser(c *fiber.Ctx) (workspaceuser.WorkspaceUser, *restErrors.RestErr) {
 	var workspaceUser workspaceuser.WorkspaceUser
 	var namespace = "default"
@@ -66,7 +69,7 @@ func validateWorkspaceUser(c *fiber.Ctx) (workspaceuser.WorkspaceUser, *restErro
 		workspaceUser = c.Locals("workspaceUser").(workspaceuser.WorkspaceUser)
 		return workspaceUser, nil
 	} else { //working with api sdk
-		if c.Query("namespace") == "" { //check if namespace appended as body field (create requests)
+		if c.Query("namespace") == "" { //check if namespace appended as body field (create Deployment requests)
 			body := make(map[string]interface{})
 			err := json.Unmarshal(c.Body(), &body)
 			if err != nil {
@@ -83,7 +86,7 @@ func validateWorkspaceUser(c *fiber.Ctx) (workspaceuser.WorkspaceUser, *restErro
 
 	model, err := workspaceRepo.GetByNamespace(namespace)
 	if err != nil {
-		logger.Panic("IS_ADMIN_MIDDLEWARE", err)
+		logger.Error("VALIDATE_WORKSPACE_USER_IN_ROLES_MIDDLEWARE", err)
 		internalErr := restErrors.NewInternalServerError("something went wrong")
 		return workspaceuser.WorkspaceUser{}, internalErr
 	}
