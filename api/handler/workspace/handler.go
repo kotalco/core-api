@@ -296,7 +296,7 @@ func UpdateWorkspaceUser(c *fiber.Ctx) error {
 	}
 
 	model := c.Locals("workspace").(workspace.Workspace)
-	workspaceUserId := c.Params("workspace_userId")
+	workspaceUserId := c.Params("user_id")
 	userId := c.Locals("user").(token.UserDetails).ID
 
 	//check if the to-be-changed user exists in the workspace

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/kotalco/cloud-api/internal/workspace"
+	"github.com/kotalco/cloud-api/internal/workspaceuser"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
 	"github.com/kotalco/cloud-api/pkg/token"
 	"gorm.io/gorm"
@@ -173,9 +174,14 @@ var (
 	addWorkspaceMemberFunc    func(workspace *workspace.Workspace, memberId string, role string) *restErrors.RestErr
 	DeleteWorkspaceMemberFunc func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr
 	CountByUserIdFunc         func(userId string) (int64, *restErrors.RestErr)
+	UpdateWorkspaceUserFunc   func(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) *restErrors.RestErr
 )
 
 type workspaceServiceMock struct{}
+
+func (wService workspaceServiceMock) UpdateWorkspaceUser(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) *restErrors.RestErr {
+	return UpdateWorkspaceUserFunc(workspaceUser, dto)
+}
 
 func (wService workspaceServiceMock) WithTransaction(txHandle *gorm.DB) workspace.IService {
 	return wService
