@@ -4,6 +4,7 @@ import (
 	"github.com/google/uuid"
 	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/kotalco/cloud-api/internal/workspaceuser"
+	"github.com/kotalco/cloud-api/pkg/roles"
 	"gorm.io/gorm"
 	"net/http"
 )
@@ -57,6 +58,7 @@ func (service) Create(dto *CreateWorkspaceRequestDto, userId string) (*Workspace
 	workspaceuser.ID = uuid.New().String()
 	workspaceuser.WorkspaceID = workspace.ID
 	workspaceuser.UserId = workspace.UserId
+	workspaceuser.Role = roles.Admin
 
 	workspace.WorkspaceUsers = append(workspace.WorkspaceUsers, *workspaceuser)
 

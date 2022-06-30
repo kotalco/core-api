@@ -4,4 +4,5 @@ type WorkspaceUser struct {
 	ID          string
 	UserId      string
 	WorkspaceID string
+	Role        string
 }

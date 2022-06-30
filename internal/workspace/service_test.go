@@ -4,6 +4,7 @@ import (
 	"github.com/google/uuid"
 	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/kotalco/cloud-api/internal/workspaceuser"
+	"github.com/kotalco/cloud-api/pkg/roles"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 	"net/http"
@@ -90,6 +91,7 @@ func TestService_Create(t *testing.T) {
 		model, err := workspaceTestService.Create(dto, "1")
 		assert.Nil(t, err)
 		assert.NotNil(t, model)
+		assert.EqualValues(t, roles.Admin, model.WorkspaceUsers[0].Role)
 	})
 
 	t.Run("WorkspaceNameShould_Default_if_no_Name_Passed", func(t *testing.T) {

@@ -47,6 +47,9 @@ func Validate(dto interface{}) *restErrors.RestErr {
 			case "Email":
 				fields["email"] = "email should be a valid email address"
 				break
+			case "Role":
+				fields["role"] = "invalid role"
+				break
 			}
 		}
 		if len(fields) > 0 {

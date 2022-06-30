@@ -6,6 +6,7 @@ import (
 	"github.com/kotalco/cloud-api/internal/user"
 	"github.com/kotalco/cloud-api/internal/workspace"
 	"github.com/kotalco/cloud-api/internal/workspaceuser"
+	"github.com/kotalco/cloud-api/pkg/roles"
 	"github.com/kotalco/cloud-api/pkg/security"
 	"gorm.io/gorm"
 )
@@ -58,6 +59,7 @@ func (s service) Seeds() []Definition {
 				newWorkspaceuser.ID = uuid.New().String()
 				newWorkspaceuser.WorkspaceID = newWorkspace.ID
 				newWorkspaceuser.UserId = newWorkspace.UserId
+				newWorkspaceuser.Role = roles.Admin
 
 				newWorkspace.WorkspaceUsers = append(newWorkspace.WorkspaceUsers, *newWorkspaceuser)
 
