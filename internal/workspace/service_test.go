@@ -25,9 +25,14 @@ var (
 	DeleteWorkspaceMemberFunc                    func(workspace *Workspace, workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr
 	GetWorkspaceMemberByWorkspaceIdAndUserIdFunc func(workspaceId string, userId string) (*workspaceuser.WorkspaceUser, *restErrors.RestErr)
 	CountByUserIdFunc                            func(userId string) (int64, *restErrors.RestErr)
+	UpdateWorkspaceUserFunc                      func(workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr
 )
 
 type workspaceRepositoryMock struct{}
+
+func (r workspaceRepositoryMock) UpdateWorkspaceUser(workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr {
+	return UpdateWorkspaceUserFunc(workspaceUser)
+}
 
 func (r workspaceRepositoryMock) WithTransaction(txHandle *gorm.DB) IRepository {
 	return r
@@ -329,4 +334,29 @@ func TestService_CountWorkspacesByUserId(t *testing.T) {
 		assert.EqualValues(t, 0, result)
 	})
 
+}
+
+func TestService_UpdateWorkspaceUser(t *testing.T) {
+	t.Run("update_workspace_user_should_pass", func(t *testing.T) {
+		UpdateWorkspaceUserFunc = func(workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr {
+			return nil
+		}
+
+		workspaceUser := new(workspaceuser.WorkspaceUser)
+		dto := new(UpdateWorkspaceUserRequestDto)
+		err := workspaceTestService.UpdateWorkspaceUser(workspaceUser, dto)
+		assert.Nil(t, err)
+	})
+
+	t.Run("update_workspace_user_should_throw_if_repo_throws", func(t *testing.T) {
+		UpdateWorkspaceUserFunc = func(workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr {
+			return restErrors.NewInternalServerError("some thing went wrong")
+		}
+
+		workspaceUser := new(workspaceuser.WorkspaceUser)
+		dto := new(UpdateWorkspaceUserRequestDto)
+		err := workspaceTestService.UpdateWorkspaceUser(workspaceUser, dto)
+		assert.NotNil(t, err)
+		assert.EqualValues(t, "some thing went wrong", err.Message)
+	})
 }

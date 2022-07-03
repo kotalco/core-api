@@ -281,3 +281,57 @@ func Members(c *fiber.Ctx) error {
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(result))
 }
+
+//UpdateWorkspaceUser enables user to assign specific
+func UpdateWorkspaceUser(c *fiber.Ctx) error {
+	//request dto validation
+	dto := new(workspace.UpdateWorkspaceUserRequestDto)
+	if err := c.BodyParser(dto); err != nil {
+		badReq := restErrors.NewBadRequestError("invalid request body")
+		return c.Status(badReq.Status).JSON(badReq)
+	}
+	err := workspace.Validate(dto)
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
+
+	model := c.Locals("workspace").(workspace.Workspace)
+	workspaceUserId := c.Params("user_id")
+	userId := c.Locals("user").(token.UserDetails).ID
+
+	//check if the to-be-changed user exists in the workspace
+	exist := false
+	var workspaceUser *workspaceuser.WorkspaceUser
+	for _, v := range model.WorkspaceUsers {
+		if v.UserId == workspaceUserId {
+			exist = true
+			workspaceUser = &v
+			break
+		}
+	}
+	if !exist {
+		notFoundErr := restErrors.NewNotFoundError("user isn't a member of the workspace")
+		return c.Status(notFoundErr.Status).JSON(notFoundErr)
+	}
+
+	if dto.Role != "" { //update workspace-user record role
+		if workspaceUser.UserId == userId {
+			badReq := restErrors.NewBadRequestError("users can't change their own workspace role!")
+			return c.Status(badReq.Status).JSON(badReq)
+		}
+
+	}
+
+	txHandle := sqlclient.Begin()
+	err = workspaceService.WithTransaction(txHandle).UpdateWorkspaceUser(workspaceUser, dto)
+	if err != nil {
+		sqlclient.Rollback(txHandle)
+		return c.Status(err.Status).JSON(err)
+	}
+
+	sqlclient.Commit(txHandle)
+
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{
+		Message: "User role changed successfully",
+	}))
+}

@@ -115,6 +115,7 @@ var (
 	AddWorkspaceMemberFunc     func(workspace *workspace.Workspace, memberId string, role string) *restErrors.RestErr
 	DeleteWorkspaceMemberFunc  func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr
 	CountWorkspaceByUserIdFunc func(userId string) (int64, *restErrors.RestErr)
+	UpdateWorkspaceUserFunc    func(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) *restErrors.RestErr
 )
 
 type workspaceServiceMock struct{}
@@ -147,8 +148,13 @@ func (workspaceServiceMock) AddWorkspaceMember(workspace *workspace.Workspace, m
 func (workspaceServiceMock) DeleteWorkspaceMember(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
 	return DeleteWorkspaceMemberFunc(workspace, memberId)
 }
+
 func (workspaceServiceMock) CountByUserId(userId string) (int64, *restErrors.RestErr) {
 	return CountWorkspaceByUserIdFunc(userId)
+}
+
+func (workspaceServiceMock) UpdateWorkspaceUser(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) *restErrors.RestErr {
+	return UpdateWorkspaceUserFunc(workspaceUser, dto)
 }
 
 /*
@@ -950,4 +956,144 @@ func TestMembers(t *testing.T) {
 		assert.EqualValues(t, http.StatusInternalServerError, result.Status)
 		assert.EqualValues(t, "something went wrong", result.Message)
 	})
+}
+
+func TestUpdateWorkspaceUser(t *testing.T) {
+	userDetails := new(token.UserDetails)
+	userDetails.ID = uuid.NewString()
+
+	workspaceModelLocals := new(workspace.Workspace)
+	workspaceUserModelLocals := new(workspaceuser.WorkspaceUser)
+	workspaceUserModelLocals.UserId = ""
+	workspaceUserModelLocals.Role = roles.Admin
+	workspaceModelLocals.WorkspaceUsers = []workspaceuser.WorkspaceUser{*workspaceUserModelLocals}
+
+	var locals = map[string]interface{}{}
+	locals["user"] = *userDetails
+	locals["workspace"] = *workspaceModelLocals
+
+	var validDto = map[string]string{
+		"role": "admin",
+	}
+	var invalidDto = map[string]string{
+		"role": "invalid",
+	}
+
+	t.Run("update_workspace_user_should_pass", func(t *testing.T) {
+		UpdateWorkspaceUserFunc = func(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) *restErrors.RestErr {
+			return nil
+		}
+
+		result, resp := newFiberCtx(validDto, UpdateWorkspaceUser, locals)
+		var responseMessage map[string]shared.SuccessMessage
+		err := json.Unmarshal(result, &responseMessage)
+		if err != nil {
+			panic(err)
+		}
+		assert.EqualValues(t, "User role changed successfully", responseMessage["data"].Message)
+		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
+	})
+
+	t.Run("update_workspace_should_throw_in_valid_body_request", func(t *testing.T) {
+		UpdateWorkspaceUserFunc = func(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) *restErrors.RestErr {
+			return nil
+		}
+
+		body, resp := newFiberCtx("", UpdateWorkspaceUser, locals)
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		assert.EqualValues(t, "invalid request body", result.Message)
+		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
+	})
+
+	t.Run("update_workspace_should_throw_validation_err", func(t *testing.T) {
+		UpdateWorkspaceUserFunc = func(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) *restErrors.RestErr {
+			return nil
+		}
+
+		body, resp := newFiberCtx(invalidDto, UpdateWorkspaceUser, locals)
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+		var fields = map[string]string{}
+		fields["role"] = "invalid role"
+		badReqErr := restErrors.NewValidationError(fields)
+
+		assert.EqualValues(t, badReqErr, &result)
+		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
+	})
+
+	t.Run("update_workspace_should_throw_if_user_to_be_changed_isn't_member_of_the_workspace", func(t *testing.T) {
+		workspaceUserModelLocals.UserId = "different_id"
+		workspaceModelLocals.WorkspaceUsers = []workspaceuser.WorkspaceUser{*workspaceUserModelLocals}
+		locals["workspace"] = *workspaceModelLocals
+
+		UpdateWorkspaceUserFunc = func(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) *restErrors.RestErr {
+			return nil
+		}
+
+		body, resp := newFiberCtx(validDto, UpdateWorkspaceUser, locals)
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err)
+		}
+		assert.EqualValues(t, "user isn't a member of the workspace", result.Message)
+		assert.EqualValues(t, http.StatusNotFound, resp.StatusCode)
+
+		workspaceUserModelLocals.UserId = ""
+		workspaceModelLocals.WorkspaceUsers = []workspaceuser.WorkspaceUser{*workspaceUserModelLocals}
+		locals["workspace"] = *workspaceModelLocals
+	})
+	t.Run("update_workspace_should_throw_if_users_tries_to_update_their_own_role", func(t *testing.T) {
+		userDetails.ID = ""
+		locals["user"] = *userDetails
+		workspaceUserModelLocals.UserId = ""
+		workspaceModelLocals.WorkspaceUsers = []workspaceuser.WorkspaceUser{*workspaceUserModelLocals}
+		locals["workspace"] = *workspaceModelLocals
+
+		UpdateWorkspaceUserFunc = func(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) *restErrors.RestErr {
+			return nil
+		}
+
+		body, resp := newFiberCtx(validDto, UpdateWorkspaceUser, locals)
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err)
+		}
+		assert.EqualValues(t, "users can't change their own workspace role!", result.Message)
+		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
+	})
+
+	t.Run("update_workspace_should_throw_if_service_throws", func(t *testing.T) {
+		userDetails.ID = uuid.NewString()
+
+		workspaceUserModelLocals.UserId = ""
+		workspaceUserModelLocals.Role = roles.Admin
+		workspaceModelLocals.WorkspaceUsers = []workspaceuser.WorkspaceUser{*workspaceUserModelLocals}
+		locals["user"] = *userDetails
+		locals["workspace"] = *workspaceModelLocals
+		UpdateWorkspaceUserFunc = func(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) *restErrors.RestErr {
+			return restErrors.NewInternalServerError("something went wrong")
+		}
+
+		body, resp := newFiberCtx(validDto, UpdateWorkspaceUser, locals)
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err)
+		}
+		assert.EqualValues(t, "something went wrong", result.Message)
+		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
+	})
+
 }
