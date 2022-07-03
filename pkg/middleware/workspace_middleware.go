@@ -27,6 +27,7 @@ func IsWorkspace(c *fiber.Ctx) error {
 	for _, v := range model.WorkspaceUsers {
 		if v.UserId == userId {
 			validUser = true
+			c.Locals("workspaceUser", v)
 			break
 		}
 	}

@@ -6,7 +6,9 @@ import (
 	"github.com/kotalco/api/pkg/shared"
 	"github.com/kotalco/cloud-api/internal/user"
 	"github.com/kotalco/cloud-api/internal/workspace"
+	"github.com/kotalco/cloud-api/internal/workspaceuser"
 	"github.com/kotalco/cloud-api/pkg/k8s"
+	"github.com/kotalco/cloud-api/pkg/roles"
 	"github.com/kotalco/cloud-api/pkg/sendgrid"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
 	"github.com/kotalco/cloud-api/pkg/token"
@@ -161,7 +163,7 @@ func AddMember(c *fiber.Ctx) error {
 	}
 
 	txHandle := sqlclient.Begin()
-	err = workspaceService.WithTransaction(txHandle).AddWorkspaceMember(&model, member.ID)
+	err = workspaceService.WithTransaction(txHandle).AddWorkspaceMember(&model, member.ID, dto.Role)
 	if err != nil {
 		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
@@ -183,11 +185,22 @@ func AddMember(c *fiber.Ctx) error {
 //Leave removes workspace member from workspace
 func Leave(c *fiber.Ctx) error {
 	model := c.Locals("workspace").(workspace.Workspace)
+	workspaceUser := c.Locals("workspaceUser").(workspaceuser.WorkspaceUser)
 	userId := c.Locals("user").(token.UserDetails).ID
 
-	if model.UserId == userId {
-		err := restErrors.NewForbiddenError("you can't leave your own workspace")
-		return c.Status(err.Status).JSON(err)
+	if workspaceUser.Role == roles.Admin { //user with admin role can leave workspace only if it has another admin
+		canLeave := false
+		for _, v := range model.WorkspaceUsers {
+			if v.UserId != userId && v.Role == roles.Admin {
+				canLeave = true
+				break
+			}
+		}
+
+		if !canLeave {
+			err := restErrors.NewForbiddenError("user with admin role can leave workspace only if it has another admin")
+			return c.Status(err.Status).JSON(err)
+		}
 	}
 
 	txHandle := sqlclient.Begin()
@@ -207,17 +220,12 @@ func Leave(c *fiber.Ctx) error {
 //RemoveMember workspace owner removes workspace member form his/her workspace
 func RemoveMember(c *fiber.Ctx) error {
 	model := c.Locals("workspace").(workspace.Workspace)
-	userId := c.Locals("user").(token.UserDetails).ID
 	memberId := c.Params("user_id")
+	userId := c.Locals("user").(token.UserDetails).ID
 
-	if model.UserId != userId { //check if the user is the owner
-		err := restErrors.NewForbiddenError("you can only delete other users from your own workspace")
-		return c.Status(err.Status).JSON(err)
-	}
-
-	if model.UserId == memberId { //check if the-to-be deleted user isn't the owner of the workspace
-		err := restErrors.NewForbiddenError("you can't leave your own workspace")
-		return c.Status(err.Status).JSON(err)
+	if memberId == userId {
+		badReq := restErrors.NewBadRequestError("you can't remove your self, try to leave workspace instead!")
+		return c.Status(badReq.Status).JSON(badReq)
 	}
 
 	exist := false //check if the to-be-delete user exists in the workspace

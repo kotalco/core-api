@@ -170,7 +170,7 @@ var (
 	DeleteWorkspace           func(workspace *workspace.Workspace) *restErrors.RestErr
 	GetWorkspaceByIdFunc      func(Id string) (*workspace.Workspace, *restErrors.RestErr)
 	GetWorkspacesByUserIdFunc func(userId string) ([]*workspace.Workspace, *restErrors.RestErr)
-	addWorkspaceMemberFunc    func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr
+	addWorkspaceMemberFunc    func(workspace *workspace.Workspace, memberId string, role string) *restErrors.RestErr
 	DeleteWorkspaceMemberFunc func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr
 	CountByUserIdFunc         func(userId string) (int64, *restErrors.RestErr)
 )
@@ -201,8 +201,8 @@ func (workspaceServiceMock) GetByUserId(userId string) ([]*workspace.Workspace, 
 	return GetWorkspacesByUserIdFunc(userId)
 }
 
-func (workspaceServiceMock) AddWorkspaceMember(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
-	return addWorkspaceMemberFunc(workspace, memberId)
+func (workspaceServiceMock) AddWorkspaceMember(workspace *workspace.Workspace, memberId string, role string) *restErrors.RestErr {
+	return addWorkspaceMemberFunc(workspace, memberId, role)
 }
 
 func (workspaceServiceMock) DeleteWorkspaceMember(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {

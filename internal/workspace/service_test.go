@@ -262,7 +262,7 @@ func TestService_AddWorkspaceMember(t *testing.T) {
 		addWorkspaceMemberFunc = func(workspace *Workspace, workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr {
 			return nil
 		}
-		err := workspaceTestService.AddWorkspaceMember(new(Workspace), "1")
+		err := workspaceTestService.AddWorkspaceMember(new(Workspace), "1", roles.Writer)
 		assert.Nil(t, err)
 	})
 
@@ -271,7 +271,7 @@ func TestService_AddWorkspaceMember(t *testing.T) {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 
-		err := workspaceTestService.AddWorkspaceMember(new(Workspace), "1")
+		err := workspaceTestService.AddWorkspaceMember(new(Workspace), "1", roles.Writer)
 		assert.Error(t, err, "something went wrong")
 	})
 }
