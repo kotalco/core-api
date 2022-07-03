@@ -69,7 +69,7 @@ func validateWorkspaceUser(c *fiber.Ctx) (workspaceuser.WorkspaceUser, *restErro
 		workspaceUser = c.Locals("workspaceUser").(workspaceuser.WorkspaceUser)
 		return workspaceUser, nil
 	} else { //working with api sdk
-		if c.Query("namespace") == "" { //check if namespace appended as body field (create Deployment requests)
+		if c.Query("namespace") == "" { //check if namespace appended as body field (create Deployment requests) )
 			body := make(map[string]interface{})
 			err := json.Unmarshal(c.Body(), &body)
 			if err != nil {

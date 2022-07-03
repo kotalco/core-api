@@ -24,6 +24,7 @@ type WorkspaceResponseDto struct {
 	ID           string `json:"id"`
 	Name         string `json:"name"`
 	K8sNamespace string `json:"k8s_namespace"`
+	Role         string `json:"role,omitempty"`
 }
 
 type AddWorkspaceMemberDto struct {
