@@ -179,10 +179,6 @@ var (
 
 type workspaceServiceMock struct{}
 
-func (wService workspaceServiceMock) UpdateWorkspaceUser(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) *restErrors.RestErr {
-	return UpdateWorkspaceUserFunc(workspaceUser, dto)
-}
-
 func (wService workspaceServiceMock) WithTransaction(txHandle *gorm.DB) workspace.IService {
 	return wService
 }
