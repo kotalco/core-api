@@ -24,6 +24,7 @@ type IRepository interface {
 	GetWorkspaceMemberByWorkspaceIdAndUserId(workspaceId string, userId string) (*workspaceuser.WorkspaceUser, *restErrors.RestErr)
 	CountByUserId(userId string) (int64, *restErrors.RestErr)
 	UpdateWorkspaceUser(workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr
+	GetByNamespace(namespace string) (*Workspace, *restErrors.RestErr)
 }
 
 func NewRepository() IRepository {
@@ -172,4 +173,21 @@ func (repo *repository) UpdateWorkspaceUser(workspaceUser *workspaceuser.Workspa
 		return restErrors.NewInternalServerError("something went wrong")
 	}
 	return nil
+}
+
+//GetByNamespace returns workspace by namespace
+func (repo *repository) GetByNamespace(namespace string) (*Workspace, *restErrors.RestErr) {
+	var workspace = new(Workspace)
+	workspace.K8sNamespace = namespace
+
+	result := sqlclient.DbClient.Preload("WorkspaceUsers").First(workspace)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, restErrors.NewNotFoundError("record not found")
+		}
+		go logger.Error(repo.GetByNamespace, result.Error)
+		return nil, restErrors.NewInternalServerError("something went wrong")
+	}
+
+	return workspace, nil
 }

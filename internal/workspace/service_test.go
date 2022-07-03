@@ -26,6 +26,7 @@ var (
 	GetWorkspaceMemberByWorkspaceIdAndUserIdFunc func(workspaceId string, userId string) (*workspaceuser.WorkspaceUser, *restErrors.RestErr)
 	CountByUserIdFunc                            func(userId string) (int64, *restErrors.RestErr)
 	UpdateWorkspaceUserFunc                      func(workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr
+	GetByNamespaceFunc                           func(namespace string) (*Workspace, *restErrors.RestErr)
 )
 
 type workspaceRepositoryMock struct{}
@@ -73,6 +74,10 @@ func (workspaceRepositoryMock) GetWorkspaceMemberByWorkspaceIdAndUserId(workspac
 }
 func (workspaceRepositoryMock) CountByUserId(userId string) (int64, *restErrors.RestErr) {
 	return CountByUserIdFunc(userId)
+}
+
+func (workspaceRepositoryMock) GetByNamespace(namespace string) (*Workspace, *restErrors.RestErr) {
+	return GetByNamespaceFunc(namespace)
 }
 
 func TestMain(m *testing.M) {
