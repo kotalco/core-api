@@ -61,7 +61,7 @@ func MapUrl(app *fiber.App) {
 }
 
 func mapDeploymentUrl(v1 fiber.Router) {
-	v1.Use(middleware.JWTProtected, middleware.TFAProtected)
+	v1.Use(middleware.JWTProtected, middleware.TFAProtected, middleware.IsNamespace)
 
 	// chainlink group
 	chainlinkGroup := v1.Group("chainlink")

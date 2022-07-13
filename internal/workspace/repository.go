@@ -180,7 +180,7 @@ func (repo *repository) GetByNamespace(namespace string) (*Workspace, *restError
 	var workspace = new(Workspace)
 	workspace.K8sNamespace = namespace
 
-	result := sqlclient.DbClient.Preload("WorkspaceUsers").First(workspace)
+	result := sqlclient.DbClient.Preload("WorkspaceUsers").Where("k8s_namespace = ?", namespace).First(workspace)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, restErrors.NewNotFoundError("record not found")
