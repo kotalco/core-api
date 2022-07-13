@@ -25,6 +25,7 @@ type WorkspaceResponseDto struct {
 	Name         string `json:"name"`
 	K8sNamespace string `json:"k8s_namespace"`
 	Role         string `json:"role,omitempty"`
+	UserId       string `json:"user_id"`
 }
 
 type AddWorkspaceMemberDto struct {
@@ -37,6 +38,7 @@ func (dto *WorkspaceResponseDto) Marshall(model *Workspace) *WorkspaceResponseDt
 	dto.ID = model.ID
 	dto.Name = model.Name
 	dto.K8sNamespace = model.K8sNamespace
+	dto.UserId = model.UserId
 	return dto
 }
 
