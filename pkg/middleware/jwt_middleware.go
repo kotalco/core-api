@@ -13,8 +13,7 @@ var userRepository = user.NewRepository()
 var tokenService = token.NewToken()
 
 func JWTProtected(c *fiber.Ctx) error {
-	//get Authorization token from headers or from qs if it doesn't exit in case of ws connections
-	BearerToken := c.Get("Authorization", c.Query("Authorization"))
+	BearerToken := c.Get("Authorization", c.Query("authorization"))
 
 	accessDetails, err := tokenService.ExtractTokenMetadata(BearerToken)
 	if err != nil {
