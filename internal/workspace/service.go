@@ -4,6 +4,7 @@ import (
 	"github.com/google/uuid"
 	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/kotalco/cloud-api/internal/workspaceuser"
+	"github.com/kotalco/cloud-api/pkg/roles"
 	"gorm.io/gorm"
 	"net/http"
 )
@@ -17,9 +18,10 @@ type IService interface {
 	Delete(workspace *Workspace) *restErrors.RestErr
 	GetById(Id string) (*Workspace, *restErrors.RestErr)
 	GetByUserId(UserId string) ([]*Workspace, *restErrors.RestErr)
-	AddWorkspaceMember(workspace *Workspace, memberId string) *restErrors.RestErr
+	AddWorkspaceMember(workspace *Workspace, memberId string, role string) *restErrors.RestErr
 	DeleteWorkspaceMember(workspace *Workspace, memberId string) *restErrors.RestErr
 	CountByUserId(userId string) (int64, *restErrors.RestErr)
+	UpdateWorkspaceUser(workspaceUser *workspaceuser.WorkspaceUser, dto *UpdateWorkspaceUserRequestDto) *restErrors.RestErr
 }
 
 var (
@@ -57,6 +59,7 @@ func (service) Create(dto *CreateWorkspaceRequestDto, userId string) (*Workspace
 	workspaceuser.ID = uuid.New().String()
 	workspaceuser.WorkspaceID = workspace.ID
 	workspaceuser.UserId = workspace.UserId
+	workspaceuser.Role = roles.Admin
 
 	workspace.WorkspaceUsers = append(workspace.WorkspaceUsers, *workspaceuser)
 
@@ -112,11 +115,12 @@ func (service) GetByUserId(userId string) ([]*Workspace, *restErrors.RestErr) {
 }
 
 //AddWorkspaceMember creates new workspaceUser record for a given workspace
-func (service) AddWorkspaceMember(workspace *Workspace, memberId string) *restErrors.RestErr {
+func (service) AddWorkspaceMember(workspace *Workspace, memberId string, role string) *restErrors.RestErr {
 	newWorkspaceUser := new(workspaceuser.WorkspaceUser)
 	newWorkspaceUser.ID = uuid.NewString()
 	newWorkspaceUser.WorkspaceID = workspace.ID
 	newWorkspaceUser.UserId = memberId
+	newWorkspaceUser.Role = role
 
 	return workspaceRepo.AddWorkspaceMember(workspace, newWorkspaceUser)
 }
@@ -134,4 +138,9 @@ func (service) DeleteWorkspaceMember(workspace *Workspace, memberId string) *res
 //CountByUserId returns user's workspaces count
 func (service) CountByUserId(userId string) (int64, *restErrors.RestErr) {
 	return workspaceRepo.CountByUserId(userId)
+}
+
+func (service) UpdateWorkspaceUser(workspaceUser *workspaceuser.WorkspaceUser, dto *UpdateWorkspaceUserRequestDto) *restErrors.RestErr {
+	workspaceUser.Role = dto.Role
+	return workspaceRepo.UpdateWorkspaceUser(workspaceUser)
 }

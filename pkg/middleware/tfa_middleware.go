@@ -6,7 +6,7 @@ import (
 )
 
 func TFAProtected(c *fiber.Ctx) error {
-	BearerToken := c.Get("Authorization")
+	BearerToken := c.Get("Authorization", c.Query("authorization"))
 	accessDetails, err := tokenService.ExtractTokenMetadata(BearerToken)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)

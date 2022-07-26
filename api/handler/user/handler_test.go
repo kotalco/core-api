@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/kotalco/cloud-api/internal/workspace"
+	"github.com/kotalco/cloud-api/internal/workspaceuser"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
 	"github.com/kotalco/cloud-api/pkg/token"
 	"gorm.io/gorm"
@@ -170,9 +171,10 @@ var (
 	DeleteWorkspace           func(workspace *workspace.Workspace) *restErrors.RestErr
 	GetWorkspaceByIdFunc      func(Id string) (*workspace.Workspace, *restErrors.RestErr)
 	GetWorkspacesByUserIdFunc func(userId string) ([]*workspace.Workspace, *restErrors.RestErr)
-	addWorkspaceMemberFunc    func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr
+	addWorkspaceMemberFunc    func(workspace *workspace.Workspace, memberId string, role string) *restErrors.RestErr
 	DeleteWorkspaceMemberFunc func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr
 	CountByUserIdFunc         func(userId string) (int64, *restErrors.RestErr)
+	UpdateWorkspaceUserFunc   func(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) *restErrors.RestErr
 )
 
 type workspaceServiceMock struct{}
@@ -201,8 +203,8 @@ func (workspaceServiceMock) GetByUserId(userId string) ([]*workspace.Workspace, 
 	return GetWorkspacesByUserIdFunc(userId)
 }
 
-func (workspaceServiceMock) AddWorkspaceMember(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
-	return addWorkspaceMemberFunc(workspace, memberId)
+func (workspaceServiceMock) AddWorkspaceMember(workspace *workspace.Workspace, memberId string, role string) *restErrors.RestErr {
+	return addWorkspaceMemberFunc(workspace, memberId, role)
 }
 
 func (workspaceServiceMock) DeleteWorkspaceMember(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
@@ -210,6 +212,9 @@ func (workspaceServiceMock) DeleteWorkspaceMember(workspace *workspace.Workspace
 }
 func (workspaceServiceMock) CountByUserId(userId string) (int64, *restErrors.RestErr) {
 	return CountByUserIdFunc(userId)
+}
+func (workspaceServiceMock) UpdateWorkspaceUser(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) *restErrors.RestErr {
+	return UpdateWorkspaceUserFunc(workspaceUser, dto)
 }
 
 /*

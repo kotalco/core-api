@@ -4,6 +4,7 @@ import (
 	"github.com/google/uuid"
 	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/kotalco/cloud-api/internal/workspaceuser"
+	"github.com/kotalco/cloud-api/pkg/roles"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 	"net/http"
@@ -24,9 +25,15 @@ var (
 	DeleteWorkspaceMemberFunc                    func(workspace *Workspace, workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr
 	GetWorkspaceMemberByWorkspaceIdAndUserIdFunc func(workspaceId string, userId string) (*workspaceuser.WorkspaceUser, *restErrors.RestErr)
 	CountByUserIdFunc                            func(userId string) (int64, *restErrors.RestErr)
+	UpdateWorkspaceUserFunc                      func(workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr
+	GetByNamespaceFunc                           func(namespace string) (*Workspace, *restErrors.RestErr)
 )
 
 type workspaceRepositoryMock struct{}
+
+func (r workspaceRepositoryMock) UpdateWorkspaceUser(workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr {
+	return UpdateWorkspaceUserFunc(workspaceUser)
+}
 
 func (r workspaceRepositoryMock) WithTransaction(txHandle *gorm.DB) IRepository {
 	return r
@@ -69,6 +76,10 @@ func (workspaceRepositoryMock) CountByUserId(userId string) (int64, *restErrors.
 	return CountByUserIdFunc(userId)
 }
 
+func (workspaceRepositoryMock) GetByNamespace(namespace string) (*Workspace, *restErrors.RestErr) {
+	return GetByNamespaceFunc(namespace)
+}
+
 func TestMain(m *testing.M) {
 	workspaceRepo = &workspaceRepositoryMock{}
 	workspaceTestService = NewService()
@@ -90,6 +101,7 @@ func TestService_Create(t *testing.T) {
 		model, err := workspaceTestService.Create(dto, "1")
 		assert.Nil(t, err)
 		assert.NotNil(t, model)
+		assert.EqualValues(t, roles.Admin, model.WorkspaceUsers[0].Role)
 	})
 
 	t.Run("WorkspaceNameShould_Default_if_no_Name_Passed", func(t *testing.T) {
@@ -260,7 +272,7 @@ func TestService_AddWorkspaceMember(t *testing.T) {
 		addWorkspaceMemberFunc = func(workspace *Workspace, workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr {
 			return nil
 		}
-		err := workspaceTestService.AddWorkspaceMember(new(Workspace), "1")
+		err := workspaceTestService.AddWorkspaceMember(new(Workspace), "1", roles.Writer)
 		assert.Nil(t, err)
 	})
 
@@ -269,7 +281,7 @@ func TestService_AddWorkspaceMember(t *testing.T) {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 
-		err := workspaceTestService.AddWorkspaceMember(new(Workspace), "1")
+		err := workspaceTestService.AddWorkspaceMember(new(Workspace), "1", roles.Writer)
 		assert.Error(t, err, "something went wrong")
 	})
 }
@@ -327,4 +339,29 @@ func TestService_CountWorkspacesByUserId(t *testing.T) {
 		assert.EqualValues(t, 0, result)
 	})
 
+}
+
+func TestService_UpdateWorkspaceUser(t *testing.T) {
+	t.Run("update_workspace_user_should_pass", func(t *testing.T) {
+		UpdateWorkspaceUserFunc = func(workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr {
+			return nil
+		}
+
+		workspaceUser := new(workspaceuser.WorkspaceUser)
+		dto := new(UpdateWorkspaceUserRequestDto)
+		err := workspaceTestService.UpdateWorkspaceUser(workspaceUser, dto)
+		assert.Nil(t, err)
+	})
+
+	t.Run("update_workspace_user_should_throw_if_repo_throws", func(t *testing.T) {
+		UpdateWorkspaceUserFunc = func(workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr {
+			return restErrors.NewInternalServerError("some thing went wrong")
+		}
+
+		workspaceUser := new(workspaceuser.WorkspaceUser)
+		dto := new(UpdateWorkspaceUserRequestDto)
+		err := workspaceTestService.UpdateWorkspaceUser(workspaceUser, dto)
+		assert.NotNil(t, err)
+		assert.EqualValues(t, "some thing went wrong", err.Message)
+	})
 }

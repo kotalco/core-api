@@ -64,6 +64,7 @@ type UserResponseDto struct {
 type PublicUserResponseDto struct {
 	ID    string `json:"id"`
 	Email string `json:"email"`
+	Role  string `json:"role,omitempty"`
 }
 
 type UserSessionResponseDto struct {

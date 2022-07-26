@@ -6,7 +6,9 @@ import (
 	"github.com/kotalco/api/pkg/shared"
 	"github.com/kotalco/cloud-api/internal/user"
 	"github.com/kotalco/cloud-api/internal/workspace"
+	"github.com/kotalco/cloud-api/internal/workspaceuser"
 	"github.com/kotalco/cloud-api/pkg/k8s"
+	"github.com/kotalco/cloud-api/pkg/roles"
 	"github.com/kotalco/cloud-api/pkg/sendgrid"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
 	"github.com/kotalco/cloud-api/pkg/token"
@@ -133,6 +135,17 @@ func GetByUserId(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(marshalled))
 }
 
+//GetById find workspaces by Id
+func GetById(c *fiber.Ctx) error {
+	model := c.Locals("workspace").(workspace.Workspace)
+	workspaceUser := c.Locals("workspaceUser").(workspaceuser.WorkspaceUser)
+
+	marshalled := new(workspace.WorkspaceResponseDto).Marshall(&model)
+	marshalled.Role = workspaceUser.Role
+
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(marshalled))
+}
+
 //AddMember adds new member to workspace
 func AddMember(c *fiber.Ctx) error {
 	dto := new(workspace.AddWorkspaceMemberDto)
@@ -161,7 +174,7 @@ func AddMember(c *fiber.Ctx) error {
 	}
 
 	txHandle := sqlclient.Begin()
-	err = workspaceService.WithTransaction(txHandle).AddWorkspaceMember(&model, member.ID)
+	err = workspaceService.WithTransaction(txHandle).AddWorkspaceMember(&model, member.ID, dto.Role)
 	if err != nil {
 		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
@@ -183,11 +196,22 @@ func AddMember(c *fiber.Ctx) error {
 //Leave removes workspace member from workspace
 func Leave(c *fiber.Ctx) error {
 	model := c.Locals("workspace").(workspace.Workspace)
+	workspaceUser := c.Locals("workspaceUser").(workspaceuser.WorkspaceUser)
 	userId := c.Locals("user").(token.UserDetails).ID
 
-	if model.UserId == userId {
-		err := restErrors.NewForbiddenError("you can't leave your own workspace")
-		return c.Status(err.Status).JSON(err)
+	if workspaceUser.Role == roles.Admin { //user with admin role can leave workspace only if it has another admin
+		canLeave := false
+		for _, v := range model.WorkspaceUsers {
+			if v.UserId != userId && v.Role == roles.Admin {
+				canLeave = true
+				break
+			}
+		}
+
+		if !canLeave {
+			err := restErrors.NewForbiddenError("user with admin role can leave workspace only if it has another admin")
+			return c.Status(err.Status).JSON(err)
+		}
 	}
 
 	txHandle := sqlclient.Begin()
@@ -207,17 +231,12 @@ func Leave(c *fiber.Ctx) error {
 //RemoveMember workspace owner removes workspace member form his/her workspace
 func RemoveMember(c *fiber.Ctx) error {
 	model := c.Locals("workspace").(workspace.Workspace)
-	userId := c.Locals("user").(token.UserDetails).ID
 	memberId := c.Params("user_id")
+	userId := c.Locals("user").(token.UserDetails).ID
 
-	if model.UserId != userId { //check if the user is the owner
-		err := restErrors.NewForbiddenError("you can only delete other users from your own workspace")
-		return c.Status(err.Status).JSON(err)
-	}
-
-	if model.UserId == memberId { //check if the-to-be deleted user isn't the owner of the workspace
-		err := restErrors.NewForbiddenError("you can't leave your own workspace")
-		return c.Status(err.Status).JSON(err)
+	if memberId == userId {
+		badReq := restErrors.NewBadRequestError("you can't remove your self, try to leave workspace instead!")
+		return c.Status(badReq.Status).JSON(badReq)
 	}
 
 	exist := false //check if the to-be-delete user exists in the workspace
@@ -261,8 +280,69 @@ func Members(c *fiber.Ctx) error {
 
 	result := make([]user.PublicUserResponseDto, len(workspaceMembersList))
 	for k, v := range workspaceMembersList {
+		//marshal user model to public response dto
 		result[k] = new(user.PublicUserResponseDto).Marshall(v)
+		//assign user role
+		for _, workspaceUser := range model.WorkspaceUsers {
+			if v.ID == workspaceUser.UserId {
+				result[k].Role = workspaceUser.Role
+			}
+		}
 	}
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(result))
+}
+
+//UpdateWorkspaceUser enables user to assign specific
+func UpdateWorkspaceUser(c *fiber.Ctx) error {
+	//request dto validation
+	dto := new(workspace.UpdateWorkspaceUserRequestDto)
+	if err := c.BodyParser(dto); err != nil {
+		badReq := restErrors.NewBadRequestError("invalid request body")
+		return c.Status(badReq.Status).JSON(badReq)
+	}
+	err := workspace.Validate(dto)
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
+
+	model := c.Locals("workspace").(workspace.Workspace)
+	workspaceUserId := c.Params("user_id")
+	userId := c.Locals("user").(token.UserDetails).ID
+
+	//check if the to-be-changed user exists in the workspace
+	exist := false
+	var workspaceUser *workspaceuser.WorkspaceUser
+	for _, v := range model.WorkspaceUsers {
+		if v.UserId == workspaceUserId {
+			exist = true
+			workspaceUser = &v
+			break
+		}
+	}
+	if !exist {
+		notFoundErr := restErrors.NewNotFoundError("user isn't a member of the workspace")
+		return c.Status(notFoundErr.Status).JSON(notFoundErr)
+	}
+
+	if dto.Role != "" { //update workspace-user record role
+		if workspaceUser.UserId == userId {
+			badReq := restErrors.NewBadRequestError("users can't change their own workspace role!")
+			return c.Status(badReq.Status).JSON(badReq)
+		}
+
+	}
+
+	txHandle := sqlclient.Begin()
+	err = workspaceService.WithTransaction(txHandle).UpdateWorkspaceUser(workspaceUser, dto)
+	if err != nil {
+		sqlclient.Rollback(txHandle)
+		return c.Status(err.Status).JSON(err)
+	}
+
+	sqlclient.Commit(txHandle)
+
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{
+		Message: "User role changed successfully",
+	}))
 }
