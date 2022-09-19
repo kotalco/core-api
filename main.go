@@ -2,11 +2,13 @@ package main
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/pprof"
 	"github.com/kotalco/api/pkg/logger"
 	"github.com/kotalco/cloud-api/api"
 	"github.com/kotalco/cloud-api/pkg/config"
 	"github.com/kotalco/cloud-api/pkg/middleware"
 	"github.com/kotalco/cloud-api/pkg/migration"
+	"github.com/kotalco/cloud-api/pkg/monitor"
 	"github.com/kotalco/cloud-api/pkg/seeder"
 	"github.com/kotalco/cloud-api/pkg/server"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
@@ -15,6 +17,8 @@ import (
 func main() {
 	app := fiber.New(config.FiberConfig())
 	middleware.FiberMiddleware(app)
+	monitor.NewMonitor(app)
+	app.Use(pprof.New())
 	api.MapUrl(app)
 
 	dbClient := sqlclient.OpenDBConnection()
