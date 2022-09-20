@@ -9,6 +9,7 @@ import (
 	"github.com/kotalco/api/pkg/shared"
 	"github.com/kotalco/cloud-api/internal/subscription"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
+	subscriptionAPI "github.com/kotalco/cloud-api/pkg/subscription"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
@@ -125,6 +126,9 @@ func TestAcknowledgement(t *testing.T) {
 
 		eccVerifySignatureFunc = func(data []byte, signature []byte, pubKey *ecdsa.PublicKey) (bool, error) {
 			return true, nil
+		}
+		subscriptionAPI.IsValid = func() bool {
+			return true
 		}
 
 		body, resp := newFiberCtx(validDto, Acknowledgement, map[string]interface{}{})
@@ -272,5 +276,32 @@ func TestAcknowledgement(t *testing.T) {
 		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
 
 	})
+	t.Run("Acknowledgement should throw if subscription is invalid", func(t *testing.T) {
+		subscriptionAcknowledgmentFunc = func(activationKey string) ([]byte, *restErrors.RestErr) {
+			responseBody, _ := json.Marshal(map[string]subscription.LicenseAcknowledgmentDto{"data": {Subscription: subscription.SubscriptionDto{}}})
+			return responseBody, nil
+		}
 
+		eccDecodePublicFunc = func(hexEncodedPub string) (*ecdsa.PublicKey, error) {
+			return &ecdsa.PublicKey{}, nil
+		}
+
+		eccVerifySignatureFunc = func(data []byte, signature []byte, pubKey *ecdsa.PublicKey) (bool, error) {
+			return true, nil
+		}
+		subscriptionAPI.IsValid = func() bool {
+			return false
+		}
+
+		body, resp := newFiberCtx(validDto, Acknowledgement, map[string]interface{}{})
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		assert.EqualValues(t, http.StatusGone, resp.StatusCode)
+
+	})
 }

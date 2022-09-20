@@ -14,7 +14,7 @@ type SubscriptionDetailsDto struct {
 	CanceledAt int64  `json:"canceled_at"`
 }
 
-func IsValid() bool {
+var IsValid = func() bool {
 	if SubscriptionDetails == nil {
 		return false
 	} else if !(SubscriptionDetails.Status == "active" || SubscriptionDetails.Status == "past_due") {
