@@ -15,6 +15,7 @@ import (
 	"github.com/kotalco/api/api/handlers/near"
 	"github.com/kotalco/api/api/handlers/polkadot"
 	"github.com/kotalco/api/api/handlers/shared"
+	"github.com/kotalco/cloud-api/api/handler/subscription"
 	"github.com/kotalco/cloud-api/api/handler/user"
 	"github.com/kotalco/cloud-api/api/handler/workspace"
 	"github.com/kotalco/cloud-api/pkg/middleware"
@@ -24,6 +25,11 @@ import (
 func MapUrl(app *fiber.App) {
 	api := app.Group("api")
 	v1 := api.Group("v1")
+
+	//subscription
+	v1.Post("/license-acknowledgment", subscription.Acknowledgement)
+	v1.Use(middleware.IsSubscription)
+
 	//users group
 	v1.Post("sessions", user.SignIn)
 	users := v1.Group("users")

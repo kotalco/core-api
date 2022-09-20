@@ -152,4 +152,14 @@ func init() {
 		EnvironmentConf["RATE_LIMITER_PER_MINUTE"] = val
 	}
 
+	//LICENSE
+	val, ok = os.LookupEnv("SUBSCRIPTION_API_BASE_URL")
+	if !ok {
+		EnvironmentConf["SUBSCRIPTION_API_BASE_URL"] = "http://localhost:8080"
+	} else {
+		EnvironmentConf["SUBSCRIPTION_API_BASE_URL"] = val
+	}
+	//ECC
+	EnvironmentConf["ECC_PUBLIC_KEY"] = os.Getenv("ECC_PUBLIC_KEY")
+
 }

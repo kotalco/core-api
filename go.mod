@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-playground/validator/v10 v10.10.0
-	github.com/gofiber/fiber/v2 v2.33.0
+	github.com/gofiber/fiber/v2 v2.37.1
 	github.com/google/uuid v1.3.0
 	github.com/jackc/pgconn v1.10.1
 	github.com/kotalco/api v0.0.0-20220612132844-6c5bc5352344
@@ -80,7 +80,7 @@ require (
 	github.com/sendgrid/rest v2.6.8+incompatible // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.36.0 // indirect
+	github.com/valyala/fasthttp v1.40.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	github.com/ybbus/jsonrpc/v2 v2.1.7 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
