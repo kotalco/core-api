@@ -101,5 +101,14 @@ func Acknowledgement(c *fiber.Ctx) error {
 	//store activation key
 	subscriptionAPI.ActivationKey = dto.ActivationKey
 
+	validSub := subscriptionAPI.IsValid()
+	if !validSub {
+		expiredRestErr := restErrors.RestErr{
+			Status:  http.StatusGone,
+			Message: "invalid subscription",
+			Name:    "STATUS_GONE",
+		}
+		return c.Status(expiredRestErr.Status).JSON(expiredRestErr)
+	}
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{Message: "subscription activated"}))
 }

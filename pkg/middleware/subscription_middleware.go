@@ -21,7 +21,14 @@ var (
 )
 
 func IsSubscription(c *fiber.Ctx) error {
-	if subscriptionAPI.CheckDate < time.Now().Add(-time.Hour*24).Unix() {
+	elapsedTime := time.Now().Unix() - subscriptionAPI.CheckDate
+	if elapsedTime > int64(time.Hour)*24 {
+		//check if activation key exits
+		if subscriptionAPI.ActivationKey == "" {
+			invalidSubErr := restErrors.RestErr{Status: http.StatusGone, Message: "invalid subscription", Name: "STATUS_GONE"}
+			return c.Status(invalidSubErr.Status).JSON(invalidSubErr)
+		}
+		//call subscription platform for acknowledgement
 		responseData, err := subscriptionAPIService.Acknowledgment(subscriptionAPI.ActivationKey)
 		if err != nil {
 			return c.Status(err.Status).JSON(err)
@@ -31,8 +38,8 @@ func IsSubscription(c *fiber.Ctx) error {
 		intErr := json.Unmarshal(responseData, &responseBody)
 		if intErr != nil {
 			go logger.Error("ACKNOWLEDGEMENT_HANDLER", intErr)
-			err = restErrors.NewInternalServerError("can't activate subscription")
-			return c.Status(err.Status).JSON(err)
+			invalidSubErr := restErrors.RestErr{Status: http.StatusGone, Message: "invalid subscription", Name: "STATUS_GONE"}
+			return c.Status(invalidSubErr.Status).JSON(invalidSubErr)
 		}
 		licenseAcknowledgmentDto := responseBody["data"]
 
@@ -40,34 +47,34 @@ func IsSubscription(c *fiber.Ctx) error {
 		decodedPub, intErr := ecService.DecodePublic(config.EnvironmentConf["ECC_PUBLIC_KEY"])
 		if intErr != nil {
 			go logger.Error("ACKNOWLEDGEMENT_HANDLER", intErr)
-			err := restErrors.NewInternalServerError("can't activate subscription")
-			return c.Status(err.Status).JSON(err)
+			invalidSubErr := restErrors.RestErr{Status: http.StatusGone, Message: "invalid subscription", Name: "STATUS_GONE"}
+			return c.Status(invalidSubErr.Status).JSON(invalidSubErr)
 		}
 
 		subscriptionBytes, intErr := json.Marshal(licenseAcknowledgmentDto.Subscription)
 		if intErr != nil {
 			go logger.Error("ACKNOWLEDGEMENT_HANDLER", intErr)
-			err = restErrors.NewInternalServerError("can't activate subscription")
-			return c.Status(err.Status).JSON(err)
+			invalidSubErr := restErrors.RestErr{Status: http.StatusGone, Message: "invalid subscription", Name: "STATUS_GONE"}
+			return c.Status(invalidSubErr.Status).JSON(invalidSubErr)
 		}
 
 		signatureBytes, intErr := base64.StdEncoding.DecodeString(licenseAcknowledgmentDto.Signature)
 		if intErr != nil {
 			go logger.Error("ACKNOWLEDGEMENT_HANDLER", intErr)
-			err = restErrors.NewInternalServerError("can't activate subscription")
-			return c.Status(err.Status).JSON(err)
+			invalidSubErr := restErrors.RestErr{Status: http.StatusGone, Message: "invalid subscription", Name: "STATUS_GONE"}
+			return c.Status(invalidSubErr.Status).JSON(invalidSubErr)
 		}
 
 		valid, intErr := ecService.VerifySignature(subscriptionBytes, signatureBytes, decodedPub)
 		if intErr != nil {
 			go logger.Error("ACKNOWLEDGEMENT_HANDLER", intErr)
-			err = restErrors.NewInternalServerError("can't activate subscription")
-			return c.Status(err.Status).JSON(err)
+			invalidSubErr := restErrors.RestErr{Status: http.StatusGone, Message: "invalid subscription", Name: "STATUS_GONE"}
+			return c.Status(invalidSubErr.Status).JSON(invalidSubErr)
 		}
 		if !valid {
 			go logger.Error("ACKNOWLEDGEMENT_HANDLER", errors.New("invalid signature"))
-			err = restErrors.NewInternalServerError("can't activate subscription")
-			return c.Status(err.Status).JSON(err)
+			invalidSubErr := restErrors.RestErr{Status: http.StatusGone, Message: "invalid subscription", Name: "STATUS_GONE"}
+			return c.Status(invalidSubErr.Status).JSON(invalidSubErr)
 		}
 
 		//save last check data
@@ -84,11 +91,12 @@ func IsSubscription(c *fiber.Ctx) error {
 
 	validSub := subscriptionAPI.IsValid()
 	if !validSub {
-		expiredRestErr := restErrors.RestErr{
+		invalidSubErr := restErrors.RestErr{
 			Status:  http.StatusGone,
 			Message: "invalid subscription",
+			Name:    "STATUS_GONE",
 		}
-		return c.Status(expiredRestErr.Status).JSON(expiredRestErr)
+		return c.Status(invalidSubErr.Status).JSON(invalidSubErr)
 	}
 	c.Locals("subscriptionDetails", *subscriptionAPI.SubscriptionDetails)
 
