@@ -305,3 +305,33 @@ func TestAcknowledgement(t *testing.T) {
 
 	})
 }
+
+func TestCurrent(t *testing.T) {
+	t.Run("Current should pass", func(t *testing.T) {
+		subscriptionAPI.SubscriptionDetails = &subscriptionAPI.SubscriptionDetailsDto{}
+
+		body, resp := newFiberCtx("", Current, map[string]interface{}{})
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
+	})
+	t.Run("Current should throw if subscription details doesn't exits", func(t *testing.T) {
+		subscriptionAPI.SubscriptionDetails = nil
+
+		body, resp := newFiberCtx("", Current, map[string]interface{}{})
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		assert.EqualValues(t, http.StatusGone, resp.StatusCode)
+	})
+
+}

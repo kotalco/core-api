@@ -112,3 +112,17 @@ func Acknowledgement(c *fiber.Ctx) error {
 	}
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{Message: "subscription activated"}))
 }
+
+func Current(c *fiber.Ctx) error {
+	if subscriptionAPI.SubscriptionDetails == nil {
+		go logger.Error("CURRENT_SUBSCRIPTION", errors.New("user have no active subscription and passed the middleware check"))
+		expiredRestErr := restErrors.RestErr{
+			Status:  http.StatusGone,
+			Message: "invalid subscription",
+			Name:    "STATUS_GONE",
+		}
+		return c.Status(expiredRestErr.Status).JSON(expiredRestErr)
+	}
+
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(subscriptionAPI.SubscriptionDetails))
+}
