@@ -22,3 +22,9 @@ var IsValid = func() bool {
 	}
 	return true
 }
+
+func Reset() {
+	SubscriptionDetails = nil
+	CheckDate = 0
+	ActivationKey = ""
+}

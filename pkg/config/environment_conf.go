@@ -155,7 +155,7 @@ func init() {
 	//LICENSE
 	val, ok = os.LookupEnv("SUBSCRIPTION_API_BASE_URL")
 	if !ok {
-		EnvironmentConf["SUBSCRIPTION_API_BASE_URL"] = "http://localhost:8080"
+		EnvironmentConf["SUBSCRIPTION_API_BASE_URL"] = "http://localhost:8081"
 	} else {
 		EnvironmentConf["SUBSCRIPTION_API_BASE_URL"] = val
 	}

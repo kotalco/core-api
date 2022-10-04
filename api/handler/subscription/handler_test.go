@@ -12,20 +12,29 @@ import (
 	subscriptionAPI "github.com/kotalco/cloud-api/pkg/subscription"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
+	corev1 "k8s.io/api/core/v1"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
 )
 
+/*
+ subscription service  mocks
+*/
 var (
-	subscriptionAcknowledgmentFunc func(activationKey string) ([]byte, *restErrors.RestErr)
+	subscriptionAcknowledgmentFunc     func(activationKey string) ([]byte, *restErrors.RestErr)
+	subscriptionSyncAcknowledgmentFunc func(activationKey string, clusterId string) *restErrors.RestErr
 )
 
 type subscriptionApiServiceMock struct{}
 
 func (s subscriptionApiServiceMock) Acknowledgment(activationKey string) ([]byte, *restErrors.RestErr) {
 	return subscriptionAcknowledgmentFunc(activationKey)
+}
+
+func (s subscriptionApiServiceMock) SyncAcknowledgment(activationKey string, clusterId string) *restErrors.RestErr {
+	return subscriptionSyncAcknowledgmentFunc(activationKey, clusterId)
 }
 
 /*
@@ -71,6 +80,30 @@ func (e eccServiceMock) CreateSignature(data []byte, privKey *ecdsa.PrivateKey) 
 	return eccCreateSignatureFunc(data, privKey)
 }
 
+/*
+Namespace service Mocks
+*/
+
+var (
+	namespaceCreateNamespaceFunc func(name string) *restErrors.RestErr
+	namespaceGetNamespaceFunc    func(name string) (*corev1.Namespace, *restErrors.RestErr)
+	namespaceDeleteNamespaceFunc func(name string) *restErrors.RestErr
+)
+
+type namespaceServiceMock struct{}
+
+func (namespaceServiceMock) Create(name string) *restErrors.RestErr {
+	return namespaceCreateNamespaceFunc(name)
+}
+
+func (namespaceServiceMock) Get(name string) (*corev1.Namespace, *restErrors.RestErr) {
+	return namespaceGetNamespaceFunc(name)
+}
+
+func (namespaceServiceMock) Delete(name string) *restErrors.RestErr {
+	return namespaceDeleteNamespaceFunc(name)
+}
+
 func newFiberCtx(dto interface{}, method func(c *fiber.Ctx) error, locals map[string]interface{}) ([]byte, *http.Response) {
 	app := fiber.New()
 	app.Post("/test/", func(c *fiber.Ctx) error {
@@ -104,6 +137,7 @@ func TestMain(m *testing.M) {
 	sqlclient.OpenDBConnection()
 	subscriptionAPIService = &subscriptionApiServiceMock{}
 	ecService = &eccServiceMock{}
+	namespaceService = &namespaceServiceMock{}
 
 	code := m.Run()
 	os.Exit(code)
@@ -129,6 +163,14 @@ func TestAcknowledgement(t *testing.T) {
 		}
 		subscriptionAPI.IsValid = func() bool {
 			return true
+		}
+
+		namespaceGetNamespaceFunc = func(name string) (*corev1.Namespace, *restErrors.RestErr) {
+			return &corev1.Namespace{}, nil
+		}
+
+		subscriptionSyncAcknowledgmentFunc = func(activationKey string, clusterId string) *restErrors.RestErr {
+			return nil
 		}
 
 		body, resp := newFiberCtx(validDto, Acknowledgement, map[string]interface{}{})
@@ -304,6 +346,75 @@ func TestAcknowledgement(t *testing.T) {
 		assert.EqualValues(t, http.StatusGone, resp.StatusCode)
 
 	})
+	t.Run("Acknowledgement should throw if can't get kube-system namespace", func(t *testing.T) {
+		subscriptionAcknowledgmentFunc = func(activationKey string) ([]byte, *restErrors.RestErr) {
+			responseBody, _ := json.Marshal(map[string]subscription.LicenseAcknowledgmentDto{"data": {Subscription: subscription.SubscriptionDto{}}})
+			return responseBody, nil
+		}
+
+		eccDecodePublicFunc = func(hexEncodedPub string) (*ecdsa.PublicKey, error) {
+			return &ecdsa.PublicKey{}, nil
+		}
+
+		eccVerifySignatureFunc = func(data []byte, signature []byte, pubKey *ecdsa.PublicKey) (bool, error) {
+			return true, nil
+		}
+		subscriptionAPI.IsValid = func() bool {
+			return true
+		}
+
+		namespaceGetNamespaceFunc = func(name string) (*corev1.Namespace, *restErrors.RestErr) {
+			return nil, restErrors.NewInternalServerError("something went wrong")
+		}
+
+		body, resp := newFiberCtx(validDto, Acknowledgement, map[string]interface{}{})
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
+
+	})
+	t.Run("Acknowledgement should throw if can't sync acknowledgment back to subscription platform", func(t *testing.T) {
+		subscriptionAcknowledgmentFunc = func(activationKey string) ([]byte, *restErrors.RestErr) {
+			responseBody, _ := json.Marshal(map[string]subscription.LicenseAcknowledgmentDto{"data": {Subscription: subscription.SubscriptionDto{}}})
+			return responseBody, nil
+		}
+
+		eccDecodePublicFunc = func(hexEncodedPub string) (*ecdsa.PublicKey, error) {
+			return &ecdsa.PublicKey{}, nil
+		}
+
+		eccVerifySignatureFunc = func(data []byte, signature []byte, pubKey *ecdsa.PublicKey) (bool, error) {
+			return true, nil
+		}
+		subscriptionAPI.IsValid = func() bool {
+			return true
+		}
+
+		namespaceGetNamespaceFunc = func(name string) (*corev1.Namespace, *restErrors.RestErr) {
+			return &corev1.Namespace{}, nil
+		}
+
+		subscriptionSyncAcknowledgmentFunc = func(activationKey string, clusterId string) *restErrors.RestErr {
+			return restErrors.NewInternalServerError("something went wrong")
+		}
+
+		body, resp := newFiberCtx(validDto, Acknowledgement, map[string]interface{}{})
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
+
+	})
+
 }
 
 func TestCurrent(t *testing.T) {
