@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/kotalco/api/pkg/logger"
 	"github.com/kotalco/cloud-api/pkg/config"
@@ -14,13 +13,11 @@ import (
 )
 
 const (
-	ACKNOWLEDGEMENT     = "/api/v1/license/acknowledgment"
-	SYNCACKNOWLEDGEMENT = "/api/v1/license/sync-acknowledgment"
+	ACKNOWLEDGEMENT = "/api/v1/license/acknowledgment"
 )
 
 type ISubscriptionService interface {
-	Acknowledgment(activationKey string) ([]byte, *restErrors.RestErr)
-	SyncAcknowledgment(activationKey string, clusterId string) *restErrors.RestErr
+	Acknowledgment(activationKey string, clusterID string) ([]byte, *restErrors.RestErr)
 }
 
 type subscriptionService struct{}
@@ -29,8 +26,8 @@ func NewSubscriptionService() ISubscriptionService {
 	return &subscriptionService{}
 }
 
-func (subApi *subscriptionService) Acknowledgment(activationKey string) ([]byte, *restErrors.RestErr) {
-	requestBody := map[string]string{"activation_key": activationKey}
+func (subApi *subscriptionService) Acknowledgment(activationKey string, clusterID string) ([]byte, *restErrors.RestErr) {
+	requestBody := map[string]string{"activation_key": activationKey, "cluster_id": clusterID}
 	jsonBody, err := json.Marshal(requestBody)
 	if err != nil {
 		go logger.Error(subApi.Acknowledgment, err)
@@ -67,45 +64,4 @@ func (subApi *subscriptionService) Acknowledgment(activationKey string) ([]byte,
 	}
 
 	return responseData, nil
-}
-
-func (subApi *subscriptionService) SyncAcknowledgment(activationKey string, clusterID string) *restErrors.RestErr {
-	requestBody := map[string]string{"activation_key": activationKey, "cluster_id": clusterID}
-	jsonBody, err := json.Marshal(requestBody)
-	if err != nil {
-		go logger.Error(subApi.SyncAcknowledgment, err)
-		return restErrors.NewInternalServerError("something went wrong")
-	}
-
-	bodyReader := bytes.NewReader(jsonBody)
-	req, err := http.NewRequest(http.MethodPost, config.EnvironmentConf["SUBSCRIPTION_API_BASE_URL"]+SYNCACKNOWLEDGEMENT, bodyReader)
-	if err != nil {
-		go logger.Error(subApi.SyncAcknowledgment, err)
-		return restErrors.NewInternalServerError("something went wrong")
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-
-	client := http.Client{
-		Timeout: 30 * time.Second,
-	}
-	res, err := client.Do(req)
-	if err != nil {
-		go logger.Error(subApi.SyncAcknowledgment, err)
-		return restErrors.NewInternalServerError("something went wrong")
-	}
-
-	if res.StatusCode != http.StatusOK {
-		go logger.Error(subApi.SyncAcknowledgment, errors.New(res.Status))
-		return restErrors.NewInternalServerError("something went wrong")
-	}
-
-	responseData, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		go logger.Error(subApi.SyncAcknowledgment, err)
-		return restErrors.NewInternalServerError("something went wrong")
-	}
-	fmt.Println(responseData)
-
-	return nil
 }

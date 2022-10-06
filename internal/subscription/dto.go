@@ -19,6 +19,7 @@ type SubscriptionDto struct {
 	CanceledAt             int64       `json:"canceled_at"`
 	Invoice                interface{} `json:"invoice,omitempty"`
 	DefaultPaymentMethodId string      `json:"default_payment_method_id"`
+	Attached               bool        `json:"attached"`
 }
 type LicenseAcknowledgmentDto struct {
 	Signature    string          `json:"signature"`
