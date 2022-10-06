@@ -54,7 +54,7 @@ func (subService *service) Acknowledgment(activationKey string) *restErrors.Rest
 	var responseBody map[string]LicenseAcknowledgmentDto
 	intErr := json.Unmarshal(responseData, &responseBody)
 	if intErr != nil {
-		go logger.Error("ACKNOWLEDGEMENT_HANDLER", intErr)
+		go logger.Error(subService.Acknowledgment, intErr)
 		err = restErrors.NewInternalServerError("can't activate subscription")
 		return err
 	}
@@ -62,33 +62,33 @@ func (subService *service) Acknowledgment(activationKey string) *restErrors.Rest
 	//validate the signature
 	decodedPub, intErr := ecService.DecodePublic(config.EnvironmentConf["ECC_PUBLIC_KEY"])
 	if intErr != nil {
-		go logger.Error("ACKNOWLEDGEMENT_HANDLER", intErr)
+		go logger.Error(subService.Acknowledgment, intErr)
 		err = restErrors.NewInternalServerError("can't activate subscription")
 		return err
 	}
 
 	subscriptionBytes, intErr := json.Marshal(licenseAcknowledgmentDto.Subscription)
 	if intErr != nil {
-		go logger.Error("ACKNOWLEDGEMENT_HANDLER", intErr)
+		go logger.Error(subService.Acknowledgment, intErr)
 		err = restErrors.NewInternalServerError("can't activate subscription")
 		return err
 	}
 
 	signatureBytes, intErr := base64.StdEncoding.DecodeString(licenseAcknowledgmentDto.Signature)
 	if intErr != nil {
-		go logger.Error("ACKNOWLEDGEMENT_HANDLER", intErr)
+		go logger.Error(subService.Acknowledgment, intErr)
 		err = restErrors.NewInternalServerError("can't activate subscription")
 		return err
 	}
 
 	valid, intErr := ecService.VerifySignature(subscriptionBytes, signatureBytes, decodedPub)
 	if intErr != nil {
-		go logger.Error("ACKNOWLEDGEMENT_HANDLER", intErr)
+		go logger.Error(subService.Acknowledgment, intErr)
 		err = restErrors.NewInternalServerError("can't activate subscription")
 		return err
 	}
 	if !valid {
-		go logger.Error("ACKNOWLEDGEMENT_HANDLER", errors.New("invalid signature"))
+		go logger.Error(subService.Acknowledgment, errors.New("invalid signature"))
 		err = restErrors.NewInternalServerError("can't activate subscription")
 		return err
 	}
