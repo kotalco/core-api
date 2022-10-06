@@ -17,7 +17,7 @@ const (
 )
 
 type ISubscriptionService interface {
-	Acknowledgment(activationKey string) ([]byte, *restErrors.RestErr)
+	Acknowledgment(activationKey string, clusterID string) ([]byte, *restErrors.RestErr)
 }
 
 type subscriptionService struct{}
@@ -26,18 +26,18 @@ func NewSubscriptionService() ISubscriptionService {
 	return &subscriptionService{}
 }
 
-func (l *subscriptionService) Acknowledgment(activationKey string) ([]byte, *restErrors.RestErr) {
-	requestBody := map[string]string{"activation_key": activationKey}
+func (subApi *subscriptionService) Acknowledgment(activationKey string, clusterID string) ([]byte, *restErrors.RestErr) {
+	requestBody := map[string]string{"activation_key": activationKey, "cluster_id": clusterID}
 	jsonBody, err := json.Marshal(requestBody)
 	if err != nil {
-		go logger.Error(l.Acknowledgment, err)
+		go logger.Error(subApi.Acknowledgment, err)
 		return nil, restErrors.NewInternalServerError("can't activate subscription")
 	}
 
 	bodyReader := bytes.NewReader(jsonBody)
 	req, err := http.NewRequest(http.MethodPost, config.EnvironmentConf["SUBSCRIPTION_API_BASE_URL"]+ACKNOWLEDGEMENT, bodyReader)
 	if err != nil {
-		go logger.Error(l.Acknowledgment, err)
+		go logger.Error(subApi.Acknowledgment, err)
 		return nil, restErrors.NewInternalServerError("can't activate subscription")
 	}
 
@@ -48,18 +48,18 @@ func (l *subscriptionService) Acknowledgment(activationKey string) ([]byte, *res
 	}
 	res, err := client.Do(req)
 	if err != nil {
-		go logger.Error(l.Acknowledgment, err)
+		go logger.Error(subApi.Acknowledgment, err)
 		return nil, restErrors.NewInternalServerError("can't activate subscription")
 	}
 
 	if res.StatusCode != http.StatusOK {
-		go logger.Error(l.Acknowledgment, errors.New(res.Status))
+		go logger.Error(subApi.Acknowledgment, errors.New(res.Status))
 		return nil, restErrors.NewInternalServerError("can't activate subscription")
 	}
 
 	responseData, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		go logger.Error(l.Acknowledgment, err)
+		go logger.Error(subApi.Acknowledgment, err)
 		return nil, restErrors.NewInternalServerError("can't activate subscription")
 	}
 
