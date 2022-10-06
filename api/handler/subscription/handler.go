@@ -33,6 +33,7 @@ func Acknowledgement(c *fiber.Ctx) error {
 
 	err = subscriptionService.Acknowledgment(dto.ActivationKey)
 	if err != nil {
+		subscriptionAPI.Reset()
 		return c.Status(err.Status).JSON(err)
 	}
 
