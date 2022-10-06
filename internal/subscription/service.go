@@ -10,7 +10,6 @@ import (
 	"github.com/kotalco/cloud-api/pkg/k8s"
 	"github.com/kotalco/cloud-api/pkg/security"
 	subscriptionAPI "github.com/kotalco/cloud-api/pkg/subscription"
-	"time"
 )
 
 const KUBE_SYSTEM_NAMESPACE = "kube-system"
@@ -30,6 +29,9 @@ type IService interface {
 	//the system uses its public key to validate the integrity of the subscription details, to the signature
 	//activate the user according to his subscription plan
 	Acknowledgment(activationKey string) *restErrors.RestErr
+	//CurrentTimestamp returns the current timestamp
+	//by calling the subscription platform and validating the signature of this timestamp using ecc
+	CurrentTimestamp() (int64, *restErrors.RestErr)
 }
 
 func NewService() IService {
@@ -93,9 +95,15 @@ func (subService *service) Acknowledgment(activationKey string) *restErrors.Rest
 		return err
 	}
 
+	//get last time
+	currentTime, err := subService.CurrentTimestamp()
+	if err != nil {
+		go logger.Error(subService.CurrentTimestamp, err)
+		return err
+	}
+
 	//save last check data
-	//Todo time externally request
-	subscriptionAPI.CheckDate = time.Now().Unix()
+	subscriptionAPI.CheckDate = currentTime
 
 	//assign license details
 	subscriptionAPI.SubscriptionDetails = &subscriptionAPI.SubscriptionDetailsDto{
@@ -110,4 +118,55 @@ func (subService *service) Acknowledgment(activationKey string) *restErrors.Rest
 	subscriptionAPI.ActivationKey = activationKey
 
 	return nil
+}
+
+func (subService *service) CurrentTimestamp() (int64, *restErrors.RestErr) {
+	responseData, err := subscriptionAPIService.CurrentTimeStamp()
+	if err != nil {
+		return 0, err
+	}
+
+	var responseBody map[string]CurrentTimeStampDto
+	intErr := json.Unmarshal(responseData, &responseBody)
+	if intErr != nil {
+		go logger.Error(subService.CurrentTimestamp, intErr)
+		err = restErrors.NewInternalServerError("something went wrong")
+		return 0, err
+	}
+	currentTimestampDto := responseBody["data"]
+	//validate the signature
+	decodedPub, intErr := ecService.DecodePublic(config.EnvironmentConf["ECC_PUBLIC_KEY"])
+	if intErr != nil {
+		go logger.Error(subService.CurrentTimestamp, intErr)
+		err = restErrors.NewInternalServerError("something went wrong")
+		return 0, err
+	}
+
+	currentTimestampDtoBytes, intErr := json.Marshal(currentTimestampDto.Time)
+	if intErr != nil {
+		go logger.Error(subService.CurrentTimestamp, intErr)
+		err = restErrors.NewInternalServerError("something went wrong")
+		return 0, err
+	}
+
+	signatureBytes, intErr := base64.StdEncoding.DecodeString(currentTimestampDto.Signature)
+	if intErr != nil {
+		go logger.Error(subService.CurrentTimestamp, intErr)
+		err = restErrors.NewInternalServerError("something went wrong")
+		return 0, err
+	}
+
+	valid, intErr := ecService.VerifySignature(currentTimestampDtoBytes, signatureBytes, decodedPub)
+	if intErr != nil {
+		go logger.Error(subService.CurrentTimestamp, intErr)
+		err = restErrors.NewInternalServerError("something went wrong")
+		return 0, err
+	}
+	if !valid {
+		go logger.Error(subService.CurrentTimestamp, errors.New("invalid signature"))
+		err = restErrors.NewInternalServerError("something went wrong")
+		return 0, err
+	}
+
+	return currentTimestampDto.Time.CurrentTime, err
 }

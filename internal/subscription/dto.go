@@ -26,6 +26,13 @@ type LicenseAcknowledgmentDto struct {
 	Subscription SubscriptionDto `json:"subscription"`
 }
 
+type CurrentTimeStampDto struct {
+	Signature string `json:"signature"`
+	Time      struct {
+		CurrentTime int64 `json:"current_time"`
+	} `json:"time"`
+}
+
 func Validate(dto interface{}) *restErrors.RestErr {
 	newValidator := validator.New()
 	err := newValidator.Struct(dto)

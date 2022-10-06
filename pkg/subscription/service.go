@@ -13,11 +13,13 @@ import (
 )
 
 const (
-	ACKNOWLEDGEMENT = "/api/v1/license/acknowledgment"
+	ACKNOWLEDGEMENT   = "/api/v1/license/acknowledgment"
+	CURRENT_TIMESTAMP = "/api/v1/timestamp/current"
 )
 
 type ISubscriptionService interface {
 	Acknowledgment(activationKey string, clusterID string) ([]byte, *restErrors.RestErr)
+	CurrentTimeStamp() ([]byte, *restErrors.RestErr)
 }
 
 type subscriptionService struct{}
@@ -61,6 +63,39 @@ func (subApi *subscriptionService) Acknowledgment(activationKey string, clusterI
 	if err != nil {
 		go logger.Error(subApi.Acknowledgment, err)
 		return nil, restErrors.NewInternalServerError("can't activate subscription")
+	}
+
+	return responseData, nil
+}
+
+func (subApi *subscriptionService) CurrentTimeStamp() ([]byte, *restErrors.RestErr) {
+
+	req, err := http.NewRequest(http.MethodGet, config.EnvironmentConf["SUBSCRIPTION_API_BASE_URL"]+CURRENT_TIMESTAMP, nil)
+	if err != nil {
+		go logger.Error(subApi.CurrentTimeStamp, err)
+		return nil, restErrors.NewInternalServerError(err.Error())
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	client := http.Client{
+		Timeout: 30 * time.Second,
+	}
+	res, err := client.Do(req)
+	if err != nil {
+		go logger.Error(subApi.CurrentTimeStamp, err)
+		return nil, restErrors.NewInternalServerError(err.Error())
+	}
+
+	if res.StatusCode != http.StatusOK {
+		go logger.Error(subApi.CurrentTimeStamp, errors.New(res.Status))
+		return nil, restErrors.NewInternalServerError(err.Error())
+	}
+
+	responseData, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		go logger.Error(subApi.CurrentTimeStamp, err)
+		return nil, restErrors.NewInternalServerError(err.Error())
 	}
 
 	return responseData, nil
