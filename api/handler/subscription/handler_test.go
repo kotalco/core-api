@@ -20,13 +20,17 @@ import (
  subscriptionAPI service  mocks
 */
 var (
-	subscriptionAcknowledgmentFunc func(activationKey string) *restErrors.RestErr
+	subscriptionAcknowledgmentFunc   func(activationKey string) *restErrors.RestErr
+	subscriptionCurrentTimestampFunc func() (int64, *restErrors.RestErr)
 )
 
 type subscriptionServiceMock struct{}
 
 func (s subscriptionServiceMock) Acknowledgment(activationKey string) *restErrors.RestErr {
 	return subscriptionAcknowledgmentFunc(activationKey)
+}
+func (s subscriptionServiceMock) CurrentTimestamp() (int64, *restErrors.RestErr) {
+	return subscriptionCurrentTimestampFunc()
 }
 
 func newFiberCtx(dto interface{}, method func(c *fiber.Ctx) error, locals map[string]interface{}) ([]byte, *http.Response) {
