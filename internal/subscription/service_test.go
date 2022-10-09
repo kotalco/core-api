@@ -2,6 +2,7 @@ package subscription
 
 import (
 	"crypto/ecdsa"
+	"encoding/base64"
 	"encoding/json"
 	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
@@ -11,20 +12,25 @@ import (
 	"net/http"
 	"os"
 	"testing"
+	"time"
 )
 
 /*
  subscriptionAPI service  mocks
 */
 var (
-	subscriptionAPIAcknowledgmentFunc func(activationKey string, clusterID string) ([]byte, *restErrors.RestErr)
-	subscriptionService               IService
+	subscriptionAPIAcknowledgmentFunc   func(activationKey string, clusterID string) ([]byte, *restErrors.RestErr)
+	subscriptionAPICurrentTimeStampFunc func() ([]byte, *restErrors.RestErr)
+	subscriptionService                 IService
 )
 
 type subscriptionApiServiceMock struct{}
 
 func (s subscriptionApiServiceMock) Acknowledgment(activationKey string, clusterID string) ([]byte, *restErrors.RestErr) {
 	return subscriptionAPIAcknowledgmentFunc(activationKey, clusterID)
+}
+func (s subscriptionApiServiceMock) CurrentTimeStamp() ([]byte, *restErrors.RestErr) {
+	return subscriptionAPICurrentTimeStampFunc()
 }
 
 /*
@@ -125,9 +131,25 @@ func TestService_Acknowledgment(t *testing.T) {
 			return true
 		}
 
+		subscriptionAPICurrentTimeStampFunc = func() ([]byte, *restErrors.RestErr) {
+			requestBody := map[string]CurrentTimeStampDto{
+				"data": {
+					Signature: base64.StdEncoding.EncodeToString([]byte("1234")),
+					Time: struct {
+						CurrentTime int64 `json:"current_time"`
+					}(struct{ CurrentTime int64 }{CurrentTime: time.Now().Unix()}),
+				},
+			}
+			jsonBody, _ := json.Marshal(requestBody)
+
+			return jsonBody, nil
+		}
+
 		err := subscriptionService.Acknowledgment("key")
 		assert.Nil(t, err)
+
 	})
+
 	t.Run("test service acknowledgment should throw if can't get cluster id", func(t *testing.T) {
 		namespaceGetNamespaceFunc = func(name string) (*corev1.Namespace, *restErrors.RestErr) {
 			return nil, restErrors.NewInternalServerError("something went wrong")
@@ -198,6 +220,128 @@ func TestService_Acknowledgment(t *testing.T) {
 
 		err := subscriptionService.Acknowledgment("key")
 		assert.EqualValues(t, "can't activate subscription", err.Message)
+	})
+
+}
+
+func TestService_CurrentTimestamp(t *testing.T) {
+	t.Run("current timestamp should pass", func(t *testing.T) {
+		currentTime := time.Now().Unix()
+		subscriptionAPICurrentTimeStampFunc = func() ([]byte, *restErrors.RestErr) {
+			requestBody := map[string]CurrentTimeStampDto{
+				"data": {
+					Signature: base64.StdEncoding.EncodeToString([]byte("1234")),
+					Time: struct {
+						CurrentTime int64 `json:"current_time"`
+					}(struct{ CurrentTime int64 }{CurrentTime: currentTime}),
+				},
+			}
+			jsonBody, _ := json.Marshal(requestBody)
+
+			return jsonBody, nil
+		}
+
+		eccDecodePublicFunc = func(hexEncodedPub string) (*ecdsa.PublicKey, error) {
+			return &ecdsa.PublicKey{}, nil
+		}
+
+		eccVerifySignatureFunc = func(data []byte, signature []byte, pubKey *ecdsa.PublicKey) (bool, error) {
+			return true, nil
+		}
+
+		time, err := subscriptionService.CurrentTimestamp()
+		assert.Nil(t, err)
+		assert.EqualValues(t, currentTime, time)
+	})
+	t.Run("current timestamp should throw if subscriptionApi.currentTimeStamp throws", func(t *testing.T) {
+		subscriptionAPICurrentTimeStampFunc = func() ([]byte, *restErrors.RestErr) {
+			return nil, restErrors.NewInternalServerError("something went wrong")
+		}
+
+		time, err := subscriptionService.CurrentTimestamp()
+		assert.EqualValues(t, http.StatusInternalServerError, err.Status)
+		assert.EqualValues(t, 0, time)
+	})
+
+	t.Run("current timestamp should throw if can't decode public", func(t *testing.T) {
+		currentTime := time.Now().Unix()
+		subscriptionAPICurrentTimeStampFunc = func() ([]byte, *restErrors.RestErr) {
+			requestBody := map[string]CurrentTimeStampDto{
+				"data": {
+					Signature: base64.StdEncoding.EncodeToString([]byte("1234")),
+					Time: struct {
+						CurrentTime int64 `json:"current_time"`
+					}(struct{ CurrentTime int64 }{CurrentTime: currentTime}),
+				},
+			}
+			jsonBody, _ := json.Marshal(requestBody)
+
+			return jsonBody, nil
+		}
+
+		eccDecodePublicFunc = func(hexEncodedPub string) (*ecdsa.PublicKey, error) {
+			return nil, restErrors.NewInternalServerError("something")
+		}
+
+		time, err := subscriptionService.CurrentTimestamp()
+		assert.EqualValues(t, http.StatusInternalServerError, err.Status)
+		assert.EqualValues(t, 0, time)
+	})
+	t.Run("current timestamp should throw if  verify signature throws internal", func(t *testing.T) {
+		currentTime := time.Now().Unix()
+		subscriptionAPICurrentTimeStampFunc = func() ([]byte, *restErrors.RestErr) {
+			requestBody := map[string]CurrentTimeStampDto{
+				"data": {
+					Signature: base64.StdEncoding.EncodeToString([]byte("1234")),
+					Time: struct {
+						CurrentTime int64 `json:"current_time"`
+					}(struct{ CurrentTime int64 }{CurrentTime: currentTime}),
+				},
+			}
+			jsonBody, _ := json.Marshal(requestBody)
+
+			return jsonBody, nil
+		}
+
+		eccDecodePublicFunc = func(hexEncodedPub string) (*ecdsa.PublicKey, error) {
+			return &ecdsa.PublicKey{}, nil
+		}
+
+		eccVerifySignatureFunc = func(data []byte, signature []byte, pubKey *ecdsa.PublicKey) (bool, error) {
+			return true, restErrors.NewInternalServerError("something went wrong")
+		}
+
+		time, err := subscriptionService.CurrentTimestamp()
+		assert.EqualValues(t, http.StatusInternalServerError, err.Status)
+		assert.EqualValues(t, 0, time)
+	})
+	t.Run("current timestamp should throw if can't verify signature ", func(t *testing.T) {
+		currentTime := time.Now().Unix()
+		subscriptionAPICurrentTimeStampFunc = func() ([]byte, *restErrors.RestErr) {
+			requestBody := map[string]CurrentTimeStampDto{
+				"data": {
+					Signature: base64.StdEncoding.EncodeToString([]byte("1234")),
+					Time: struct {
+						CurrentTime int64 `json:"current_time"`
+					}(struct{ CurrentTime int64 }{CurrentTime: currentTime}),
+				},
+			}
+			jsonBody, _ := json.Marshal(requestBody)
+
+			return jsonBody, nil
+		}
+
+		eccDecodePublicFunc = func(hexEncodedPub string) (*ecdsa.PublicKey, error) {
+			return &ecdsa.PublicKey{}, nil
+		}
+
+		eccVerifySignatureFunc = func(data []byte, signature []byte, pubKey *ecdsa.PublicKey) (bool, error) {
+			return false, nil
+		}
+
+		time, err := subscriptionService.CurrentTimestamp()
+		assert.EqualValues(t, http.StatusInternalServerError, err.Status)
+		assert.EqualValues(t, 0, time)
 	})
 
 }

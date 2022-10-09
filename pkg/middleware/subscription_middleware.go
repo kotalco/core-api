@@ -3,6 +3,7 @@ package middleware
 import (
 	"github.com/gofiber/fiber/v2"
 	restErrors "github.com/kotalco/api/pkg/errors"
+	"github.com/kotalco/api/pkg/logger"
 	"github.com/kotalco/cloud-api/internal/subscription"
 	subscriptionAPI "github.com/kotalco/cloud-api/pkg/subscription"
 	"net/http"
@@ -14,7 +15,14 @@ var (
 )
 
 func IsSubscription(c *fiber.Ctx) error {
-	elapsedTime := time.Now().Unix() - subscriptionAPI.CheckDate
+	//get last time
+	currentTime, err := subscriptionService.CurrentTimestamp()
+	if err != nil {
+		go logger.Error("IS_SUBSCRIPTION_MIDDLEWARE", err)
+		return err
+	}
+
+	elapsedTime := currentTime - subscriptionAPI.CheckDate
 	if elapsedTime > int64(time.Hour)*24 {
 		//check if activation key exits
 		if subscriptionAPI.ActivationKey == "" {
