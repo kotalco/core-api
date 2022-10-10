@@ -1,7 +1,9 @@
-name: Docker Image CI
+name: Build-Push kotal cloud api
 
 on:
   push:
+    branches: [ master ]
+  pull_request:
     branches: [ master ]
 
 jobs:
@@ -12,26 +14,27 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Set Env
+      run: |
+        echo "BUILD_SHA=${GITHUB_SHA:0:7}" >> $GITHUB_ENV
+        echo "RELEASE_TAG=$(curl -s GET https://api.github.com/repos/kotalco/kotal/releases | jq -r '.[].name' | head -n1)" >> $GITHUB_ENV
 
     - name: Set up QEMU
-      uses: docker/setup-qemu-action@v1
-    
+      uses: docker/setup-qemu-action@v2
+
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
-    
+
     - name: Login to DockerHub
-      uses: docker/login-action@v1 
+      uses: docker/login-action@v2
       with:
-        registry: registry.digitalocean.com
-        username: ${{ secrets.DIGITAL_OCEAN_CONTAINER_REGISTRY_USERNAME }}
-        password: ${{ secrets.DIGITAL_OCEAN_CONTAINER_REGISTRY_PASSWORD }}
+        username: kotalco
+        password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
     - name: Build and push
-      uses: docker/build-push-action@v2
-      env:
-        GITHUB_SHA: ${{ env.GITHUB_SHA }}
+      uses: docker/build-push-action@v3
       with:
         context: .
         platforms: linux/amd64,linux/arm64
         push: true
-        tags: registry.digitalocean.com/kotal/cloud-api:develop
+        tags: kotalco/kotal-cloud-api:latest,kotalco/kotal-cloud-api:${{ env.BUILD_SHA }},kotalco/kotal-cloud-api:${{ env.RELEASE_TAG }}

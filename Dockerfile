@@ -13,12 +13,18 @@ COPY . .
 RUN CGO_ENABLED=0 go build -v -o server
 
 FROM alpine
+
+# Add new user 'kotal'
+RUN adduser -D kotal
+USER kotal
+
 # required by api server to determine config/crds path
 ENV GOPATH=/go 
 COPY --from=builder /go/pkg/mod/github.com/kotalco /go/pkg/mod/github.com/kotalco
 # tools (etcd, apiserver, and kubectl) required by envtest
 COPY --from=builder /usr/local/kubebuilder /usr/local/kubebuilder
-COPY --from=builder /api/server /api/server
+COPY --from=builder /api/server /home/kotal/api/server
 
-ENV ETCD_UNSUPPORTED_ARCH=arm64
-ENTRYPOINT [ "/api/server" ]
+WORKDIR /home/kotal
+EXPOSE 8080
+ENTRYPOINT [ "./api/server" ]
