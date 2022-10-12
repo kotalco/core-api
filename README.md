@@ -24,7 +24,7 @@ in production, staging environment it should passed as a build time variables
 - `DB_SERVER_URL`  postgres://postgres:secret@localhost:5432/db-name-goes-here
 
 ### Optional Envrionment Variables
-- `CLOUD_API_SERVER_PORT` any port except the one the operator listening to
+- `CLOUD_API_SERVER_PORT`
 - `ENVIRONMENT` could be development or production
 - `SERVER_READ_TIMEOUT`
 - `ACCESS_SECRET` jwt symmetric key used to sign the Json Web Token
