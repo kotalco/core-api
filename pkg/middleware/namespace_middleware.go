@@ -15,6 +15,7 @@ func IsNamespace(c *fiber.Ctx) error {
 
 	userId := c.Locals("user").(token.UserDetails).ID
 
+	//namespace exits as a body field
 	if namespace == "" { //namespace exits as body filed
 		body := make(map[string]interface{})
 		err := json.Unmarshal(c.Body(), &body)
@@ -23,7 +24,13 @@ func IsNamespace(c *fiber.Ctx) error {
 			internalErr := restErrors.NewInternalServerError("something went wrong")
 			return c.Status(internalErr.Status).JSON(internalErr)
 		}
-		namespace = body["namespace"].(string)
+
+		_, ok := body["namespace"]
+		if ok { //user supported the namespace
+			namespace = body["namespace"].(string)
+		} else { // user didn't support the namespace
+			namespace = "default"
+		}
 	}
 
 	model, err := workspaceRepo.GetByNamespace(namespace)
