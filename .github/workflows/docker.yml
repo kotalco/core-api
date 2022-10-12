@@ -37,4 +37,4 @@ jobs:
         context: .
         platforms: linux/amd64,linux/arm64
         push: true
-        tags: kotalco/kotal-cloud-api:latest,kotalco/kotal-cloud-api:${{ env.BUILD_SHA }},kotalco/kotal-cloud-api:${{ env.RELEASE_TAG }}
+        tags: kotalco/cloud-api:latest,kotalco/cloud-api:${{ env.BUILD_SHA }},kotalco/cloud-api:${{ env.RELEASE_TAG }}
