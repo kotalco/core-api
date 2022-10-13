@@ -4,9 +4,10 @@ import (
 	"os"
 )
 
-var EnvironmentConf = map[string]string{}
-
-var ECCPublicKey string
+var (
+	EnvironmentConf = map[string]string{}
+	ECCPublicKey    string
+)
 
 func init() {
 	var val string
