@@ -47,3 +47,20 @@ in production, staging environment it should passed as a build time variables
 ## :closed_lock_with_key:	 Build-Time Variables
 This is a list of the build-time variavbles you need pass when building the applicaion
 - `ECC_PUBLIC_KEY` 
+
+
+
+## :building_construction: Build Cloud API
+The application excpects ECC public key passed as build time variable <br />
+The Go build process – go build – supports linker flags
+```
+go build -ldflags="-X 'full_package_path.variable=value'" 
+```
+In case of ECC_PUBLIC_KEY the call call would look like this
+```
+go build -ldflags="-X 'github.com/kotalco/cloud-api/pkg/config.ECCPublicKey=hexa_key_goes_here'"
+```
+Notice: <br />
+In development ENVRIONMENT: ECCPublicKey reads only the environment variable ECC_PUBLIC_KEY <br />
+In other ENVRIONMENTS: ECCPublicKey get it's value from build tags only
+
