@@ -6,6 +6,8 @@ import (
 
 var EnvironmentConf = map[string]string{}
 
+var ECCPublicKey string
+
 func init() {
 	var val string
 	var ok bool
@@ -160,6 +162,10 @@ func init() {
 		EnvironmentConf["SUBSCRIPTION_API_BASE_URL"] = val
 	}
 	//ECC
-	EnvironmentConf["ECC_PUBLIC_KEY"] = os.Getenv("ECC_PUBLIC_KEY")
+	if EnvironmentConf["ENVIRONMENT"] == "development" {
+		EnvironmentConf["ECC_PUBLIC_KEY"] = os.Getenv("ECC_PUBLIC_KEY")
+	} else {
+		EnvironmentConf["ECC_PUBLIC_KEY"] = ECCPublicKey
+	}
 
 }
