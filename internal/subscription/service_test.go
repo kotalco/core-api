@@ -16,7 +16,7 @@ import (
 )
 
 /*
- subscriptionAPI service  mocks
+subscriptionAPI service  mocks
 */
 var (
 	subscriptionAPIAcknowledgmentFunc   func(activationKey string, clusterID string) ([]byte, *restErrors.RestErr)

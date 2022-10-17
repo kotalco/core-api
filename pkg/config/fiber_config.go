@@ -19,9 +19,9 @@ func FiberConfig() fiber.Config {
 	}
 }
 
-//defaultErrorHandler used to catch all unhandled  run time resterror mainly panics
-//logs resterror using logger pkg
-//return custom error struct using restError pkg
+// defaultErrorHandler used to catch all unhandled  run time resterror mainly panics
+// logs resterror using logger pkg
+// return custom error struct using restError pkg
 var defaultErrorHandler = func(c *fiber.Ctx, err error) error {
 	go logger.Panic("PANICKING_UNHANDLED_ERROR", err)
 	internalErr := restErrors.NewInternalServerError("some thing went wrong")

@@ -22,7 +22,7 @@ var (
 	mailService      = sendgrid.NewService()
 )
 
-//Create validate dto , create new workspace, creates new namespace in k8
+// Create validate dto , create new workspace, creates new namespace in k8
 func Create(c *fiber.Ctx) error {
 
 	userId := c.Locals("user").(token.UserDetails).ID
@@ -57,7 +57,7 @@ func Create(c *fiber.Ctx) error {
 
 }
 
-//Update validate dto , validate user authenticity & update workspace
+// Update validate dto , validate user authenticity & update workspace
 func Update(c *fiber.Ctx) error {
 
 	model := c.Locals("workspace").(workspace.Workspace)
@@ -86,7 +86,7 @@ func Update(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(new(workspace.WorkspaceResponseDto).Marshall(&model)))
 }
 
-//Delete deletes user workspace and associated namespace
+// Delete deletes user workspace and associated namespace
 func Delete(c *fiber.Ctx) error {
 	model := c.Locals("workspace").(workspace.Workspace)
 	userId := c.Locals("user").(token.UserDetails).ID
@@ -118,7 +118,7 @@ func Delete(c *fiber.Ctx) error {
 	return c.SendStatus(http.StatusNoContent)
 }
 
-//GetByUserId find workspaces by userId
+// GetByUserId find workspaces by userId
 func GetByUserId(c *fiber.Ctx) error {
 	userId := c.Locals("user").(token.UserDetails).ID
 
@@ -135,7 +135,7 @@ func GetByUserId(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(marshalled))
 }
 
-//GetById find workspaces by Id
+// GetById find workspaces by Id
 func GetById(c *fiber.Ctx) error {
 	model := c.Locals("workspace").(workspace.Workspace)
 	workspaceUser := c.Locals("workspaceUser").(workspaceuser.WorkspaceUser)
@@ -146,7 +146,7 @@ func GetById(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(marshalled))
 }
 
-//AddMember adds new member to workspace
+// AddMember adds new member to workspace
 func AddMember(c *fiber.Ctx) error {
 	dto := new(workspace.AddWorkspaceMemberDto)
 	if err := c.BodyParser(dto); err != nil {
@@ -193,7 +193,7 @@ func AddMember(c *fiber.Ctx) error {
 	}))
 }
 
-//Leave removes workspace member from workspace
+// Leave removes workspace member from workspace
 func Leave(c *fiber.Ctx) error {
 	model := c.Locals("workspace").(workspace.Workspace)
 	workspaceUser := c.Locals("workspaceUser").(workspaceuser.WorkspaceUser)
@@ -228,7 +228,7 @@ func Leave(c *fiber.Ctx) error {
 	}))
 }
 
-//RemoveMember workspace owner removes workspace member form his/her workspace
+// RemoveMember workspace owner removes workspace member form his/her workspace
 func RemoveMember(c *fiber.Ctx) error {
 	model := c.Locals("workspace").(workspace.Workspace)
 	memberId := c.Params("user_id")
@@ -265,7 +265,7 @@ func RemoveMember(c *fiber.Ctx) error {
 	}))
 }
 
-//Members returns a list of workspace members
+// Members returns a list of workspace members
 func Members(c *fiber.Ctx) error {
 	model := c.Locals("workspace").(workspace.Workspace)
 	userIds := make([]string, len(model.WorkspaceUsers))
@@ -293,7 +293,7 @@ func Members(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(result))
 }
 
-//UpdateWorkspaceUser enables user to assign specific
+// UpdateWorkspaceUser enables user to assign specific
 func UpdateWorkspaceUser(c *fiber.Ctx) error {
 	//request dto validation
 	dto := new(workspace.UpdateWorkspaceUserRequestDto)

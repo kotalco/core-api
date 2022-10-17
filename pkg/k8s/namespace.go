@@ -4,16 +4,11 @@ import (
 	"context"
 	"fmt"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
-	"github.com/kotalco/community-api/pkg/k8s"
 	"github.com/kotalco/community-api/pkg/logger"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-)
-
-var (
-	k8sClient = k8s.NewClientService()
 )
 
 //namespace service communicates with k8s from community-api to create namespaces for different nodes

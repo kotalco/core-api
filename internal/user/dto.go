@@ -72,7 +72,7 @@ type UserSessionResponseDto struct {
 	Token      string `json:"token"`
 }
 
-//Marshall creates user response from user model
+// Marshall creates user response from user model
 func (dto UserResponseDto) Marshall(model *User) UserResponseDto {
 	dto.ID = model.ID
 	dto.Email = model.Email
@@ -80,14 +80,14 @@ func (dto UserResponseDto) Marshall(model *User) UserResponseDto {
 	return dto
 }
 
-//Marshall creates user response from user model
+// Marshall creates user response from user model
 func (dto PublicUserResponseDto) Marshall(model *User) PublicUserResponseDto {
 	dto.ID = model.ID
 	dto.Email = model.Email
 	return dto
 }
 
-//Validate validates user request field for all request dto`s
+// Validate validates user request field for all request dto`s
 func Validate(dto interface{}) *restErrors.RestErr {
 	newValidator := validator.New()
 	err := newValidator.Struct(dto)

@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/websocket/v2"
+	"github.com/kotalco/cloud-api/api/handler/endpoint"
 	"github.com/kotalco/cloud-api/api/handler/subscription"
 	"github.com/kotalco/cloud-api/api/handler/user"
 	"github.com/kotalco/cloud-api/api/handler/workspace"
@@ -28,7 +29,7 @@ func MapUrl(app *fiber.App) {
 
 	//subscription
 	v1.Post("subscriptions/acknowledgment", subscription.Acknowledgement)
-	v1.Use(middleware.IsSubscription)
+	//v1.Use(middleware.IsSubscription)
 
 	//users group
 	v1.Post("sessions", user.SignIn)
@@ -66,6 +67,12 @@ func MapUrl(app *fiber.App) {
 	licenses := v1.Group("subscriptions")
 	licenses.Get("/current", middleware.JWTProtected, middleware.TFAProtected, subscription.Current)
 
+	//endpoints
+	//todo add user security check middlewares
+	endpoints := v1.Group("endpoints")
+	endpoints.Post("/", endpoint.Create)
+	endpoints.Get("/", endpoint.List)
+	endpoints.Get("/:name", endpoint.Get) //todo change to id
 	//community routes
 	mapDeploymentUrl(v1)
 }

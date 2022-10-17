@@ -39,7 +39,7 @@ func (vService service) WithTransaction(txHandle *gorm.DB) IService {
 	return vService
 }
 
-//Create creates a new verification token for the user
+// Create creates a new verification token for the user
 func (service) Create(userId string) (string, *restErrors.RestErr) {
 	token, restErr := generateToken()
 	if restErr != nil {
@@ -71,7 +71,7 @@ func (service) Create(userId string) (string, *restErrors.RestErr) {
 	return token, nil
 }
 
-//GetByUserId get verification by user id
+// GetByUserId get verification by user id
 func (service) GetByUserId(userId string) (*Verification, *restErrors.RestErr) {
 	verification, err := verificationRepository.GetByUserId(userId)
 	if err != nil {
@@ -81,7 +81,7 @@ func (service) GetByUserId(userId string) (*Verification, *restErrors.RestErr) {
 	return verification, err
 }
 
-//Verify verify token hash
+// Verify verify token hash
 func (service) Verify(userId string, token string) *restErrors.RestErr {
 	verification, err := verificationRepository.GetByUserId(userId)
 	if err != nil {
@@ -112,7 +112,7 @@ func (service) Verify(userId string, token string) *restErrors.RestErr {
 	return nil
 }
 
-//Resend  verification token to user
+// Resend  verification token to user
 func (vService service) Resend(userId string) (string, *restErrors.RestErr) {
 	verification, err := verificationRepository.GetByUserId(userId)
 	if err != nil {
@@ -143,7 +143,7 @@ func (vService service) Resend(userId string) (string, *restErrors.RestErr) {
 	return token, nil
 }
 
-//generateToken creates a random token to the user which will be sent to user email
+// generateToken creates a random token to the user which will be sent to user email
 var generateToken = func() (string, *restErrors.RestErr) {
 	tokenLength, err := strconv.Atoi(config.EnvironmentConf["VERIFICATION_TOKEN_LENGTH"])
 	if err != nil {
@@ -156,7 +156,7 @@ var generateToken = func() (string, *restErrors.RestErr) {
 	return token, nil
 }
 
-//hashToken hashes the verification token before sending it to the user email
+// hashToken hashes the verification token before sending it to the user email
 var hashToken = func(token string) (string, *restErrors.RestErr) {
 
 	hashedToken, err := hashing.Hash(token, 6)
