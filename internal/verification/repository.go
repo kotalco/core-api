@@ -5,9 +5,9 @@ import (
 	"gorm.io/gorm"
 	"regexp"
 
-	restErrors "github.com/kotalco/api/pkg/errors"
-	"github.com/kotalco/api/pkg/logger"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
+	restErrors "github.com/kotalco/community-api/pkg/errors"
+	"github.com/kotalco/community-api/pkg/logger"
 )
 
 type repository struct{}

@@ -3,9 +3,9 @@ package config
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
-	restErrors "github.com/kotalco/api/pkg/errors"
-	"github.com/kotalco/api/pkg/logger"
-	"github.com/kotalco/api/pkg/shared"
+	restErrors "github.com/kotalco/community-api/pkg/errors"
+	"github.com/kotalco/community-api/pkg/logger"
+	"github.com/kotalco/community-api/pkg/shared"
 
 	"strconv"
 	"time"

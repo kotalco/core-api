@@ -3,8 +3,8 @@ package verification
 import (
 	"errors"
 	"fmt"
-	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/kotalco/cloud-api/pkg/config"
+	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 	"os"

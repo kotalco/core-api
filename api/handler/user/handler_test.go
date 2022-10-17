@@ -23,9 +23,9 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
-	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/kotalco/cloud-api/internal/user"
 	"github.com/kotalco/cloud-api/internal/verification"
+	restErrors "github.com/kotalco/community-api/pkg/errors"
 )
 
 /*

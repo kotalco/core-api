@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/pprof"
-	"github.com/kotalco/api/pkg/logger"
 	"github.com/kotalco/cloud-api/api"
 	"github.com/kotalco/cloud-api/pkg/config"
 	"github.com/kotalco/cloud-api/pkg/middleware"
@@ -12,6 +11,7 @@ import (
 	"github.com/kotalco/cloud-api/pkg/seeder"
 	"github.com/kotalco/cloud-api/pkg/server"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
+	"github.com/kotalco/community-api/pkg/logger"
 )
 
 func main() {

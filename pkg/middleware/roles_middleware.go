@@ -2,9 +2,9 @@ package middleware
 
 import (
 	"github.com/gofiber/fiber/v2"
-	restErrors "github.com/kotalco/api/pkg/errors"
 	"github.com/kotalco/cloud-api/internal/workspaceuser"
 	"github.com/kotalco/cloud-api/pkg/roles"
+	restErrors "github.com/kotalco/community-api/pkg/errors"
 )
 
 func IsAdmin(c *fiber.Ctx) error {

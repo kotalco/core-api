@@ -2,12 +2,12 @@ package seeder
 
 import (
 	"github.com/google/uuid"
-	"github.com/kotalco/api/pkg/logger"
 	"github.com/kotalco/cloud-api/internal/user"
 	"github.com/kotalco/cloud-api/internal/workspace"
 	"github.com/kotalco/cloud-api/internal/workspaceuser"
 	"github.com/kotalco/cloud-api/pkg/roles"
 	"github.com/kotalco/cloud-api/pkg/security"
+	"github.com/kotalco/community-api/pkg/logger"
 	"gorm.io/gorm"
 )
 
