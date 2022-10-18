@@ -3,12 +3,12 @@ package user
 import (
 	"bytes"
 	"github.com/google/uuid"
-	restErrors "github.com/kotalco/api/pkg/errors"
-	"github.com/kotalco/api/pkg/logger"
 	"github.com/kotalco/cloud-api/pkg/config"
 	"github.com/kotalco/cloud-api/pkg/security"
 	"github.com/kotalco/cloud-api/pkg/tfa"
 	"github.com/kotalco/cloud-api/pkg/token"
+	restErrors "github.com/kotalco/community-api/pkg/errors"
+	"github.com/kotalco/community-api/pkg/logger"
 	"gorm.io/gorm"
 )
 

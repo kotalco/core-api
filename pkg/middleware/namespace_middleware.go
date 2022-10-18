@@ -3,10 +3,10 @@ package middleware
 import (
 	"encoding/json"
 	"github.com/gofiber/fiber/v2"
-	restErrors "github.com/kotalco/api/pkg/errors"
-	"github.com/kotalco/api/pkg/logger"
 	"github.com/kotalco/cloud-api/internal/workspace"
 	"github.com/kotalco/cloud-api/pkg/token"
+	restErrors "github.com/kotalco/community-api/pkg/errors"
+	"github.com/kotalco/community-api/pkg/logger"
 )
 
 func IsNamespace(c *fiber.Ctx) error {

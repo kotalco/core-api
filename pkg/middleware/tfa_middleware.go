@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"github.com/gofiber/fiber/v2"
-	restErrors "github.com/kotalco/api/pkg/errors"
+	restErrors "github.com/kotalco/community-api/pkg/errors"
 )
 
 func TFAProtected(c *fiber.Ctx) error {

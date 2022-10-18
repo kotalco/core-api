@@ -6,8 +6,8 @@ import (
 	"os/signal"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/kotalco/api/pkg/logger"
 	"github.com/kotalco/cloud-api/pkg/config"
+	"github.com/kotalco/community-api/pkg/logger"
 )
 
 // StartServerWithGracefulShutdown function for starting server with a graceful shutdown.

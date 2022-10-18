@@ -9,14 +9,14 @@ import (
 
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
 
-	"github.com/kotalco/api/pkg/logger"
+	"github.com/kotalco/community-api/pkg/logger"
 
 	"github.com/gofiber/fiber/v2"
-	restErrors "github.com/kotalco/api/pkg/errors"
-	"github.com/kotalco/api/pkg/shared"
 	"github.com/kotalco/cloud-api/internal/user"
 	"github.com/kotalco/cloud-api/internal/verification"
 	"github.com/kotalco/cloud-api/pkg/sendgrid"
+	restErrors "github.com/kotalco/community-api/pkg/errors"
+	"github.com/kotalco/community-api/pkg/shared"
 )
 
 var (

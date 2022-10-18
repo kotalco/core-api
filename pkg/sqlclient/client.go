@@ -4,8 +4,8 @@ import (
 	glogger "gorm.io/gorm/logger"
 	"sync"
 
-	"github.com/kotalco/api/pkg/logger"
 	"github.com/kotalco/cloud-api/pkg/config"
+	"github.com/kotalco/community-api/pkg/logger"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )

@@ -4,12 +4,12 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	restErrors "github.com/kotalco/api/pkg/errors"
-	"github.com/kotalco/api/pkg/logger"
 	"github.com/kotalco/cloud-api/pkg/config"
 	"github.com/kotalco/cloud-api/pkg/k8s"
 	"github.com/kotalco/cloud-api/pkg/security"
 	subscriptionAPI "github.com/kotalco/cloud-api/pkg/subscription"
+	restErrors "github.com/kotalco/community-api/pkg/errors"
+	"github.com/kotalco/community-api/pkg/logger"
 )
 
 const KUBE_SYSTEM_NAMESPACE = "kube-system"
