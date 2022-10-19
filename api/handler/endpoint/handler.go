@@ -3,17 +3,22 @@ package endpoint
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/kotalco/cloud-api/internal/endpoint"
-	"github.com/kotalco/cloud-api/pkg/k8s"
+	"github.com/kotalco/cloud-api/internal/workspace"
+	"github.com/kotalco/cloud-api/pkg/svc"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/shared"
 	"net/http"
 )
 
-var endpointService = k8s.NewEndpointService()
+var (
+	endpointService = endpoint.NewService()
+	svcService      = svc.NewService()
+)
 
-//Todo add user security checks
-
+//Create accept  endpoint.CreateEndpointDto , creates the endpoint and returns success or err
 func Create(c *fiber.Ctx) error {
+	workspaceModel := c.Locals("workspace").(workspace.Workspace)
+
 	dto := new(endpoint.CreateEndpointDto)
 	if intErr := c.BodyParser(dto); intErr != nil {
 		badReq := restErrors.NewBadRequestError("invalid request body")
@@ -25,30 +30,17 @@ func Create(c *fiber.Ctx) error {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	err = endpointService.Create(dto.Name, dto.Namespace, dto.ServiceName, dto.ServicePort)
+	//get service
+	svcResource, err := svcService.Get(dto.ServiceName, workspaceModel.K8sNamespace)
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
+
+	err = endpointService.Create(dto, svcResource, workspaceModel.K8sNamespace)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
 	return c.Status(http.StatusCreated).JSON(shared.NewResponse(shared.SuccessMessage{
 		Message: "Ingress route created",
 	}))
-}
-
-func List(c *fiber.Ctx) error {
-	var namespace = c.Query("namespace", "default")
-	list, err := endpointService.List(namespace)
-	if err != nil {
-		return c.Status(err.Status).JSON(err)
-	}
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(list))
-}
-
-func Get(c *fiber.Ctx) error {
-	var namespace = c.Query("namespace", "default")
-	var name = c.Params("name")
-	record, err := endpointService.Get(name, namespace)
-	if err != nil {
-		return c.Status(err.Status).JSON(err)
-	}
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(record))
 }

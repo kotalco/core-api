@@ -169,4 +169,6 @@ func init() {
 		EnvironmentConf["ECC_PUBLIC_KEY"] = ECCPublicKey
 	}
 
+	//TRAEFIK
+	EnvironmentConf["TRAEFIK_MATCH_BASE_URL"] = os.Getenv("TRAEFIK_MATCH_BASE_URL")
 }

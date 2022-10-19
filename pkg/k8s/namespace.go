@@ -34,7 +34,7 @@ func (service *namespace) Create(name string) *restErrors.RestErr {
 			Name: name,
 		},
 	}
-	err := k8sClient.Create(context.Background(), ns)
+	err := K8sClient.Create(context.Background(), ns)
 	if err != nil {
 		if errors.IsAlreadyExists(err) {
 			return restErrors.NewConflictError("namespace already exits")
@@ -55,7 +55,7 @@ func (service *namespace) Get(name string) (*corev1.Namespace, *restErrors.RestE
 	key.Namespace = name
 	key.Name = name
 
-	err := k8sClient.Get(context.Background(), key, &ns)
+	err := K8sClient.Get(context.Background(), key, &ns)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil, restErrors.NewNotFoundError(fmt.Sprintf("can't find namespace %s", name))
@@ -74,7 +74,7 @@ func (service *namespace) Delete(name string) *restErrors.RestErr {
 		},
 	}
 
-	err := k8sClient.Delete(context.Background(), ns)
+	err := K8sClient.Delete(context.Background(), ns)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return restErrors.NewNotFoundError(fmt.Sprintf("namespace %s does't exit", name))

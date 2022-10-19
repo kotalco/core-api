@@ -6,11 +6,12 @@ import (
 )
 
 type CreateEndpointDto struct {
-	Name      string `json:"name" validate:"required"`
-	Namespace string `json:"namespace" validate:"required"` //todo change to workspace and handle errors
-	//Match       string `json:"match"`
+	Name        string `json:"name" validate:"required"`
 	ServiceName string `json:"service_name" validate:"required"`
-	ServicePort int    `json:"service_port" validate:"required"`
+}
+
+type SvcResponseDto struct {
+	Name string
 }
 
 func Validate(dto interface{}) *restErrors.RestErr {
@@ -24,17 +25,8 @@ func Validate(dto interface{}) *restErrors.RestErr {
 			case "Name":
 				fields["name"] = "invalid name"
 				break
-			case "Namespace":
-				fields["namespace"] = "invalid namespace"
-				break
-			case "Match":
-				fields["match"] = "invalid match field"
-				break
 			case "ServiceName":
 				fields["service_name"] = "invalid service_name"
-				break
-			case "ServicePort":
-				fields["service_port"] = "invalid service_port"
 				break
 			}
 		}
