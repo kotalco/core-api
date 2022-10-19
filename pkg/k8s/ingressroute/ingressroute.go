@@ -10,6 +10,7 @@ import (
 	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type ingressroute struct{}
@@ -18,6 +19,8 @@ type ingressroute struct{}
 type IIngressRoute interface {
 	// Create takes the representation of a ingressRoute and creates it returns an error, if there is any.
 	Create(dto *IngressRouteDto) *restErrors.RestErr
+	//List takes label and field selectors, and returns the list of Middlewares that match those selectors.
+	List(namesapce string) (*traefikv1alpha1.IngressRouteList, *restErrors.RestErr)
 }
 
 func NewIngressRoutesService() IIngressRoute {
@@ -25,7 +28,6 @@ func NewIngressRoutesService() IIngressRoute {
 }
 
 func (i *ingressroute) Create(dto *IngressRouteDto) *restErrors.RestErr {
-
 	routes := make([]traefikv1alpha1.Route, 0)
 	for k := 0; k < len(dto.Ports); k++ {
 		routes = append(routes, traefikv1alpha1.Route{
@@ -59,4 +61,17 @@ func (i *ingressroute) Create(dto *IngressRouteDto) *restErrors.RestErr {
 	}
 
 	return nil
+}
+
+func (i *ingressroute) List(namespace string) (*traefikv1alpha1.IngressRouteList, *restErrors.RestErr) {
+	records := &traefikv1alpha1.IngressRouteList{}
+	err := k8s.K8sClient.List(context.Background(), records, &client.ListOptions{Namespace: namespace})
+	if err != nil {
+		go logger.Error(i.List, err)
+	}
+
+	//marshalledRespos
+	//
+	//return new(IngressRoute).Marshall(r), nil
+	return nil, nil
 }

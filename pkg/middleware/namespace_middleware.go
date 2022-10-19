@@ -18,6 +18,7 @@ func IsNamespace(c *fiber.Ctx) error {
 	if namespace == "" { //namespace exits as body filed
 		body := make(map[string]interface{})
 		json.Unmarshal(c.Body(), &body)
+
 		_, ok := body["namespace"]
 		if ok { //user supported the namespace
 			namespace = body["namespace"].(string)
