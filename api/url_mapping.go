@@ -72,7 +72,10 @@ func MapUrl(app *fiber.App) {
 	endpoints := v1.Group("endpoints")
 	endpoints.Post("/", middleware.JWTProtected, middleware.TFAProtected, middleware.IsNamespace, endpoint.Create)
 	endpoints.Get("/", middleware.JWTProtected, middleware.TFAProtected, middleware.IsNamespace, endpoint.List)
+<<<<<<< HEAD
 	endpoints.Get("/:name", middleware.JWTProtected, middleware.TFAProtected, middleware.IsNamespace, endpoint.Get)
+=======
+>>>>>>> 7871d96 (feat: list ingressroute completed)
 
 	mapDeploymentUrl(v1)
 }
