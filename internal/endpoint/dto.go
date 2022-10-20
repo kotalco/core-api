@@ -3,6 +3,8 @@ package endpoint
 import (
 	"github.com/go-playground/validator/v10"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
+	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
+	"strings"
 )
 
 type CreateEndpointDto struct {
@@ -10,8 +12,9 @@ type CreateEndpointDto struct {
 	ServiceName string `json:"service_name" validate:"required"`
 }
 
-type SvcResponseDto struct {
-	Name string
+type EndpointDto struct {
+	Name   string   `json:"name"`
+	Routes []string `json:"routes"`
 }
 
 func Validate(dto interface{}) *restErrors.RestErr {
@@ -36,4 +39,17 @@ func Validate(dto interface{}) *restErrors.RestErr {
 	}
 
 	return nil
+}
+
+func (endpoint *EndpointDto) Marshall(dtoIngressRoute *traefikv1alpha1.IngressRoute) *EndpointDto {
+	endpoint.Name = dtoIngressRoute.Name
+	for _, route := range dtoIngressRoute.Spec.Routes {
+		str := strings.ReplaceAll(route.Match, "Host(`", "")
+		str = strings.ReplaceAll(str, "`)", "")
+		str = strings.ReplaceAll(str, " && ", "")
+		str = strings.ReplaceAll(str, "Path(`", "")
+		endpoint.Routes = append(endpoint.Routes, str)
+	}
+
+	return endpoint
 }

@@ -15,7 +15,7 @@ var (
 	svcService      = svc.NewService()
 )
 
-//Create accept  endpoint.CreateEndpointDto , creates the endpoint and returns success or err
+// Create accept  endpoint.CreateEndpointDto , creates the endpoint and returns success or err if any
 func Create(c *fiber.Ctx) error {
 	workspaceModel := c.Locals("workspace").(workspace.Workspace)
 
@@ -45,11 +45,13 @@ func Create(c *fiber.Ctx) error {
 	}))
 }
 
+// List accept namespace , returns a list of ingressroute.Ingressroute list or err if any
 func List(c *fiber.Ctx) error {
 	workspaceModel := c.Locals("workspace").(workspace.Workspace)
 	list, err := endpointService.List(workspaceModel.K8sNamespace)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
+
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(list))
 }

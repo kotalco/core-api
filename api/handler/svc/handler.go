@@ -2,14 +2,14 @@ package svc
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/kotalco/cloud-api/internal/endpoint"
+	"github.com/kotalco/cloud-api/internal/svc"
 	"github.com/kotalco/cloud-api/internal/workspace"
-	"github.com/kotalco/cloud-api/pkg/svc"
+	k8sv "github.com/kotalco/cloud-api/pkg/svc"
 	"github.com/kotalco/community-api/pkg/shared"
 	"net/http"
 )
 
-var svcService = svc.NewService()
+var svcService = k8sv.NewService()
 
 func ListServices(c *fiber.Ctx) error {
 	workspaceModel := c.Locals("workspace").(workspace.Workspace)
@@ -19,9 +19,9 @@ func ListServices(c *fiber.Ctx) error {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	responseDto := make([]endpoint.SvcResponseDto, 0)
+	responseDto := make([]svc.SvcResponseDto, 0)
 	for _, v := range svcList.Items {
-		responseDto = append(responseDto, endpoint.SvcResponseDto{Name: v.Name})
+		responseDto = append(responseDto, svc.SvcResponseDto{Name: v.Name})
 	}
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(responseDto))
 }
