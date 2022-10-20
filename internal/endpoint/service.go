@@ -16,6 +16,7 @@ type IService interface {
 	Create(dto *CreateEndpointDto, svc *corev1.Service, namespace string) *restErrors.RestErr
 	List(namespace string) ([]*EndpointDto, *restErrors.RestErr)
 	Get(name string, namespace string) (*EndpointDto, *restErrors.RestErr)
+	Update(name string, namespace string, newName string) *restErrors.RestErr
 	Delete(name string, namespace string) *restErrors.RestErr
 }
 
@@ -66,6 +67,9 @@ func (s *service) Get(name string, namespace string) (*EndpointDto, *restErrors.
 	return new(EndpointDto).Marshall(record), nil
 }
 
+func (s *service) Update(name string, namespace string, newName string) *restErrors.RestErr {
+	return ingressRoutesService.Update(name, namespace, newName)
+}
 func (s *service) Delete(name string, namespace string) *restErrors.RestErr {
 	return ingressRoutesService.Delete(name, namespace)
 }
