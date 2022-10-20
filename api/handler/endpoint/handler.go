@@ -68,3 +68,15 @@ func Get(c *fiber.Ctx) error {
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(record))
 }
+
+//Delete accept namespace and the name of the ingress-route ,deletes it , returns success message or err if any
+func Delete(c *fiber.Ctx) error {
+	workspaceModel := c.Locals("workspace").(workspace.Workspace)
+	name := c.Params("name")
+
+	err := endpointService.Delete(workspaceModel.K8sNamespace, name)
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{Message: "ingress-route deleted"}))
+}

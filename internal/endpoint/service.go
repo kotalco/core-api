@@ -16,6 +16,7 @@ type IService interface {
 	Create(dto *CreateEndpointDto, svc *corev1.Service, namespace string) *restErrors.RestErr
 	List(namespace string) ([]*EndpointDto, *restErrors.RestErr)
 	Get(name string, namespace string) (*EndpointDto, *restErrors.RestErr)
+	Delete(namespace string, name string) *restErrors.RestErr
 }
 
 func NewService() IService {
@@ -63,6 +64,10 @@ func (s *service) Get(name string, namespace string) (*EndpointDto, *restErrors.
 	}
 
 	return new(EndpointDto).Marshall(record), nil
+}
+
+func (s *service) Delete(namespace string, name string) *restErrors.RestErr {
+	return ingressRoutesService.Delete(namespace, name)
 }
 
 var availableProtocol = func(protocol string) bool {

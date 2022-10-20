@@ -25,6 +25,8 @@ type IIngressRoute interface {
 	List(namesapce string) (*traefikv1alpha1.IngressRouteList, *restErrors.RestErr)
 	// Get takes name and namespace of the ingressRoute, and returns the corresponding ingressRoute object, and an error if there is any.
 	Get(name string, namespace string) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr)
+	// Delete takes name  and namespace of the ingressRoute, check if it exists and delete it if found. Returns an error if one occurs.
+	Delete(name string, namespace string) *restErrors.RestErr
 }
 
 func NewIngressRoutesService() IIngressRoute {
@@ -91,4 +93,19 @@ func (i *ingressroute) Get(name string, namespace string) (*traefikv1alpha1.Ingr
 		return nil, restErrors.NewInternalServerError("something went wrong")
 	}
 	return record, nil
+}
+
+func (i *ingressroute) Delete(name string, namespace string) *restErrors.RestErr {
+	record, err := i.Get(name, namespace)
+	if err != nil {
+		return err
+	}
+
+	intErr := k8s.K8sClient.Delete(context.Background(), record)
+	if intErr != nil {
+		go logger.Error(i.Delete, err)
+		return restErrors.NewInternalServerError("something went wrong")
+	}
+
+	return nil
 }
