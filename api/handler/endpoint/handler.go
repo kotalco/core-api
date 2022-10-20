@@ -45,7 +45,7 @@ func Create(c *fiber.Ctx) error {
 	}))
 }
 
-// List accept namespace , returns a list of ingressroute.Ingressroute list or err if any
+// List accept namespace , returns a list of ingressroute.Ingressroute  or err if any
 func List(c *fiber.Ctx) error {
 	workspaceModel := c.Locals("workspace").(workspace.Workspace)
 	list, err := endpointService.List(workspaceModel.K8sNamespace)
@@ -66,4 +66,19 @@ func Get(c *fiber.Ctx) error {
 	}
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(record))
+}
+
+//Get accept namespace and name , returns a record of type ingressroute.Ingressroute or err if any
+func Get(c *fiber.Ctx) error {
+	workspaceModel := c.Locals("workspace").(workspace.Workspace)
+	name := c.Params("name")
+
+	record, err := endpointService.Get(workspaceModel.K8sNamespace, name)
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
+
+	marshalledDto := new(endpoint.EndpointResponseDto).Marshall(record)
+
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(marshalledDto))
 }
