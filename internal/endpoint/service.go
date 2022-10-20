@@ -14,6 +14,7 @@ type service struct{}
 
 type IService interface {
 	Create(dto *CreateEndpointDto, svc *corev1.Service, namespace string) *restErrors.RestErr
+	List(namespace string) ([]*ingressroute.IngressRouteDto, *restErrors.RestErr)
 }
 
 func NewService() IService {
@@ -38,6 +39,10 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service, namespace 
 
 	err := ingressRoutesService.Create(ingresRouteDto)
 	return err
+}
+
+func (s *service) List(namespace string) ([]*ingressroute.IngressRouteDto, *restErrors.RestErr) {
+	return nil, nil
 }
 
 var availableProtocol = func(protocol string) bool {

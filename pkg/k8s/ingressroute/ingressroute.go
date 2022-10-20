@@ -69,9 +69,5 @@ func (i *ingressroute) List(namespace string) (*traefikv1alpha1.IngressRouteList
 	if err != nil {
 		go logger.Error(i.List, err)
 	}
-
-	//marshalledRespos
-	//
-	//return new(IngressRoute).Marshall(r), nil
-	return nil, nil
+	return records, nil
 }

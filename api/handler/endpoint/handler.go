@@ -44,3 +44,12 @@ func Create(c *fiber.Ctx) error {
 		Message: "Endpoint has been created",
 	}))
 }
+
+func List(c *fiber.Ctx) error {
+	workspaceModel := c.Locals("workspace").(workspace.Workspace)
+	list, err := endpointService.List(workspaceModel.K8sNamespace)
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(list))
+}
