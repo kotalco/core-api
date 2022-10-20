@@ -54,7 +54,6 @@ func (s *service) List(namespace string) ([]*EndpointDto, *restErrors.RestErr) {
 	}
 
 	return marshalledDto, nil
-
 }
 
 func (s *service) Get(name string, namespace string) (*EndpointDto, *restErrors.RestErr) {
