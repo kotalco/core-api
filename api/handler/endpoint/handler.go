@@ -55,3 +55,15 @@ func List(c *fiber.Ctx) error {
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(list))
 }
+
+func Get(c *fiber.Ctx) error {
+	workspaceModel := c.Locals("workspace").(workspace.Workspace)
+	endpointName := c.Params("name")
+
+	record, err := endpointService.Get(endpointName, workspaceModel.K8sNamespace)
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
+
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(record))
+}
