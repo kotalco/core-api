@@ -27,7 +27,7 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service, namespace 
 	for _, v := range svc.Spec.Ports {
 		if availableProtocol(v.Name) {
 			routes = append(routes, ingressroute.Route{
-				Match: fmt.Sprintf("Host(`endpoint.%s`) && Path(`/%s/%s`)", config.EnvironmentConf["TRAEFIK_MATCH_BASE_URL"], svc.UID, v.Name),
+				Match: fmt.Sprintf("Host(`endpoint.%s`) && Path(`/%s/%s`)", config.EnvironmentConf["DOMAIN_MATCH_BASE_URL"], svc.UID, v.Name),
 				Services: []ingressroute.Service{
 					{
 						Name: svc.Name,

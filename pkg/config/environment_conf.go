@@ -170,5 +170,5 @@ func init() {
 	}
 
 	//TRAEFIK
-	EnvironmentConf["TRAEFIK_MATCH_BASE_URL"] = os.Getenv("TRAEFIK_MATCH_BASE_URL")
+	EnvironmentConf["DOMAIN_MATCH_BASE_URL"] = os.Getenv("DOMAIN_MATCH_BASE_URL")
 }

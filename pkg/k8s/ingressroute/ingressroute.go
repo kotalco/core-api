@@ -24,19 +24,19 @@ func NewIngressRoutesService() IIngressRoute {
 
 func (i *ingressroute) Create(dto *IngressRoute) *restErrors.RestErr {
 	routes := make([]traefikv1alpha1.Route, 0)
-	for _, ruleDto := range dto.Routes {
+	for _, rule := range dto.Routes {
 		services := make([]traefikv1alpha1.Service, 0)
-		for _, serviceDto := range ruleDto.Services {
+		for _, service := range rule.Services {
 			services = append(services, traefikv1alpha1.Service{
 				LoadBalancerSpec: traefikv1alpha1.LoadBalancerSpec{
-					Name: serviceDto.Name,
-					Port: intstr.IntOrString{IntVal: serviceDto.Port},
+					Name: service.Name,
+					Port: intstr.IntOrString{StrVal: service.Name},
 				},
 			})
 		}
 
 		routes = append(routes, traefikv1alpha1.Route{
-			Match:    ruleDto.Match,
+			Match:    rule.Match,
 			Kind:     "Rule",
 			Services: services,
 		})
