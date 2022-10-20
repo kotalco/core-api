@@ -2,6 +2,8 @@ package ingressroute
 
 import (
 	"context"
+	"fmt"
+	"github.com/kotalco/cloud-api/pkg/config"
 	"github.com/kotalco/cloud-api/pkg/k8s"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/logger"
@@ -15,30 +17,28 @@ type ingressroute struct{}
 // IIngressRoute has methods to work with ingressroutes resources.
 type IIngressRoute interface {
 	// Create takes the representation of a ingressRoute and creates it returns an error, if there is any.
-	Create(dto *IngressRoute) *restErrors.RestErr
+	Create(dto *IngressRouteDto) *restErrors.RestErr
 }
 
 func NewIngressRoutesService() IIngressRoute {
 	return &ingressroute{}
 }
 
-func (i *ingressroute) Create(dto *IngressRoute) *restErrors.RestErr {
-	routes := make([]traefikv1alpha1.Route, 0)
-	for _, rule := range dto.Routes {
-		services := make([]traefikv1alpha1.Service, 0)
-		for _, service := range rule.Services {
-			services = append(services, traefikv1alpha1.Service{
-				LoadBalancerSpec: traefikv1alpha1.LoadBalancerSpec{
-					Name: service.Name,
-					Port: intstr.IntOrString{StrVal: service.Name},
-				},
-			})
-		}
+func (i *ingressroute) Create(dto *IngressRouteDto) *restErrors.RestErr {
 
+	routes := make([]traefikv1alpha1.Route, 0)
+	for k := 0; k < len(dto.Ports); k++ {
 		routes = append(routes, traefikv1alpha1.Route{
-			Match:    rule.Match,
-			Kind:     "Rule",
-			Services: services,
+			Match: fmt.Sprintf("Host(`endpoint.%s`) && Path(`/%s/%s`)", config.EnvironmentConf["DOMAIN_MATCH_BASE_URL"], dto.ServiceID, dto.Ports[k]),
+			Kind:  "Rule",
+			Services: []traefikv1alpha1.Service{
+				{
+					LoadBalancerSpec: traefikv1alpha1.LoadBalancerSpec{
+						Name: dto.ServiceName,
+						Port: intstr.IntOrString{Type: intstr.String, StrVal: dto.Ports[k]},
+					},
+				},
+			},
 		})
 	}
 
