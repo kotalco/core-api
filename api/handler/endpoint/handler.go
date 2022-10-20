@@ -82,6 +82,36 @@ func Get(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(record))
 }
 
+func Update(c *fiber.Ctx) error {
+	workspaceModel := c.Locals("workspace").(workspace.Workspace)
+	endpointName := c.Params("name")
+
+	dto := new(endpoint.UpdateEndpointDto)
+	if intErr := c.BodyParser(dto); intErr != nil {
+		badReq := restErrors.NewBadRequestError("invalid request body")
+		return c.Status(badReq.Status).JSON(badReq)
+	}
+
+	err := endpoint.Validate(dto)
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
+
+	//get service
+	svcResource, err := svcService.Get(dto.ServiceName, workspaceModel.K8sNamespace)
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
+
+	err = endpointService.Update(endpointName, workspaceModel.K8sNamespace, svcResource)
+	if err != nil {
+		return c.Status(http.StatusOK).JSON(err)
+	}
+
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{Message: "Endpoint Updated"}))
+
+}
+
 //Delete accept namespace and the name of the ingress-route ,deletes it , returns success message or err if any
 func Delete(c *fiber.Ctx) error {
 	workspaceModel := c.Locals("workspace").(workspace.Workspace)
