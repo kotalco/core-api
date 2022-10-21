@@ -55,6 +55,9 @@ func (subApi *subscriptionService) Acknowledgment(activationKey string, clusterI
 	}
 
 	if res.StatusCode != http.StatusOK {
+		if res.StatusCode == http.StatusConflict {
+			return nil, restErrors.NewConflictError("subscription already used by another cluster")
+		}
 		go logger.Error(subApi.Acknowledgment, errors.New(res.Status))
 		return nil, restErrors.NewInternalServerError("can't activate subscription")
 	}

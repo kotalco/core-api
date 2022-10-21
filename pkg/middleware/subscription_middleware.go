@@ -10,23 +10,29 @@ import (
 	"time"
 )
 
+const (
+	InvalidSubscriptionStatusMessage = "INVALID_SUBSCRIPTION"
+)
+
 var (
 	subscriptionService = subscription.NewService()
 )
 
 func IsSubscription(c *fiber.Ctx) error {
 	//get last time
-	currentTime, err := subscriptionService.CurrentTimestamp()
+	currenTimeInUnix, err := subscriptionService.CurrentTimestamp()
 	if err != nil {
 		go logger.Error("IS_SUBSCRIPTION_MIDDLEWARE", err)
 		return err
 	}
 
-	elapsedTime := currentTime - subscriptionAPI.CheckDate
-	if elapsedTime > int64(time.Hour)*24 {
+	lastCheckDate := time.Unix(subscriptionAPI.CheckDate, 0)
+	lastCheckDateInUnixWithGracePeriod := lastCheckDate.Add(time.Hour * 24).Unix()
+
+	if lastCheckDateInUnixWithGracePeriod < currenTimeInUnix {
 		//check if activation key exits
 		if subscriptionAPI.ActivationKey == "" {
-			invalidSubErr := restErrors.RestErr{Status: http.StatusGone, Message: "invalid subscription", Name: "STATUS_GONE"}
+			invalidSubErr := restErrors.RestErr{Status: http.StatusForbidden, Message: "invalid subscription", Name: InvalidSubscriptionStatusMessage}
 			return c.Status(invalidSubErr.Status).JSON(invalidSubErr)
 		}
 
@@ -41,9 +47,9 @@ func IsSubscription(c *fiber.Ctx) error {
 	validSub := subscriptionAPI.IsValid()
 	if !validSub {
 		invalidSubErr := restErrors.RestErr{
-			Status:  http.StatusGone,
+			Status:  http.StatusForbidden,
 			Message: "invalid subscription",
-			Name:    "STATUS_GONE",
+			Name:    InvalidSubscriptionStatusMessage,
 		}
 		return c.Status(invalidSubErr.Status).JSON(invalidSubErr)
 	}

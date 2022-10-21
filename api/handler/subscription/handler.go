@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/gofiber/fiber/v2"
 	"github.com/kotalco/cloud-api/internal/subscription"
+	"github.com/kotalco/cloud-api/pkg/middleware"
 	subscriptionAPI "github.com/kotalco/cloud-api/pkg/subscription"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/logger"
@@ -40,9 +41,9 @@ func Acknowledgement(c *fiber.Ctx) error {
 	validSub := subscriptionAPI.IsValid()
 	if !validSub {
 		err = &restErrors.RestErr{
-			Status:  http.StatusGone,
+			Status:  http.StatusForbidden,
 			Message: "invalid subscription",
-			Name:    "STATUS_GONE",
+			Name:    middleware.InvalidSubscriptionStatusMessage,
 		}
 		return c.Status(err.Status).JSON(err)
 	}
@@ -54,9 +55,9 @@ func Current(c *fiber.Ctx) error {
 	if subscriptionAPI.SubscriptionDetails == nil {
 		go logger.Error("CURRENT_SUBSCRIPTION", errors.New("user have no active subscription and passed the middleware check"))
 		expiredRestErr := restErrors.RestErr{
-			Status:  http.StatusGone,
+			Status:  http.StatusForbidden,
 			Message: "invalid subscription",
-			Name:    "STATUS_GONE",
+			Name:    middleware.InvalidSubscriptionStatusMessage,
 		}
 		return c.Status(expiredRestErr.Status).JSON(expiredRestErr)
 	}

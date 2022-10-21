@@ -158,7 +158,7 @@ func TestAcknowledgement(t *testing.T) {
 			panic(err.Error())
 		}
 
-		assert.EqualValues(t, http.StatusGone, resp.StatusCode)
+		assert.EqualValues(t, http.StatusForbidden, resp.StatusCode)
 
 	})
 
@@ -189,7 +189,7 @@ func TestCurrent(t *testing.T) {
 			panic(err.Error())
 		}
 
-		assert.EqualValues(t, http.StatusGone, resp.StatusCode)
+		assert.EqualValues(t, http.StatusForbidden, resp.StatusCode)
 	})
 
 }
