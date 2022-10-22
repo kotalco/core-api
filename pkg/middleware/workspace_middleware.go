@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/kotalco/cloud-api/internal/workspace"
 	"github.com/kotalco/cloud-api/pkg/token"
@@ -40,4 +41,55 @@ func IsWorkspace(c *fiber.Ctx) error {
 
 	c.Next()
 	return nil
+}
+
+// WorkspaceProtected validate if useer exist in the workspace, creates a new namespace query params to be used by the community-api
+func WorkspaceProtected(c *fiber.Ctx) error {
+	workspaceId := c.Query("workspace_id")
+	userId := c.Locals("user").(token.UserDetails).ID
+	var model *workspace.Workspace
+	var err *restErrors.RestErr
+	//user appended the workspace id
+	if workspaceId != "" {
+		//get workspace model by workspaceId
+		model, err = workspaceRepo.GetById(workspaceId)
+		if err != nil {
+			if err.Status == http.StatusNotFound {
+				notFoundErr := restErrors.NewNotFoundError("no such record")
+				return c.Status(notFoundErr.Status).JSON(notFoundErr)
+			}
+			return c.Status(err.Status).JSON(err)
+		}
+	} else { //user didn't append the workspace id //assume the default workspace
+		model, err = workspaceRepo.GetByNamespace("default")
+		if err != nil {
+			if err.Status == http.StatusNotFound {
+				notFoundErr := restErrors.NewNotFoundError("no such record")
+				return c.Status(notFoundErr.Status).JSON(notFoundErr)
+			}
+			return c.Status(err.Status).JSON(err)
+		}
+	}
+
+	//check if user exist in the namespace
+	validUser := false
+	for _, v := range model.WorkspaceUsers {
+		if v.UserId == userId {
+			validUser = true
+			c.Locals("workspaceUser", v)
+			break
+		}
+	}
+	if !validUser {
+		notFoundErr := restErrors.NewNotFoundError("no such record")
+		return c.Status(notFoundErr.Status).JSON(notFoundErr)
+	}
+	c.Locals("workspace", *model)
+
+	//set query params to be used by the deployments queries
+	c.Request().URI().SetQueryString(fmt.Sprintf("namespace=%s", model.K8sNamespace))
+
+	c.Next()
+	return nil
+
 }
