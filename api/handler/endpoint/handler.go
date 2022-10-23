@@ -105,7 +105,7 @@ func Update(c *fiber.Ctx) error {
 
 	err = endpointService.Update(endpointName, workspaceModel.K8sNamespace, svcResource)
 	if err != nil {
-		return c.Status(http.StatusOK).JSON(err)
+		return c.Status(err.Status).JSON(err)
 	}
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{Message: "Endpoint Updated"}))
@@ -121,5 +121,5 @@ func Delete(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{Message: "ingress-route deleted"}))
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{Message: "Endpoint Deleted"}))
 }
