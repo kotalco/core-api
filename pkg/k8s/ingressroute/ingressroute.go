@@ -8,6 +8,7 @@ import (
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/logger"
 	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -83,7 +84,11 @@ func (i *ingressroute) Get(name string, namespace string) (*traefikv1alpha1.Ingr
 	}
 	err := k8s.K8sClient.Get(context.Background(), key, record)
 	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil, restErrors.NewNotFoundError(fmt.Sprintf("can't find endpoint %s", name))
+		}
 		go logger.Error(i.Get, err)
+		return nil, restErrors.NewInternalServerError("something went wrong")
 	}
 	return record, nil
 }
