@@ -17,7 +17,6 @@ var (
 	ingressRouteCreateFunc func(dto *ingressroute.IngressRouteDto) *restErrors.RestErr
 	ingressRouteListFunc   func(namesapce string) (*traefikv1alpha1.IngressRouteList, *restErrors.RestErr)
 	ingressRouteGetFunc    func(name string, namespace string) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr)
-	ingressRouteUpdateFunc func(dto *ingressroute.IngressRouteDto) *restErrors.RestErr
 	ingressRouteDeleteFunc func(name string, namespace string) *restErrors.RestErr
 )
 
@@ -33,10 +32,6 @@ func (i ingressRouteServiceMock) List(namesapce string) (*traefikv1alpha1.Ingres
 
 func (i ingressRouteServiceMock) Get(name string, namespace string) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr) {
 	return ingressRouteGetFunc(name, namespace)
-}
-
-func (i ingressRouteServiceMock) Update(dto *ingressroute.IngressRouteDto) *restErrors.RestErr {
-	return ingressRouteUpdateFunc(dto)
 }
 
 func (i ingressRouteServiceMock) Delete(name string, namespace string) *restErrors.RestErr {
@@ -138,25 +133,6 @@ func TestService_Get(t *testing.T) {
 		assert.EqualValues(t, "no such record", err.Message)
 	})
 
-}
-
-func TestService_Update(t *testing.T) {
-	t.Run("update endpoint should pass", func(t *testing.T) {
-		ingressRouteUpdateFunc = func(dto *ingressroute.IngressRouteDto) *restErrors.RestErr {
-			return nil
-		}
-		err := endpointService.Update("name", "namespace", &corev1.Service{Spec: corev1.ServiceSpec{Ports: []corev1.ServicePort{{}}}})
-		assert.Nil(t, err)
-	})
-
-	t.Run("update endpoint should throw if ingreessrouteService.update throws", func(t *testing.T) {
-		ingressRouteUpdateFunc = func(dto *ingressroute.IngressRouteDto) *restErrors.RestErr {
-			return restErrors.NewInternalServerError("something went wrong")
-		}
-		err := endpointService.Update("name", "namespace", &corev1.Service{Spec: corev1.ServiceSpec{Ports: []corev1.ServicePort{}}})
-		assert.EqualValues(t, http.StatusInternalServerError, err.Status)
-		assert.EqualValues(t, "something went wrong", err.Message)
-	})
 }
 
 func TestService_Delete(t *testing.T) {

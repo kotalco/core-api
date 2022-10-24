@@ -24,7 +24,6 @@ var (
 	endpointServiceCreateFunc func(dto *endpoint.CreateEndpointDto, svc *corev1.Service, namespace string) *restErrors.RestErr
 	endpointServiceListFunc   func(namespace string) ([]*endpoint.EndpointDto, *restErrors.RestErr)
 	endpointServiceGetFunc    func(name string, namespace string) (*endpoint.EndpointDto, *restErrors.RestErr)
-	endpointServiceUpdateFunc func(name string, namespace string, svc *corev1.Service) *restErrors.RestErr
 	endpointServiceDeleteFunc func(name string, namespace string) *restErrors.RestErr
 )
 
@@ -38,9 +37,6 @@ func (e endpointServiceMock) List(namespace string) ([]*endpoint.EndpointDto, *r
 }
 func (e endpointServiceMock) Get(name string, namespace string) (*endpoint.EndpointDto, *restErrors.RestErr) {
 	return endpointServiceGetFunc(name, namespace)
-}
-func (e endpointServiceMock) Update(name string, namespace string, svc *corev1.Service) *restErrors.RestErr {
-	return endpointServiceUpdateFunc(name, namespace, svc)
 }
 func (e endpointServiceMock) Delete(name string, namespace string) *restErrors.RestErr {
 	return endpointServiceDeleteFunc(name, namespace)
@@ -128,7 +124,7 @@ func TestCreate(t *testing.T) {
 		assert.Nil(t, err)
 
 		assert.EqualValues(t, http.StatusCreated, resp.StatusCode)
-		assert.EqualValues(t, "Ingress route created", result["data"].Message)
+		assert.EqualValues(t, "Endpoint has been created", result["data"].Message)
 	})
 
 	t.Run("create endpoint should throw bad request err", func(t *testing.T) {
@@ -250,83 +246,6 @@ func TestGet(t *testing.T) {
 		assert.NotNil(t, "no such record", result.Message)
 	})
 
-}
-
-func TestUpdate(t *testing.T) {
-	workspaceModel := new(workspace.Workspace)
-	var locals = map[string]interface{}{}
-	locals["workspace"] = *workspaceModel
-
-	var validDto = map[string]string{
-		"service_name": "serviceName",
-	}
-
-	var invalidDto = map[string]string{}
-
-	t.Run("update endpoint should pass", func(t *testing.T) {
-		svcServiceGetFunc = func(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {
-			return &corev1.Service{}, nil
-		}
-		endpointServiceUpdateFunc = func(name string, namespace string, svc *corev1.Service) *restErrors.RestErr {
-			return nil
-		}
-		body, resp := newFiberCtx(validDto, Update, locals)
-		var result map[string]shared.SuccessMessage
-		err := json.Unmarshal(body, &result)
-		assert.Nil(t, err)
-
-		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
-		assert.EqualValues(t, "Endpoint Updated", result["data"].Message)
-	})
-	t.Run("update endpoint should throw bad request err", func(t *testing.T) {
-		body, resp := newFiberCtx("", Update, locals)
-		var result restErrors.RestErr
-		err := json.Unmarshal(body, &result)
-		assert.Nil(t, err)
-		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
-		assert.EqualValues(t, "invalid request body", result.Message)
-	})
-	t.Run("update should throw validation err", func(t *testing.T) {
-		body, resp := newFiberCtx(invalidDto, Update, locals)
-		var result restErrors.RestErr
-		err := json.Unmarshal(body, &result)
-		assert.Nil(t, err)
-
-		var fields = map[string]string{}
-		fields["service_name"] = "invalid service_name"
-		badReqErr := restErrors.NewValidationError(fields)
-
-		assert.Equal(t, *badReqErr, result)
-		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
-	})
-	t.Run("update endpoint should throw if can't get service resource", func(t *testing.T) {
-		svcServiceGetFunc = func(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {
-			return nil, restErrors.NewNotFoundError("no such record")
-		}
-
-		body, resp := newFiberCtx(validDto, Update, locals)
-		var result restErrors.RestErr
-		err := json.Unmarshal(body, &result)
-		assert.Nil(t, err)
-
-		assert.EqualValues(t, http.StatusNotFound, resp.StatusCode)
-		assert.EqualValues(t, "no such record", result.Message)
-	})
-	t.Run("update endpoint should throw if can't endpointService.update throws", func(t *testing.T) {
-		svcServiceGetFunc = func(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {
-			return &corev1.Service{}, nil
-		}
-		endpointServiceUpdateFunc = func(name string, namespace string, svc *corev1.Service) *restErrors.RestErr {
-			return restErrors.NewInternalServerError("something went wrong")
-		}
-		body, resp := newFiberCtx(validDto, Update, locals)
-		var result restErrors.RestErr
-		err := json.Unmarshal(body, &result)
-		assert.Nil(t, err)
-
-		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
-		assert.EqualValues(t, "something went wrong", result.Message)
-	})
 }
 
 func TestDelete(t *testing.T) {

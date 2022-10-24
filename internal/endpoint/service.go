@@ -17,7 +17,6 @@ type IService interface {
 	Create(dto *CreateEndpointDto, svc *corev1.Service, namespace string) *restErrors.RestErr
 	List(namespace string) ([]*EndpointDto, *restErrors.RestErr)
 	Get(name string, namespace string) (*EndpointDto, *restErrors.RestErr)
-	Update(name string, namespace string, svc *corev1.Service) *restErrors.RestErr
 	Delete(name string, namespace string) *restErrors.RestErr
 }
 
@@ -73,24 +72,6 @@ func (s *service) Get(name string, namespace string) (*EndpointDto, *restErrors.
 	return new(EndpointDto).Marshall(record), nil
 }
 
-func (s *service) Update(name string, namespace string, svc *corev1.Service) *restErrors.RestErr {
-	ports := make([]string, 0)
-	for _, v := range svc.Spec.Ports {
-		if availableProtocol(v.Name) {
-			ports = append(ports, v.Name)
-		}
-	}
-
-	ingresRouteDto := &ingressroute.IngressRouteDto{
-		Name:        name,
-		Namespace:   namespace,
-		ServiceName: svc.Name,
-		ServiceID:   string(svc.UID),
-		Ports:       ports,
-	}
-
-	return ingressRoutesService.Update(ingresRouteDto)
-}
 func (s *service) Delete(name string, namespace string) *restErrors.RestErr {
 	return ingressRoutesService.Delete(name, namespace)
 }

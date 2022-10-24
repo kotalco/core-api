@@ -25,8 +25,6 @@ type IIngressRoute interface {
 	List(namesapce string) (*traefikv1alpha1.IngressRouteList, *restErrors.RestErr)
 	// Get takes name and namespace of the ingressRoute, and returns the corresponding ingressRoute object, and an error if there is any.
 	Get(name string, namespace string) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr)
-	// Update takes name, namespace and newName of the ingress-route, finds the ingress-route record and updates it. Returns an error, if there is any.
-	Update(dto *IngressRouteDto) *restErrors.RestErr
 	// Delete takes name  and namespace of the ingressRoute, check if it exists and delete it if found. Returns an error if one occurs.
 	Delete(name string, namespace string) *restErrors.RestErr
 }
@@ -95,39 +93,6 @@ func (i *ingressroute) Get(name string, namespace string) (*traefikv1alpha1.Ingr
 		return nil, restErrors.NewInternalServerError("something went wrong")
 	}
 	return record, nil
-}
-
-func (i *ingressroute) Update(dto *IngressRouteDto) *restErrors.RestErr {
-	record, err := i.Get(dto.Name, dto.Namespace)
-	if err != nil {
-		go logger.Error(i.Update, err)
-		return restErrors.NewInternalServerError("something went wrong")
-	}
-
-	routes := make([]traefikv1alpha1.Route, 0)
-	for k := 0; k < len(dto.Ports); k++ {
-		routes = append(routes, traefikv1alpha1.Route{
-			Match: fmt.Sprintf("Host(`endpoint.%s`) && Path(`/%s/%s`)", config.EnvironmentConf["DOMAIN_MATCH_BASE_URL"], dto.ServiceID, dto.Ports[k]),
-			Kind:  "Rule",
-			Services: []traefikv1alpha1.Service{
-				{
-					LoadBalancerSpec: traefikv1alpha1.LoadBalancerSpec{
-						Name: dto.ServiceName,
-						Port: intstr.IntOrString{Type: intstr.String, StrVal: dto.Ports[k]},
-					},
-				},
-			},
-		})
-	}
-
-	record.Spec.Routes = routes
-	intErr := k8s.K8sClient.Update(context.Background(), record)
-	if intErr != nil {
-		go logger.Error(i.Update, err)
-		return restErrors.NewInternalServerError("something went wrong")
-	}
-
-	return nil
 }
 
 func (i *ingressroute) Delete(name string, namespace string) *restErrors.RestErr {
