@@ -42,9 +42,7 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service, namespace 
 
 var availableProtocol = func(protocol string) bool {
 	switch protocol {
-	case "ws":
-		return false
-	case "p2p":
+	case "ws", "p2p":
 		return false
 	default:
 		return true

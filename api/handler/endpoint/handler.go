@@ -41,6 +41,6 @@ func Create(c *fiber.Ctx) error {
 		return c.Status(err.Status).JSON(err)
 	}
 	return c.Status(http.StatusCreated).JSON(shared.NewResponse(shared.SuccessMessage{
-		Message: "Ingress route created",
+		Message: "Endpoint has been created",
 	}))
 }

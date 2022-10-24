@@ -7,10 +7,10 @@ import (
 	"github.com/kotalco/cloud-api/pkg/k8s"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/logger"
+	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
-import traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 
 type ingressroute struct{}
 
@@ -29,7 +29,7 @@ func (i *ingressroute) Create(dto *IngressRouteDto) *restErrors.RestErr {
 	routes := make([]traefikv1alpha1.Route, 0)
 	for k := 0; k < len(dto.Ports); k++ {
 		routes = append(routes, traefikv1alpha1.Route{
-			Match: fmt.Sprintf("Host(`endpoint.%s`) && Path(`/%s/%s`)", config.EnvironmentConf["DOMAIN_MATCH_BASE_URL"], dto.ServiceID, dto.Ports[k]),
+			Match: fmt.Sprintf("Host(`endpoints.%s`) && Path(`/%s/%s`)", config.EnvironmentConf["DOMAIN_MATCH_BASE_URL"], dto.ServiceID, dto.Ports[k]),
 			Kind:  "Rule",
 			Services: []traefikv1alpha1.Service{
 				{
