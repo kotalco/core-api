@@ -73,6 +73,7 @@ func MapUrl(app *fiber.App) {
 	endpoints.Post("/", middleware.JWTProtected, middleware.TFAProtected, middleware.IsNamespace, endpoint.Create)
 	endpoints.Get("/", middleware.JWTProtected, middleware.TFAProtected, middleware.IsNamespace, endpoint.List)
 	endpoints.Get("/:name", middleware.JWTProtected, middleware.TFAProtected, middleware.IsNamespace, endpoint.Get)
+	endpoints.Delete("/:name", middleware.JWTProtected, middleware.TFAProtected, middleware.IsNamespace, endpoint.Delete)
 
 	mapDeploymentUrl(v1)
 }
