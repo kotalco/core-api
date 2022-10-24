@@ -1,22 +1,19 @@
 package user
 
 import (
-	"github.com/kotalco/cloud-api/internal/workspace"
-	"github.com/kotalco/cloud-api/pkg/k8s"
-	"github.com/kotalco/cloud-api/pkg/token"
-	"net/http"
-	"strconv"
-
-	"github.com/kotalco/cloud-api/pkg/sqlclient"
-
-	"github.com/kotalco/community-api/pkg/logger"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/kotalco/cloud-api/internal/user"
 	"github.com/kotalco/cloud-api/internal/verification"
+	"github.com/kotalco/cloud-api/internal/workspace"
+	"github.com/kotalco/cloud-api/pkg/k8s"
 	"github.com/kotalco/cloud-api/pkg/sendgrid"
+	"github.com/kotalco/cloud-api/pkg/sqlclient"
+	"github.com/kotalco/cloud-api/pkg/token"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
+	"github.com/kotalco/community-api/pkg/logger"
 	"github.com/kotalco/community-api/pkg/shared"
+	"net/http"
+	"strconv"
 )
 
 var (
@@ -89,6 +86,7 @@ func SignUp(c *fiber.Ctx) error {
 
 // SignIn creates bearer token for the yse
 func SignIn(c *fiber.Ctx) error {
+
 	dto := new(user.SignInRequestDto)
 	if err := c.BodyParser(dto); err != nil {
 		badReq := restErrors.NewBadRequestError("invalid request body")
