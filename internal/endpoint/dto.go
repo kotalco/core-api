@@ -12,10 +12,6 @@ type CreateEndpointDto struct {
 	ServiceName string `json:"service_name" validate:"required"`
 }
 
-type UpdateEndpointDto struct {
-	ServiceName string `json:"service_name" validate:"required"`
-}
-
 type EndpointDto struct {
 	Name   string   `json:"name"`
 	Routes []string `json:"routes"`
