@@ -5,6 +5,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/pprof"
 	"github.com/kotalco/cloud-api/api"
 	"github.com/kotalco/cloud-api/pkg/config"
+	"github.com/kotalco/cloud-api/pkg/k8s"
 	"github.com/kotalco/cloud-api/pkg/middleware"
 	"github.com/kotalco/cloud-api/pkg/migration"
 	"github.com/kotalco/cloud-api/pkg/monitor"
@@ -21,6 +22,9 @@ func main() {
 	app.Use(pprof.New())
 	api.MapUrl(app)
 
+	//Adds additional types to the community k8s client
+	k8s.AddToScheme()
+	//open db connection
 	dbClient := sqlclient.OpenDBConnection()
 	migrationService := migration.NewService(dbClient)
 	for _, step := range migrationService.Migrations() {

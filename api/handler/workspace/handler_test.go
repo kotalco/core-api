@@ -181,7 +181,7 @@ func (namespaceServiceMock) Delete(name string) *restErrors.RestErr {
 	return DeleteNamespaceFunc(name)
 }
 
-//Mail Service mocks
+// Mail Service mocks
 var (
 	SignUpMailFunc              func(dto *sendgrid.MailRequestDto) *restErrors.RestErr
 	ResendEmailVerificationFunc func(dto *sendgrid.MailRequestDto) *restErrors.RestErr

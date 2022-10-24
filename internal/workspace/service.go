@@ -37,7 +37,7 @@ func (wService service) WithTransaction(txHandle *gorm.DB) IService {
 	return wService
 }
 
-//Create creates new workspace and workspace-user record  from a given dto.
+// Create creates new workspace and workspace-user record  from a given dto.
 func (service) Create(dto *CreateWorkspaceRequestDto, userId string) (*Workspace, *restErrors.RestErr) {
 	exist, err := workspaceRepo.GetByNameAndUserId(dto.Name, userId)
 	if err != nil && err.Status != http.StatusNotFound {
@@ -71,7 +71,7 @@ func (service) Create(dto *CreateWorkspaceRequestDto, userId string) (*Workspace
 	return workspace, nil
 }
 
-//Update updates the workspace name only ,updating K8sNamespace not allowed.
+// Update updates the workspace name only ,updating K8sNamespace not allowed.
 func (service) Update(dto *UpdateWorkspaceRequestDto, workspace *Workspace) *restErrors.RestErr {
 	exist, err := workspaceRepo.GetByNameAndUserId(dto.Name, workspace.UserId)
 	if err != nil && err.Status != http.StatusNotFound {
@@ -94,12 +94,12 @@ func (service) Update(dto *UpdateWorkspaceRequestDto, workspace *Workspace) *res
 	return nil
 }
 
-//GetById gets workspace by given id.
+// GetById gets workspace by given id.
 func (service) GetById(Id string) (*Workspace, *restErrors.RestErr) {
 	return workspaceRepo.GetById(Id)
 }
 
-//Delete workspace by given id for specific user
+// Delete workspace by given id for specific user
 func (service) Delete(workspace *Workspace) *restErrors.RestErr {
 	err := workspaceRepo.Delete(workspace)
 	if err != nil {
@@ -109,12 +109,12 @@ func (service) Delete(workspace *Workspace) *restErrors.RestErr {
 	return nil
 }
 
-//GetByUserId Finds workspaces by given userId
+// GetByUserId Finds workspaces by given userId
 func (service) GetByUserId(userId string) ([]*Workspace, *restErrors.RestErr) {
 	return workspaceRepo.GetByUserId(userId)
 }
 
-//AddWorkspaceMember creates new workspaceUser record for a given workspace
+// AddWorkspaceMember creates new workspaceUser record for a given workspace
 func (service) AddWorkspaceMember(workspace *Workspace, memberId string, role string) *restErrors.RestErr {
 	newWorkspaceUser := new(workspaceuser.WorkspaceUser)
 	newWorkspaceUser.ID = uuid.NewString()
@@ -125,7 +125,7 @@ func (service) AddWorkspaceMember(workspace *Workspace, memberId string, role st
 	return workspaceRepo.AddWorkspaceMember(workspace, newWorkspaceUser)
 }
 
-//DeleteWorkspaceMember removes workspaceUser record for a given workspace
+// DeleteWorkspaceMember removes workspaceUser record for a given workspace
 func (service) DeleteWorkspaceMember(workspace *Workspace, memberId string) *restErrors.RestErr {
 	member, err := workspaceRepo.GetWorkspaceMemberByWorkspaceIdAndUserId(workspace.ID, memberId)
 	if err != nil {
@@ -135,7 +135,7 @@ func (service) DeleteWorkspaceMember(workspace *Workspace, memberId string) *res
 	return workspaceRepo.DeleteWorkspaceMember(workspace, member)
 }
 
-//CountByUserId returns user's workspaces count
+// CountByUserId returns user's workspaces count
 func (service) CountByUserId(userId string) (int64, *restErrors.RestErr) {
 	return workspaceRepo.CountByUserId(userId)
 }

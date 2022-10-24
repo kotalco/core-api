@@ -27,7 +27,7 @@ var (
 	namespaceService    = k8s.NewNamespaceService()
 )
 
-//SignUp validate dto , create user , send verification token, create the default namespace and create the default workspace
+// SignUp validate dto , create user , send verification token, create the default namespace and create the default workspace
 func SignUp(c *fiber.Ctx) error {
 	dto := new(user.SignUpRequestDto)
 	if err := c.BodyParser(dto); err != nil {
@@ -87,7 +87,7 @@ func SignUp(c *fiber.Ctx) error {
 	return c.Status(http.StatusCreated).JSON(shared.NewResponse(new(user.UserResponseDto).Marshall(model)))
 }
 
-//SignIn creates bearer token for the yse
+// SignIn creates bearer token for the yse
 func SignIn(c *fiber.Ctx) error {
 	dto := new(user.SignInRequestDto)
 	if err := c.BodyParser(dto); err != nil {
@@ -108,9 +108,9 @@ func SignIn(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(session))
 }
 
-//SendEmailVerification send email verification for user who
-//users with email verification token got expired
-//users who didn't receive email verification and want to resent token
+// SendEmailVerification send email verification for user who
+// users with email verification token got expired
+// users who didn't receive email verification and want to resent token
 func SendEmailVerification(c *fiber.Ctx) error {
 	dto := new(user.SendEmailVerificationRequestDto)
 	if err := c.BodyParser(dto); err != nil {
@@ -291,8 +291,8 @@ func ResetPassword(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(resp))
 }
 
-//ChangePassword change user password
-//todo log all user token out
+// ChangePassword change user password
+// todo log all user token out
 func ChangePassword(c *fiber.Ctx) error {
 	userId := c.Locals("user").(token.UserDetails).ID
 	userDetails, err := userService.GetById(userId)
@@ -326,7 +326,7 @@ func ChangePassword(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(resp))
 }
 
-//ChangeEmail change user email and send verification token to the user email
+// ChangeEmail change user email and send verification token to the user email
 func ChangeEmail(c *fiber.Ctx) error {
 	userId := c.Locals("user").(token.UserDetails).ID
 	userDetails, err := userService.GetById(userId)
@@ -386,7 +386,7 @@ func Whoami(c *fiber.Ctx) error {
 
 }
 
-//CreateTOTP create time based one time password QR code so user can scan it with his mobile app
+// CreateTOTP create time based one time password QR code so user can scan it with his mobile app
 func CreateTOTP(c *fiber.Ctx) error {
 	userId := c.Locals("user").(token.UserDetails).ID
 	userDetails, err := userService.GetById(userId)
@@ -422,8 +422,8 @@ func CreateTOTP(c *fiber.Ctx) error {
 	return nil
 }
 
-//EnableTwoFactorAuth used one time when user scan the QR code to verify it scanned and configured correctly
-//then it enables two-factor auth for the user
+// EnableTwoFactorAuth used one time when user scan the QR code to verify it scanned and configured correctly
+// then it enables two-factor auth for the user
 func EnableTwoFactorAuth(c *fiber.Ctx) error {
 	userId := c.Locals("user").(token.UserDetails).ID
 	userDetails, err := userService.GetById(userId)
@@ -445,8 +445,8 @@ func EnableTwoFactorAuth(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(new(user.UserResponseDto).Marshall(model)))
 }
 
-//VerifyTOTP used after the login if the user enabled 2fa his bearer token will be limited to specific functions including this one
-//create new bearer token for the user after totp validation
+// VerifyTOTP used after the login if the user enabled 2fa his bearer token will be limited to specific functions including this one
+// create new bearer token for the user after totp validation
 func VerifyTOTP(c *fiber.Ctx) error {
 	userId := c.Locals("user").(token.UserDetails).ID
 	userDetails, err := userService.GetById(userId)

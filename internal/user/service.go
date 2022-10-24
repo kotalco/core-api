@@ -49,7 +49,7 @@ func (uService service) WithTransaction(txHandle *gorm.DB) IService {
 	return uService
 }
 
-//SignUp Creates new user
+// SignUp Creates new user
 func (service) SignUp(dto *SignUpRequestDto) (*User, *restErrors.RestErr) {
 	hashedPassword, err := hashing.Hash(dto.Password, 13)
 	if err != nil {
@@ -71,7 +71,7 @@ func (service) SignUp(dto *SignUpRequestDto) (*User, *restErrors.RestErr) {
 	return user, nil
 }
 
-//SignIn Log user in and  returns jwt token
+// SignIn Log user in and  returns jwt token
 func (service) SignIn(dto *SignInRequestDto) (*UserSessionResponseDto, *restErrors.RestErr) {
 	user, err := userRepository.GetByEmail(dto.Email)
 	if err != nil {
@@ -111,7 +111,7 @@ func (service) SignIn(dto *SignInRequestDto) (*UserSessionResponseDto, *restErro
 	return session, nil
 }
 
-//GetByEmail find user by email
+// GetByEmail find user by email
 func (service) GetByEmail(email string) (*User, *restErrors.RestErr) {
 	model, err := userRepository.GetByEmail(email)
 	if err != nil {
@@ -121,7 +121,7 @@ func (service) GetByEmail(email string) (*User, *restErrors.RestErr) {
 	return model, nil
 }
 
-//GetById get user by Id
+// GetById get user by Id
 func (service) GetById(ID string) (*User, *restErrors.RestErr) {
 	model, err := userRepository.GetById(ID)
 	if err != nil {
@@ -131,8 +131,8 @@ func (service) GetById(ID string) (*User, *restErrors.RestErr) {
 	return model, nil
 }
 
-//VerifyEmail change user isVerified to true
-//user can't sign in if this field is falsy
+// VerifyEmail change user isVerified to true
+// user can't sign in if this field is falsy
 func (service) VerifyEmail(model *User) *restErrors.RestErr {
 	model.IsEmailVerified = true
 	err := userRepository.Update(model)
@@ -142,7 +142,7 @@ func (service) VerifyEmail(model *User) *restErrors.RestErr {
 	return nil
 }
 
-//ResetPassword create new password for user used after user ForgetPassword
+// ResetPassword create new password for user used after user ForgetPassword
 func (service) ResetPassword(model *User, password string) *restErrors.RestErr {
 	hashedPassword, error := hashing.Hash(password, 13)
 	if error != nil {
@@ -160,7 +160,7 @@ func (service) ResetPassword(model *User, password string) *restErrors.RestErr {
 	return nil
 }
 
-//ChangePassword change user password  for authenticated users
+// ChangePassword change user password  for authenticated users
 func (service) ChangePassword(model *User, dto *ChangePasswordRequestDto) *restErrors.RestErr {
 
 	invalidPassError := hashing.VerifyHash(model.Password, dto.OldPassword)
@@ -184,7 +184,7 @@ func (service) ChangePassword(model *User, dto *ChangePasswordRequestDto) *restE
 	return nil
 }
 
-//ChangeEmail change user email for authenticated users
+// ChangeEmail change user email for authenticated users
 func (service) ChangeEmail(model *User, dto *ChangeEmailRequestDto) *restErrors.RestErr {
 
 	invalidPassError := hashing.VerifyHash(model.Password, dto.Password)
@@ -203,8 +203,8 @@ func (service) ChangeEmail(model *User, dto *ChangeEmailRequestDto) *restErrors.
 	return nil
 }
 
-//CreateTOTP Enables two-factor auth for users using qr-code
-//if the user requested another qr code he/she has to register the new one on the 2auth-app coz the old one became invalid
+// CreateTOTP Enables two-factor auth for users using qr-code
+// if the user requested another qr code he/she has to register the new one on the 2auth-app coz the old one became invalid
 func (service) CreateTOTP(model *User, dto *CreateTOTPRequestDto) (bytes.Buffer, *restErrors.RestErr) {
 
 	invalidPassError := hashing.VerifyHash(model.Password, dto.Password)
@@ -233,7 +233,7 @@ func (service) CreateTOTP(model *User, dto *CreateTOTPRequestDto) (bytes.Buffer,
 	return qrBytes, nil
 }
 
-//EnableTwoFactorAuth enables two-factor auth for the user after checking first time otp is valid
+// EnableTwoFactorAuth enables two-factor auth for the user after checking first time otp is valid
 func (service) EnableTwoFactorAuth(model *User, totp string) (*User, *restErrors.RestErr) {
 	if model.TwoFactorCipher == "" {
 		return nil, restErrors.NewBadRequestError("please create and register qr code first")
@@ -258,7 +258,7 @@ func (service) EnableTwoFactorAuth(model *User, totp string) (*User, *restErrors
 	return model, nil
 }
 
-//VerifyTOTP used after SignIn if the user enabled the 2fa to create another bearer token
+// VerifyTOTP used after SignIn if the user enabled the 2fa to create another bearer token
 func (service) VerifyTOTP(model *User, totp string) (*UserSessionResponseDto, *restErrors.RestErr) {
 	if !model.TwoFactorEnabled {
 		return nil, restErrors.NewBadRequestError("please enable your 2fa first")
@@ -288,7 +288,7 @@ func (service) VerifyTOTP(model *User, totp string) (*UserSessionResponseDto, *r
 	return session, nil
 }
 
-//DisableTwoFactorAuth disables two-factor auth for the user
+// DisableTwoFactorAuth disables two-factor auth for the user
 func (service) DisableTwoFactorAuth(model *User, dto *DisableTOTPRequestDto) *restErrors.RestErr {
 	invalidPassError := hashing.VerifyHash(model.Password, dto.Password)
 	if invalidPassError != nil {
@@ -309,7 +309,7 @@ func (service) DisableTwoFactorAuth(model *User, dto *DisableTOTPRequestDto) *re
 	return nil
 }
 
-//FindWhereIdInSlice returns a list of users which ids exist in the slice of ids passed as argument
+// FindWhereIdInSlice returns a list of users which ids exist in the slice of ids passed as argument
 func (service) FindWhereIdInSlice(ids []string) ([]*User, *restErrors.RestErr) {
 	return userRepository.FindWhereIdInSlice(ids)
 }

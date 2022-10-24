@@ -6,7 +6,6 @@ import (
 	"github.com/kotalco/cloud-api/internal/workspace"
 	"github.com/kotalco/cloud-api/pkg/token"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
-	"github.com/kotalco/community-api/pkg/logger"
 )
 
 func IsNamespace(c *fiber.Ctx) error {
@@ -18,13 +17,7 @@ func IsNamespace(c *fiber.Ctx) error {
 	//namespace exits as a body field
 	if namespace == "" { //namespace exits as body filed
 		body := make(map[string]interface{})
-		err := json.Unmarshal(c.Body(), &body)
-		if err != nil {
-			logger.Error("IS_NAMESPACE", err)
-			internalErr := restErrors.NewInternalServerError("something went wrong")
-			return c.Status(internalErr.Status).JSON(internalErr)
-		}
-
+		json.Unmarshal(c.Body(), &body)
 		_, ok := body["namespace"]
 		if ok { //user supported the namespace
 			namespace = body["namespace"].(string)

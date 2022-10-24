@@ -3,7 +3,9 @@ package api
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/websocket/v2"
+	"github.com/kotalco/cloud-api/api/handler/endpoint"
 	"github.com/kotalco/cloud-api/api/handler/subscription"
+	"github.com/kotalco/cloud-api/api/handler/svc"
 	"github.com/kotalco/cloud-api/api/handler/user"
 	"github.com/kotalco/cloud-api/api/handler/workspace"
 	"github.com/kotalco/cloud-api/pkg/middleware"
@@ -66,7 +68,10 @@ func MapUrl(app *fiber.App) {
 	licenses := v1.Group("subscriptions")
 	licenses.Get("/current", middleware.JWTProtected, middleware.TFAProtected, subscription.Current)
 
-	//community routes
+	//endpoints group
+	endpoints := v1.Group("endpoints")
+	endpoints.Post("/", middleware.JWTProtected, middleware.TFAProtected, middleware.IsNamespace, endpoint.Create)
+
 	mapDeploymentUrl(v1)
 }
 
@@ -114,6 +119,10 @@ func mapDeploymentUrl(v1 fiber.Router) {
 	storageClasses.Get("/:name", middleware.IsReader, storage_class.ValidateStorageClassExist, storage_class.Get)
 	storageClasses.Put("/:name", middleware.IsWriter, storage_class.ValidateStorageClassExist, storage_class.Update)
 	storageClasses.Delete("/:name", middleware.IsAdmin, storage_class.ValidateStorageClassExist, storage_class.Delete)
+
+	//services group
+	services := coreGroup.Group("services")
+	services.Get("/", middleware.JWTProtected, middleware.TFAProtected, middleware.IsNamespace, svc.ListServices)
 
 	//ethereum2 group
 	ethereum2 := v1.Group("ethereum2", middleware.JWTProtected, middleware.TFAProtected, middleware.IsNamespace)
