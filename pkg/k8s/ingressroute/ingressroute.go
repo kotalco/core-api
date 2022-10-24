@@ -25,7 +25,9 @@ type IIngressRoute interface {
 	List(namesapce string) (*traefikv1alpha1.IngressRouteList, *restErrors.RestErr)
 	// Get takes name and namespace of the ingressRoute, and returns the corresponding ingressRoute object, and an error if there is any.
 	Get(name string, namespace string) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr)
-	// Update takes name, namespace and newName of the ingress-route, finds the ingress-route record and updates it. Returns an error, if there is any.
+	// Update takes IngressRouteDto, finds the ingress-route record and updates it. Returns an error, if there is any.
+	// the system will only updates the service, and the routes of this service
+	// the system won't update ingress-route name or namespace
 	Update(dto *IngressRouteDto) *restErrors.RestErr
 	// Delete takes name  and namespace of the ingressRoute, check if it exists and delete it if found. Returns an error if one occurs.
 	Delete(name string, namespace string) *restErrors.RestErr
@@ -100,8 +102,7 @@ func (i *ingressroute) Get(name string, namespace string) (*traefikv1alpha1.Ingr
 func (i *ingressroute) Update(dto *IngressRouteDto) *restErrors.RestErr {
 	record, err := i.Get(dto.Name, dto.Namespace)
 	if err != nil {
-		go logger.Error(i.Update, err)
-		return restErrors.NewInternalServerError("something went wrong")
+		return err
 	}
 
 	routes := make([]traefikv1alpha1.Route, 0)
