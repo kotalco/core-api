@@ -8,7 +8,10 @@ import (
 	"net/http"
 )
 
-var svcService = k8svc.NewService()
+var (
+	svcService        = k8svc.NewService()
+	availableProtocol = k8svc.AvailableProtocol
+)
 
 // List accept namespace, returns a list of names of corv1.Service
 // list returns only service with API enabled
@@ -24,7 +27,7 @@ func List(c *fiber.Ctx) error {
 	for _, corv1Service := range svcList.Items { // iterate over corv1.ServiceList to create svcDto
 		ApiEnabled := false
 		for _, port := range corv1Service.Spec.Ports { // iterate over service ports
-			if k8svc.AvailableProtocol(port.Name) { // check if service has API enabled (valid protocols)
+			if availableProtocol(port.Name) { // check if service has API enabled (valid protocols)
 				ApiEnabled = true
 			}
 		}
