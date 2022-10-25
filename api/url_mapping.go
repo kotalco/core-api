@@ -125,7 +125,7 @@ func mapDeploymentUrl(v1 fiber.Router) {
 
 	//services group
 	services := coreGroup.Group("services")
-	services.Get("/", middleware.JWTProtected, middleware.TFAProtected, middleware.IsNamespace, svc.ListServices)
+	services.Get("/", middleware.JWTProtected, middleware.TFAProtected, middleware.IsNamespace, svc.List)
 
 	//ethereum2 group
 	ethereum2 := v1.Group("ethereum2", middleware.JWTProtected, middleware.TFAProtected, middleware.IsNamespace)

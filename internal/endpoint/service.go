@@ -2,6 +2,7 @@ package endpoint
 
 import (
 	"github.com/kotalco/cloud-api/pkg/k8s/ingressroute"
+	k8svc "github.com/kotalco/cloud-api/pkg/k8s/svc"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -26,7 +27,7 @@ func NewService() IService {
 func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service, namespace string) *restErrors.RestErr {
 	ports := make([]string, 0)
 	for _, v := range svc.Spec.Ports {
-		if availableProtocol(v.Name) {
+		if k8svc.AvailableProtocol(v.Name) {
 			ports = append(ports, v.Name)
 		}
 	}
@@ -68,13 +69,4 @@ func (s *service) Get(name string, namespace string) (*EndpointDto, *restErrors.
 
 func (s *service) Delete(name string, namespace string) *restErrors.RestErr {
 	return ingressRoutesService.Delete(name, namespace)
-}
-
-var availableProtocol = func(protocol string) bool {
-	switch protocol {
-	case "ws", "p2p":
-		return false
-	default:
-		return true
-	}
 }
