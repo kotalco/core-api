@@ -1,10 +1,11 @@
 package endpoint
 
 import (
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/kotalco/cloud-api/internal/endpoint"
 	"github.com/kotalco/cloud-api/internal/workspace"
-	"github.com/kotalco/cloud-api/pkg/svc"
+	k8svc "github.com/kotalco/cloud-api/pkg/k8s/svc"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/shared"
 	"net/http"
@@ -12,7 +13,7 @@ import (
 
 var (
 	endpointService = endpoint.NewService()
-	svcService      = svc.NewService()
+	svcService      = k8svc.NewService()
 )
 
 // Create accept  endpoint.CreateEndpointDto , creates the endpoint and returns success or err if any
@@ -31,12 +32,24 @@ func Create(c *fiber.Ctx) error {
 	}
 
 	//get service
-	svcResource, err := svcService.Get(dto.ServiceName, workspaceModel.K8sNamespace)
+	corev1Svc, err := svcService.Get(dto.ServiceName, workspaceModel.K8sNamespace)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	err = endpointService.Create(dto, svcResource, workspaceModel.K8sNamespace)
+	//check if service has API enabled
+	validProtocol := false
+	for _, v := range corev1Svc.Spec.Ports {
+		if k8svc.AvailableProtocol(v.Name) {
+			validProtocol = true
+		}
+	}
+	if validProtocol == false {
+		badReq := restErrors.NewBadRequestError(fmt.Sprintf("service %s doesn't have API enabled", corev1Svc.Name))
+		return c.Status(badReq.Status).JSON(badReq)
+	}
+
+	err = endpointService.Create(dto, corev1Svc, workspaceModel.K8sNamespace)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}

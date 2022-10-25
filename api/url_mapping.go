@@ -30,7 +30,7 @@ func MapUrl(app *fiber.App) {
 
 	//subscription
 	v1.Post("subscriptions/acknowledgment", subscription.Acknowledgement)
-	v1.Use(middleware.IsSubscription)
+	//v1.Use(middleware.IsSubscription)
 
 	//users group
 	v1.Post("sessions", user.SignIn)
@@ -125,7 +125,7 @@ func mapDeploymentUrl(v1 fiber.Router) {
 
 	//services group
 	services := coreGroup.Group("services")
-	services.Get("/", middleware.JWTProtected, middleware.TFAProtected, middleware.IsNamespace, svc.ListServices)
+	services.Get("/", middleware.JWTProtected, middleware.TFAProtected, middleware.IsNamespace, svc.List)
 
 	//ethereum2 group
 	ethereum2 := v1.Group("ethereum2", middleware.JWTProtected, middleware.TFAProtected, middleware.IsNamespace)
