@@ -22,10 +22,14 @@ func List(c *fiber.Ctx) error {
 
 	responseDto := make([]k8svc.SvcDto, 0)
 	for _, corv1Service := range svcList.Items { // iterate over corv1.ServiceList to create svcDto
+		ApiEnabled := false
 		for _, port := range corv1Service.Spec.Ports { // iterate over service ports
 			if k8svc.AvailableProtocol(port.Name) { // check if service has API enabled (valid protocols)
-				responseDto = append(responseDto, k8svc.SvcDto{Name: port.Name})
+				ApiEnabled = true
 			}
+		}
+		if ApiEnabled == true {
+			responseDto = append(responseDto, k8svc.SvcDto{Name: corv1Service.Name})
 		}
 	}
 
