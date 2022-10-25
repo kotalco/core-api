@@ -12,8 +12,9 @@ import (
 )
 
 var (
-	endpointService = endpoint.NewService()
-	svcService      = k8svc.NewService()
+	endpointService   = endpoint.NewService()
+	svcService        = k8svc.NewService()
+	availableProtocol = k8svc.AvailableProtocol
 )
 
 // Create accept  endpoint.CreateEndpointDto , creates the endpoint and returns success or err if any
@@ -40,7 +41,7 @@ func Create(c *fiber.Ctx) error {
 	//check if service has API enabled
 	validProtocol := false
 	for _, v := range corev1Svc.Spec.Ports {
-		if k8svc.AvailableProtocol(v.Name) {
+		if availableProtocol(v.Name) {
 			validProtocol = true
 		}
 	}

@@ -94,6 +94,7 @@ func TestMain(m *testing.M) {
 	endpointService = &endpointServiceMock{}
 	svcService = &svcServiceMock{}
 	code := m.Run()
+
 	os.Exit(code)
 }
 
@@ -113,10 +114,13 @@ func TestCreate(t *testing.T) {
 
 	t.Run("create endpoint should pass", func(t *testing.T) {
 		svcServiceGetFunc = func(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {
-			return &corev1.Service{}, nil
+			return &corev1.Service{Spec: corev1.ServiceSpec{Ports: []corev1.ServicePort{{}}}}, nil
 		}
 		endpointServiceCreateFunc = func(dto *endpoint.CreateEndpointDto, svc *corev1.Service, namespace string) *restErrors.RestErr {
 			return nil
+		}
+		availableProtocol = func(protocol string) bool {
+			return true
 		}
 		body, resp := newFiberCtx(validDto, Create, locals)
 		var result map[string]shared.SuccessMessage
@@ -166,10 +170,13 @@ func TestCreate(t *testing.T) {
 
 	t.Run("create endpoint should throw if can't endpointService.create throws", func(t *testing.T) {
 		svcServiceGetFunc = func(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {
-			return &corev1.Service{}, nil
+			return &corev1.Service{Spec: corev1.ServiceSpec{Ports: []corev1.ServicePort{{}}}}, nil
 		}
 		endpointServiceCreateFunc = func(dto *endpoint.CreateEndpointDto, svc *corev1.Service, namespace string) *restErrors.RestErr {
 			return restErrors.NewInternalServerError("something went wrong")
+		}
+		availableProtocol = func(protocol string) bool {
+			return true
 		}
 		body, resp := newFiberCtx(validDto, Create, locals)
 		var result restErrors.RestErr
@@ -178,6 +185,21 @@ func TestCreate(t *testing.T) {
 
 		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
 		assert.EqualValues(t, "something went wrong", result.Message)
+	})
+	t.Run("create endpoint should throw if there is no valid protocols", func(t *testing.T) {
+		svcServiceGetFunc = func(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {
+			return &corev1.Service{Spec: corev1.ServiceSpec{Ports: []corev1.ServicePort{{}}}}, nil
+		}
+		availableProtocol = func(protocol string) bool {
+			return false
+		}
+		body, resp := newFiberCtx(validDto, Create, locals)
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		assert.Nil(t, err)
+
+		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
+		assert.EqualValues(t, "service  doesn't have API enabled", result.Message)
 	})
 
 }

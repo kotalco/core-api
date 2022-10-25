@@ -71,19 +71,6 @@ func TestService_Create(t *testing.T) {
 		assert.EqualValues(t, http.StatusInternalServerError, err.Status)
 		assert.EqualValues(t, "something went wrong", err.Message)
 	})
-	t.Run("create endpoint should throw if service has no invalid ports", func(t *testing.T) {
-		ingressRouteCreateFunc = func(dto *ingressroute.IngressRouteDto) *restErrors.RestErr {
-			return nil
-		}
-
-		createDto := &CreateEndpointDto{}
-		svc := &corev1.Service{Spec: corev1.ServiceSpec{
-			Ports: []corev1.ServicePort{},
-		}}
-		err := endpointService.Create(createDto, svc, "")
-		assert.EqualValues(t, http.StatusBadRequest, err.Status)
-		assert.EqualValues(t, "service invalid ports", err.Message)
-	})
 }
 
 func TestService_List(t *testing.T) {

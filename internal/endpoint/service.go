@@ -32,11 +32,6 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service, namespace 
 		}
 	}
 
-	//check ports availability
-	if len(ports) == 0 {
-		return restErrors.NewBadRequestError("service invalid ports")
-	}
-
 	ingresRouteDto := &ingressroute.IngressRouteDto{
 		Name:        dto.Name,
 		Namespace:   namespace,
