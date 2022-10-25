@@ -74,10 +74,10 @@ func MapUrl(app *fiber.App) {
 
 	//endpoints group
 	endpoints := v1.Group("endpoints")
-	endpoints.Post("/", middleware.JWTProtected, middleware.TFAProtected, middleware.IsWorkspace, middleware.ValidateWorkspaceMembership, endpoint.Create)
-	endpoints.Get("/", middleware.JWTProtected, middleware.TFAProtected, middleware.IsWorkspace, middleware.ValidateWorkspaceMembership, endpoint.List)
-	endpoints.Get("/:name", middleware.JWTProtected, middleware.TFAProtected, middleware.IsWorkspace, middleware.ValidateWorkspaceMembership, endpoint.Get)
-	endpoints.Delete("/:name", middleware.JWTProtected, middleware.TFAProtected, middleware.IsWorkspace, middleware.ValidateWorkspaceMembership, endpoint.Delete)
+	endpoints.Post("/", middleware.JWTProtected, middleware.TFAProtected, middleware.IsWorkspace, middleware.ValidateWorkspaceMembership, middleware.IsWriter, endpoint.Create)
+	endpoints.Get("/", middleware.JWTProtected, middleware.TFAProtected, middleware.IsWorkspace, middleware.ValidateWorkspaceMembership, middleware.IsReader, endpoint.List)
+	endpoints.Get("/:name", middleware.JWTProtected, middleware.TFAProtected, middleware.IsWorkspace, middleware.ValidateWorkspaceMembership, middleware.IsReader, endpoint.Get)
+	endpoints.Delete("/:name", middleware.JWTProtected, middleware.TFAProtected, middleware.IsWorkspace, middleware.ValidateWorkspaceMembership, middleware.IsAdmin, endpoint.Delete)
 
 	mapDeploymentUrl(v1)
 }
@@ -87,7 +87,7 @@ func mapDeploymentUrl(v1 fiber.Router) {
 	chainlinkGroup := v1.Group("chainlink", middleware.JWTProtected, middleware.TFAProtected, middleware.DeploymentsWorkspaceProtected, middleware.ValidateWorkspaceMembership)
 	chainlinkNodes := chainlinkGroup.Group("nodes")
 
-	chainlinkNodes.Post("/", middleware.IsAdmin, chainlink.Create)
+	chainlinkNodes.Post("/", middleware.IsWriter, chainlink.Create)
 	chainlinkNodes.Head("/", middleware.IsReader, chainlink.Count)
 	chainlinkNodes.Get("/", middleware.IsReader, chainlink.List)
 	chainlinkNodes.Get("/:name", middleware.IsReader, chainlink.ValidateNodeExist, chainlink.Get)
