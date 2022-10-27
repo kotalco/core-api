@@ -54,26 +54,31 @@ func MapUrl(app *fiber.App) {
 	workspaces := v1.Group("workspaces")
 	workspaces.Use(middleware.JWTProtected, middleware.TFAProtected)
 	workspaces.Post("/", workspace.Create)
-	workspaces.Patch("/:id", middleware.IsWorkspace, middleware.IsWriter, workspace.Update)
-	workspaces.Delete("/:id", middleware.IsWorkspace, middleware.IsWriter, workspace.Delete)
+	workspaces.Patch("/:id", workspace.ValidateWorkspaceExist, middleware.IsWriter, workspace.Update)
+	workspaces.Delete("/:id", workspace.ValidateWorkspaceExist, middleware.IsWriter, workspace.Delete)
 	workspaces.Get("/", workspace.GetByUserId)
-	workspaces.Get("/:id", middleware.IsWorkspace, middleware.IsReader, workspace.GetById)
-	workspaces.Post("/:id/members", middleware.IsWorkspace, workspace.AddMember)
-	workspaces.Post("/:id/leave", middleware.IsWorkspace, workspace.Leave)
+	workspaces.Get("/:id", workspace.ValidateWorkspaceExist, middleware.IsReader, workspace.GetById)
+	workspaces.Post("/:id/members", workspace.ValidateWorkspaceExist, workspace.AddMember)
+	workspaces.Post("/:id/leave", workspace.ValidateWorkspaceExist, workspace.Leave)
 	workspaces.Delete("/:id/members/:user_id", middleware.IsWorkspace, workspace.RemoveMember)
-	workspaces.Get("/:id/members", middleware.IsWorkspace, workspace.Members)
-	workspaces.Patch("/:id/members/:user_id", middleware.IsWorkspace, workspace.UpdateWorkspaceUser)
+	workspaces.Get("/:id/members", workspace.ValidateWorkspaceExist, workspace.Members)
+	workspaces.Patch("/:id/members/:user_id", workspace.ValidateWorkspaceExist, workspace.UpdateWorkspaceUser)
 
 	//license group
 	licenses := v1.Group("subscriptions")
 	licenses.Get("/current", middleware.JWTProtected, middleware.TFAProtected, subscription.Current)
 
+	//svc group
+	//services group
+	svcGroup := v1.Group("/core/services")
+	svcGroup.Get("/", middleware.JWTProtected, middleware.TFAProtected, middleware.IsWorkspace, svc.List)
+
 	//endpoints group
 	endpoints := v1.Group("endpoints")
-	endpoints.Post("/", middleware.JWTProtected, middleware.TFAProtected, middleware.IsNamespace, endpoint.Create)
-	endpoints.Get("/", middleware.JWTProtected, middleware.TFAProtected, middleware.IsNamespace, endpoint.List)
-	endpoints.Get("/:name", middleware.JWTProtected, middleware.TFAProtected, middleware.IsNamespace, endpoint.Get)
-	endpoints.Delete("/:name", middleware.JWTProtected, middleware.TFAProtected, middleware.IsNamespace, endpoint.Delete)
+	endpoints.Post("/", middleware.JWTProtected, middleware.TFAProtected, middleware.IsWorkspace, endpoint.Create)
+	endpoints.Get("/", middleware.JWTProtected, middleware.TFAProtected, middleware.IsWorkspace, endpoint.List)
+	endpoints.Get("/:name", middleware.JWTProtected, middleware.TFAProtected, middleware.IsWorkspace, endpoint.Get)
+	endpoints.Delete("/:name", middleware.JWTProtected, middleware.TFAProtected, middleware.IsWorkspace, endpoint.Delete)
 
 	mapDeploymentUrl(v1)
 }
@@ -122,10 +127,6 @@ func mapDeploymentUrl(v1 fiber.Router) {
 	storageClasses.Get("/:name", middleware.IsReader, storage_class.ValidateStorageClassExist, storage_class.Get)
 	storageClasses.Put("/:name", middleware.IsWriter, storage_class.ValidateStorageClassExist, storage_class.Update)
 	storageClasses.Delete("/:name", middleware.IsAdmin, storage_class.ValidateStorageClassExist, storage_class.Delete)
-
-	//services group
-	services := coreGroup.Group("services")
-	services.Get("/", middleware.JWTProtected, middleware.TFAProtected, middleware.IsNamespace, svc.List)
 
 	//ethereum2 group
 	ethereum2 := v1.Group("ethereum2", middleware.JWTProtected, middleware.TFAProtected, middleware.DeploymentsWorkspaceProtected)

@@ -346,3 +346,34 @@ func UpdateWorkspaceUser(c *fiber.Ctx) error {
 		Message: "User role changed successfully",
 	}))
 }
+
+func ValidateWorkspaceExist(c *fiber.Ctx) error {
+	workspaceId := c.Params("id")
+	userId := c.Locals("user").(token.UserDetails).ID
+
+	model, err := workspaceService.GetById(workspaceId)
+	if err != nil {
+		if err.Status == http.StatusNotFound {
+			notFoundErr := restErrors.NewNotFoundError("no such record")
+			return c.Status(notFoundErr.Status).JSON(notFoundErr)
+		}
+		return c.Status(err.Status).JSON(err)
+	}
+
+	validUser := false
+	for _, v := range model.WorkspaceUsers {
+		if v.UserId == userId {
+			validUser = true
+			c.Locals("workspaceUser", v)
+			break
+		}
+	}
+	if !validUser {
+		notFoundErr := restErrors.NewNotFoundError("no such record")
+		return c.Status(notFoundErr.Status).JSON(notFoundErr)
+	}
+
+	c.Locals("workspace", *model)
+
+	return c.Next()
+}

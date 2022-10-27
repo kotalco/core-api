@@ -5,7 +5,6 @@ import (
 	"github.com/kotalco/cloud-api/internal/workspace"
 	"github.com/kotalco/cloud-api/pkg/token"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
-	"net/http"
 )
 
 var workspaceRepo = workspace.NewRepository()
@@ -13,16 +12,21 @@ var workspaceRepo = workspace.NewRepository()
 // IsWorkspace check if user exits in the workspace, creates workspace, workspaceUser locals
 // used to protect cloud-api handlers that's need workspace
 func IsWorkspace(c *fiber.Ctx) error {
-	workspaceId := c.Params("id")
 	userId := c.Locals("user").(token.UserDetails).ID
+	var model *workspace.Workspace
+	var err *restErrors.RestErr
 
-	model, err := workspaceRepo.GetById(workspaceId)
-	if err != nil {
-		if err.Status == http.StatusNotFound {
-			notFoundErr := restErrors.NewNotFoundError("no such record")
-			return c.Status(notFoundErr.Status).JSON(notFoundErr)
+	//get workspace model
+	if c.Query("workspace_id") != "" {
+		model, err = workspaceRepo.GetById(c.Query("workspace_id"))
+		if err != nil {
+			return c.Status(err.Status).JSON(err)
 		}
-		return c.Status(err.Status).JSON(err)
+	} else {
+		model, err = workspaceRepo.GetByNamespace("default")
+		if err != nil {
+			return c.Status(err.Status).JSON(err)
+		}
 	}
 
 	validUser := false
@@ -43,8 +47,9 @@ func IsWorkspace(c *fiber.Ctx) error {
 	return c.Next()
 }
 
-// DeploymentsWorkspaceProtected validate if user exist in the workspace, creates namespace local to be used by the community-api
-// used to protect deployments handlers
+// DeploymentsWorkspaceProtected validate if user exist in the workspace,
+//create workspace, workspace locals  to be used by cloud-api handlers
+//creates namespace local to be used by the community-api handler
 func DeploymentsWorkspaceProtected(c *fiber.Ctx) error {
 	userId := c.Locals("user").(token.UserDetails).ID
 	var model *workspace.Workspace
