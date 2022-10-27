@@ -30,7 +30,7 @@ func MapUrl(app *fiber.App) {
 
 	//subscription
 	v1.Post("subscriptions/acknowledgment", subscription.Acknowledgement)
-	//v1.Use(middleware.IsSubscription)
+	v1.Use(middleware.IsSubscription)
 
 	//users group
 	v1.Post("sessions", user.SignIn)
@@ -69,7 +69,6 @@ func MapUrl(app *fiber.App) {
 	licenses.Get("/current", middleware.JWTProtected, middleware.TFAProtected, subscription.Current)
 
 	//svc group
-	//services group
 	svcGroup := v1.Group("/core/services")
 	svcGroup.Get("/", middleware.JWTProtected, middleware.TFAProtected, middleware.IsWorkspace, svc.List)
 
