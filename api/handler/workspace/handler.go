@@ -347,9 +347,9 @@ func UpdateWorkspaceUser(c *fiber.Ctx) error {
 	}))
 }
 
+// ValidateWorkspaceExist checks if the workspace_id (id) which passed as query param exist, creates workspace local
 func ValidateWorkspaceExist(c *fiber.Ctx) error {
 	workspaceId := c.Params("id")
-	userId := c.Locals("user").(token.UserDetails).ID
 
 	model, err := workspaceService.GetById(workspaceId)
 	if err != nil {
@@ -358,19 +358,6 @@ func ValidateWorkspaceExist(c *fiber.Ctx) error {
 			return c.Status(notFoundErr.Status).JSON(notFoundErr)
 		}
 		return c.Status(err.Status).JSON(err)
-	}
-
-	validUser := false
-	for _, v := range model.WorkspaceUsers {
-		if v.UserId == userId {
-			validUser = true
-			c.Locals("workspaceUser", v)
-			break
-		}
-	}
-	if !validUser {
-		notFoundErr := restErrors.NewNotFoundError("no such record")
-		return c.Status(notFoundErr.Status).JSON(notFoundErr)
 	}
 
 	c.Locals("workspace", *model)

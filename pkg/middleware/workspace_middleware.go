@@ -9,10 +9,8 @@ import (
 
 var workspaceRepo = workspace.NewRepository()
 
-// IsWorkspace check if user exits in the workspace, creates workspace, workspaceUser locals
-// used to protect cloud-api handlers that's need workspace
+// IsWorkspace checks for workspace_id passed as query string to get the workspace model, if the id isn't passed it gets the default workspace, creates workspace local
 func IsWorkspace(c *fiber.Ctx) error {
-	userId := c.Locals("user").(token.UserDetails).ID
 	var model *workspace.Workspace
 	var err *restErrors.RestErr
 
@@ -29,29 +27,13 @@ func IsWorkspace(c *fiber.Ctx) error {
 		}
 	}
 
-	validUser := false
-	for _, v := range model.WorkspaceUsers {
-		if v.UserId == userId {
-			validUser = true
-			c.Locals("workspaceUser", v)
-			break
-		}
-	}
-	if !validUser {
-		notFoundErr := restErrors.NewNotFoundError("no such record")
-		return c.Status(notFoundErr.Status).JSON(notFoundErr)
-	}
-
 	c.Locals("workspace", *model)
-
 	return c.Next()
 }
 
-// DeploymentsWorkspaceProtected validate if user exist in the workspace,
-//create workspace, workspace locals  to be used by cloud-api handlers
-//creates namespace local to be used by the community-api handler
+// DeploymentsWorkspaceProtected checks for the workspace_id passed as query string or as a body field to get the workspace model, if not passed it gets the default workspace
+// creates workspace model local, and namespace name local
 func DeploymentsWorkspaceProtected(c *fiber.Ctx) error {
-	userId := c.Locals("user").(token.UserDetails).ID
 	var model *workspace.Workspace
 	var workspaceId string
 	var err *restErrors.RestErr
@@ -82,9 +64,19 @@ func DeploymentsWorkspaceProtected(c *fiber.Ctx) error {
 		}
 	}
 
+	c.Locals("workspace", *model)
+	c.Locals("namespace", model.K8sNamespace)
+	return c.Next()
+}
+
+// ValidateWorkspaceMembership validates if the user belongs to the current workspace, creates workspaceUser local
+func ValidateWorkspaceMembership(c *fiber.Ctx) error {
+	workspaceModel := c.Locals("workspace").(workspace.Workspace)
+	userId := c.Locals("user").(token.UserDetails).ID
+
 	//check if user exist in the workspace
 	validUser := false
-	for _, v := range model.WorkspaceUsers {
+	for _, v := range workspaceModel.WorkspaceUsers {
 		if v.UserId == userId {
 			validUser = true
 			c.Locals("workspaceUser", v)
@@ -92,10 +84,9 @@ func DeploymentsWorkspaceProtected(c *fiber.Ctx) error {
 		}
 	}
 	if !validUser {
-		notFoundErr := restErrors.NewNotFoundError("no such record")
+		notFoundErr := restErrors.NewForbiddenError("you ain't a member of this workspace ")
 		return c.Status(notFoundErr.Status).JSON(notFoundErr)
 	}
 
-	c.Locals("namespace", model.K8sNamespace)
 	return c.Next()
 }
