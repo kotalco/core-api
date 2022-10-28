@@ -56,8 +56,11 @@ func (i *ingressroute) Create(dto *IngressRouteDto) *restErrors.RestErr {
 			Namespace: dto.Namespace,
 		},
 		Spec: traefikv1alpha1.IngressRouteSpec{
-			EntryPoints: []string{"web"},
+			EntryPoints: []string{"websecure"},
 			Routes:      routes,
+			TLS: &traefikv1alpha1.TLS{
+				CertResolver: "myresolver",
+			},
 		},
 	}
 	err := k8s.K8sClient.Create(context.Background(), route)
