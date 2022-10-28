@@ -346,3 +346,21 @@ func UpdateWorkspaceUser(c *fiber.Ctx) error {
 		Message: "User role changed successfully",
 	}))
 }
+
+// ValidateWorkspaceExist checks if the workspace_id (id) which passed as query param exist, creates workspace local
+func ValidateWorkspaceExist(c *fiber.Ctx) error {
+	workspaceId := c.Params("id")
+
+	model, err := workspaceService.GetById(workspaceId)
+	if err != nil {
+		if err.Status == http.StatusNotFound {
+			notFoundErr := restErrors.NewNotFoundError("no such record")
+			return c.Status(notFoundErr.Status).JSON(notFoundErr)
+		}
+		return c.Status(err.Status).JSON(err)
+	}
+
+	c.Locals("workspace", *model)
+
+	return c.Next()
+}
