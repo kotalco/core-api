@@ -20,6 +20,8 @@ type SubscriptionDto struct {
 	Invoice                interface{} `json:"invoice,omitempty"`
 	DefaultPaymentMethodId string      `json:"default_payment_method_id"`
 	Attached               bool        `json:"attached"`
+	TrialStartAt           int64       `json:"trial_start_at"`
+	TrialEndAt             int64       `json:"trial_end_at"`
 }
 type LicenseAcknowledgmentDto struct {
 	Signature    string          `json:"signature"`

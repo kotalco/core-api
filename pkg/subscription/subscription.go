@@ -17,7 +17,7 @@ type SubscriptionDetailsDto struct {
 var IsValid = func() bool {
 	if SubscriptionDetails == nil {
 		return false
-	} else if !(SubscriptionDetails.Status == "active" || SubscriptionDetails.Status == "past_due") {
+	} else if !(SubscriptionDetails.Status == "active" || SubscriptionDetails.Status == "past_due" || SubscriptionDetails.Status == "trialing") {
 		Reset()
 		return false
 	}
