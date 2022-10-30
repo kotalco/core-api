@@ -42,8 +42,9 @@ func (i *ingressroute) Create(dto *IngressRouteDto) *restErrors.RestErr {
 			Services: []traefikv1alpha1.Service{
 				{
 					LoadBalancerSpec: traefikv1alpha1.LoadBalancerSpec{
-						Name: dto.ServiceName,
-						Port: intstr.IntOrString{Type: intstr.String, StrVal: dto.Ports[k]},
+						Name:      dto.ServiceName,
+						Namespace: dto.Namespace, // find the service in the namespace of the ingressroute
+						Port:      intstr.IntOrString{Type: intstr.String, StrVal: dto.Ports[k]},
 					},
 				},
 			},
