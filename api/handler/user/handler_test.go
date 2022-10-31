@@ -11,7 +11,6 @@ import (
 	"github.com/kotalco/cloud-api/pkg/token"
 	"gorm.io/gorm"
 	"io/ioutil"
-	corev1 "k8s.io/api/core/v1"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -138,7 +137,7 @@ func (vService verificationServiceMock) Resend(userId string) (string, *restErro
 	return ResendFunc(userId)
 }
 
-//Mail Service mocks
+// Mail Service mocks
 var (
 	SignUpMailFunc              func(dto *sendgrid.MailRequestDto) *restErrors.RestErr
 	ResendEmailVerificationFunc func(dto *sendgrid.MailRequestDto) *restErrors.RestErr
@@ -165,16 +164,17 @@ func (mailServiceMock) WorkspaceInvitation(dto *sendgrid.WorkspaceInvitationMail
 Workspace service Mocks
 */
 var (
-	WorkspaceWithTransaction  func(txHandle *gorm.DB) workspace.IService
-	CreateWorkspaceFunc       func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr)
-	UpdateWorkspaceFunc       func(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) *restErrors.RestErr
-	DeleteWorkspace           func(workspace *workspace.Workspace) *restErrors.RestErr
-	GetWorkspaceByIdFunc      func(Id string) (*workspace.Workspace, *restErrors.RestErr)
-	GetWorkspacesByUserIdFunc func(userId string) ([]*workspace.Workspace, *restErrors.RestErr)
-	addWorkspaceMemberFunc    func(workspace *workspace.Workspace, memberId string, role string) *restErrors.RestErr
-	DeleteWorkspaceMemberFunc func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr
-	CountByUserIdFunc         func(userId string) (int64, *restErrors.RestErr)
-	UpdateWorkspaceUserFunc   func(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) *restErrors.RestErr
+	WorkspaceWithTransaction       func(txHandle *gorm.DB) workspace.IService
+	CreateWorkspaceFunc            func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr)
+	UpdateWorkspaceFunc            func(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) *restErrors.RestErr
+	DeleteWorkspace                func(workspace *workspace.Workspace) *restErrors.RestErr
+	GetWorkspaceByIdFunc           func(Id string) (*workspace.Workspace, *restErrors.RestErr)
+	GetWorkspacesByUserIdFunc      func(userId string) ([]*workspace.Workspace, *restErrors.RestErr)
+	addWorkspaceMemberFunc         func(workspace *workspace.Workspace, memberId string, role string) *restErrors.RestErr
+	DeleteWorkspaceMemberFunc      func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr
+	CountByUserIdFunc              func(userId string) (int64, *restErrors.RestErr)
+	UpdateWorkspaceUserFunc        func(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) *restErrors.RestErr
+	CreateUserDefaultWorkspaceFunc func(userId string) *restErrors.RestErr
 )
 
 type workspaceServiceMock struct{}
@@ -216,29 +216,8 @@ func (workspaceServiceMock) CountByUserId(userId string) (int64, *restErrors.Res
 func (workspaceServiceMock) UpdateWorkspaceUser(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) *restErrors.RestErr {
 	return UpdateWorkspaceUserFunc(workspaceUser, dto)
 }
-
-/*
-Namespace service Mocks
-*/
-
-var (
-	CreateNamespaceFunc func(name string) *restErrors.RestErr
-	GetNamespaceFunc    func(name string) (*corev1.Namespace, *restErrors.RestErr)
-	DeleteNamespaceFunc func(name string) *restErrors.RestErr
-)
-
-type namespaceServiceMock struct{}
-
-func (namespaceServiceMock) Create(name string) *restErrors.RestErr {
-	return CreateNamespaceFunc(name)
-}
-
-func (namespaceServiceMock) Get(name string) (*corev1.Namespace, *restErrors.RestErr) {
-	return GetNamespaceFunc(name)
-}
-
-func (namespaceServiceMock) Delete(name string) *restErrors.RestErr {
-	return DeleteNamespaceFunc(name)
+func (wService workspaceServiceMock) CreateUserDefaultWorkspace(userId string) *restErrors.RestErr {
+	return CreateUserDefaultWorkspaceFunc(userId)
 }
 
 func TestMain(m *testing.M) {
@@ -246,7 +225,6 @@ func TestMain(m *testing.M) {
 	verificationService = &verificationServiceMock{}
 	mailService = &mailServiceMock{}
 	workspaceService = &workspaceServiceMock{}
-	namespaceService = &namespaceServiceMock{}
 
 	sqlclient.OpenDBConnection()
 
@@ -314,7 +292,7 @@ func TestSignUp(t *testing.T) {
 			return responseDto, nil
 		}
 
-		CreateNamespaceFunc = func(name string) *restErrors.RestErr {
+		CreateUserDefaultWorkspaceFunc = func(userId string) *restErrors.RestErr {
 			return nil
 		}
 
@@ -383,8 +361,8 @@ func TestSignUp(t *testing.T) {
 			return responseDto, nil
 		}
 
-		CreateNamespaceFunc = func(name string) *restErrors.RestErr {
-			return restErrors.NewInternalServerError("can't create namespace")
+		CreateUserDefaultWorkspaceFunc = func(userId string) *restErrors.RestErr {
+			return nil
 		}
 
 		SignUpMailFunc = func(dto *sendgrid.MailRequestDto) *restErrors.RestErr {
