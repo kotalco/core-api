@@ -47,7 +47,7 @@ func (endpoint *EndpointDto) Marshall(dtoIngressRoute *traefikv1alpha1.IngressRo
 		str := strings.ReplaceAll(route.Match, "Host(`", "")
 		str = strings.ReplaceAll(str, "`)", "")
 		str = strings.ReplaceAll(str, " && ", "")
-		str = strings.ReplaceAll(str, "Path(`", "")
+		str = strings.ReplaceAll(str, "PathPrefix(`", "")
 		endpoint.Routes = append(endpoint.Routes, str)
 	}
 

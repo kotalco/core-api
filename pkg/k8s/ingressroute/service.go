@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/kotalco/cloud-api/pkg/config"
 	"github.com/kotalco/cloud-api/pkg/k8s"
+	k8sMiddleware "github.com/kotalco/cloud-api/pkg/k8s/middleware"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/logger"
 	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
@@ -37,8 +38,11 @@ func (i *ingressroute) Create(dto *IngressRouteDto) *restErrors.RestErr {
 	routes := make([]traefikv1alpha1.Route, 0)
 	for k := 0; k < len(dto.Ports); k++ {
 		routes = append(routes, traefikv1alpha1.Route{
-			Match: fmt.Sprintf("Host(`endpoints.%s`) && Path(`/%s/%s`)", config.EnvironmentConf["DOMAIN_MATCH_BASE_URL"], dto.ServiceID, dto.Ports[k]),
+			Match: fmt.Sprintf("Host(`endpoints.%s`) && PathPrefix(`/%s/%s`)", config.EnvironmentConf["DOMAIN_MATCH_BASE_URL"], dto.ServiceID, dto.Ports[k]),
 			Kind:  "Rule",
+			Middlewares: []traefikv1alpha1.MiddlewareRef{
+				{Namespace: "default", Name: k8sMiddleware.StripPrefixRegexMiddlewareName},
+			},
 			Services: []traefikv1alpha1.Service{
 				{
 					LoadBalancerSpec: traefikv1alpha1.LoadBalancerSpec{
@@ -64,10 +68,10 @@ func (i *ingressroute) Create(dto *IngressRouteDto) *restErrors.RestErr {
 			},
 		},
 	}
-	err := k8s.K8sClient.Create(context.Background(), route)
-	if err != nil {
-		go logger.Error(i.Create, err)
-		return restErrors.NewInternalServerError(err.Error())
+	intErr := k8s.K8sClient.Create(context.Background(), route)
+	if intErr != nil {
+		go logger.Error(i.Create, intErr)
+		return restErrors.NewInternalServerError(intErr.Error())
 	}
 
 	return nil
