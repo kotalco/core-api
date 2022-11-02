@@ -157,9 +157,9 @@ func (service) UpdateWorkspaceUser(workspaceUser *workspaceuser.WorkspaceUser, d
 func (service) CreateUserDefaultWorkspace(userId string) *restErrors.RestErr {
 	defaultNamespace := "default"
 
-	//check if user don't have any clusters
-	list, err := workspaceRepo.GetByNameAndUserId(defaultNamespace, userId)
-	if err != nil && err.Status != http.StatusNotFound {
+	//check if user don't have any workspaces
+	list, err := workspaceRepo.GetByUserId(userId)
+	if err != nil {
 		return err
 	}
 	if len(list) > 0 {
