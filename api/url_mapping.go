@@ -30,7 +30,7 @@ func MapUrl(app *fiber.App) {
 
 	//subscription
 	v1.Post("subscriptions/acknowledgment", subscription.Acknowledgement)
-	//v1.Use(middleware.IsSubscription)
+	v1.Use(middleware.IsSubscription)
 
 	//users group
 	v1.Post("sessions", user.SignIn)

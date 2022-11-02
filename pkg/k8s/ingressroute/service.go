@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/kotalco/cloud-api/pkg/config"
 	"github.com/kotalco/cloud-api/pkg/k8s"
-	k8sMiddleware "github.com/kotalco/cloud-api/pkg/k8s/middleware"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/logger"
 	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
@@ -40,9 +39,13 @@ func (i *ingressroute) Create(dto *IngressRouteDto) *restErrors.RestErr {
 		routes = append(routes, traefikv1alpha1.Route{
 			Match: fmt.Sprintf("Host(`endpoints.%s`) && PathPrefix(`/%s/%s`)", config.EnvironmentConf["DOMAIN_MATCH_BASE_URL"], dto.ServiceID, dto.Ports[k]),
 			Kind:  "Rule",
-			Middlewares: []traefikv1alpha1.MiddlewareRef{
-				{Namespace: "default", Name: k8sMiddleware.StripPrefixRegexMiddlewareName},
-			},
+			Middlewares: func() []traefikv1alpha1.MiddlewareRef {
+				middlewares := make([]traefikv1alpha1.MiddlewareRef, 0)
+				for _, v := range dto.Middlewares {
+					middlewares = append(middlewares, traefikv1alpha1.MiddlewareRef{Name: v.Name, Namespace: v.Namespace})
+				}
+				return middlewares
+			}(),
 			Services: []traefikv1alpha1.Service{
 				{
 					LoadBalancerSpec: traefikv1alpha1.LoadBalancerSpec{
@@ -55,7 +58,7 @@ func (i *ingressroute) Create(dto *IngressRouteDto) *restErrors.RestErr {
 		})
 	}
 
-	route := &traefikv1alpha1.IngressRoute{
+	record := &traefikv1alpha1.IngressRoute{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      dto.Name,
 			Namespace: dto.Namespace,
@@ -68,8 +71,11 @@ func (i *ingressroute) Create(dto *IngressRouteDto) *restErrors.RestErr {
 			},
 		},
 	}
-	intErr := k8s.K8sClient.Create(context.Background(), route)
+	intErr := k8s.K8sClient.Create(context.Background(), record)
 	if intErr != nil {
+		if errors.IsAlreadyExists(intErr) {
+			return restErrors.NewConflictError(fmt.Sprintf("endpoint %s already exist!", dto.Name))
+		}
 		go logger.Error(i.Create, intErr)
 		return restErrors.NewInternalServerError(intErr.Error())
 	}

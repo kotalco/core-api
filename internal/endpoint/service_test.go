@@ -2,6 +2,7 @@ package endpoint
 
 import (
 	"github.com/kotalco/cloud-api/pkg/k8s/ingressroute"
+	"github.com/kotalco/cloud-api/pkg/k8s/middleware"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
@@ -38,8 +39,19 @@ func (i ingressRouteServiceMock) Delete(name string, namespace string) *restErro
 	return ingressRouteDeleteFunc(name, namespace)
 }
 
+type k8MiddlewareServiceMock struct{}
+
+var (
+	k8middlewareCreateFunc func(dto *middleware.CreateMiddlewareDto) *restErrors.RestErr
+)
+
+func (k k8MiddlewareServiceMock) Create(dto *middleware.CreateMiddlewareDto) *restErrors.RestErr {
+	return k8middlewareCreateFunc(dto)
+}
+
 func TestMain(m *testing.M) {
 	ingressRoutesService = &ingressRouteServiceMock{}
+	k8MiddlewareService = &k8MiddlewareServiceMock{}
 	endpointService = NewService()
 	code := m.Run()
 	os.Exit(code)
@@ -47,6 +59,9 @@ func TestMain(m *testing.M) {
 
 func TestService_Create(t *testing.T) {
 	t.Run("create endpoint should pass", func(t *testing.T) {
+		k8middlewareCreateFunc = func(dto *middleware.CreateMiddlewareDto) *restErrors.RestErr {
+			return nil
+		}
 		ingressRouteCreateFunc = func(dto *ingressroute.IngressRouteDto) *restErrors.RestErr {
 			return nil
 		}
@@ -58,6 +73,21 @@ func TestService_Create(t *testing.T) {
 		err := endpointService.Create(createDto, svc, "")
 		assert.Nil(t, err)
 	})
+	t.Run("create endpoint should throw if k8middleware service throws", func(t *testing.T) {
+		k8middlewareCreateFunc = func(dto *middleware.CreateMiddlewareDto) *restErrors.RestErr {
+			return nil
+		}
+		k8middlewareCreateFunc = func(dto *middleware.CreateMiddlewareDto) *restErrors.RestErr {
+			return restErrors.NewInternalServerError("something went wrong")
+		}
+		createDto := &CreateEndpointDto{}
+		svc := &corev1.Service{Spec: corev1.ServiceSpec{
+			Ports: []corev1.ServicePort{{}},
+		}}
+		err := endpointService.Create(createDto, svc, "")
+		assert.EqualValues(t, "something went wrong", err.Message)
+	})
+
 	t.Run("create endpoint should throw if ingressRoute.create throws", func(t *testing.T) {
 		ingressRouteCreateFunc = func(dto *ingressroute.IngressRouteDto) *restErrors.RestErr {
 			return restErrors.NewInternalServerError("something went wrong")

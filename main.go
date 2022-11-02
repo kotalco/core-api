@@ -6,7 +6,6 @@ import (
 	"github.com/kotalco/cloud-api/api"
 	"github.com/kotalco/cloud-api/pkg/config"
 	"github.com/kotalco/cloud-api/pkg/k8s"
-	k8sMiddleware "github.com/kotalco/cloud-api/pkg/k8s/middleware"
 	"github.com/kotalco/cloud-api/pkg/middleware"
 	"github.com/kotalco/cloud-api/pkg/migration"
 	"github.com/kotalco/cloud-api/pkg/monitor"
@@ -23,10 +22,8 @@ func main() {
 	app.Use(pprof.New())
 	api.MapUrl(app)
 
-	//Adds additional types to the community k8s client
-	k8s.AddToScheme()
-	//create stripePrefixMiddleware
-	k8sMiddleware.CreateStripPrefixRegexMiddleware()
+	k8s.Config()
+
 	//open db connection
 	dbClient := sqlclient.OpenDBConnection()
 	migrationService := migration.NewService(dbClient)

@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"fmt"
 	"github.com/kotalco/cloud-api/pkg/k8s"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/logger"
@@ -11,25 +12,35 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const StripPrefixRegexMiddlewareName = "stripprefixregex"
+type IK8Middleware interface {
+	Create(dto *CreateMiddlewareDto) *restErrors.RestErr
+}
 
-func CreateStripPrefixRegexMiddleware() *restErrors.RestErr {
+type k8Middleware struct{}
+
+func NewK8Middleware() IK8Middleware {
+	return &k8Middleware{}
+}
+
+func (m *k8Middleware) Create(dto *CreateMiddlewareDto) *restErrors.RestErr {
 	newMiddleware := &traefikv1alpha1.Middleware{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      StripPrefixRegexMiddlewareName,
-			Namespace: "default",
+			Name:      dto.Name,
+			Namespace: dto.Namespace,
 		},
 		Spec: traefikv1alpha1.MiddlewareSpec{
-			StripPrefixRegex: &dynamic.StripPrefixRegex{Regex: []string{"/([A-Za-z0-9]+(-[A-Za-z0-9]+)+)/[A-Za-z0-9]+"}},
+			StripPrefix: &dynamic.StripPrefix{
+				Prefixes: dto.StripPrefixes,
+			},
 		},
 	}
 
 	err := k8s.K8sClient.Create(context.Background(), newMiddleware)
 	if err != nil {
-		if errors.IsConflict(err) {
-			go logger.Error("CreateStripPrefixRegexMiddleware", err)
-			return restErrors.NewConflictError(err.Error())
+		if errors.IsAlreadyExists(err) {
+			return restErrors.NewConflictError(fmt.Sprintf("middleware %s already exist!", dto.Name))
 		}
+		go logger.Error(m.Create, err)
 		return restErrors.NewInternalServerError(err.Error())
 	}
 
