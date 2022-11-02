@@ -32,7 +32,7 @@ func List(c *fiber.Ctx) error {
 			}
 		}
 		if ApiEnabled == true {
-			responseDto = append(responseDto, k8svc.SvcDto{Name: corv1Service.Name})
+			responseDto = append(responseDto, k8svc.SvcDto{Name: corv1Service.Name, Protocol: corv1Service.Labels["app.kubernetes.io/component"]})
 		}
 	}
 
