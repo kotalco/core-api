@@ -106,16 +106,17 @@ func (userServiceMock) FindWhereIdInSlice(ids []string) ([]*user.User, *restErro
 Workspace service Mocks
 */
 var (
-	WorkspaceWithTransaction   func(txHandle *gorm.DB) workspace.IService
-	CreateWorkspaceFunc        func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr)
-	UpdateWorkspaceFunc        func(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) *restErrors.RestErr
-	GetWorkspaceByIdFunc       func(Id string) (*workspace.Workspace, *restErrors.RestErr)
-	DeleteWorkspaceFunc        func(workspace *workspace.Workspace) *restErrors.RestErr
-	GetWorkspaceByUserIdFunc   func(userId string) ([]*workspace.Workspace, *restErrors.RestErr)
-	AddWorkspaceMemberFunc     func(workspace *workspace.Workspace, memberId string, role string) *restErrors.RestErr
-	DeleteWorkspaceMemberFunc  func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr
-	CountWorkspaceByUserIdFunc func(userId string) (int64, *restErrors.RestErr)
-	UpdateWorkspaceUserFunc    func(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) *restErrors.RestErr
+	WorkspaceWithTransaction       func(txHandle *gorm.DB) workspace.IService
+	CreateWorkspaceFunc            func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr)
+	UpdateWorkspaceFunc            func(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) *restErrors.RestErr
+	GetWorkspaceByIdFunc           func(Id string) (*workspace.Workspace, *restErrors.RestErr)
+	DeleteWorkspaceFunc            func(workspace *workspace.Workspace) *restErrors.RestErr
+	GetWorkspaceByUserIdFunc       func(userId string) ([]*workspace.Workspace, *restErrors.RestErr)
+	AddWorkspaceMemberFunc         func(workspace *workspace.Workspace, memberId string, role string) *restErrors.RestErr
+	DeleteWorkspaceMemberFunc      func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr
+	CountWorkspaceByUserIdFunc     func(userId string) (int64, *restErrors.RestErr)
+	UpdateWorkspaceUserFunc        func(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) *restErrors.RestErr
+	CreateUserDefaultWorkspaceFunc func(userId string) *restErrors.RestErr
 )
 
 type workspaceServiceMock struct{}
@@ -155,6 +156,9 @@ func (workspaceServiceMock) CountByUserId(userId string) (int64, *restErrors.Res
 
 func (workspaceServiceMock) UpdateWorkspaceUser(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) *restErrors.RestErr {
 	return UpdateWorkspaceUserFunc(workspaceUser, dto)
+}
+func (wService workspaceServiceMock) CreateUserDefaultWorkspace(userId string) *restErrors.RestErr {
+	return CreateUserDefaultWorkspaceFunc(userId)
 }
 
 /*

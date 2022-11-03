@@ -7,11 +7,39 @@ import (
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
+	corev1 "k8s.io/api/core/v1"
 	"net/http"
 	"os"
 	"testing"
 )
 
+/*
+Namespace service Mocks
+*/
+
+var (
+	namespaceCreateNamespaceFunc func(name string) *restErrors.RestErr
+	namespaceGetNamespaceFunc    func(name string) (*corev1.Namespace, *restErrors.RestErr)
+	namespaceDeleteNamespaceFunc func(name string) *restErrors.RestErr
+)
+
+type namespaceServiceMock struct{}
+
+func (namespaceServiceMock) Create(name string) *restErrors.RestErr {
+	return namespaceCreateNamespaceFunc(name)
+}
+
+func (namespaceServiceMock) Get(name string) (*corev1.Namespace, *restErrors.RestErr) {
+	return namespaceGetNamespaceFunc(name)
+}
+
+func (namespaceServiceMock) Delete(name string) *restErrors.RestErr {
+	return namespaceDeleteNamespaceFunc(name)
+}
+
+/*
+Workspace repo Mocks
+*/
 var (
 	WithTransactionFunc                          func(txHandle *gorm.DB) IRepository
 	workspaceTestService                         IService
@@ -82,6 +110,7 @@ func (workspaceRepositoryMock) GetByNamespace(namespace string) (*Workspace, *re
 
 func TestMain(m *testing.M) {
 	workspaceRepo = &workspaceRepositoryMock{}
+	namespaceService = &namespaceServiceMock{}
 	workspaceTestService = NewService()
 	code := m.Run()
 	os.Exit(code)
@@ -364,4 +393,155 @@ func TestService_UpdateWorkspaceUser(t *testing.T) {
 		assert.NotNil(t, err)
 		assert.EqualValues(t, "some thing went wrong", err.Message)
 	})
+}
+
+func TestService_CreateUserDefaultWorkspace(t *testing.T) {
+	t.Run("create user default workspace should pass", func(t *testing.T) {
+		GetByUserIdFunc = func(userId string) ([]*Workspace, *restErrors.RestErr) {
+			return []*Workspace{}, nil
+		}
+		namespaceGetNamespaceFunc = func(name string) (*corev1.Namespace, *restErrors.RestErr) {
+			return &corev1.Namespace{}, nil
+		}
+		namespaceCreateNamespaceFunc = func(name string) *restErrors.RestErr {
+			return nil
+		}
+		GetByNamespaceFunc = func(namespace string) (*Workspace, *restErrors.RestErr) {
+			return &Workspace{}, nil
+		}
+		CreateWorkspaceFunc = func(workspace *Workspace) *restErrors.RestErr {
+			return nil
+		}
+
+		err := workspaceTestService.CreateUserDefaultWorkspace("1")
+		assert.Nil(t, err)
+
+	})
+	t.Run("create user default workspace should pass but the cluster don't have default namespace", func(t *testing.T) {
+		GetByUserIdFunc = func(userId string) ([]*Workspace, *restErrors.RestErr) {
+			return []*Workspace{}, nil
+		}
+		namespaceGetNamespaceFunc = func(name string) (*corev1.Namespace, *restErrors.RestErr) {
+			return nil, restErrors.NewNotFoundError("no such record")
+		}
+		namespaceCreateNamespaceFunc = func(name string) *restErrors.RestErr {
+			return nil
+		}
+		GetByNamespaceFunc = func(namespace string) (*Workspace, *restErrors.RestErr) {
+			return &Workspace{}, nil
+		}
+		namespaceCreateNamespaceFunc = func(name string) *restErrors.RestErr {
+			return nil
+		}
+		CreateWorkspaceFunc = func(workspace *Workspace) *restErrors.RestErr {
+			return nil
+		}
+
+		err := workspaceTestService.CreateUserDefaultWorkspace("1")
+		assert.Nil(t, err)
+	})
+	t.Run("create user default workspace should pass and the default namespace but theres is no default workspace in the cluster", func(t *testing.T) {
+		GetByUserIdFunc = func(userId string) ([]*Workspace, *restErrors.RestErr) {
+			return []*Workspace{}, nil
+		}
+		namespaceGetNamespaceFunc = func(name string) (*corev1.Namespace, *restErrors.RestErr) {
+			return &corev1.Namespace{}, nil
+		}
+		GetByNamespaceFunc = func(namespace string) (*Workspace, *restErrors.RestErr) {
+			return nil, restErrors.NewNotFoundError("no such record")
+		}
+		namespaceCreateNamespaceFunc = func(name string) *restErrors.RestErr {
+			return nil
+		}
+		CreateWorkspaceFunc = func(workspace *Workspace) *restErrors.RestErr {
+			return nil
+		}
+
+		err := workspaceTestService.CreateUserDefaultWorkspace("1")
+		assert.Nil(t, err)
+
+	})
+	t.Run("create user default workspace should throw if user already have workspaces", func(t *testing.T) {
+		GetByUserIdFunc = func(userId string) ([]*Workspace, *restErrors.RestErr) {
+			return []*Workspace{{}}, nil
+		}
+		err := workspaceTestService.CreateUserDefaultWorkspace("1")
+		assert.EqualValues(t, "user already have a workspace", err.Message)
+	})
+	t.Run("create user default workspace should throw if get user workspaces throws internal error", func(t *testing.T) {
+		GetByUserIdFunc = func(userId string) ([]*Workspace, *restErrors.RestErr) {
+			return []*Workspace{}, restErrors.NewInternalServerError("something went wrong")
+		}
+		err := workspaceTestService.CreateUserDefaultWorkspace("1")
+		assert.EqualValues(t, "something went wrong", err.Message)
+
+	})
+
+	t.Run("create user default workspace should throw if can't get the default namespace", func(t *testing.T) {
+		GetByUserIdFunc = func(userId string) ([]*Workspace, *restErrors.RestErr) {
+			return []*Workspace{}, nil
+		}
+
+		namespaceGetNamespaceFunc = func(name string) (*corev1.Namespace, *restErrors.RestErr) {
+			return nil, restErrors.NewInternalServerError("something went wrong")
+		}
+
+		err := workspaceTestService.CreateUserDefaultWorkspace("1")
+		assert.EqualValues(t, "something went wrong", err.Message)
+	})
+	t.Run("create user default workspace should throw if can't create the namespace default", func(t *testing.T) {
+		GetByUserIdFunc = func(userId string) ([]*Workspace, *restErrors.RestErr) {
+			return []*Workspace{}, nil
+		}
+		namespaceGetNamespaceFunc = func(name string) (*corev1.Namespace, *restErrors.RestErr) {
+			return nil, restErrors.NewNotFoundError("no such record")
+		}
+		namespaceCreateNamespaceFunc = func(name string) *restErrors.RestErr {
+			return restErrors.NewInternalServerError("")
+		}
+
+		err := workspaceTestService.CreateUserDefaultWorkspace("1")
+		assert.EqualValues(t, "can't create the namespace default", err.Message)
+	})
+	t.Run("create user default workspace should throw if can't create the user new default namespace", func(t *testing.T) {
+		GetByUserIdFunc = func(userId string) ([]*Workspace, *restErrors.RestErr) {
+			return []*Workspace{}, nil
+		}
+		namespaceGetNamespaceFunc = func(name string) (*corev1.Namespace, *restErrors.RestErr) {
+			return &corev1.Namespace{}, nil
+		}
+		namespaceCreateNamespaceFunc = func(name string) *restErrors.RestErr {
+			return nil
+		}
+		GetByNamespaceFunc = func(namespace string) (*Workspace, *restErrors.RestErr) {
+			return &Workspace{}, nil
+		}
+		namespaceCreateNamespaceFunc = func(name string) *restErrors.RestErr {
+			return restErrors.NewInternalServerError("")
+		}
+
+		err := workspaceTestService.CreateUserDefaultWorkspace("1")
+		assert.EqualValues(t, "can't create the user default namespace", err.Message)
+	})
+	t.Run("create user default workspace should throw if can't create the user default workspace", func(t *testing.T) {
+		GetByUserIdFunc = func(userId string) ([]*Workspace, *restErrors.RestErr) {
+			return []*Workspace{}, nil
+		}
+		namespaceGetNamespaceFunc = func(name string) (*corev1.Namespace, *restErrors.RestErr) {
+			return &corev1.Namespace{}, nil
+		}
+		namespaceCreateNamespaceFunc = func(name string) *restErrors.RestErr {
+			return nil
+		}
+		GetByNamespaceFunc = func(namespace string) (*Workspace, *restErrors.RestErr) {
+			return &Workspace{}, nil
+		}
+		CreateWorkspaceFunc = func(workspace *Workspace) *restErrors.RestErr {
+			return restErrors.NewInternalServerError("something went wrong")
+		}
+
+		err := workspaceTestService.CreateUserDefaultWorkspace("1")
+		assert.EqualValues(t, "something went wrong", err.Message)
+	})
+
 }
