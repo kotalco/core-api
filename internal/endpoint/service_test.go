@@ -15,7 +15,7 @@ import (
 
 var (
 	endpointService        IService
-	ingressRouteCreateFunc func(dto *ingressroute.IngressRouteDto) *restErrors.RestErr
+	ingressRouteCreateFunc func(dto *ingressroute.IngressRouteDto) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr)
 	ingressRouteListFunc   func(namesapce string) (*traefikv1alpha1.IngressRouteList, *restErrors.RestErr)
 	ingressRouteGetFunc    func(name string, namespace string) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr)
 	ingressRouteDeleteFunc func(name string, namespace string) *restErrors.RestErr
@@ -23,7 +23,7 @@ var (
 
 type ingressRouteServiceMock struct{}
 
-func (i ingressRouteServiceMock) Create(dto *ingressroute.IngressRouteDto) *restErrors.RestErr {
+func (i ingressRouteServiceMock) Create(dto *ingressroute.IngressRouteDto) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr) {
 	return ingressRouteCreateFunc(dto)
 }
 
@@ -59,10 +59,14 @@ func TestMain(m *testing.M) {
 
 func TestService_Create(t *testing.T) {
 	t.Run("create endpoint should pass", func(t *testing.T) {
-		k8middlewareCreateFunc = func(dto *middleware.CreateMiddlewareDto) *restErrors.RestErr {
-			return nil
+		ingressRouteCreateFunc = func(dto *ingressroute.IngressRouteDto) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr) {
+			return &traefikv1alpha1.IngressRoute{
+				TypeMeta:   metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{},
+				Spec:       traefikv1alpha1.IngressRouteSpec{},
+			}, nil
 		}
-		ingressRouteCreateFunc = func(dto *ingressroute.IngressRouteDto) *restErrors.RestErr {
+		k8middlewareCreateFunc = func(dto *middleware.CreateMiddlewareDto) *restErrors.RestErr {
 			return nil
 		}
 
@@ -73,8 +77,29 @@ func TestService_Create(t *testing.T) {
 		err := endpointService.Create(createDto, svc, "")
 		assert.Nil(t, err)
 	})
+	t.Run("create endpoint should throw if ingressRoute.create throws", func(t *testing.T) {
+		ingressRouteCreateFunc = func(dto *ingressroute.IngressRouteDto) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr) {
+			return nil, restErrors.NewInternalServerError("something went wrong")
+		}
+
+		createDto := &CreateEndpointDto{}
+		svc := &corev1.Service{Spec: corev1.ServiceSpec{
+			Ports: []corev1.ServicePort{{}},
+		}}
+		err := endpointService.Create(createDto, svc, "")
+		assert.EqualValues(t, http.StatusInternalServerError, err.Status)
+		assert.EqualValues(t, "something went wrong", err.Message)
+	})
+
 	t.Run("create endpoint should throw if k8middleware service throws", func(t *testing.T) {
-		k8middlewareCreateFunc = func(dto *middleware.CreateMiddlewareDto) *restErrors.RestErr {
+		ingressRouteCreateFunc = func(dto *ingressroute.IngressRouteDto) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr) {
+			return &traefikv1alpha1.IngressRoute{
+				TypeMeta:   metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{},
+				Spec:       traefikv1alpha1.IngressRouteSpec{},
+			}, nil
+		}
+		ingressRouteDeleteFunc = func(name string, namespace string) *restErrors.RestErr {
 			return nil
 		}
 		k8middlewareCreateFunc = func(dto *middleware.CreateMiddlewareDto) *restErrors.RestErr {
@@ -88,19 +113,6 @@ func TestService_Create(t *testing.T) {
 		assert.EqualValues(t, "something went wrong", err.Message)
 	})
 
-	t.Run("create endpoint should throw if ingressRoute.create throws", func(t *testing.T) {
-		ingressRouteCreateFunc = func(dto *ingressroute.IngressRouteDto) *restErrors.RestErr {
-			return restErrors.NewInternalServerError("something went wrong")
-		}
-
-		createDto := &CreateEndpointDto{}
-		svc := &corev1.Service{Spec: corev1.ServiceSpec{
-			Ports: []corev1.ServicePort{{}},
-		}}
-		err := endpointService.Create(createDto, svc, "")
-		assert.EqualValues(t, http.StatusInternalServerError, err.Status)
-		assert.EqualValues(t, "something went wrong", err.Message)
-	})
 }
 
 func TestService_List(t *testing.T) {
