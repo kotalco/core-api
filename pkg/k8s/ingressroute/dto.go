@@ -1,5 +1,7 @@
 package ingressroute
 
+import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 const (
 	APIVersion = "traefik.containo.us/v1alpha1"
 	Kind       = "IngressRoute"
@@ -14,6 +16,7 @@ type IngressRouteDto struct {
 	ServiceID   string   // id of the service created by kotal operator
 	Ports       []string // the corresponding ports of the targeted service
 	Middlewares []IngressRouteMiddlewareRefDto
+	OwnersRef   []metav1.OwnerReference
 }
 
 type IngressRouteMiddlewareRefDto struct {
