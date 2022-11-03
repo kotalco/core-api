@@ -22,8 +22,8 @@ func main() {
 	app.Use(pprof.New())
 	api.MapUrl(app)
 
-	//Adds additional types to the community k8s client
-	k8s.AddToScheme()
+	k8s.Config()
+
 	//open db connection
 	dbClient := sqlclient.OpenDBConnection()
 	migrationService := migration.NewService(dbClient)

@@ -8,4 +8,10 @@ type IngressRouteDto struct {
 	ServiceName string   // is the name of the service created by kotal operator
 	ServiceID   string   // id of the service created by kotal operator
 	Ports       []string // the corresponding ports of the targeted service
+	Middlewares []IngressRouteMiddlewareRefDto
+}
+
+type IngressRouteMiddlewareRefDto struct {
+	Name      string
+	Namespace string
 }

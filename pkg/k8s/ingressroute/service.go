@@ -37,8 +37,15 @@ func (i *ingressroute) Create(dto *IngressRouteDto) *restErrors.RestErr {
 	routes := make([]traefikv1alpha1.Route, 0)
 	for k := 0; k < len(dto.Ports); k++ {
 		routes = append(routes, traefikv1alpha1.Route{
-			Match: fmt.Sprintf("Host(`endpoints.%s`) && Path(`/%s/%s`)", config.EnvironmentConf["DOMAIN_MATCH_BASE_URL"], dto.ServiceID, dto.Ports[k]),
+			Match: fmt.Sprintf("Host(`endpoints.%s`) && PathPrefix(`/%s/%s`)", config.EnvironmentConf["DOMAIN_MATCH_BASE_URL"], dto.ServiceID, dto.Ports[k]),
 			Kind:  "Rule",
+			Middlewares: func() []traefikv1alpha1.MiddlewareRef {
+				middlewares := make([]traefikv1alpha1.MiddlewareRef, 0)
+				for _, v := range dto.Middlewares {
+					middlewares = append(middlewares, traefikv1alpha1.MiddlewareRef{Name: v.Name, Namespace: v.Namespace})
+				}
+				return middlewares
+			}(),
 			Services: []traefikv1alpha1.Service{
 				{
 					LoadBalancerSpec: traefikv1alpha1.LoadBalancerSpec{
@@ -51,7 +58,7 @@ func (i *ingressroute) Create(dto *IngressRouteDto) *restErrors.RestErr {
 		})
 	}
 
-	route := &traefikv1alpha1.IngressRoute{
+	record := &traefikv1alpha1.IngressRoute{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      dto.Name,
 			Namespace: dto.Namespace,
@@ -64,10 +71,13 @@ func (i *ingressroute) Create(dto *IngressRouteDto) *restErrors.RestErr {
 			},
 		},
 	}
-	err := k8s.K8sClient.Create(context.Background(), route)
-	if err != nil {
-		go logger.Error(i.Create, err)
-		return restErrors.NewInternalServerError(err.Error())
+	intErr := k8s.K8sClient.Create(context.Background(), record)
+	if intErr != nil {
+		if errors.IsAlreadyExists(intErr) {
+			return restErrors.NewConflictError(fmt.Sprintf("endpoint %s already exist!", dto.Name))
+		}
+		go logger.Error(i.Create, intErr)
+		return restErrors.NewInternalServerError(intErr.Error())
 	}
 
 	return nil
