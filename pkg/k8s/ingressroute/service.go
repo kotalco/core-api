@@ -19,8 +19,8 @@ type ingressroute struct{}
 
 // IIngressRoute has methods to work with ingressroutes resources.
 type IIngressRoute interface {
-	// Create takes the representation of a ingressRoute and creates it returns an error, if there is any.
-	Create(dto *IngressRouteDto) *restErrors.RestErr
+	// Create takes the representation of a ingressRoute and creates it returns ingress-route object or error if any
+	Create(dto *IngressRouteDto) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr)
 	//List takes label and field selectors, and returns the list of Middlewares that match those selectors.
 	List(namesapce string) (*traefikv1alpha1.IngressRouteList, *restErrors.RestErr)
 	// Get takes name and namespace of the ingressRoute, and returns the corresponding ingressRoute object, and an error if there is any.
@@ -33,7 +33,7 @@ func NewIngressRoutesService() IIngressRoute {
 	return &ingressroute{}
 }
 
-func (i *ingressroute) Create(dto *IngressRouteDto) *restErrors.RestErr {
+func (i *ingressroute) Create(dto *IngressRouteDto) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr) {
 	routes := make([]traefikv1alpha1.Route, 0)
 	for k := 0; k < len(dto.Ports); k++ {
 		routes = append(routes, traefikv1alpha1.Route{
@@ -74,13 +74,13 @@ func (i *ingressroute) Create(dto *IngressRouteDto) *restErrors.RestErr {
 	intErr := k8s.K8sClient.Create(context.Background(), record)
 	if intErr != nil {
 		if errors.IsAlreadyExists(intErr) {
-			return restErrors.NewConflictError(fmt.Sprintf("endpoint %s already exist!", dto.Name))
+			return nil, restErrors.NewConflictError(fmt.Sprintf("endpoint %s already exist!", dto.Name))
 		}
 		go logger.Error(i.Create, intErr)
-		return restErrors.NewInternalServerError(intErr.Error())
+		return nil, restErrors.NewInternalServerError(intErr.Error())
 	}
 
-	return nil
+	return record, nil
 }
 
 func (i *ingressroute) List(namespace string) (*traefikv1alpha1.IngressRouteList, *restErrors.RestErr) {
@@ -93,12 +93,13 @@ func (i *ingressroute) List(namespace string) (*traefikv1alpha1.IngressRouteList
 }
 
 func (i *ingressroute) Get(name string, namespace string) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr) {
-	record := &traefikv1alpha1.IngressRoute{}
+	var record traefikv1alpha1.IngressRoute
 	key := types.NamespacedName{
 		Namespace: namespace,
 		Name:      name,
 	}
-	err := k8s.K8sClient.Get(context.Background(), key, record)
+
+	err := k8s.K8sClient.Get(context.Background(), key, &record)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil, restErrors.NewNotFoundError(fmt.Sprintf("can't find endpoint %s", name))
@@ -106,7 +107,7 @@ func (i *ingressroute) Get(name string, namespace string) (*traefikv1alpha1.Ingr
 		go logger.Error(i.Get, err)
 		return nil, restErrors.NewInternalServerError("something went wrong")
 	}
-	return record, nil
+	return &record, nil
 }
 
 func (i *ingressroute) Delete(name string, namespace string) *restErrors.RestErr {

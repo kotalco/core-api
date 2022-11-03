@@ -25,8 +25,9 @@ func NewK8Middleware() IK8Middleware {
 func (m *k8Middleware) Create(dto *CreateMiddlewareDto) *restErrors.RestErr {
 	newMiddleware := &traefikv1alpha1.Middleware{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      dto.Name,
-			Namespace: dto.Namespace,
+			Name:            dto.Name,
+			Namespace:       dto.Namespace,
+			OwnerReferences: dto.OwnersRef,
 		},
 		Spec: traefikv1alpha1.MiddlewareSpec{
 			StripPrefix: &dynamic.StripPrefix{

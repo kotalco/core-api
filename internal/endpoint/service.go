@@ -6,7 +6,9 @@ import (
 	"github.com/kotalco/cloud-api/pkg/k8s/middleware"
 	k8svc "github.com/kotalco/cloud-api/pkg/k8s/svc"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
+	"github.com/kotalco/community-api/pkg/logger"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (
@@ -34,6 +36,7 @@ func NewService() IService {
 func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service, namespace string) *restErrors.RestErr {
 	ingressRoutePorts := make([]string, 0)
 	middlewarePrefixes := make([]string, 0)
+	middlewareName := fmt.Sprintf("%s-strip-prefix-%s", dto.Name, svc.UID)
 
 	for _, v := range svc.Spec.Ports {
 		if k8svc.AvailableProtocol(v.Name) {
@@ -42,19 +45,8 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service, namespace 
 		}
 	}
 
-	//create the strip prefix-middleware
-	middlewareName := fmt.Sprintf("%s-strip-prefix-%s", dto.Name, svc.UID)
-	err := k8MiddlewareService.Create(&middleware.CreateMiddlewareDto{
-		Name:          middlewareName,
-		Namespace:     namespace,
-		StripPrefixes: middlewarePrefixes,
-	})
-	if err != nil {
-		return err
-	}
-
 	//create ingress-route
-	err = ingressRoutesService.Create(&ingressroute.IngressRouteDto{
+	ingressRouteObject, err := ingressRoutesService.Create(&ingressroute.IngressRouteDto{
 		Name:        dto.Name,
 		Namespace:   namespace,
 		ServiceName: svc.Name,
@@ -62,8 +54,34 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service, namespace 
 		Ports:       ingressRoutePorts,
 		Middlewares: []ingressroute.IngressRouteMiddlewareRefDto{{Name: middlewareName, Namespace: namespace}},
 	})
+	if err != nil {
+		return err
+	}
 
-	return err
+	//create the strip prefix-middleware
+	middlewareDto := middleware.CreateMiddlewareDto{
+		Name:          middlewareName,
+		Namespace:     namespace,
+		StripPrefixes: middlewarePrefixes,
+		OwnersRef: []metav1.OwnerReference{
+			{
+				APIVersion: ingressroute.APIVersion,
+				Kind:       ingressroute.Kind,
+				Name:       ingressRouteObject.Name,
+				UID:        ingressRouteObject.UID,
+			},
+		},
+	}
+	err = k8MiddlewareService.Create(&middlewareDto)
+	if err != nil {
+		dErr := ingressRoutesService.Delete(dto.Name, namespace)
+		if dErr != nil {
+			go logger.Error(s.Create, dErr)
+		}
+		return err
+	}
+
+	return nil
 }
 
 func (s *service) List(namespace string) ([]*EndpointDto, *restErrors.RestErr) {

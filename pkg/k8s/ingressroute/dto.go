@@ -1,5 +1,10 @@
 package ingressroute
 
+const (
+	APIVersion = "traefik.containo.us/v1alpha1"
+	Kind       = "IngressRoute"
+)
+
 // IngressRouteDto defines the desired state of the traefikv1alpha1.IngressRoute
 // IngressRouteDto is the struct that matches the CRD implementation of a Traefik HTTP Router.
 type IngressRouteDto struct {
