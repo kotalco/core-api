@@ -53,6 +53,7 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service, namespace 
 		ServiceID:   string(svc.UID),
 		Ports:       ingressRoutePorts,
 		Middlewares: []ingressroute.IngressRouteMiddlewareRefDto{{Name: middlewareName, Namespace: namespace}},
+		OwnersRef:   svc.OwnerReferences,
 	})
 	if err != nil {
 		return err

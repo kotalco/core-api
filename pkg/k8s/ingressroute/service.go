@@ -60,8 +60,9 @@ func (i *ingressroute) Create(dto *IngressRouteDto) (*traefikv1alpha1.IngressRou
 
 	record := &traefikv1alpha1.IngressRoute{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      dto.Name,
-			Namespace: dto.Namespace,
+			Name:            dto.Name,
+			Namespace:       dto.Namespace,
+			OwnerReferences: dto.OwnersRef,
 		},
 		Spec: traefikv1alpha1.IngressRouteSpec{
 			EntryPoints: []string{"websecure"},
