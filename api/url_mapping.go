@@ -87,7 +87,7 @@ func mapDeploymentUrl(v1 fiber.Router) {
 	chainlinkGroup := v1.Group("chainlink", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership)
 	chainlinkNodes := chainlinkGroup.Group("nodes")
 
-	chainlinkNodes.Post("/", middleware.IsWriter, chainlink.Create)
+	chainlinkNodes.Post("/", middleware.IsWriter, middleware.NodesLimitProtected, chainlink.Create)
 	chainlinkNodes.Head("/", middleware.IsReader, chainlink.Count)
 	chainlinkNodes.Get("/", middleware.IsReader, chainlink.List)
 	chainlinkNodes.Get("/:name", middleware.IsReader, chainlink.ValidateNodeExist, chainlink.Get)
@@ -99,7 +99,7 @@ func mapDeploymentUrl(v1 fiber.Router) {
 	//ethereum group
 	ethereumGroup := v1.Group("ethereum", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership)
 	ethereumNodes := ethereumGroup.Group("nodes")
-	ethereumNodes.Post("/", middleware.IsWriter, ethereum.Create)
+	ethereumNodes.Post("/", middleware.IsWriter, middleware.NodesLimitProtected, ethereum.Create)
 	ethereumNodes.Head("/", middleware.IsReader, ethereum.Count)
 	ethereumNodes.Get("/", middleware.IsReader, ethereum.List)
 	ethereumNodes.Get("/:name", middleware.IsReader, ethereum.ValidateNodeExist, ethereum.Get)
@@ -113,7 +113,7 @@ func mapDeploymentUrl(v1 fiber.Router) {
 	coreGroup := v1.Group("core", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership)
 	//secret group
 	secrets := coreGroup.Group("secrets")
-	secrets.Post("/", middleware.IsWriter, secret.Create)
+	secrets.Post("/", middleware.IsWriter, middleware.NodesLimitProtected, secret.Create)
 	secrets.Head("/", middleware.IsReader, secret.Count)
 	secrets.Get("/", middleware.IsReader, secret.List)
 	secrets.Get("/:name", middleware.IsReader, secret.ValidateSecretExist, secret.Get)
@@ -121,7 +121,7 @@ func mapDeploymentUrl(v1 fiber.Router) {
 	secrets.Delete("/:name", middleware.IsAdmin, secret.ValidateSecretExist, secret.Delete)
 	//storage class group
 	storageClasses := coreGroup.Group("storageclasses", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership)
-	storageClasses.Post("/", middleware.IsWriter, storage_class.Create)
+	storageClasses.Post("/", middleware.IsWriter, middleware.NodesLimitProtected, storage_class.Create)
 	storageClasses.Get("/", middleware.IsReader, storage_class.List)
 	storageClasses.Get("/:name", middleware.IsReader, storage_class.ValidateStorageClassExist, storage_class.Get)
 	storageClasses.Put("/:name", middleware.IsWriter, storage_class.ValidateStorageClassExist, storage_class.Update)
@@ -131,7 +131,7 @@ func mapDeploymentUrl(v1 fiber.Router) {
 	ethereum2 := v1.Group("ethereum2", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership)
 	//beaconnodes group
 	beaconnodesGroup := ethereum2.Group("beaconnodes")
-	beaconnodesGroup.Post("/", middleware.IsWriter, beacon_node.Create)
+	beaconnodesGroup.Post("/", middleware.IsWriter, middleware.NodesLimitProtected, beacon_node.Create)
 	beaconnodesGroup.Head("/", middleware.IsReader, beacon_node.Count)
 	beaconnodesGroup.Get("/", middleware.IsReader, beacon_node.List)
 	beaconnodesGroup.Get("/:name", middleware.IsReader, beacon_node.ValidateBeaconNodeExist, beacon_node.Get)
@@ -141,7 +141,7 @@ func mapDeploymentUrl(v1 fiber.Router) {
 	beaconnodesGroup.Delete("/:name", middleware.IsAdmin, beacon_node.ValidateBeaconNodeExist, beacon_node.Delete)
 	//validators group
 	validatorsGroup := ethereum2.Group("validators", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership)
-	validatorsGroup.Post("/", middleware.IsWriter, validator.Create)
+	validatorsGroup.Post("/", middleware.IsWriter, middleware.NodesLimitProtected, validator.Create)
 	validatorsGroup.Head("/", middleware.IsReader, validator.Count)
 	validatorsGroup.Get("/", middleware.IsReader, validator.List)
 	validatorsGroup.Get("/:name", middleware.IsReader, validator.ValidateValidatorExist, validator.Get)
@@ -153,7 +153,7 @@ func mapDeploymentUrl(v1 fiber.Router) {
 	//filecoin group
 	filecoinGroup := v1.Group("filecoin", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership)
 	filecoinNodes := filecoinGroup.Group("nodes")
-	filecoinNodes.Post("/", middleware.IsWriter, filecoin.Create)
+	filecoinNodes.Post("/", middleware.IsWriter, middleware.NodesLimitProtected, filecoin.Create)
 	filecoinNodes.Head("/", middleware.IsReader, filecoin.Count)
 	filecoinNodes.Get("/", middleware.IsReader, filecoin.List)
 	filecoinNodes.Get("/:name", middleware.IsReader, filecoin.ValidateNodeExist, filecoin.Get)
@@ -166,7 +166,7 @@ func mapDeploymentUrl(v1 fiber.Router) {
 	ipfsGroup := v1.Group("ipfs", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership)
 	//ipfs peer group
 	ipfsPeersGroup := ipfsGroup.Group("peers")
-	ipfsPeersGroup.Post("/", middleware.IsWriter, ipfs_peer.Create)
+	ipfsPeersGroup.Post("/", middleware.IsWriter, middleware.NodesLimitProtected, ipfs_peer.Create)
 	ipfsPeersGroup.Head("/", middleware.IsReader, ipfs_peer.Count)
 	ipfsPeersGroup.Get("/", middleware.IsReader, ipfs_peer.List)
 	ipfsPeersGroup.Get("/:name", middleware.IsReader, ipfs_peer.ValidatePeerExist, ipfs_peer.Get)
@@ -176,7 +176,7 @@ func mapDeploymentUrl(v1 fiber.Router) {
 	ipfsPeersGroup.Delete("/:name", middleware.IsAdmin, ipfs_peer.ValidatePeerExist, ipfs_peer.Delete)
 	//ipfs peer group
 	clusterpeersGroup := ipfsGroup.Group("clusterpeers", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership)
-	clusterpeersGroup.Post("/", middleware.IsWriter, ipfs_cluster_peer.Create)
+	clusterpeersGroup.Post("/", middleware.IsWriter, middleware.NodesLimitProtected, ipfs_cluster_peer.Create)
 	clusterpeersGroup.Head("/", middleware.IsReader, ipfs_cluster_peer.Count)
 	clusterpeersGroup.Get("/", middleware.IsReader, ipfs_cluster_peer.List)
 	clusterpeersGroup.Get("/:name", middleware.IsReader, ipfs_cluster_peer.ValidateClusterPeerExist, ipfs_cluster_peer.Get)
@@ -188,7 +188,7 @@ func mapDeploymentUrl(v1 fiber.Router) {
 	//near group
 	nearGroup := v1.Group("near", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership)
 	nearNodesGroup := nearGroup.Group("nodes")
-	nearNodesGroup.Post("/", middleware.IsWriter, near.Create)
+	nearNodesGroup.Post("/", middleware.IsWriter, middleware.NodesLimitProtected, near.Create)
 	nearNodesGroup.Head("/", middleware.IsReader, near.Count)
 	nearNodesGroup.Get("/", middleware.IsReader, near.List)
 	nearNodesGroup.Get("/:name", middleware.IsReader, near.ValidateNodeExist, near.Get)
@@ -200,7 +200,7 @@ func mapDeploymentUrl(v1 fiber.Router) {
 
 	polkadotGroup := v1.Group("polkadot", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership)
 	polkadotNodesGroup := polkadotGroup.Group("nodes")
-	polkadotNodesGroup.Post("/", middleware.IsWriter, polkadot.Create)
+	polkadotNodesGroup.Post("/", middleware.IsWriter, middleware.NodesLimitProtected, polkadot.Create)
 	polkadotNodesGroup.Head("/", middleware.IsReader, polkadot.Count)
 	polkadotNodesGroup.Get("/", middleware.IsReader, polkadot.List)
 	polkadotNodesGroup.Get("/:name", middleware.IsReader, polkadot.ValidateNodeExist, polkadot.Get)

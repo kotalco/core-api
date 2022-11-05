@@ -22,6 +22,7 @@ type SubscriptionDto struct {
 	Attached               bool        `json:"attached"`
 	TrialStartAt           int64       `json:"trial_start_at"`
 	TrialEndAt             int64       `json:"trial_end_at"`
+	NodesLimit             uint        `json:"nodes_limit"`
 }
 type LicenseAcknowledgmentDto struct {
 	Signature    string          `json:"signature"`

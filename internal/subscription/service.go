@@ -107,11 +107,14 @@ func (subService *service) Acknowledgment(activationKey string) *restErrors.Rest
 
 	//assign license details
 	subscriptionAPI.SubscriptionDetails = &subscriptionAPI.SubscriptionDetailsDto{
-		Status:     licenseAcknowledgmentDto.Subscription.Status,
-		StartDate:  licenseAcknowledgmentDto.Subscription.StartDate,
-		EndDate:    licenseAcknowledgmentDto.Subscription.EndDate,
-		Name:       licenseAcknowledgmentDto.Subscription.Name,
-		CanceledAt: licenseAcknowledgmentDto.Subscription.CanceledAt,
+		Status:       licenseAcknowledgmentDto.Subscription.Status,
+		StartDate:    licenseAcknowledgmentDto.Subscription.StartDate,
+		EndDate:      licenseAcknowledgmentDto.Subscription.EndDate,
+		Name:         licenseAcknowledgmentDto.Subscription.Name,
+		CanceledAt:   licenseAcknowledgmentDto.Subscription.CanceledAt,
+		TrialStartAt: licenseAcknowledgmentDto.Subscription.TrialStartAt,
+		TrialEndAt:   licenseAcknowledgmentDto.Subscription.EndDate,
+		NodesLimit:   licenseAcknowledgmentDto.Subscription.NodesLimit,
 	}
 
 	//store activation key

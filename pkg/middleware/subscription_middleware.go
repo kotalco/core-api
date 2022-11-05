@@ -3,6 +3,7 @@ package middleware
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/kotalco/cloud-api/internal/subscription"
+	"github.com/kotalco/cloud-api/pkg/k8s/statefulset"
 	subscriptionAPI "github.com/kotalco/cloud-api/pkg/subscription"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/logger"
@@ -12,10 +13,12 @@ import (
 
 const (
 	InvalidSubscriptionStatusMessage = "INVALID_SUBSCRIPTION"
+	NodeLimitStatusMessage           = "NODES_LIMIT"
 )
 
 var (
 	subscriptionService = subscription.NewService()
+	statefulSetService  = statefulset.NewService()
 )
 
 func IsSubscription(c *fiber.Ctx) error {
@@ -55,6 +58,23 @@ func IsSubscription(c *fiber.Ctx) error {
 	}
 	c.Locals("subscriptionDetails", *subscriptionAPI.SubscriptionDetails)
 
-	c.Next()
-	return nil
+	return c.Next()
+}
+
+func NodesLimitProtected(c *fiber.Ctx) error {
+	//validate nodes limit
+	limit, err := statefulSetService.Count()
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
+	if limit >= subscriptionAPI.SubscriptionDetails.NodesLimit {
+		err := restErrors.RestErr{
+			Message: "reached nodes limit",
+			Status:  http.StatusForbidden,
+			Name:    NodeLimitStatusMessage,
+		}
+		return c.Status(err.Status).JSON(err)
+	}
+
+	return c.Next()
 }
