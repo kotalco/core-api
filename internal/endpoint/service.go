@@ -7,6 +7,7 @@ import (
 	k8svc "github.com/kotalco/cloud-api/pkg/k8s/svc"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/logger"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -61,9 +62,13 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service, namespace 
 
 	//create the strip prefix-middleware
 	middlewareDto := middleware.CreateMiddlewareDto{
-		Name:          middlewareName,
-		Namespace:     namespace,
-		StripPrefixes: middlewarePrefixes,
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      middlewareName,
+			Namespace: namespace,
+		},
+		StripPrefix: dynamic.StripPrefix{
+			Prefixes: middlewarePrefixes,
+		},
 		OwnersRef: []metav1.OwnerReference{
 			{
 				APIVersion: ingressroute.APIVersion,

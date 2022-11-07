@@ -1,10 +1,12 @@
 package middleware
 
-import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+import (
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
 
 type CreateMiddlewareDto struct {
-	Name          string
-	Namespace     string
-	StripPrefixes []string
-	OwnersRef     []metav1.OwnerReference
+	metav1.ObjectMeta
+	dynamic.StripPrefix
+	OwnersRef []metav1.OwnerReference
 }

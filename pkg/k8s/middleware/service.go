@@ -31,7 +31,7 @@ func (m *k8Middleware) Create(dto *CreateMiddlewareDto) *restErrors.RestErr {
 		},
 		Spec: traefikv1alpha1.MiddlewareSpec{
 			StripPrefix: &dynamic.StripPrefix{
-				Prefixes: dto.StripPrefixes,
+				Prefixes: dto.Prefixes,
 			},
 		},
 	}
