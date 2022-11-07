@@ -2,12 +2,15 @@ package endpoint
 
 import (
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/kotalco/cloud-api/pkg/k8s/ingressroute"
 	"github.com/kotalco/cloud-api/pkg/k8s/middleware"
+	"github.com/kotalco/cloud-api/pkg/k8s/secret"
 	k8svc "github.com/kotalco/cloud-api/pkg/k8s/svc"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/logger"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -15,6 +18,7 @@ import (
 var (
 	ingressRoutesService = ingressroute.NewIngressRoutesService()
 	k8MiddlewareService  = middleware.NewK8Middleware()
+	secretService        = secret.NewService()
 )
 
 type service struct{}
@@ -37,7 +41,8 @@ func NewService() IService {
 func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service, namespace string) *restErrors.RestErr {
 	ingressRoutePorts := make([]string, 0)
 	middlewarePrefixes := make([]string, 0)
-	middlewareName := fmt.Sprintf("%s-strip-prefix-%s", dto.Name, svc.UID)
+	stripePrefixMiddlewareName := fmt.Sprintf("%s-strip-prefix-%s", dto.Name, uuid.NewString())
+	basicAuthMiddlewareName := fmt.Sprintf("%s-basic-auth-%s", dto.Name, uuid.NewString())
 
 	for _, v := range svc.Spec.Ports {
 		if k8svc.AvailableProtocol(v.Name) {
@@ -53,38 +58,97 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service, namespace 
 		ServiceName: svc.Name,
 		ServiceID:   string(svc.UID),
 		Ports:       ingressRoutePorts,
-		Middlewares: []ingressroute.IngressRouteMiddlewareRefDto{{Name: middlewareName, Namespace: namespace}},
-		OwnersRef:   svc.OwnerReferences,
+		Middlewares: func() []ingressroute.IngressRouteMiddlewareRefDto {
+			refs := make([]ingressroute.IngressRouteMiddlewareRefDto, 0)
+			refs = append(refs, ingressroute.IngressRouteMiddlewareRefDto{
+				Name:      stripePrefixMiddlewareName,
+				Namespace: namespace,
+			})
+			if dto.BasicAuth != nil {
+				refs = append(refs, ingressroute.IngressRouteMiddlewareRefDto{
+					Name:      basicAuthMiddlewareName,
+					Namespace: namespace,
+				})
+			}
+			return refs
+		}(),
+		OwnersRef: svc.OwnerReferences,
 	})
 	if err != nil {
 		return err
 	}
 
+	ingressRouteOwnerRef := metav1.OwnerReference{
+		APIVersion: ingressroute.APIVersion,
+		Kind:       ingressroute.Kind,
+		Name:       ingressRouteObject.Name,
+		UID:        ingressRouteObject.UID,
+	}
+
 	//create the strip prefix-middleware
-	middlewareDto := middleware.CreateMiddlewareDto{
+	err = k8MiddlewareService.Create(&middleware.CreateMiddlewareDto{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      middlewareName,
-			Namespace: namespace,
+			Name:            stripePrefixMiddlewareName,
+			Namespace:       namespace,
+			OwnerReferences: []metav1.OwnerReference{ingressRouteOwnerRef},
 		},
-		StripPrefix: dynamic.StripPrefix{
-			Prefixes: middlewarePrefixes,
-		},
-		OwnersRef: []metav1.OwnerReference{
-			{
-				APIVersion: ingressroute.APIVersion,
-				Kind:       ingressroute.Kind,
-				Name:       ingressRouteObject.Name,
-				UID:        ingressRouteObject.UID,
+		MiddlewareSpec: v1alpha1.MiddlewareSpec{
+			StripPrefix: &dynamic.StripPrefix{
+				Prefixes: middlewarePrefixes,
 			},
 		},
-	}
-	err = k8MiddlewareService.Create(&middlewareDto)
+	})
 	if err != nil {
 		dErr := ingressRoutesService.Delete(dto.Name, namespace)
 		if dErr != nil {
 			go logger.Error(s.Create, dErr)
 		}
 		return err
+	}
+
+	//create basic-auth middleware if exist
+	if dto.BasicAuth != nil {
+		//create basic auth secret
+		secretName := fmt.Sprintf("%s-secret-%s", dto.Name, svc.UID)
+		err := secretService.Create(&secret.CreateSecretDto{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:            secretName,
+				Namespace:       namespace,
+				OwnerReferences: []metav1.OwnerReference{ingressRouteOwnerRef},
+			},
+			Type: corev1.SecretTypeBasicAuth,
+			StringData: map[string]string{
+				"username": dto.BasicAuth.Username,
+				"password": dto.BasicAuth.Password,
+			},
+		})
+		if err != nil {
+			dErr := ingressRoutesService.Delete(dto.Name, namespace)
+			if dErr != nil {
+				go logger.Error(s.Create, dErr)
+			}
+			return err
+		}
+		//create basic auth middleware
+		err = k8MiddlewareService.Create(&middleware.CreateMiddlewareDto{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:            basicAuthMiddlewareName,
+				Namespace:       namespace,
+				OwnerReferences: []metav1.OwnerReference{ingressRouteOwnerRef},
+			},
+			MiddlewareSpec: v1alpha1.MiddlewareSpec{
+				BasicAuth: &v1alpha1.BasicAuth{
+					Secret: secretName,
+				},
+			},
+		})
+		if err != nil {
+			dErr := ingressRoutesService.Delete(dto.Name, namespace)
+			if dErr != nil {
+				go logger.Error(s.Create, dErr)
+			}
+			return err
+		}
 	}
 
 	return nil

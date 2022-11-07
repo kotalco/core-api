@@ -3,6 +3,7 @@ package endpoint
 import (
 	"github.com/kotalco/cloud-api/pkg/k8s/ingressroute"
 	"github.com/kotalco/cloud-api/pkg/k8s/middleware"
+	"github.com/kotalco/cloud-api/pkg/k8s/secret"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
@@ -49,9 +50,20 @@ func (k k8MiddlewareServiceMock) Create(dto *middleware.CreateMiddlewareDto) *re
 	return k8middlewareCreateFunc(dto)
 }
 
+type secretServiceMock struct{}
+
+var (
+	secretCreateFunc func(dto *secret.CreateSecretDto) *restErrors.RestErr
+)
+
+func (s secretServiceMock) Create(dto *secret.CreateSecretDto) *restErrors.RestErr {
+	return secretCreateFunc(dto)
+}
+
 func TestMain(m *testing.M) {
 	ingressRoutesService = &ingressRouteServiceMock{}
 	k8MiddlewareService = &k8MiddlewareServiceMock{}
+	secretService = &secretServiceMock{}
 	endpointService = NewService()
 	code := m.Run()
 	os.Exit(code)
@@ -77,6 +89,65 @@ func TestService_Create(t *testing.T) {
 		err := endpointService.Create(createDto, svc, "")
 		assert.Nil(t, err)
 	})
+	t.Run("create endpoint should pass with basic auth", func(t *testing.T) {
+		ingressRouteCreateFunc = func(dto *ingressroute.IngressRouteDto) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr) {
+			return &traefikv1alpha1.IngressRoute{
+				TypeMeta:   metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{},
+				Spec:       traefikv1alpha1.IngressRouteSpec{},
+			}, nil
+		}
+		k8middlewareCreateFunc = func(dto *middleware.CreateMiddlewareDto) *restErrors.RestErr {
+			return nil
+		}
+
+		createDto := &CreateEndpointDto{
+			BasicAuth: &SecretBasicAuth{
+				Username: "username",
+				Password: "mohamed",
+			},
+		}
+		svc := &corev1.Service{Spec: corev1.ServiceSpec{
+			Ports: []corev1.ServicePort{{}},
+		}}
+
+		secretCreateFunc = func(dto *secret.CreateSecretDto) *restErrors.RestErr {
+			return nil
+		}
+		err := endpointService.Create(createDto, svc, "")
+		assert.Nil(t, err)
+	})
+	t.Run("create endpoint should throw if can't create secret with basic auth", func(t *testing.T) {
+		ingressRouteCreateFunc = func(dto *ingressroute.IngressRouteDto) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr) {
+			return &traefikv1alpha1.IngressRoute{
+				TypeMeta:   metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{},
+				Spec:       traefikv1alpha1.IngressRouteSpec{},
+			}, nil
+		}
+		k8middlewareCreateFunc = func(dto *middleware.CreateMiddlewareDto) *restErrors.RestErr {
+			return nil
+		}
+
+		createDto := &CreateEndpointDto{
+			BasicAuth: &SecretBasicAuth{
+				Username: "username",
+				Password: "mohamed",
+			},
+		}
+		svc := &corev1.Service{Spec: corev1.ServiceSpec{
+			Ports: []corev1.ServicePort{{}},
+		}}
+
+		secretCreateFunc = func(dto *secret.CreateSecretDto) *restErrors.RestErr {
+			return restErrors.NewInternalServerError("can't create secret")
+		}
+		ingressRouteDeleteFunc = func(name string, namespace string) *restErrors.RestErr {
+			return nil
+		}
+		err := endpointService.Create(createDto, svc, "")
+		assert.EqualValues(t, "can't create secret", err.Message)
+	})
 	t.Run("create endpoint should throw if ingressRoute.create throws", func(t *testing.T) {
 		ingressRouteCreateFunc = func(dto *ingressroute.IngressRouteDto) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr) {
 			return nil, restErrors.NewInternalServerError("something went wrong")
@@ -90,7 +161,6 @@ func TestService_Create(t *testing.T) {
 		assert.EqualValues(t, http.StatusInternalServerError, err.Status)
 		assert.EqualValues(t, "something went wrong", err.Message)
 	})
-
 	t.Run("create endpoint should throw if k8middleware service throws", func(t *testing.T) {
 		ingressRouteCreateFunc = func(dto *ingressroute.IngressRouteDto) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr) {
 			return &traefikv1alpha1.IngressRoute{
@@ -112,7 +182,6 @@ func TestService_Create(t *testing.T) {
 		err := endpointService.Create(createDto, svc, "")
 		assert.EqualValues(t, "something went wrong", err.Message)
 	})
-
 }
 
 func TestService_List(t *testing.T) {
