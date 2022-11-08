@@ -47,6 +47,7 @@ in production, staging environment it should passed as a build time variables
 ## :closed_lock_with_key:	 Build-Time Variables
 This is a list of the build-time variavbles you need pass when building the applicaion
 - `ECC_PUBLIC_KEY` 
+- `SEND_GRID_API_KEY` 
 
 
 

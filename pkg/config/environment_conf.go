@@ -7,6 +7,7 @@ import (
 var (
 	EnvironmentConf = map[string]string{}
 	ECCPublicKey    string
+	SendGridAPIKey  string
 )
 
 func init() {
@@ -137,7 +138,11 @@ func init() {
 		EnvironmentConf["SEND_GRID_SENDER_EMAIL"] = val
 	}
 
-	EnvironmentConf["SEND_GRID_API_KEY"] = os.Getenv("SEND_GRID_API_KEY")
+	if EnvironmentConf["ENVIRONMENT"] == "development" {
+		EnvironmentConf["SEND_GRID_API_KEY"] = os.Getenv("SEND_GRID_API_KEY")
+	} else {
+		EnvironmentConf["SEND_GRID_API_KEY"] = SendGridAPIKey
+	}
 
 	//tfa configs
 	val, ok = os.LookupEnv("2_FACTOR_SECRET")
