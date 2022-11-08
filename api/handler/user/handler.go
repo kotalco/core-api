@@ -59,6 +59,11 @@ func SignUp(c *fiber.Ctx) error {
 			sqlclient.Rollback(txHandle)
 			return c.Status(restErr.Status).JSON(restErr)
 		}
+		restErr = userService.VerifyEmail(model)
+		if restErr != nil {
+			sqlclient.Rollback(txHandle)
+			return c.Status(restErr.Status).JSON(restErr)
+		}
 	}
 
 	sqlclient.Commit(txHandle)
