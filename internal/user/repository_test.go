@@ -109,6 +109,16 @@ func TestRepository_FindWhereIdInSlice(t *testing.T) {
 	})
 }
 
+func TestRepository_Count(t *testing.T) {
+	t.Run("count users should pass", func(t *testing.T) {
+		user1 := createUser(t)
+		count, err := repo.Count()
+		assert.Nil(t, err)
+		assert.NotEqual(t, 0, count)
+		cleanUp(user1)
+	})
+}
+
 func createUser(t *testing.T) User {
 	user := new(User)
 	user.ID = uuid.New().String()

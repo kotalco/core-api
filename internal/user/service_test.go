@@ -21,6 +21,7 @@ var (
 	GetByIdFunc            func(id string) (*User, *restErrors.RestErr)
 	UpdateFunc             func(user *User) *restErrors.RestErr
 	FindWhereIdInSliceFunc func(ids []string) ([]*User, *restErrors.RestErr)
+	CountFunc              func() (int64, *restErrors.RestErr)
 
 	EncryptFunc func(data []byte, passphrase string) (string, error)
 	DecryptFunc func(encodedCipher string, passphrase string) (string, error)
@@ -41,7 +42,7 @@ type hashingServiceMock struct{}
 type tokenServiceMock struct{}
 type tfaServiceMock struct{}
 
-//user repository methods
+// user repository methods
 func (r userRepositoryMock) WithTransaction(txHandle *gorm.DB) IRepository {
 	return r
 }
@@ -65,8 +66,11 @@ func (userRepositoryMock) Update(user *User) *restErrors.RestErr {
 func (userRepositoryMock) FindWhereIdInSlice(ids []string) ([]*User, *restErrors.RestErr) {
 	return FindWhereIdInSliceFunc(ids)
 }
+func (userRepositoryMock) Count() (int64, *restErrors.RestErr) {
+	return CountFunc()
+}
 
-//encryption service methods
+// encryption service methods
 func (encryptionServiceMock) Encrypt(data []byte, passphrase string) (string, error) {
 	return EncryptFunc(data, passphrase)
 }
@@ -75,7 +79,7 @@ func (encryptionServiceMock) Decrypt(encodedCipher string, passphrase string) (s
 	return DecryptFunc(encodedCipher, passphrase)
 }
 
-//hashing service methods
+// hashing service methods
 func (hashingServiceMock) Hash(password string, cost int) ([]byte, error) {
 	return HashFunc(password, cost)
 }
@@ -84,7 +88,7 @@ func (hashingServiceMock) VerifyHash(hashedPassword, password string) error {
 	return VerifyHashFunc(hashedPassword, password)
 }
 
-//token service methods
+// token service methods
 func (tokenServiceMock) CreateToken(userId string, rememberMe bool, authorized bool) (*token.Token, *restErrors.RestErr) {
 	return CreateTokenFunc(userId, rememberMe, authorized)
 }
@@ -93,7 +97,7 @@ func (tokenServiceMock) ExtractTokenMetadata(bearToken string) (*token.AccessDet
 	return ExtractTokenMetadataFunc(bearToken)
 }
 
-//tfa service methods
+// tfa service methods
 func (tfaServiceMock) CreateQRCode(accountName string) (bytes.Buffer, string, error) {
 	return CreateQRCodeFunc(accountName)
 }
@@ -794,5 +798,25 @@ func TestService_FindWhereIdInSlice(t *testing.T) {
 		list, err := userService.FindWhereIdInSlice([]string{})
 		assert.Nil(t, err)
 		assert.Len(t, list, 2)
+	})
+}
+
+func TestService_Count(t *testing.T) {
+	t.Run("count should pass", func(t *testing.T) {
+		CountFunc = func() (int64, *restErrors.RestErr) {
+			return 1, nil
+		}
+		count, err := userService.Count()
+		assert.EqualValues(t, 1, count)
+		assert.Nil(t, err)
+	})
+
+	t.Run("count should throw if repo throws", func(t *testing.T) {
+		CountFunc = func() (int64, *restErrors.RestErr) {
+			return 0, restErrors.NewInternalServerError("something went wrong")
+		}
+		count, err := userService.Count()
+		assert.EqualValues(t, 0, count)
+		assert.EqualValues(t, "something went wrong", err.Message)
 	})
 }

@@ -42,6 +42,7 @@ var (
 	EnableTwoFactorAuthFunc  func(model *user.User, totp string) (*user.User, *restErrors.RestErr)
 	DisableTwoFactorAuthFunc func(model *user.User, dto *user.DisableTOTPRequestDto) *restErrors.RestErr
 	FindWhereIdInSliceFunc   func(ids []string) ([]*user.User, *restErrors.RestErr)
+	usersCountFunc           func() (int64, *restErrors.RestErr)
 )
 
 type userServiceMock struct{}
@@ -100,6 +101,9 @@ func (userServiceMock) DisableTwoFactorAuth(model *user.User, dto *user.DisableT
 
 func (userServiceMock) FindWhereIdInSlice(ids []string) ([]*user.User, *restErrors.RestErr) {
 	return FindWhereIdInSliceFunc(ids)
+}
+func (uService userServiceMock) Count() (int64, *restErrors.RestErr) {
+	return usersCountFunc()
 }
 
 /*
