@@ -34,13 +34,13 @@ in production, staging environment it should passed as a build time variables
 - `DB_MAX_CONNECTIONS`
 - `DB_MAX_IDLE_CONNECTIONS`
 - `DB_MAX_LIFETIME_CONNECTIONS`
-- `FRONT_BASE_URL` the dashboard used to redirect user to when sending emails 
 - `VERIFICATION_TOKEN_LENGTH` the length of the verification tokens used by the system idl > 50 chars
 - `VERIFICATION_TOKEN_EXPIRY_HOURS` 
 - `SEND_GRID_SENDER_NAME` the username of the emails sent to the users
 - `SEND_GRID_SENDER_EMAIL` the email address used to send the emails with
 - `2_FACTOR_SECRET` symmetric key used to sign the user verification key
 - `RATE_LIMITER_PER_MINUTE` 
+- `DOMAIN_MATCH_BASE_URL`
 
 
 

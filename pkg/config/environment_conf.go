@@ -102,14 +102,6 @@ func init() {
 		EnvironmentConf["DB_MAX_LIFETIME_CONNECTIONS"] = val
 	}
 
-	//Emails configs
-	val, ok = os.LookupEnv("FRONT_BASE_URL")
-	if !ok {
-		EnvironmentConf["FRONT_BASE_URL"] = "http://localhost:3000/"
-	} else {
-		EnvironmentConf["FRONT_BASE_URL"] = val
-	}
-
 	val, ok = os.LookupEnv("VERIFICATION_TOKEN_LENGTH")
 	if !ok {
 		EnvironmentConf["VERIFICATION_TOKEN_LENGTH"] = "80"
