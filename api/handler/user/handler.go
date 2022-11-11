@@ -79,7 +79,6 @@ func SignUp(c *fiber.Ctx) error {
 			mailRequest := new(sendgrid.MailRequestDto)
 			mailRequest.Token = token
 			mailRequest.Email = model.Email
-
 			mailService.SignUp(mailRequest)
 		}
 	}()
