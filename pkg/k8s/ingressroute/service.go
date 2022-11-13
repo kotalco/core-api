@@ -63,6 +63,7 @@ func (i *ingressroute) Create(dto *IngressRouteDto) (*traefikv1alpha1.IngressRou
 			Name:            dto.Name,
 			Namespace:       dto.Namespace,
 			OwnerReferences: dto.OwnersRef,
+			Labels:          map[string]string{"app.kubernetes.io/managed-by": "kotal"},
 		},
 		Spec: traefikv1alpha1.IngressRouteSpec{
 			EntryPoints: []string{"websecure"},

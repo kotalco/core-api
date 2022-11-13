@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-//namespace service communicates with k8s from community-api to create namespaces for different nodes
+// namespace service communicates with k8s from community-api to create namespaces for different nodes
 // in combination with workspace-module they form (workspace exposed to the user which is the namespace behind the scenes)
 type namespace struct{}
 
@@ -27,11 +27,12 @@ func NewNamespaceService() INamespace {
 	return newNamespace
 }
 
-//Create creates new namespace from a given name using the clientSet from community-api microservice
+// Create creates new namespace from a given name using the clientSet from community-api microservice
 func (service *namespace) Create(name string) *restErrors.RestErr {
 	ns := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
+			Name:   name,
+			Labels: map[string]string{"app.kubernetes.io/managed-by": "kotal"},
 		},
 	}
 	err := K8sClient.Create(context.Background(), ns)
@@ -47,7 +48,7 @@ func (service *namespace) Create(name string) *restErrors.RestErr {
 	return nil
 }
 
-//Get returns a namespace if exits
+// Get returns a namespace if exits
 func (service *namespace) Get(name string) (*corev1.Namespace, *restErrors.RestErr) {
 	ns := corev1.Namespace{}
 
@@ -66,7 +67,7 @@ func (service *namespace) Get(name string) (*corev1.Namespace, *restErrors.RestE
 	return &ns, nil
 }
 
-//Delete deletes a namespace if exits
+// Delete deletes a namespace if exits
 func (service *namespace) Delete(name string) *restErrors.RestErr {
 	ns := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
