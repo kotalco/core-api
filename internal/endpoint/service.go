@@ -20,6 +20,7 @@ var (
 	ingressRoutesService = ingressroute.NewIngressRoutesService()
 	k8MiddlewareService  = middleware.NewK8Middleware()
 	secretService        = secret.NewService()
+	k8Service            = k8svc.NewService()
 )
 
 type service struct{}
@@ -163,7 +164,15 @@ func (s *service) List(namespace string) ([]*EndpointDto, *restErrors.RestErr) {
 
 	marshalledDto := make([]*EndpointDto, 0)
 	for _, item := range records.Items {
-		marshalledDto = append(marshalledDto, new(EndpointDto).Marshall(&item))
+		//get service
+		v1Service, err := k8Service.Get(item.Spec.Routes[0].Services[0].Name, namespace)
+		if err != nil {
+			return nil, err
+		}
+		//get secret
+		secretName := fmt.Sprintf("%s-secret-%s", item.Name, v1Service.UID)
+		v1Secret, _ := secretService.Get(secretName, namespace)
+		marshalledDto = append(marshalledDto, new(EndpointDto).Marshall(&item, v1Secret))
 	}
 
 	return marshalledDto, nil
@@ -175,7 +184,16 @@ func (s *service) Get(name string, namespace string) (*EndpointDto, *restErrors.
 		return nil, err
 	}
 
-	return new(EndpointDto).Marshall(record), nil
+	//get service
+	v1Service, err := k8Service.Get(record.Spec.Routes[0].Services[0].Name, namespace)
+	if err != nil {
+		return nil, err
+	}
+	//get secret
+	secretName := fmt.Sprintf("%s-secret-%s", record.Name, v1Service.UID)
+	v1Secret, _ := secretService.Get(secretName, namespace)
+
+	return new(EndpointDto).Marshall(record, v1Secret), nil
 }
 
 func (s *service) Delete(name string, namespace string) *restErrors.RestErr {

@@ -9,10 +9,12 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 type ISecret interface {
 	Create(dto *CreateSecretDto) *restError.RestErr
+	Get(name string, namespace string) (*corev1.Secret, *restError.RestErr)
 }
 
 type secret struct {
@@ -43,4 +45,21 @@ func (s *secret) Create(dto *CreateSecretDto) *restError.RestErr {
 		return restError.NewInternalServerError("error creating secret")
 	}
 	return nil
+}
+
+func (s *secret) Get(name string, namespace string) (*corev1.Secret, *restError.RestErr) {
+	record := &corev1.Secret{}
+	key := types.NamespacedName{
+		Namespace: namespace,
+		Name:      name,
+	}
+	err := k8s.K8sClient.Get(context.Background(), key, record)
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			return nil, restError.NewNotFoundError(fmt.Sprintf("can't find secret %s", name))
+		}
+		go logger.Error(s.Get, err)
+		return nil, restError.NewInternalServerError(err.Error())
+	}
+	return record, nil
 }

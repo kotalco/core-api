@@ -54,16 +54,36 @@ type secretServiceMock struct{}
 
 var (
 	secretCreateFunc func(dto *secret.CreateSecretDto) *restErrors.RestErr
+	secretGetFunc    func(name string, namespace string) (*corev1.Secret, *restErrors.RestErr)
 )
 
 func (s secretServiceMock) Create(dto *secret.CreateSecretDto) *restErrors.RestErr {
 	return secretCreateFunc(dto)
+}
+func (s secretServiceMock) Get(name string, namespace string) (*corev1.Secret, *restErrors.RestErr) {
+	return secretGetFunc(name, namespace)
+}
+
+var (
+	k8ServiceListFunc func(namespace string) (*corev1.ServiceList, *restErrors.RestErr)
+	k8ServiceGetFunc  func(name string, namespace string) (*corev1.Service, *restErrors.RestErr)
+)
+
+type k8ServiceMock struct{}
+
+func (k k8ServiceMock) List(namespace string) (*corev1.ServiceList, *restErrors.RestErr) {
+	return k8ServiceListFunc(namespace)
+}
+
+func (k k8ServiceMock) Get(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {
+	return k8ServiceGetFunc(name, namespace)
 }
 
 func TestMain(m *testing.M) {
 	ingressRoutesService = &ingressRouteServiceMock{}
 	k8MiddlewareService = &k8MiddlewareServiceMock{}
 	secretService = &secretServiceMock{}
+	k8Service = &k8ServiceMock{}
 	endpointService = NewService()
 	code := m.Run()
 	os.Exit(code)
@@ -184,11 +204,24 @@ func TestService_List(t *testing.T) {
 			return &traefikv1alpha1.IngressRouteList{
 				TypeMeta: metav1.TypeMeta{},
 				ListMeta: metav1.ListMeta{},
-				Items:    []traefikv1alpha1.IngressRoute{{}},
+				Items: []traefikv1alpha1.IngressRoute{{
+					Spec: traefikv1alpha1.IngressRouteSpec{
+						Routes: []traefikv1alpha1.Route{{
+							Services: []traefikv1alpha1.Service{{}},
+						}},
+					},
+				}},
 			}, nil
+		}
+		k8ServiceGetFunc = func(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {
+			return &corev1.Service{}, nil
+		}
+		secretGetFunc = func(name string, namespace string) (*corev1.Secret, *restErrors.RestErr) {
+			return &corev1.Secret{}, nil
 		}
 
 		list, err := endpointService.List("namespace")
+
 		assert.Nil(t, err)
 		assert.NotNil(t, list)
 	})
@@ -207,7 +240,19 @@ func TestService_List(t *testing.T) {
 func TestService_Get(t *testing.T) {
 	t.Run("get endpoint should pass", func(t *testing.T) {
 		ingressRouteGetFunc = func(name string, namespace string) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr) {
-			return &traefikv1alpha1.IngressRoute{}, nil
+			return &traefikv1alpha1.IngressRoute{
+				Spec: traefikv1alpha1.IngressRouteSpec{
+					Routes: []traefikv1alpha1.Route{{
+						Services: []traefikv1alpha1.Service{{}},
+					}},
+				},
+			}, nil
+		}
+		k8ServiceGetFunc = func(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {
+			return &corev1.Service{}, nil
+		}
+		secretGetFunc = func(name string, namespace string) (*corev1.Secret, *restErrors.RestErr) {
+			return &corev1.Secret{}, nil
 		}
 		record, err := endpointService.Get("name", "namespace")
 		assert.Nil(t, err)
