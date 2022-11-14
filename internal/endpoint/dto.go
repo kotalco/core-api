@@ -8,14 +8,9 @@ import (
 )
 
 type CreateEndpointDto struct {
-	Name        string `json:"name" validate:"required"`
-	ServiceName string `json:"service_name" validate:"required"`
-	BasicAuth   *SecretBasicAuth
-}
-
-type SecretBasicAuth struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Name         string `json:"name" validate:"required"`
+	ServiceName  string `json:"service_name" validate:"required"`
+	UseBasicAuth bool   `json:"use_basic_auth"`
 }
 
 type EndpointDto struct {

@@ -7,6 +7,7 @@ import (
 	"github.com/kotalco/cloud-api/pkg/k8s/middleware"
 	"github.com/kotalco/cloud-api/pkg/k8s/secret"
 	k8svc "github.com/kotalco/cloud-api/pkg/k8s/svc"
+	"github.com/kotalco/cloud-api/pkg/security"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/logger"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
@@ -64,7 +65,7 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service, namespace 
 				Name:      stripePrefixMiddlewareName,
 				Namespace: namespace,
 			})
-			if dto.BasicAuth != nil {
+			if dto.UseBasicAuth {
 				refs = append(refs, ingressroute.IngressRouteMiddlewareRefDto{
 					Name:      basicAuthMiddlewareName,
 					Namespace: namespace,
@@ -107,7 +108,7 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service, namespace 
 	}
 
 	//create basic-auth middleware if exist
-	if dto.BasicAuth != nil {
+	if dto.UseBasicAuth {
 		//create basic auth secret
 		secretName := fmt.Sprintf("%s-secret-%s", dto.Name, svc.UID)
 		err := secretService.Create(&secret.CreateSecretDto{
@@ -118,8 +119,8 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service, namespace 
 			},
 			Type: corev1.SecretTypeBasicAuth,
 			StringData: map[string]string{
-				"username": dto.BasicAuth.Username,
-				"password": dto.BasicAuth.Password,
+				"username": security.GenerateRandomString(8),
+				"password": security.GenerateRandomString(8),
 			},
 		})
 		if err != nil {

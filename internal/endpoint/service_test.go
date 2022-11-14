@@ -102,10 +102,7 @@ func TestService_Create(t *testing.T) {
 		}
 
 		createDto := &CreateEndpointDto{
-			BasicAuth: &SecretBasicAuth{
-				Username: "username",
-				Password: "mohamed",
-			},
+			UseBasicAuth: true,
 		}
 		svc := &corev1.Service{Spec: corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{{}},
@@ -130,10 +127,7 @@ func TestService_Create(t *testing.T) {
 		}
 
 		createDto := &CreateEndpointDto{
-			BasicAuth: &SecretBasicAuth{
-				Username: "username",
-				Password: "mohamed",
-			},
+			UseBasicAuth: true,
 		}
 		svc := &corev1.Service{Spec: corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{{}},
