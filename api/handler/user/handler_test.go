@@ -45,6 +45,7 @@ var (
 	EnableTwoFactorAuthFunc  func(model *user.User, totp string) (*user.User, *restErrors.RestErr)
 	DisableTwoFactorAuthFunc func(model *user.User, dto *user.DisableTOTPRequestDto) *restErrors.RestErr
 	FindWhereIdInSliceFunc   func(ids []string) ([]*user.User, *restErrors.RestErr)
+	usersCountFunc           func() (int64, *restErrors.RestErr)
 )
 
 type userServiceMock struct{}
@@ -102,6 +103,9 @@ func (userServiceMock) DisableTwoFactorAuth(model *user.User, dto *user.DisableT
 }
 func (userServiceMock) FindWhereIdInSlice(ids []string) ([]*user.User, *restErrors.RestErr) {
 	return FindWhereIdInSliceFunc(ids)
+}
+func (userServiceMock) Count() (int64, *restErrors.RestErr) {
+	return usersCountFunc()
 }
 
 /*
@@ -283,6 +287,9 @@ func TestSignUp(t *testing.T) {
 		CreateFunc = func(userId string) (string, *restErrors.RestErr) {
 			return "JWT-token", nil
 		}
+		usersCountFunc = func() (int64, *restErrors.RestErr) {
+			return 2, nil
+		}
 
 		CreateWorkspaceFunc = func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr) {
 			responseDto := new(workspace.Workspace)
@@ -322,7 +329,15 @@ func TestSignUp(t *testing.T) {
 		CreateFunc = func(userId string) (string, *restErrors.RestErr) {
 			return "JWT-token", nil
 		}
-
+		usersCountFunc = func() (int64, *restErrors.RestErr) {
+			return 1, nil
+		}
+		VerifyFunc = func(userId string, token string) *restErrors.RestErr {
+			return nil
+		}
+		VerifyEmailFunc = func(model *user.User) *restErrors.RestErr {
+			return nil
+		}
 		CreateWorkspaceFunc = func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr) {
 			return nil, restErrors.NewInternalServerError("can't create workspace")
 		}
@@ -351,6 +366,15 @@ func TestSignUp(t *testing.T) {
 
 		CreateFunc = func(userId string) (string, *restErrors.RestErr) {
 			return "JWT-token", nil
+		}
+		usersCountFunc = func() (int64, *restErrors.RestErr) {
+			return 1, nil
+		}
+		VerifyFunc = func(userId string, token string) *restErrors.RestErr {
+			return nil
+		}
+		VerifyEmailFunc = func(model *user.User) *restErrors.RestErr {
+			return nil
 		}
 
 		CreateWorkspaceFunc = func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr) {
@@ -431,14 +455,98 @@ func TestSignUp(t *testing.T) {
 		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
 		assert.EqualValues(t, result.Message, "user service errors")
 	})
+	t.Run("Sign_Up_Should_Throw_if_Count_Fun_throws", func(t *testing.T) {
+		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr) {
+			newUser := new(user.User)
+			newUser.Email = "test@test.com"
+			return newUser, nil
+		}
 
-	t.Run("Sign_Up_Should_Throw_if_Verification_Service_Throws", func(t *testing.T) {
+		CreateFunc = func(userId string) (string, *restErrors.RestErr) {
+			return "JWT-token", nil
+		}
+		usersCountFunc = func() (int64, *restErrors.RestErr) {
+			return 0, restErrors.NewInternalServerError("count users throws")
+		}
+
+		body, resp := newFiberCtx(validDto, SignUp, map[string]interface{}{})
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
+		assert.EqualValues(t, "count users throws", result.Message)
+	})
+	t.Run("Sign_Up_Should_Throw_if_Count_Fun_Pass_But_verification_verify_throws", func(t *testing.T) {
+		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr) {
+			newUser := new(user.User)
+			newUser.Email = "test@test.com"
+			return newUser, nil
+		}
+
+		CreateFunc = func(userId string) (string, *restErrors.RestErr) {
+			return "JWT-token", nil
+		}
+		usersCountFunc = func() (int64, *restErrors.RestErr) {
+			return 1, nil
+		}
+		VerifyFunc = func(userId string, token string) *restErrors.RestErr {
+			return restErrors.NewInternalServerError("verification verify error")
+		}
+
+		body, resp := newFiberCtx(validDto, SignUp, map[string]interface{}{})
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
+		assert.EqualValues(t, "verification verify error", result.Message)
+	})
+	t.Run("Sign_Up_Should_Throw_if_Count_Fun_Pass_and_verification_pass_but_user_service_verifyEmail_throws", func(t *testing.T) {
+		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr) {
+			newUser := new(user.User)
+			newUser.Email = "test@test.com"
+			return newUser, nil
+		}
+
+		CreateFunc = func(userId string) (string, *restErrors.RestErr) {
+			return "JWT-token", nil
+		}
+		usersCountFunc = func() (int64, *restErrors.RestErr) {
+			return 1, nil
+		}
+		VerifyFunc = func(userId string, token string) *restErrors.RestErr {
+			return nil
+		}
+		VerifyEmailFunc = func(model *user.User) *restErrors.RestErr {
+			return restErrors.NewInternalServerError("user service verify email pass")
+		}
+
+		body, resp := newFiberCtx(validDto, SignUp, map[string]interface{}{})
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
+		assert.EqualValues(t, "user service verify email pass", result.Message)
+	})
+
+	t.Run("Sign_Up_Should_Throw_if_create_user_Throws", func(t *testing.T) {
 		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr) {
 			return new(user.User), nil
 		}
 
 		CreateFunc = func(userId string) (string, *restErrors.RestErr) {
-			return "", restErrors.NewBadRequestError("verification service errors")
+			return "", restErrors.NewBadRequestError("create user service errors")
 		}
 
 		body, resp := newFiberCtx(validDto, SignUp, map[string]interface{}{})
@@ -450,7 +558,7 @@ func TestSignUp(t *testing.T) {
 		}
 
 		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
-		assert.EqualValues(t, result.Message, "verification service errors")
+		assert.EqualValues(t, result.Message, "create user service errors")
 	})
 
 }

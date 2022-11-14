@@ -21,6 +21,7 @@ type IRepository interface {
 	GetById(id string) (*User, *restErrors.RestErr)
 	Update(user *User) *restErrors.RestErr
 	FindWhereIdInSlice(ids []string) ([]*User, *restErrors.RestErr)
+	Count() (int64, *restErrors.RestErr)
 }
 
 func NewRepository() IRepository {
@@ -92,4 +93,14 @@ func (repository) FindWhereIdInSlice(ids []string) ([]*User, *restErrors.RestErr
 		return nil, restErrors.NewInternalServerError("something went wrong")
 	}
 	return users, nil
+}
+
+func (repository) Count() (int64, *restErrors.RestErr) {
+	var count int64
+	result := sqlclient.DbClient.Model(User{}).Count(&count)
+	if result.Error != nil {
+		go logger.Error(repository.Count, result.Error)
+		return 0, restErrors.NewInternalServerError("can't count users")
+	}
+	return count, nil
 }

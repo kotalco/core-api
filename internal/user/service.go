@@ -29,6 +29,7 @@ type IService interface {
 	EnableTwoFactorAuth(model *User, totp string) (*User, *restErrors.RestErr)
 	DisableTwoFactorAuth(model *User, dto *DisableTOTPRequestDto) *restErrors.RestErr
 	FindWhereIdInSlice(ids []string) ([]*User, *restErrors.RestErr)
+	Count() (int64, *restErrors.RestErr)
 }
 
 var (
@@ -312,4 +313,9 @@ func (service) DisableTwoFactorAuth(model *User, dto *DisableTOTPRequestDto) *re
 // FindWhereIdInSlice returns a list of users which ids exist in the slice of ids passed as argument
 func (service) FindWhereIdInSlice(ids []string) ([]*User, *restErrors.RestErr) {
 	return userRepository.FindWhereIdInSlice(ids)
+}
+
+// Count returns count of the users model
+func (service) Count() (int64, *restErrors.RestErr) {
+	return userRepository.Count()
 }
