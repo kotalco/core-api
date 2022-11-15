@@ -12,7 +12,7 @@ import (
 )
 
 func FiberConfig() fiber.Config {
-	readTimeoutSecondsCount, _ := strconv.Atoi(EnvironmentConf["SERVER_READ_TIMEOUT"])
+	readTimeoutSecondsCount, _ := strconv.Atoi(Environment.ServerReadTimeout)
 	return fiber.Config{
 		ReadTimeout:  time.Second * time.Duration(readTimeoutSecondsCount),
 		ErrorHandler: defaultErrorHandler,
@@ -30,7 +30,7 @@ var defaultErrorHandler = func(c *fiber.Ctx, err error) error {
 }
 
 func FiberLimiter() fiber.Handler {
-	maxLimiter, err := strconv.Atoi(EnvironmentConf["RATE_LIMITER_PER_MINUTE"])
+	maxLimiter, err := strconv.Atoi(Environment.RatelimiterPerMinute)
 	if err != nil {
 		logger.Panic("FIBER_CONFIG_LIMITER", err)
 	}

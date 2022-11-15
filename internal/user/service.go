@@ -2,6 +2,7 @@ package user
 
 import (
 	"bytes"
+
 	"github.com/google/uuid"
 	"github.com/kotalco/cloud-api/pkg/config"
 	"github.com/kotalco/cloud-api/pkg/security"
@@ -218,7 +219,7 @@ func (service) CreateTOTP(model *User, dto *CreateTOTPRequestDto) (bytes.Buffer,
 		return bytes.Buffer{}, restErrors.NewInternalServerError("something went wrong")
 	}
 
-	twoAuthSecretCipher, err := encryption.Encrypt([]byte(secret), config.EnvironmentConf["2_FACTOR_SECRET"])
+	twoAuthSecretCipher, err := encryption.Encrypt([]byte(secret), config.Environment.TwoFactorSecret)
 	if err != nil {
 		go logger.Error(service.CreateTOTP, err)
 		return bytes.Buffer{}, restErrors.NewInternalServerError("something went wrong")
@@ -238,7 +239,7 @@ func (service) EnableTwoFactorAuth(model *User, totp string) (*User, *restErrors
 	if model.TwoFactorCipher == "" {
 		return nil, restErrors.NewBadRequestError("please create and register qr code first")
 	}
-	TOTPSecret, err := encryption.Decrypt(model.TwoFactorCipher, config.EnvironmentConf["2_FACTOR_SECRET"])
+	TOTPSecret, err := encryption.Decrypt(model.TwoFactorCipher, config.Environment.TwoFactorSecret)
 	if err != nil {
 		go logger.Error(service.EnableTwoFactorAuth, err)
 		return nil, restErrors.NewInternalServerError("something went wrong")
@@ -264,7 +265,7 @@ func (service) VerifyTOTP(model *User, totp string) (*UserSessionResponseDto, *r
 		return nil, restErrors.NewBadRequestError("please enable your 2fa first")
 	}
 
-	TOTPSecret, err := encryption.Decrypt(model.TwoFactorCipher, config.EnvironmentConf["2_FACTOR_SECRET"])
+	TOTPSecret, err := encryption.Decrypt(model.TwoFactorCipher, config.Environment.TwoFactorSecret)
 	if err != nil {
 		go logger.Error(service.EnableTwoFactorAuth, err)
 		return nil, restErrors.NewInternalServerError("something went wrong")

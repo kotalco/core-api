@@ -28,9 +28,9 @@ func NewToken() IToken {
 func (token) CreateToken(userId string, rememberMe bool, authorized bool) (*Token, *restErrors.RestErr) {
 	var tokenExpires int
 	var convErr error
-	tokenExpires, convErr = strconv.Atoi(config.EnvironmentConf["JWT_SECRET_KEY_EXPIRE_HOURS_COUNT"])
+	tokenExpires, convErr = strconv.Atoi(config.Environment.JwtSecretKeyExpireHoursCount)
 	if rememberMe {
-		tokenExpires, convErr = strconv.Atoi(config.EnvironmentConf["JWT_SECRET_KEY_EXPIRE_HOURS_COUNT_REMEMBER_ME"])
+		tokenExpires, convErr = strconv.Atoi(config.Environment.JwtSecretKeyExpireHoursCountRememberMe)
 	}
 
 	if convErr != nil {
@@ -49,7 +49,7 @@ func (token) CreateToken(userId string, rememberMe bool, authorized bool) (*Toke
 	tClaims["exp"] = t.Expires
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, tClaims)
 	var err error
-	t.AccessToken, err = at.SignedString([]byte(config.EnvironmentConf["ACCESS_SECRET"]))
+	t.AccessToken, err = at.SignedString([]byte(config.Environment.AccessSecret))
 	if err != nil {
 		go logger.Error("CREATE_TOKEN_GENERATOR", err)
 		return nil, restErrors.NewInternalServerError("some thing went wrong")
@@ -84,7 +84,7 @@ func verifyToken(bearToken string) (*jwt.Token, *restErrors.RestErr) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return []byte(config.EnvironmentConf["ACCESS_SECRET"]), nil
+		return []byte(config.Environment.AccessSecret), nil
 	})
 	if err != nil {
 		go logger.Error("VERIFY_TOKEN", err)

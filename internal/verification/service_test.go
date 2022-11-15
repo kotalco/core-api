@@ -3,13 +3,14 @@ package verification
 import (
 	"errors"
 	"fmt"
+	"os"
+	"testing"
+	"time"
+
 	"github.com/kotalco/cloud-api/pkg/config"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
-	"os"
-	"testing"
-	"time"
 )
 
 var (
@@ -26,7 +27,7 @@ var (
 type verificationRepositoryMock struct{}
 type hashingServiceMock struct{}
 
-//verification repository methods
+// verification repository methods
 func (vRepository verificationRepositoryMock) WithTransaction(txHandle *gorm.DB) IRepository {
 	return vRepository
 }
@@ -41,7 +42,7 @@ func (verificationRepositoryMock) Update(verification *Verification) *restErrors
 	return UpdateFunc(verification)
 }
 
-//hashing service methods
+// hashing service methods
 func (hashingServiceMock) Hash(password string, cost int) ([]byte, error) {
 	return HashFunc(password, cost)
 }
@@ -67,11 +68,11 @@ func TestService_Helper_Function_Before_They_Get_Mocked(t *testing.T) {
 		})
 
 		t.Run("Generate_Token_Should_Throw_If_Verification_Token_Conf_Is_Invalid", func(t *testing.T) {
-			config.EnvironmentConf["VERIFICATION_TOKEN_LENGTH"] = "invalid"
+			config.Environment.VerificationTokenLength = "invalid"
 			token, err := generateToken()
 			assert.EqualValues(t, "", token)
 			assert.EqualValues(t, "some thing went wrong", err.Message)
-			config.EnvironmentConf["VERIFICATION_TOKEN_LENGTH"] = "80"
+			config.Environment.VerificationTokenLength = "80"
 		})
 	})
 
@@ -172,12 +173,12 @@ func TestService_Create(t *testing.T) {
 		hashToken = func(token string) (string, *restErrors.RestErr) {
 			return "hash", nil
 		}
-		current := config.EnvironmentConf["VERIFICATION_TOKEN_EXPIRY_HOURS"]
-		config.EnvironmentConf["VERIFICATION_TOKEN_EXPIRY_HOURS"] = "invalid"
+		current := config.Environment.VerificationTokenExpiryHours
+		config.Environment.VerificationTokenExpiryHours = "invalid"
 		result, err := verificationService.Create("test")
 		assert.EqualValues(t, "", result)
 		assert.EqualValues(t, "something went wrong", err.Message)
-		config.EnvironmentConf["VERIFICATION_TOKEN_EXPIRY_HOURS"] = current
+		config.Environment.VerificationTokenExpiryHours = current
 		fmt.Println(current)
 	})
 

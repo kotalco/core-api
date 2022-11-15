@@ -1,8 +1,9 @@
 package sqlclient
 
 import (
-	glogger "gorm.io/gorm/logger"
 	"sync"
+
+	glogger "gorm.io/gorm/logger"
 
 	"github.com/kotalco/cloud-api/pkg/config"
 	"github.com/kotalco/community-api/pkg/logger"
@@ -19,7 +20,7 @@ var (
 
 func OpenDBConnection() *gorm.DB {
 	clientOnce.Do(func() {
-		dbConnection, err = gorm.Open(postgres.Open(config.EnvironmentConf["DB_SERVER_URL"]), &gorm.Config{
+		dbConnection, err = gorm.Open(postgres.Open(config.Environment.DatabaseServerURL), &gorm.Config{
 			Logger: glogger.Default.LogMode(glogger.Error),
 		})
 		if err != nil {
