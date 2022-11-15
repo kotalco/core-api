@@ -32,7 +32,7 @@ func (service *namespace) Create(name string) *restErrors.RestErr {
 	ns := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   name,
-			Labels: map[string]string{"app.kubernetes.io/created-by": "kotal"},
+			Labels: map[string]string{"app.kubernetes.io/created-by": "kotal-api"},
 		},
 	}
 	err := K8sClient.Create(context.Background(), ns)
