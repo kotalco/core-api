@@ -10,7 +10,7 @@ import (
 )
 
 type CreateEndpointDto struct {
-	Name         string `json:"name" validate:"required"`
+	Name         string `json:"name" validate:"required,lte=200"`
 	ServiceName  string `json:"service_name" validate:"required"`
 	UseBasicAuth bool   `json:"use_basic_auth"`
 }
