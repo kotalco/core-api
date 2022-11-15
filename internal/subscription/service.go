@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+
 	"github.com/kotalco/cloud-api/pkg/config"
 	"github.com/kotalco/cloud-api/pkg/k8s"
 	"github.com/kotalco/cloud-api/pkg/security"
@@ -62,7 +63,7 @@ func (subService *service) Acknowledgment(activationKey string) *restErrors.Rest
 	}
 	licenseAcknowledgmentDto := responseBody["data"]
 	//validate the signature
-	decodedPub, intErr := ecService.DecodePublic(config.EnvironmentConf["ECC_PUBLIC_KEY"])
+	decodedPub, intErr := ecService.DecodePublic(config.Environment.ECCPublicKey)
 	if intErr != nil {
 		go logger.Error(subService.Acknowledgment, intErr)
 		err = restErrors.NewInternalServerError("can't activate subscription")
@@ -138,7 +139,7 @@ func (subService *service) CurrentTimestamp() (int64, *restErrors.RestErr) {
 	}
 	currentTimestampDto := responseBody["data"]
 	//validate the signature
-	decodedPub, intErr := ecService.DecodePublic(config.EnvironmentConf["ECC_PUBLIC_KEY"])
+	decodedPub, intErr := ecService.DecodePublic(config.Environment.ECCPublicKey)
 	if intErr != nil {
 		go logger.Error(subService.CurrentTimestamp, intErr)
 		err = restErrors.NewInternalServerError("something went wrong")

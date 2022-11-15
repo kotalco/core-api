@@ -2,10 +2,11 @@ package verification
 
 import (
 	"fmt"
-	"gorm.io/gorm"
 	"net/http"
 	"strconv"
 	"time"
+
+	"gorm.io/gorm"
 
 	"github.com/google/uuid"
 	"github.com/kotalco/cloud-api/pkg/config"
@@ -51,7 +52,7 @@ func (service) Create(userId string) (string, *restErrors.RestErr) {
 		return "", restErr
 	}
 
-	tokenExpires, convErr := strconv.Atoi(config.EnvironmentConf["VERIFICATION_TOKEN_EXPIRY_HOURS"])
+	tokenExpires, convErr := strconv.Atoi(config.Environment.VerificationTokenExpiryHours)
 	if convErr != nil {
 		go logger.Error(service.Create, convErr)
 		return "", restErrors.NewInternalServerError("something went wrong")
@@ -145,7 +146,7 @@ func (vService service) Resend(userId string) (string, *restErrors.RestErr) {
 
 // generateToken creates a random token to the user which will be sent to user email
 var generateToken = func() (string, *restErrors.RestErr) {
-	tokenLength, err := strconv.Atoi(config.EnvironmentConf["VERIFICATION_TOKEN_LENGTH"])
+	tokenLength, err := strconv.Atoi(config.Environment.VerificationTokenLength)
 	if err != nil {
 		go logger.Error("generateToken", err)
 		return "", restErrors.NewInternalServerError("some thing went wrong")

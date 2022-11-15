@@ -1,9 +1,10 @@
 package token
 
 import (
+	"testing"
+
 	"github.com/kotalco/cloud-api/pkg/config"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 var tokenTestingService = NewToken()
@@ -17,12 +18,12 @@ func TestToken_CreateToken(t *testing.T) {
 	})
 
 	t.Run("Create_Token_Should_Fail_If_Token_Expiry_Is_Invalid", func(t *testing.T) {
-		oldConf := config.EnvironmentConf["JWT_SECRET_KEY_EXPIRE_HOURS_COUNT"]
-		config.EnvironmentConf["JWT_SECRET_KEY_EXPIRE_HOURS_COUNT"] = "invalid"
+		oldConf := config.Environment.JwtSecretKeyExpireHoursCount
+		config.Environment.JwtSecretKeyExpireHoursCount = "invalid"
 		newToken, err := tokenTestingService.CreateToken("1", false, true)
 		assert.Nil(t, newToken)
 		assert.EqualValues(t, "some thing went wrong", err.Message)
-		config.EnvironmentConf["JWT_SECRET_KEY_EXPIRE_HOURS_COUNT"] = oldConf
+		config.Environment.JwtSecretKeyExpireHoursCount = oldConf
 
 	})
 }
