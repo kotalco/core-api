@@ -2,7 +2,6 @@ package endpoint
 
 import (
 	"fmt"
-	"github.com/google/uuid"
 	"github.com/kotalco/cloud-api/pkg/k8s/ingressroute"
 	"github.com/kotalco/cloud-api/pkg/k8s/middleware"
 	"github.com/kotalco/cloud-api/pkg/k8s/secret"
@@ -43,8 +42,8 @@ func NewService() IService {
 func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) *restErrors.RestErr {
 	ingressRoutePorts := make([]ingressroute.IngressRoutePortDto, 0)
 	middlewarePrefixes := make([]string, 0)
-	stripePrefixMiddlewareName := fmt.Sprintf("%s-strip-prefix-%s", dto.Name, uuid.NewString())
-	basicAuthMiddlewareName := fmt.Sprintf("%s-basic-auth-%s", dto.Name, uuid.NewString())
+	stripePrefixMiddlewareName := fmt.Sprintf("%s-strip-prefix", dto.Name)
+	basicAuthMiddlewareName := fmt.Sprintf("%s-basic-auth", dto.Name)
 
 	for _, v := range svc.Spec.Ports {
 		if k8svc.AvailableProtocol(v.Name) {
