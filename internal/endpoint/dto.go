@@ -16,9 +16,9 @@ type CreateEndpointDto struct {
 }
 
 type EndpointDto struct {
-	Name      string        `json:"name"`
-	Routes    []string      `json:"routes"`
-	BasicAuth *BasicAuthDto `json:"basic_auth,omitempty"`
+	Name      string            `json:"name"`
+	Routes    map[string]string `json:"routes"`
+	BasicAuth *BasicAuthDto     `json:"basic_auth,omitempty"`
 }
 
 type BasicAuthDto struct {
@@ -52,6 +52,7 @@ func Validate(dto interface{}) *restErrors.RestErr {
 
 func (endpoint *EndpointDto) Marshall(dtoIngressRoute *traefikv1alpha1.IngressRoute, secret *corev1.Secret) *EndpointDto {
 	endpoint.Name = dtoIngressRoute.Name
+	endpoint.Routes = map[string]string{}
 	for _, route := range dtoIngressRoute.Spec.Routes {
 		str := strings.ReplaceAll(route.Match, "Host(`", "")
 		str = strings.ReplaceAll(str, "`)", "")
@@ -60,7 +61,7 @@ func (endpoint *EndpointDto) Marshall(dtoIngressRoute *traefikv1alpha1.IngressRo
 		if secret != nil {
 			str = fmt.Sprintf("%s:%s@%s", secret.Data["username"], secret.Data["password"], str)
 		}
-		endpoint.Routes = append(endpoint.Routes, str)
+		endpoint.Routes[route.Services[0].Port.StrVal] = str
 	}
 
 	return endpoint

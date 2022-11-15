@@ -37,7 +37,7 @@ func (i *ingressroute) Create(dto *IngressRouteDto) (*traefikv1alpha1.IngressRou
 	routes := make([]traefikv1alpha1.Route, 0)
 	for k := 0; k < len(dto.Ports); k++ {
 		routes = append(routes, traefikv1alpha1.Route{
-			Match: fmt.Sprintf("Host(`endpoints.%s`) && PathPrefix(`/%s/%s`)", config.EnvironmentConf["DOMAIN_MATCH_BASE_URL"], dto.ServiceID, dto.Ports[k]),
+			Match: fmt.Sprintf("Host(`endpoints.%s`) && PathPrefix(`/%s`)", config.EnvironmentConf["DOMAIN_MATCH_BASE_URL"], dto.Ports[k].ID),
 			Kind:  "Rule",
 			Middlewares: func() []traefikv1alpha1.MiddlewareRef {
 				middlewares := make([]traefikv1alpha1.MiddlewareRef, 0)
@@ -51,7 +51,7 @@ func (i *ingressroute) Create(dto *IngressRouteDto) (*traefikv1alpha1.IngressRou
 					LoadBalancerSpec: traefikv1alpha1.LoadBalancerSpec{
 						Name:      dto.ServiceName,
 						Namespace: dto.Namespace, // find the service in the namespace of the ingressroute
-						Port:      intstr.IntOrString{Type: intstr.String, StrVal: dto.Ports[k]},
+						Port:      intstr.IntOrString{Type: intstr.String, StrVal: dto.Ports[k].Name},
 					},
 				},
 			},
