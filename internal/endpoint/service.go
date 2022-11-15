@@ -41,15 +41,19 @@ func NewService() IService {
 }
 
 func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) *restErrors.RestErr {
-	ingressRoutePorts := make([]string, 0)
+	ingressRoutePorts := make([]ingressroute.IngressRoutePortDto, 0)
 	middlewarePrefixes := make([]string, 0)
 	stripePrefixMiddlewareName := fmt.Sprintf("%s-strip-prefix-%s", dto.Name, uuid.NewString())
 	basicAuthMiddlewareName := fmt.Sprintf("%s-basic-auth-%s", dto.Name, uuid.NewString())
 
 	for _, v := range svc.Spec.Ports {
 		if k8svc.AvailableProtocol(v.Name) {
-			ingressRoutePorts = append(ingressRoutePorts, v.Name)                                   //create ingressRoute ports
-			middlewarePrefixes = append(middlewarePrefixes, fmt.Sprintf("/%s/%s", svc.UID, v.Name)) //create middleware prefixes
+			ingressRoutePortDto := ingressroute.IngressRoutePortDto{
+				ID:   uuid.NewString(),
+				Name: v.Name,
+			}
+			ingressRoutePorts = append(ingressRoutePorts, ingressRoutePortDto)                          //create ingressRoute ports
+			middlewarePrefixes = append(middlewarePrefixes, fmt.Sprintf("/%s", ingressRoutePortDto.ID)) //create middleware prefixes
 		}
 	}
 
@@ -111,7 +115,9 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) *restError
 	//create basic-auth middleware if exist
 	if dto.UseBasicAuth {
 		//create basic auth secret
-		secretName := fmt.Sprintf("%s-secret-%s", dto.Name, svc.UID)
+		//since the endpoint name is unique, and we have 1 secret per endpoint
+		//we can create secret name with the key secret+ endpointName
+		secretName := fmt.Sprintf("%s-secret", dto.Name)
 		err := secretService.Create(&secret.CreateSecretDto{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:            secretName,
@@ -164,13 +170,8 @@ func (s *service) List(namespace string) ([]*EndpointDto, *restErrors.RestErr) {
 
 	marshalledDto := make([]*EndpointDto, 0)
 	for _, item := range records.Items {
-		//get service
-		v1Service, err := k8Service.Get(item.Spec.Routes[0].Services[0].Name, namespace)
-		if err != nil {
-			return nil, err
-		}
 		//get secret
-		secretName := fmt.Sprintf("%s-secret-%s", item.Name, v1Service.UID)
+		secretName := fmt.Sprintf("%s-secret", item.Name)
 		v1Secret, _ := secretService.Get(secretName, namespace)
 		marshalledDto = append(marshalledDto, new(EndpointDto).Marshall(&item, v1Secret))
 	}
@@ -184,13 +185,8 @@ func (s *service) Get(name string, namespace string) (*EndpointDto, *restErrors.
 		return nil, err
 	}
 
-	//get service
-	v1Service, err := k8Service.Get(record.Spec.Routes[0].Services[0].Name, namespace)
-	if err != nil {
-		return nil, err
-	}
 	//get secret
-	secretName := fmt.Sprintf("%s-secret-%s", record.Name, v1Service.UID)
+	secretName := fmt.Sprintf("%s-secret", record.Name)
 	v1Secret, _ := secretService.Get(secretName, namespace)
 
 	return new(EndpointDto).Marshall(record, v1Secret), nil
