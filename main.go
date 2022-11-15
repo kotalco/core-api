@@ -32,7 +32,7 @@ func main() {
 			go logger.Error(step.Name, err)
 		}
 	}
-	if config.EnvironmentConf["ENVIRONMENT"] == "development" {
+	if config.Environment.Environment == "development" {
 		seederService := seeder.NewService(dbClient)
 		for _, step := range seederService.Seeds() {
 			if err := step.Run(); err != nil {

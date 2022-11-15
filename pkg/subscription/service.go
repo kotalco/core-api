@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/kotalco/cloud-api/pkg/config"
-	restErrors "github.com/kotalco/community-api/pkg/errors"
-	"github.com/kotalco/community-api/pkg/logger"
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"github.com/kotalco/cloud-api/pkg/config"
+	restErrors "github.com/kotalco/community-api/pkg/errors"
+	"github.com/kotalco/community-api/pkg/logger"
 )
 
 const (
@@ -37,7 +38,7 @@ func (subApi *subscriptionService) Acknowledgment(activationKey string, clusterI
 	}
 
 	bodyReader := bytes.NewReader(jsonBody)
-	req, err := http.NewRequest(http.MethodPost, config.EnvironmentConf["SUBSCRIPTION_API_BASE_URL"]+ACKNOWLEDGEMENT, bodyReader)
+	req, err := http.NewRequest(http.MethodPost, config.Environment.SubscriptionAPIBaseURL+ACKNOWLEDGEMENT, bodyReader)
 	if err != nil {
 		go logger.Error(subApi.Acknowledgment, err)
 		return nil, restErrors.NewInternalServerError("can't activate subscription")
@@ -73,7 +74,7 @@ func (subApi *subscriptionService) Acknowledgment(activationKey string, clusterI
 
 func (subApi *subscriptionService) CurrentTimeStamp() ([]byte, *restErrors.RestErr) {
 
-	req, err := http.NewRequest(http.MethodGet, config.EnvironmentConf["SUBSCRIPTION_API_BASE_URL"]+CURRENT_TIMESTAMP, nil)
+	req, err := http.NewRequest(http.MethodGet, config.Environment.SubscriptionAPIBaseURL+CURRENT_TIMESTAMP, nil)
 	if err != nil {
 		go logger.Error(subApi.CurrentTimeStamp, err)
 		return nil, restErrors.NewInternalServerError(err.Error())

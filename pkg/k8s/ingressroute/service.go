@@ -3,6 +3,7 @@ package ingressroute
 import (
 	"context"
 	"fmt"
+
 	"github.com/kotalco/cloud-api/pkg/config"
 	"github.com/kotalco/cloud-api/pkg/k8s"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
@@ -37,7 +38,7 @@ func (i *ingressroute) Create(dto *IngressRouteDto) (*traefikv1alpha1.IngressRou
 	routes := make([]traefikv1alpha1.Route, 0)
 	for k := 0; k < len(dto.Ports); k++ {
 		routes = append(routes, traefikv1alpha1.Route{
-			Match: fmt.Sprintf("Host(`endpoints.%s`) && PathPrefix(`/%s`)", config.EnvironmentConf["DOMAIN_MATCH_BASE_URL"], dto.Ports[k].ID),
+			Match: fmt.Sprintf("Host(`endpoints.%s`) && PathPrefix(`/%s`)", config.Environment.DomainMatchBaseURL, dto.Ports[k].ID),
 			Kind:  "Rule",
 			Middlewares: func() []traefikv1alpha1.MiddlewareRef {
 				middlewares := make([]traefikv1alpha1.MiddlewareRef, 0)

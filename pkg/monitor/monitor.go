@@ -1,14 +1,15 @@
 package monitor
 
 import (
+	"time"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/monitor"
 	"github.com/kotalco/cloud-api/pkg/config"
-	"time"
 )
 
 func NewMonitor(a *fiber.App) {
-	if config.EnvironmentConf["ENVIRONMENT"] == "development" {
+	if config.Environment.Environment == "development" {
 		a.Get("/metrics", monitor.New(conf()))
 	}
 }
