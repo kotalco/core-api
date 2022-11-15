@@ -27,6 +27,7 @@ func (m *k8Middleware) Create(dto *CreateMiddlewareDto) *restErrors.RestErr {
 			Name:            dto.Name,
 			Namespace:       dto.Namespace,
 			OwnerReferences: dto.OwnerReferences,
+			Labels:          map[string]string{"app.kubernetes.io/managed-by": "kotal-api"},
 		},
 		Spec: dto.MiddlewareSpec,
 	}
