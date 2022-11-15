@@ -14,7 +14,7 @@ var (
 
 func GetClient() *sendgrid.Client {
 	clientOnce.Do(func() {
-		SgClient = sendgrid.NewSendClient(config.EnvironmentConf["SEND_GRID_API_KEY"])
+		SgClient = sendgrid.NewSendClient(config.Environment.SendgridAPIKey)
 	})
 	return SgClient
 }
