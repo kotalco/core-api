@@ -3,6 +3,7 @@ package endpoint
 import (
 	"github.com/kotalco/cloud-api/pkg/k8s/ingressroute"
 	"github.com/kotalco/cloud-api/pkg/k8s/middleware"
+	"github.com/kotalco/cloud-api/pkg/k8s/secret"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
@@ -49,9 +50,40 @@ func (k k8MiddlewareServiceMock) Create(dto *middleware.CreateMiddlewareDto) *re
 	return k8middlewareCreateFunc(dto)
 }
 
+type secretServiceMock struct{}
+
+var (
+	secretCreateFunc func(dto *secret.CreateSecretDto) *restErrors.RestErr
+	secretGetFunc    func(name string, namespace string) (*corev1.Secret, *restErrors.RestErr)
+)
+
+func (s secretServiceMock) Create(dto *secret.CreateSecretDto) *restErrors.RestErr {
+	return secretCreateFunc(dto)
+}
+func (s secretServiceMock) Get(name string, namespace string) (*corev1.Secret, *restErrors.RestErr) {
+	return secretGetFunc(name, namespace)
+}
+
+var (
+	k8ServiceListFunc func(namespace string) (*corev1.ServiceList, *restErrors.RestErr)
+	k8ServiceGetFunc  func(name string, namespace string) (*corev1.Service, *restErrors.RestErr)
+)
+
+type k8ServiceMock struct{}
+
+func (k k8ServiceMock) List(namespace string) (*corev1.ServiceList, *restErrors.RestErr) {
+	return k8ServiceListFunc(namespace)
+}
+
+func (k k8ServiceMock) Get(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {
+	return k8ServiceGetFunc(name, namespace)
+}
+
 func TestMain(m *testing.M) {
 	ingressRoutesService = &ingressRouteServiceMock{}
 	k8MiddlewareService = &k8MiddlewareServiceMock{}
+	secretService = &secretServiceMock{}
+	k8Service = &k8ServiceMock{}
 	endpointService = NewService()
 	code := m.Run()
 	os.Exit(code)
@@ -74,8 +106,61 @@ func TestService_Create(t *testing.T) {
 		svc := &corev1.Service{Spec: corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{{}},
 		}}
-		err := endpointService.Create(createDto, svc, "")
+		err := endpointService.Create(createDto, svc)
 		assert.Nil(t, err)
+	})
+	t.Run("create endpoint should pass with basic auth", func(t *testing.T) {
+		ingressRouteCreateFunc = func(dto *ingressroute.IngressRouteDto) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr) {
+			return &traefikv1alpha1.IngressRoute{
+				TypeMeta:   metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{},
+				Spec:       traefikv1alpha1.IngressRouteSpec{},
+			}, nil
+		}
+		k8middlewareCreateFunc = func(dto *middleware.CreateMiddlewareDto) *restErrors.RestErr {
+			return nil
+		}
+
+		createDto := &CreateEndpointDto{
+			UseBasicAuth: true,
+		}
+		svc := &corev1.Service{Spec: corev1.ServiceSpec{
+			Ports: []corev1.ServicePort{{}},
+		}}
+
+		secretCreateFunc = func(dto *secret.CreateSecretDto) *restErrors.RestErr {
+			return nil
+		}
+		err := endpointService.Create(createDto, svc)
+		assert.Nil(t, err)
+	})
+	t.Run("create endpoint should throw if can't create secret with basic auth", func(t *testing.T) {
+		ingressRouteCreateFunc = func(dto *ingressroute.IngressRouteDto) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr) {
+			return &traefikv1alpha1.IngressRoute{
+				TypeMeta:   metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{},
+				Spec:       traefikv1alpha1.IngressRouteSpec{},
+			}, nil
+		}
+		k8middlewareCreateFunc = func(dto *middleware.CreateMiddlewareDto) *restErrors.RestErr {
+			return nil
+		}
+
+		createDto := &CreateEndpointDto{
+			UseBasicAuth: true,
+		}
+		svc := &corev1.Service{Spec: corev1.ServiceSpec{
+			Ports: []corev1.ServicePort{{}},
+		}}
+
+		secretCreateFunc = func(dto *secret.CreateSecretDto) *restErrors.RestErr {
+			return restErrors.NewInternalServerError("can't create secret")
+		}
+		ingressRouteDeleteFunc = func(name string, namespace string) *restErrors.RestErr {
+			return nil
+		}
+		err := endpointService.Create(createDto, svc)
+		assert.EqualValues(t, "can't create secret", err.Message)
 	})
 	t.Run("create endpoint should throw if ingressRoute.create throws", func(t *testing.T) {
 		ingressRouteCreateFunc = func(dto *ingressroute.IngressRouteDto) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr) {
@@ -86,11 +171,10 @@ func TestService_Create(t *testing.T) {
 		svc := &corev1.Service{Spec: corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{{}},
 		}}
-		err := endpointService.Create(createDto, svc, "")
+		err := endpointService.Create(createDto, svc)
 		assert.EqualValues(t, http.StatusInternalServerError, err.Status)
 		assert.EqualValues(t, "something went wrong", err.Message)
 	})
-
 	t.Run("create endpoint should throw if k8middleware service throws", func(t *testing.T) {
 		ingressRouteCreateFunc = func(dto *ingressroute.IngressRouteDto) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr) {
 			return &traefikv1alpha1.IngressRoute{
@@ -109,10 +193,9 @@ func TestService_Create(t *testing.T) {
 		svc := &corev1.Service{Spec: corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{{}},
 		}}
-		err := endpointService.Create(createDto, svc, "")
+		err := endpointService.Create(createDto, svc)
 		assert.EqualValues(t, "something went wrong", err.Message)
 	})
-
 }
 
 func TestService_List(t *testing.T) {
@@ -121,11 +204,24 @@ func TestService_List(t *testing.T) {
 			return &traefikv1alpha1.IngressRouteList{
 				TypeMeta: metav1.TypeMeta{},
 				ListMeta: metav1.ListMeta{},
-				Items:    []traefikv1alpha1.IngressRoute{{}},
+				Items: []traefikv1alpha1.IngressRoute{{
+					Spec: traefikv1alpha1.IngressRouteSpec{
+						Routes: []traefikv1alpha1.Route{{
+							Services: []traefikv1alpha1.Service{{}},
+						}},
+					},
+				}},
 			}, nil
+		}
+		k8ServiceGetFunc = func(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {
+			return &corev1.Service{}, nil
+		}
+		secretGetFunc = func(name string, namespace string) (*corev1.Secret, *restErrors.RestErr) {
+			return &corev1.Secret{}, nil
 		}
 
 		list, err := endpointService.List("namespace")
+
 		assert.Nil(t, err)
 		assert.NotNil(t, list)
 	})
@@ -144,7 +240,19 @@ func TestService_List(t *testing.T) {
 func TestService_Get(t *testing.T) {
 	t.Run("get endpoint should pass", func(t *testing.T) {
 		ingressRouteGetFunc = func(name string, namespace string) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr) {
-			return &traefikv1alpha1.IngressRoute{}, nil
+			return &traefikv1alpha1.IngressRoute{
+				Spec: traefikv1alpha1.IngressRouteSpec{
+					Routes: []traefikv1alpha1.Route{{
+						Services: []traefikv1alpha1.Service{{}},
+					}},
+				},
+			}, nil
+		}
+		k8ServiceGetFunc = func(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {
+			return &corev1.Service{}, nil
+		}
+		secretGetFunc = func(name string, namespace string) (*corev1.Secret, *restErrors.RestErr) {
+			return &corev1.Secret{}, nil
 		}
 		record, err := endpointService.Get("name", "namespace")
 		assert.Nil(t, err)
