@@ -50,7 +50,7 @@ func Create(c *fiber.Ctx) error {
 		return c.Status(badReq.Status).JSON(badReq)
 	}
 
-	err = endpointService.Create(dto, corev1Svc, workspaceModel.K8sNamespace)
+	err = endpointService.Create(dto, corev1Svc)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -70,7 +70,7 @@ func List(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(list))
 }
 
-//Get accept namespace and name , returns a record of type ingressroute.Ingressroute or err if any
+// Get accept namespace and name , returns a record of type ingressroute.Ingressroute or err if any
 func Get(c *fiber.Ctx) error {
 	workspaceModel := c.Locals("workspace").(workspace.Workspace)
 	endpointName := c.Params("name")
@@ -83,7 +83,7 @@ func Get(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(record))
 }
 
-//Delete accept namespace and the name of the ingress-route ,deletes it , returns success message or err if any
+// Delete accept namespace and the name of the ingress-route ,deletes it , returns success message or err if any
 func Delete(c *fiber.Ctx) error {
 	workspaceModel := c.Locals("workspace").(workspace.Workspace)
 	endpointName := c.Params("name")

@@ -21,7 +21,7 @@ import (
 endpoint service mocks
 */
 var (
-	endpointServiceCreateFunc func(dto *endpoint.CreateEndpointDto, svc *corev1.Service, namespace string) *restErrors.RestErr
+	endpointServiceCreateFunc func(dto *endpoint.CreateEndpointDto, svc *corev1.Service) *restErrors.RestErr
 	endpointServiceListFunc   func(namespace string) ([]*endpoint.EndpointDto, *restErrors.RestErr)
 	endpointServiceGetFunc    func(name string, namespace string) (*endpoint.EndpointDto, *restErrors.RestErr)
 	endpointServiceDeleteFunc func(name string, namespace string) *restErrors.RestErr
@@ -29,8 +29,8 @@ var (
 
 type endpointServiceMock struct{}
 
-func (e endpointServiceMock) Create(dto *endpoint.CreateEndpointDto, svc *corev1.Service, namespace string) *restErrors.RestErr {
-	return endpointServiceCreateFunc(dto, svc, namespace)
+func (e endpointServiceMock) Create(dto *endpoint.CreateEndpointDto, svc *corev1.Service) *restErrors.RestErr {
+	return endpointServiceCreateFunc(dto, svc)
 }
 func (e endpointServiceMock) List(namespace string) ([]*endpoint.EndpointDto, *restErrors.RestErr) {
 	return endpointServiceListFunc(namespace)
@@ -116,7 +116,7 @@ func TestCreate(t *testing.T) {
 		svcServiceGetFunc = func(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {
 			return &corev1.Service{Spec: corev1.ServiceSpec{Ports: []corev1.ServicePort{{}}}}, nil
 		}
-		endpointServiceCreateFunc = func(dto *endpoint.CreateEndpointDto, svc *corev1.Service, namespace string) *restErrors.RestErr {
+		endpointServiceCreateFunc = func(dto *endpoint.CreateEndpointDto, svc *corev1.Service) *restErrors.RestErr {
 			return nil
 		}
 		availableProtocol = func(protocol string) bool {
@@ -172,7 +172,7 @@ func TestCreate(t *testing.T) {
 		svcServiceGetFunc = func(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {
 			return &corev1.Service{Spec: corev1.ServiceSpec{Ports: []corev1.ServicePort{{}}}}, nil
 		}
-		endpointServiceCreateFunc = func(dto *endpoint.CreateEndpointDto, svc *corev1.Service, namespace string) *restErrors.RestErr {
+		endpointServiceCreateFunc = func(dto *endpoint.CreateEndpointDto, svc *corev1.Service) *restErrors.RestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 		availableProtocol = func(protocol string) bool {

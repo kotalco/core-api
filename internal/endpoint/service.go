@@ -30,7 +30,7 @@ type IService interface {
 	//-creating a middleware that get used by the ingressRoute to remove prefixes from the path before forwarding the request
 	//-creating an ingressRoute (Traefik HTTP router) which uses the previous middleware
 	//-return error if any
-	Create(dto *CreateEndpointDto, svc *corev1.Service, namespace string) *restErrors.RestErr
+	Create(dto *CreateEndpointDto, svc *corev1.Service) *restErrors.RestErr
 	List(namespace string) ([]*EndpointDto, *restErrors.RestErr)
 	Get(name string, namespace string) (*EndpointDto, *restErrors.RestErr)
 	Delete(name string, namespace string) *restErrors.RestErr
@@ -40,7 +40,7 @@ func NewService() IService {
 	return &service{}
 }
 
-func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service, namespace string) *restErrors.RestErr {
+func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) *restErrors.RestErr {
 	ingressRoutePorts := make([]string, 0)
 	middlewarePrefixes := make([]string, 0)
 	stripePrefixMiddlewareName := fmt.Sprintf("%s-strip-prefix-%s", dto.Name, uuid.NewString())
@@ -56,7 +56,7 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service, namespace 
 	//create ingress-route
 	ingressRouteObject, err := ingressRoutesService.Create(&ingressroute.IngressRouteDto{
 		Name:        dto.Name,
-		Namespace:   namespace,
+		Namespace:   svc.Namespace,
 		ServiceName: svc.Name,
 		ServiceID:   string(svc.UID),
 		Ports:       ingressRoutePorts,
@@ -64,12 +64,12 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service, namespace 
 			refs := make([]ingressroute.IngressRouteMiddlewareRefDto, 0)
 			refs = append(refs, ingressroute.IngressRouteMiddlewareRefDto{
 				Name:      stripePrefixMiddlewareName,
-				Namespace: namespace,
+				Namespace: svc.Namespace,
 			})
 			if dto.UseBasicAuth {
 				refs = append(refs, ingressroute.IngressRouteMiddlewareRefDto{
 					Name:      basicAuthMiddlewareName,
-					Namespace: namespace,
+					Namespace: svc.Namespace,
 				})
 			}
 			return refs
@@ -91,7 +91,7 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service, namespace 
 	err = k8MiddlewareService.Create(&middleware.CreateMiddlewareDto{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            stripePrefixMiddlewareName,
-			Namespace:       namespace,
+			Namespace:       svc.Namespace,
 			OwnerReferences: []metav1.OwnerReference{ingressRouteOwnerRef},
 		},
 		MiddlewareSpec: v1alpha1.MiddlewareSpec{
@@ -101,7 +101,7 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service, namespace 
 		},
 	})
 	if err != nil {
-		dErr := ingressRoutesService.Delete(dto.Name, namespace)
+		dErr := ingressRoutesService.Delete(dto.Name, svc.Namespace)
 		if dErr != nil {
 			go logger.Error(s.Create, dErr)
 		}
@@ -115,7 +115,7 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service, namespace 
 		err := secretService.Create(&secret.CreateSecretDto{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:            secretName,
-				Namespace:       namespace,
+				Namespace:       svc.Namespace,
 				OwnerReferences: []metav1.OwnerReference{ingressRouteOwnerRef},
 			},
 			Type: corev1.SecretTypeBasicAuth,
@@ -125,7 +125,7 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service, namespace 
 			},
 		})
 		if err != nil {
-			dErr := ingressRoutesService.Delete(dto.Name, namespace)
+			dErr := ingressRoutesService.Delete(dto.Name, svc.Namespace)
 			if dErr != nil {
 				go logger.Error(s.Create, dErr)
 			}
@@ -135,7 +135,7 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service, namespace 
 		err = k8MiddlewareService.Create(&middleware.CreateMiddlewareDto{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:            basicAuthMiddlewareName,
-				Namespace:       namespace,
+				Namespace:       svc.Namespace,
 				OwnerReferences: []metav1.OwnerReference{ingressRouteOwnerRef},
 			},
 			MiddlewareSpec: v1alpha1.MiddlewareSpec{
@@ -145,7 +145,7 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service, namespace 
 			},
 		})
 		if err != nil {
-			dErr := ingressRoutesService.Delete(dto.Name, namespace)
+			dErr := ingressRoutesService.Delete(dto.Name, svc.Namespace)
 			if dErr != nil {
 				go logger.Error(s.Create, dErr)
 			}

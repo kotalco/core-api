@@ -106,7 +106,7 @@ func TestService_Create(t *testing.T) {
 		svc := &corev1.Service{Spec: corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{{}},
 		}}
-		err := endpointService.Create(createDto, svc, "")
+		err := endpointService.Create(createDto, svc)
 		assert.Nil(t, err)
 	})
 	t.Run("create endpoint should pass with basic auth", func(t *testing.T) {
@@ -131,7 +131,7 @@ func TestService_Create(t *testing.T) {
 		secretCreateFunc = func(dto *secret.CreateSecretDto) *restErrors.RestErr {
 			return nil
 		}
-		err := endpointService.Create(createDto, svc, "")
+		err := endpointService.Create(createDto, svc)
 		assert.Nil(t, err)
 	})
 	t.Run("create endpoint should throw if can't create secret with basic auth", func(t *testing.T) {
@@ -159,7 +159,7 @@ func TestService_Create(t *testing.T) {
 		ingressRouteDeleteFunc = func(name string, namespace string) *restErrors.RestErr {
 			return nil
 		}
-		err := endpointService.Create(createDto, svc, "")
+		err := endpointService.Create(createDto, svc)
 		assert.EqualValues(t, "can't create secret", err.Message)
 	})
 	t.Run("create endpoint should throw if ingressRoute.create throws", func(t *testing.T) {
@@ -171,7 +171,7 @@ func TestService_Create(t *testing.T) {
 		svc := &corev1.Service{Spec: corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{{}},
 		}}
-		err := endpointService.Create(createDto, svc, "")
+		err := endpointService.Create(createDto, svc)
 		assert.EqualValues(t, http.StatusInternalServerError, err.Status)
 		assert.EqualValues(t, "something went wrong", err.Message)
 	})
@@ -193,7 +193,7 @@ func TestService_Create(t *testing.T) {
 		svc := &corev1.Service{Spec: corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{{}},
 		}}
-		err := endpointService.Create(createDto, svc, "")
+		err := endpointService.Create(createDto, svc)
 		assert.EqualValues(t, "something went wrong", err.Message)
 	})
 }
