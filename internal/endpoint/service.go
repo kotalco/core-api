@@ -2,6 +2,8 @@ package endpoint
 
 import (
 	"fmt"
+
+	"github.com/google/uuid"
 	"github.com/kotalco/cloud-api/pkg/k8s/ingressroute"
 	"github.com/kotalco/cloud-api/pkg/k8s/middleware"
 	"github.com/kotalco/cloud-api/pkg/k8s/secret"
