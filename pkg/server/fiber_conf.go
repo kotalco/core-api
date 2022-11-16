@@ -1,8 +1,9 @@
-package config
+package server
 
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
+	"github.com/kotalco/cloud-api/pkg/config"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/logger"
 	"github.com/kotalco/community-api/pkg/shared"
@@ -12,7 +13,7 @@ import (
 )
 
 func FiberConfig() fiber.Config {
-	readTimeoutSecondsCount, _ := strconv.Atoi(Environment.ServerReadTimeout)
+	readTimeoutSecondsCount, _ := strconv.Atoi(config.Environment.ServerReadTimeout)
 	return fiber.Config{
 		ReadTimeout:  time.Second * time.Duration(readTimeoutSecondsCount),
 		ErrorHandler: defaultErrorHandler,
@@ -30,7 +31,7 @@ var defaultErrorHandler = func(c *fiber.Ctx, err error) error {
 }
 
 func FiberLimiter() fiber.Handler {
-	maxLimiter, err := strconv.Atoi(Environment.RatelimiterPerMinute)
+	maxLimiter, err := strconv.Atoi(config.Environment.RatelimiterPerMinute)
 	if err != nil {
 		logger.Panic("FIBER_CONFIG_LIMITER", err)
 	}

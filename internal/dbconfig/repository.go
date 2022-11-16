@@ -15,6 +15,7 @@ type repository struct{}
 type IRepository interface {
 	WithTransaction(txHandle *gorm.DB) IRepository
 	Get(key string) (string, *restErrors.RestErr)
+	Set(key string, value string) *restErrors.RestErr
 }
 
 func NewRepository() IRepository {

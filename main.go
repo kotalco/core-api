@@ -16,7 +16,7 @@ import (
 )
 
 func main() {
-	app := fiber.New(config.FiberConfig())
+	app := fiber.New(server.FiberConfig())
 	middleware.FiberMiddleware(app)
 	monitor.NewMonitor(app)
 	app.Use(pprof.New())

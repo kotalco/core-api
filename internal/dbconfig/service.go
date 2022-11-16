@@ -10,6 +10,7 @@ type service struct{}
 type IService interface {
 	WithTransaction(txHandle *gorm.DB) IService
 	Get(key string) (string, *restErrors.RestErr)
+	Set(key string, value string) *restErrors.RestErr
 }
 
 var (
@@ -28,4 +29,8 @@ func (s service) WithTransaction(txHandle *gorm.DB) IService {
 
 func (s service) Get(key string) (string, *restErrors.RestErr) {
 	return dbConfigRepo.Get(key)
+}
+
+func (s service) Set(key string, value string) *restErrors.RestErr {
+	return dbConfigRepo.Set(key, value)
 }
