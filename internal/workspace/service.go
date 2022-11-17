@@ -14,7 +14,7 @@ import (
 type service struct{}
 
 type IService interface {
-	WithTransaction(txHandle *gorm.DB) IService
+	WithTransaction(txHandle gorm.DB) IService
 	Create(dto *CreateWorkspaceRequestDto, userId string) (*Workspace, *restErrors.RestErr)
 	Update(dto *UpdateWorkspaceRequestDto, workspace *Workspace) *restErrors.RestErr
 	Delete(workspace *Workspace) *restErrors.RestErr
@@ -36,7 +36,7 @@ func NewService() IService {
 	return &service{}
 }
 
-func (wService service) WithTransaction(txHandle *gorm.DB) IService {
+func (wService service) WithTransaction(txHandle gorm.DB) IService {
 	workspaceRepo = workspaceRepo.WithTransaction(txHandle)
 	return wService
 }

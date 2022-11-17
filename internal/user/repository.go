@@ -14,8 +14,10 @@ import (
 
 type repository struct{}
 
+var sqlClient = sqlclient.DbClient
+
 type IRepository interface {
-	WithTransaction(txHandle *gorm.DB) IRepository
+	WithTransaction(txHandle gorm.DB) IRepository
 	Create(user *User) *restErrors.RestErr
 	GetByEmail(email string) (*User, *restErrors.RestErr)
 	GetById(id string) (*User, *restErrors.RestErr)
@@ -29,13 +31,13 @@ func NewRepository() IRepository {
 	return newRepo
 }
 
-func (r repository) WithTransaction(txHandle *gorm.DB) IRepository {
-	sqlclient.DbClient = txHandle
+func (r repository) WithTransaction(txHandle gorm.DB) IRepository {
+	sqlClient = txHandle
 	return r
 }
 
 func (repository) Create(user *User) *restErrors.RestErr {
-	res := sqlclient.DbClient.Create(user)
+	res := sqlClient.Create(user)
 	if res.Error != nil {
 		duplicateEmail, _ := regexp.Match("duplicate key", []byte(res.Error.Error()))
 		if duplicateEmail {
@@ -56,7 +58,7 @@ func (repository) Create(user *User) *restErrors.RestErr {
 func (repository) GetByEmail(email string) (*User, *restErrors.RestErr) {
 	var user = new(User)
 
-	result := sqlclient.DbClient.Where("email = ?", email).First(user)
+	result := sqlClient.Where("email = ?", email).First(user)
 	if result.Error != nil {
 		return nil, restErrors.NewNotFoundError(fmt.Sprintf("can't find user with email  %s", email))
 	}
@@ -67,7 +69,7 @@ func (repository) GetByEmail(email string) (*User, *restErrors.RestErr) {
 func (repository) GetById(id string) (*User, *restErrors.RestErr) {
 	var user = new(User)
 
-	result := sqlclient.DbClient.Where("id = ?", id).First(user)
+	result := sqlClient.Where("id = ?", id).First(user)
 	if result.Error != nil {
 		return nil, restErrors.NewNotFoundError(fmt.Sprintf("no such user"))
 	}
@@ -76,7 +78,7 @@ func (repository) GetById(id string) (*User, *restErrors.RestErr) {
 }
 
 func (repository) Update(user *User) *restErrors.RestErr {
-	err := sqlclient.DbClient.Save(user)
+	err := sqlClient.Save(user)
 	if err.Error != nil {
 		go logger.Error(repository.Update, err.Error)
 		return restErrors.NewInternalServerError("something went wrong")
@@ -87,7 +89,7 @@ func (repository) Update(user *User) *restErrors.RestErr {
 
 func (repository) FindWhereIdInSlice(ids []string) ([]*User, *restErrors.RestErr) {
 	var users []*User
-	result := sqlclient.DbClient.Where("id IN (?)", ids).Find(&users)
+	result := sqlClient.Where("id IN (?)", ids).Find(&users)
 	if result.Error != nil {
 		go logger.Error(repository.FindWhereIdInSlice, result.Error)
 		return nil, restErrors.NewInternalServerError("something went wrong")
@@ -97,7 +99,7 @@ func (repository) FindWhereIdInSlice(ids []string) ([]*User, *restErrors.RestErr
 
 func (repository) Count() (int64, *restErrors.RestErr) {
 	var count int64
-	result := sqlclient.DbClient.Model(User{}).Count(&count)
+	result := sqlClient.Model(User{}).Count(&count)
 	if result.Error != nil {
 		go logger.Error(repository.Count, result.Error)
 		return 0, restErrors.NewInternalServerError("can't count users")

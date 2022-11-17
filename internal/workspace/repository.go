@@ -12,7 +12,7 @@ import (
 type repository struct{}
 
 type IRepository interface {
-	WithTransaction(txHandle *gorm.DB) IRepository
+	WithTransaction(txHandle gorm.DB) IRepository
 	Create(workspace *Workspace) *restErrors.RestErr
 	GetByNameAndUserId(name string, userId string) ([]*Workspace, *restErrors.RestErr)
 	GetById(id string) (*Workspace, *restErrors.RestErr)
@@ -31,12 +31,12 @@ func NewRepository() IRepository {
 	return &repository{}
 }
 
-func (repo *repository) WithTransaction(txHandle *gorm.DB) IRepository {
+func (repo *repository) WithTransaction(txHandle gorm.DB) IRepository {
 	sqlclient.DbClient = txHandle
 	return repo
 }
 
-//Create creates a new workspace record with its first workspaceUser record
+// Create creates a new workspace record with its first workspaceUser record
 func (repo *repository) Create(workspace *Workspace) *restErrors.RestErr {
 	res := sqlclient.DbClient.Create(workspace)
 	if res.Error != nil {
@@ -47,7 +47,7 @@ func (repo *repository) Create(workspace *Workspace) *restErrors.RestErr {
 	return nil
 }
 
-//GetByNameAndUserId used to get workspace by name to check if workspace name exits for the same owner(userId)
+// GetByNameAndUserId used to get workspace by name to check if workspace name exits for the same owner(userId)
 func (repo *repository) GetByNameAndUserId(name string, userId string) ([]*Workspace, *restErrors.RestErr) {
 	var workspaces []*Workspace
 	result := sqlclient.DbClient.Where("user_id = ? AND name = ?", userId, name).Find(&workspaces)
@@ -58,7 +58,7 @@ func (repo *repository) GetByNameAndUserId(name string, userId string) ([]*Works
 	return workspaces, nil
 }
 
-//Update updates workspace record
+// Update updates workspace record
 func (repo *repository) Update(workspace *Workspace) *restErrors.RestErr {
 	res := sqlclient.DbClient.Save(workspace)
 	if res.Error != nil {
@@ -69,7 +69,7 @@ func (repo *repository) Update(workspace *Workspace) *restErrors.RestErr {
 	return nil
 }
 
-//GetById gets workspace record and preloads workspaceUser records
+// GetById gets workspace record and preloads workspaceUser records
 func (repo repository) GetById(Id string) (*Workspace, *restErrors.RestErr) {
 	var workspace = new(Workspace)
 	workspace.ID = Id
@@ -86,7 +86,7 @@ func (repo repository) GetById(Id string) (*Workspace, *restErrors.RestErr) {
 	return workspace, nil
 }
 
-//Delete deletes workspace record and cascades workspaceUser records with it
+// Delete deletes workspace record and cascades workspaceUser records with it
 func (repo repository) Delete(workspace *Workspace) *restErrors.RestErr {
 	result := sqlclient.DbClient.First(workspace).Delete(workspace)
 	if result.Error != nil {
@@ -100,7 +100,7 @@ func (repo repository) Delete(workspace *Workspace) *restErrors.RestErr {
 	return nil
 }
 
-//GetByUserId get workspaces where user assigned to member or owner by sub-query over workspaceUser table
+// GetByUserId get workspaces where user assigned to member or owner by sub-query over workspaceUser table
 func (repo repository) GetByUserId(userId string) ([]*Workspace, *restErrors.RestErr) {
 	var workspaces []*Workspace
 	subQuery := sqlclient.DbClient.Model(workspaceuser.WorkspaceUser{}).Where("user_id = ?", userId).Select("workspace_id")
@@ -113,7 +113,7 @@ func (repo repository) GetByUserId(userId string) ([]*Workspace, *restErrors.Res
 	return workspaces, nil
 }
 
-//AddWorkspaceMember create workspaceUser record through association with workspace
+// AddWorkspaceMember create workspaceUser record through association with workspace
 func (repo *repository) AddWorkspaceMember(workspace *Workspace, workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr {
 	err := sqlclient.DbClient.Model(workspace).Association("WorkspaceUsers").Append(workspaceUser)
 	if err != nil {
@@ -124,7 +124,7 @@ func (repo *repository) AddWorkspaceMember(workspace *Workspace, workspaceUser *
 	return nil
 }
 
-//DeleteWorkspaceMember removes existing workspaceUser record through association with workspace
+// DeleteWorkspaceMember removes existing workspaceUser record through association with workspace
 func (repo *repository) DeleteWorkspaceMember(workspace *Workspace, workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr {
 	err := sqlclient.DbClient.Model(workspace).Association("WorkspaceUsers").Delete(workspaceUser)
 	if err != nil {
@@ -140,7 +140,7 @@ func (repo *repository) DeleteWorkspaceMember(workspace *Workspace, workspaceUse
 	return nil
 }
 
-//GetWorkspaceMemberByWorkspaceIdAndUserId finds workspace member by workspaceId and userId
+// GetWorkspaceMemberByWorkspaceIdAndUserId finds workspace member by workspaceId and userId
 func (repo *repository) GetWorkspaceMemberByWorkspaceIdAndUserId(workspaceId string, userId string) (*workspaceuser.WorkspaceUser, *restErrors.RestErr) {
 	var workspaceUser = new(workspaceuser.WorkspaceUser)
 	result := sqlclient.DbClient.Where("user_id = ? AND workspace_id = ?", userId, workspaceId).First(workspaceUser)
@@ -154,7 +154,7 @@ func (repo *repository) GetWorkspaceMemberByWorkspaceIdAndUserId(workspaceId str
 	return workspaceUser, nil
 }
 
-//CountByUserId returns user's workspaces count
+// CountByUserId returns user's workspaces count
 func (repo *repository) CountByUserId(userId string) (int64, *restErrors.RestErr) {
 	var count int64
 	result := sqlclient.DbClient.Model(Workspace{}).Where("user_id = ?", userId).Count(&count)
@@ -165,7 +165,7 @@ func (repo *repository) CountByUserId(userId string) (int64, *restErrors.RestErr
 	return count, nil
 }
 
-//UpdateWorkspaceUser updates work space user details
+// UpdateWorkspaceUser updates work space user details
 func (repo *repository) UpdateWorkspaceUser(workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr {
 	res := sqlclient.DbClient.Save(workspaceUser)
 	if res.Error != nil {
@@ -175,7 +175,7 @@ func (repo *repository) UpdateWorkspaceUser(workspaceUser *workspaceuser.Workspa
 	return nil
 }
 
-//GetByNamespace returns workspace by namespace
+// GetByNamespace returns workspace by namespace
 func (repo *repository) GetByNamespace(namespace string) (*Workspace, *restErrors.RestErr) {
 	var workspace = new(Workspace)
 	workspace.K8sNamespace = namespace

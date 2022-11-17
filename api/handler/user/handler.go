@@ -36,52 +36,52 @@ func SignUp(c *fiber.Ctx) error {
 	}
 
 	txHandle := sqlclient.Begin()
-	model, restErr := userService.WithTransaction(&txHandle).SignUp(dto)
+	model, restErr := userService.WithTransaction(txHandle).SignUp(dto)
 	if restErr != nil {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(restErr.Status).JSON(restErr)
 	}
 
-	token, restErr := verificationService.WithTransaction(&txHandle).Create(model.ID)
+	_, restErr = verificationService.WithTransaction(txHandle).Create(model.ID)
 	if restErr != nil {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(restErr.Status).JSON(restErr)
 	}
 
-	usersCount, restErr := userService.Count()
-	if restErr != nil {
-		sqlclient.Rollback(&txHandle)
-		return c.Status(restErr.Status).JSON(restErr)
-	}
-	if usersCount == 1 { //check if this user is first user in the cluster=>verify email address
-		restErr = verificationService.WithTransaction(&txHandle).Verify(model.ID, token)
-		if restErr != nil {
-			sqlclient.Rollback(&txHandle)
-			return c.Status(restErr.Status).JSON(restErr)
-		}
-		restErr = userService.VerifyEmail(model)
-		if restErr != nil {
-			sqlclient.Rollback(&txHandle)
-			return c.Status(restErr.Status).JSON(restErr)
-		}
-	}
+	//usersCount, restErr := userService.Count()
+	//if restErr != nil {
+	//	sqlclient.Rollback(txHandle)
+	//	return c.Status(restErr.Status).JSON(restErr)
+	//}
+	//if usersCount == 1 { //check if this user is first user in the cluster=>verify email address
+	//	restErr = verificationService.WithTransaction(txHandle).Verify(model.ID, token)
+	//	if restErr != nil {
+	//		sqlclient.Rollback(txHandle)
+	//		return c.Status(restErr.Status).JSON(restErr)
+	//	}
+	//	restErr = userService.WithTransaction(txHandle).VerifyEmail(model)
+	//	if restErr != nil {
+	//		sqlclient.Rollback(txHandle)
+	//		return c.Status(restErr.Status).JSON(restErr)
+	//	}
+	//}
 
-	sqlclient.Commit(&txHandle)
+	sqlclient.Commit(txHandle)
 
 	//Create Workspace
 	//Don't Roll back created user , but try to create the default workspace later  if not exits when user creates its first node
-	workspaceService.CreateUserDefaultWorkspace(model.ID)
+	//workspaceService.CreateUserDefaultWorkspace(model.ID)
 
 	//section that user don't need to wait for
-	go func() {
-		if usersCount > 1 { // if this user isn't the first user in the cluster send verification email
-			//send email verification
-			mailRequest := new(sendgrid.MailRequestDto)
-			mailRequest.Token = token
-			mailRequest.Email = model.Email
-			mailService.SignUp(mailRequest)
-		}
-	}()
+	//go func() {
+	//	if usersCount > 1 { // if this user isn't the first user in the cluster send verification email
+	//		//send email verification
+	//		mailRequest := new(sendgrid.MailRequestDto)
+	//		mailRequest.Token = token
+	//		mailRequest.Email = model.Email
+	//		mailService.SignUp(mailRequest)
+	//	}
+	//}()
 
 	return c.Status(http.StatusCreated).JSON(shared.NewResponse(new(user.UserResponseDto).Marshall(model)))
 }
@@ -178,19 +178,19 @@ func VerifyEmail(c *fiber.Ctx) error {
 	}
 
 	txHandle := sqlclient.Begin()
-	err = verificationService.WithTransaction(&txHandle).Verify(userModel.ID, dto.Token)
+	err = verificationService.WithTransaction(txHandle).Verify(userModel.ID, dto.Token)
 	if err != nil {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
 
-	err = userService.WithTransaction(&txHandle).VerifyEmail(userModel)
+	err = userService.WithTransaction(txHandle).VerifyEmail(userModel)
 	if err != nil {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
 
-	sqlclient.Commit(&txHandle)
+	sqlclient.Commit(txHandle)
 
 	resp := struct {
 		Message string `json:"message"`
@@ -269,18 +269,18 @@ func ResetPassword(c *fiber.Ctx) error {
 
 	txHandle := sqlclient.Begin()
 
-	err = verificationService.WithTransaction(&txHandle).Verify(userModel.ID, dto.Token)
+	err = verificationService.WithTransaction(txHandle).Verify(userModel.ID, dto.Token)
 	if err != nil {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
-	err = userService.WithTransaction(&txHandle).ResetPassword(userModel, dto.Password)
+	err = userService.WithTransaction(txHandle).ResetPassword(userModel, dto.Password)
 	if err != nil {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
 
-	sqlclient.Commit(&txHandle)
+	sqlclient.Commit(txHandle)
 
 	resp := struct {
 		Message string `json:"message"`
@@ -347,19 +347,19 @@ func ChangeEmail(c *fiber.Ctx) error {
 
 	txHandle := sqlclient.Begin()
 
-	err = userService.WithTransaction(&txHandle).ChangeEmail(userDetails, dto)
+	err = userService.WithTransaction(txHandle).ChangeEmail(userDetails, dto)
 	if err != nil {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
 
-	token, err := verificationService.WithTransaction(&txHandle).Resend(userDetails.ID)
+	token, err := verificationService.WithTransaction(txHandle).Resend(userDetails.ID)
 	if err != nil {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
 
-	sqlclient.Commit(&txHandle)
+	sqlclient.Commit(txHandle)
 
 	mailRequest := new(sendgrid.MailRequestDto)
 	mailRequest.Token = token

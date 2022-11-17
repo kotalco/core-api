@@ -29,6 +29,7 @@ var (
 		DatabaseMaxConnections                 string
 		DatabaseMaxIdleConnections             string
 		DatabaseMaxLifetimeConnections         string
+		DatabaseMaxIdleLifetimeConnections     string
 		VerificationTokenLength                string
 		VerificationTokenExpiryHours           string
 		SendgridSenderName                     string
@@ -50,16 +51,17 @@ var (
 		JwtSecretKeyExpireHoursCountRememberMe: getenv("JWT_SECRET_KEY_EXPIRE_HOURS_COUNT_REMEMBER_ME", "168"),
 		DatabaseServerURL:                      os.Getenv("DB_SERVER_URL"),
 		DatabaseTestingServerURL:               getenv("DB_TESTING_SERVER_URL", "postgres://postgres:somePassword@localhost:5432/testing-cloud-api?sslmode=disable"),
-		DatabaseMaxConnections:                 getenv("DB_MAX_CONNECTIONS", "100"),
-		DatabaseMaxIdleConnections:             getenv("DB_MAX_IDLE_CONNECTIONS", "100"),
-		DatabaseMaxLifetimeConnections:         getenv("DB_MAX_LIFETIME_CONNECTIONS", "100"),
+		DatabaseMaxConnections:                 getenv("DB_MAX_CONNECTIONS", "500"),
+		DatabaseMaxIdleConnections:             getenv("DB_MAX_IDLE_CONNECTIONS", "500"),
+		DatabaseMaxLifetimeConnections:         getenv("DB_MAX_LIFETIME_CONNECTIONS", "5"),      // time in minutes
+		DatabaseMaxIdleLifetimeConnections:     getenv("DB_MAX_IDLE_LIFETIME_CONNECTIONS", "5"), //time in minutes
 		VerificationTokenLength:                getenv("VERIFICATION_TOKEN_LENGTH", "80"),
 		VerificationTokenExpiryHours:           getenv("VERIFICATION_TOKEN_EXPIRY_HOURS", "24"),
 		SendgridSenderName:                     getenv("SEND_GRID_SENDER_NAME", "Kotal Notifications"),
 		SendgridsenderEmail:                    getenv("SEND_GRID_SENDER_EMAIL", "notifications@kotal.co"),
 		SendgridAPIKey:                         SendgridAPIKey,
 		TwoFactorSecret:                        getenv("2_FACTOR_SECRET", "secret"), // TODO: change 2fa secret default value
-		RatelimiterPerMinute:                   getenv("RATE_LIMITER_PER_MINUTE", "100"),
+		RatelimiterPerMinute:                   getenv("RATE_LIMITER_PER_MINUTE", "100000000"),
 		SubscriptionAPIBaseURL:                 getenv("SUBSCRIPTION_API_BASE_URL", "http://localhost:8081"),
 		ECCPublicKey:                           ECCPublicKey,
 		DomainMatchBaseURL:                     os.Getenv("DOMAIN_MATCH_BASE_URL"),

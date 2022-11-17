@@ -39,19 +39,19 @@ func Create(c *fiber.Ctx) error {
 	}
 
 	txHandle := sqlclient.Begin()
-	model, err := workspaceService.WithTransaction(&txHandle).Create(dto, userId)
+	model, err := workspaceService.WithTransaction(txHandle).Create(dto, userId)
 	if err != nil {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
 
 	err = namespaceService.Create(model.K8sNamespace)
 	if err != nil {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
 
-	sqlclient.Commit(&txHandle)
+	sqlclient.Commit(txHandle)
 
 	return c.Status(http.StatusCreated).JSON(shared.NewResponse(new(workspace.WorkspaceResponseDto).Marshall(model)))
 
@@ -76,12 +76,12 @@ func Update(c *fiber.Ctx) error {
 	}
 
 	txHandle := sqlclient.Begin()
-	err = workspaceService.WithTransaction(&txHandle).Update(dto, &model)
+	err = workspaceService.WithTransaction(txHandle).Update(dto, &model)
 	if err != nil {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
-	sqlclient.Commit(&txHandle)
+	sqlclient.Commit(txHandle)
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(new(workspace.WorkspaceResponseDto).Marshall(&model)))
 }
@@ -101,19 +101,19 @@ func Delete(c *fiber.Ctx) error {
 	}
 
 	txHandle := sqlclient.Begin()
-	err = workspaceService.WithTransaction(&txHandle).Delete(&model)
+	err = workspaceService.WithTransaction(txHandle).Delete(&model)
 	if err != nil {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
 
 	err = namespaceService.Delete(model.K8sNamespace)
 	if err != nil && err.Status != http.StatusNotFound {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
 
-	sqlclient.Commit(&txHandle)
+	sqlclient.Commit(txHandle)
 
 	return c.SendStatus(http.StatusNoContent)
 }
@@ -174,13 +174,13 @@ func AddMember(c *fiber.Ctx) error {
 	}
 
 	txHandle := sqlclient.Begin()
-	err = workspaceService.WithTransaction(&txHandle).AddWorkspaceMember(&model, member.ID, dto.Role)
+	err = workspaceService.WithTransaction(txHandle).AddWorkspaceMember(&model, member.ID, dto.Role)
 	if err != nil {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
 
-	sqlclient.Commit(&txHandle)
+	sqlclient.Commit(txHandle)
 
 	mailRequestDto := new(sendgrid.WorkspaceInvitationMailRequestDto)
 	mailRequestDto.Email = dto.Email
@@ -215,13 +215,13 @@ func Leave(c *fiber.Ctx) error {
 	}
 
 	txHandle := sqlclient.Begin()
-	err := workspaceService.WithTransaction(&txHandle).DeleteWorkspaceMember(&model, userId)
+	err := workspaceService.WithTransaction(txHandle).DeleteWorkspaceMember(&model, userId)
 	if err != nil {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
 
-	sqlclient.Commit(&txHandle)
+	sqlclient.Commit(txHandle)
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{
 		Message: "You're no longer member of this workspace",
@@ -252,13 +252,13 @@ func RemoveMember(c *fiber.Ctx) error {
 	}
 
 	txHandle := sqlclient.Begin()
-	err := workspaceService.WithTransaction(&txHandle).DeleteWorkspaceMember(&model, memberId)
+	err := workspaceService.WithTransaction(txHandle).DeleteWorkspaceMember(&model, memberId)
 	if err != nil {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
 
-	sqlclient.Commit(&txHandle)
+	sqlclient.Commit(txHandle)
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{
 		Message: "User has been removed from workspace",
@@ -334,13 +334,13 @@ func UpdateWorkspaceUser(c *fiber.Ctx) error {
 	}
 
 	txHandle := sqlclient.Begin()
-	err = workspaceService.WithTransaction(&txHandle).UpdateWorkspaceUser(workspaceUser, dto)
+	err = workspaceService.WithTransaction(txHandle).UpdateWorkspaceUser(workspaceUser, dto)
 	if err != nil {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
 
-	sqlclient.Commit(&txHandle)
+	sqlclient.Commit(txHandle)
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{
 		Message: "User role changed successfully",
