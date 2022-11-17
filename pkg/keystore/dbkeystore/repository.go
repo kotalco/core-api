@@ -1,4 +1,4 @@
-package dbconfig
+package dbkeystore
 
 import (
 	"fmt"
@@ -29,7 +29,7 @@ func (r repository) WithTransaction(txHandle *gorm.DB) IRepository {
 }
 
 func (r repository) Get(key string) (string, *restErrors.RestErr) {
-	var record = new(DbConfig)
+	var record = new(KeyStore)
 
 	result := sqlclient.DbClient.Where("key = ?", key).First(record)
 	if result.Error != nil {
@@ -40,7 +40,7 @@ func (r repository) Get(key string) (string, *restErrors.RestErr) {
 }
 
 func (r repository) Set(key string, value string) *restErrors.RestErr {
-	var record = &DbConfig{
+	var record = &KeyStore{
 		Key:   key,
 		Value: value,
 	}

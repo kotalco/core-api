@@ -4,6 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/websocket/v2"
 	"github.com/kotalco/cloud-api/api/handler/endpoint"
+	"github.com/kotalco/cloud-api/api/handler/onboarding"
 	"github.com/kotalco/cloud-api/api/handler/subscription"
 	"github.com/kotalco/cloud-api/api/handler/svc"
 	"github.com/kotalco/cloud-api/api/handler/user"
@@ -30,7 +31,7 @@ func MapUrl(app *fiber.App) {
 
 	//subscription
 	v1.Post("subscriptions/acknowledgment", subscription.Acknowledgement)
-	v1.Use(middleware.IsSubscription)
+	//v1.Use(middleware.IsSubscription)
 
 	//users group
 	v1.Post("sessions", user.SignIn)
@@ -79,6 +80,9 @@ func MapUrl(app *fiber.App) {
 	endpoints.Get("/:name", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership, middleware.IsReader, endpoint.Get)
 	endpoints.Delete("/:name", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership, middleware.IsAdmin, endpoint.Delete)
 
+	//Onboarding group
+	onboardingGroup := v1.Group("onboarding")
+	onboardingGroup.Post("/set-domain", onboarding.SetDomain)
 	mapDeploymentUrl(v1)
 }
 

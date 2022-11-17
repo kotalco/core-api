@@ -1,11 +1,11 @@
 package migration
 
 import (
-	"github.com/kotalco/cloud-api/internal/dbconfig"
 	"github.com/kotalco/cloud-api/internal/user"
 	"github.com/kotalco/cloud-api/internal/verification"
 	"github.com/kotalco/cloud-api/internal/workspace"
 	"github.com/kotalco/cloud-api/internal/workspaceuser"
+	"github.com/kotalco/cloud-api/pkg/keystore/dbkeystore"
 	"github.com/kotalco/community-api/pkg/logger"
 	"gorm.io/gorm"
 )
@@ -70,10 +70,10 @@ func (m migration) CreateWorkspaceUserTable() error {
 }
 
 func (m migration) CreateDbConfigTable() error {
-	exits := m.dbClient.Migrator().HasTable(dbconfig.DbConfig{})
+	exits := m.dbClient.Migrator().HasTable(dbkeystore.KeyStore{})
 	if !exits {
 		go logger.Info("CreateDbConfigTable")
-		return m.dbClient.AutoMigrate(dbconfig.DbConfig{})
+		return m.dbClient.AutoMigrate(dbkeystore.KeyStore{})
 	}
 	return nil
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/kotalco/cloud-api/internal/endpoint"
+	"github.com/kotalco/cloud-api/internal/onboarding"
 	"github.com/kotalco/cloud-api/internal/workspace"
 	k8svc "github.com/kotalco/cloud-api/pkg/k8s/svc"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
@@ -15,10 +16,16 @@ var (
 	endpointService   = endpoint.NewService()
 	svcService        = k8svc.NewService()
 	availableProtocol = k8svc.AvailableProtocol
+	onboardingService = onboarding.NewService()
 )
 
 // Create accept  endpoint.CreateEndpointDto , creates the endpoint and returns success or err if any
 func Create(c *fiber.Ctx) error {
+	//check if the user configured the domain base url
+	if !onboardingService.DomainBaseUrlExists() {
+		forbiddenRes := restErrors.NewForbiddenError("Domain hasn't been configured yet !")
+		return c.Status(forbiddenRes.Status).JSON(forbiddenRes)
+	}
 	workspaceModel := c.Locals("workspace").(workspace.Workspace)
 	dto := new(endpoint.CreateEndpointDto)
 	if intErr := c.BodyParser(dto); intErr != nil {

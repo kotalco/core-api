@@ -1,6 +1,6 @@
-package dbconfig
+package dbkeystore
 
-type DbConfig struct {
+type KeyStore struct {
 	Key   string `gorm:"uniqueIndex"`
 	Value string
 }

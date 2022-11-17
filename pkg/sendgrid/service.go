@@ -36,6 +36,7 @@ func (service) SignUp(dto *MailRequestDto) *restErrors.RestErr {
 	subject := "Welcome to Kotal! Confirm Your Email"
 	to := mail.NewEmail(greeting, dto.Email)
 	plainTextContent := ""
+
 	baseUrl := fmt.Sprintf("%s/confirm-email?email=%s&token=%s", config.Environment.DomainMatchBaseURL, dto.Email, dto.Token)
 	htmlContent := fmt.Sprintf("please visit the following link to Confirm  your email address %s", baseUrl)
 	message := mail.NewSingleEmail(from, subject, to, plainTextContent, htmlContent)

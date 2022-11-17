@@ -1,4 +1,4 @@
-package dbconfig
+package dbkeystore
 
 import (
 	restErrors "github.com/kotalco/community-api/pkg/errors"
