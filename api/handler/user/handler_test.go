@@ -225,13 +225,11 @@ func (wService workspaceServiceMock) CreateUserDefaultWorkspace(userId string) *
 }
 
 func TestMain(m *testing.M) {
+	sqlclient.OpenDBConnection()
 	userService = &userServiceMock{}
 	verificationService = &verificationServiceMock{}
 	mailService = &mailServiceMock{}
 	workspaceService = &workspaceServiceMock{}
-
-	sqlclient.OpenDBConnection()
-
 	code := m.Run()
 	os.Exit(code)
 }

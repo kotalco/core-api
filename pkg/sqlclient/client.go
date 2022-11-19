@@ -27,17 +27,17 @@ func OpenDBConnection() *gorm.DB {
 			go logger.Panic("DATABASE_CONNECTION_ERROR", err)
 			panic(err)
 		}
+		dbConfig(dbConnection)
 		DbClient = dbConnection
 	})
-	DbClient = dbConnection
 
-	return DbClient
+	DbClient = dbConnection
+	return dbConnection
 }
 
-func Begin() gorm.DB {
+func Begin() *gorm.DB {
 	DbClient = dbConnection
-	begin := DbClient.Begin()
-	return *begin
+	return DbClient.Begin()
 }
 
 func Rollback(txHandle *gorm.DB) {
