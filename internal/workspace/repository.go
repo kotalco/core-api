@@ -12,7 +12,7 @@ import (
 type repository struct{}
 
 type IRepository interface {
-	WithTransaction(txHandle gorm.DB) IRepository
+	WithTransaction(txHandle *gorm.DB) IRepository
 	Create(workspace *Workspace) *restErrors.RestErr
 	GetByNameAndUserId(name string, userId string) ([]*Workspace, *restErrors.RestErr)
 	GetById(id string) (*Workspace, *restErrors.RestErr)
@@ -31,7 +31,7 @@ func NewRepository() IRepository {
 	return &repository{}
 }
 
-func (repo *repository) WithTransaction(txHandle gorm.DB) IRepository {
+func (repo *repository) WithTransaction(txHandle *gorm.DB) IRepository {
 	sqlclient.DbClient = txHandle
 	return repo
 }

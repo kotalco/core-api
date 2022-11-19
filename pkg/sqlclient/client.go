@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	DbClient     gorm.DB
+	DbClient     *gorm.DB
 	dbConnection *gorm.DB
 	clientOnce   sync.Once
 	err          error
@@ -28,26 +28,24 @@ func OpenDBConnection() *gorm.DB {
 			panic(err)
 		}
 		dbConfig(dbConnection)
-		DbClient = *dbConnection
+		DbClient = dbConnection
 	})
 
-	//dbd, _ := dbConnection.DB()
-	DbClient = *dbConnection
+	DbClient = dbConnection
 	return dbConnection
 }
 
-func Begin() gorm.DB {
-	DbClient = *dbConnection
-	begin := DbClient.Begin()
-	return *begin
+func Begin() *gorm.DB {
+	DbClient = dbConnection
+	return DbClient.Begin()
 }
 
-func Rollback(txHandle gorm.DB) {
+func Rollback(txHandle *gorm.DB) {
 	txHandle.Rollback()
-	DbClient = *dbConnection
+	DbClient = dbConnection
 }
 
-func Commit(txHandle gorm.DB) {
+func Commit(txHandle *gorm.DB) {
 	txHandle.Commit()
-	DbClient = *dbConnection
+	DbClient = dbConnection
 }

@@ -42,46 +42,46 @@ func SignUp(c *fiber.Ctx) error {
 		return c.Status(restErr.Status).JSON(restErr)
 	}
 
-	_, restErr = verificationService.WithTransaction(txHandle).Create(model.ID)
+	token, restErr := verificationService.WithTransaction(txHandle).Create(model.ID)
 	if restErr != nil {
 		sqlclient.Rollback(txHandle)
 		return c.Status(restErr.Status).JSON(restErr)
 	}
 
-	//usersCount, restErr := userService.Count()
-	//if restErr != nil {
-	//	sqlclient.Rollback(txHandle)
-	//	return c.Status(restErr.Status).JSON(restErr)
-	//}
-	//if usersCount == 1 { //check if this user is first user in the cluster=>verify email address
-	//	restErr = verificationService.WithTransaction(txHandle).Verify(model.ID, token)
-	//	if restErr != nil {
-	//		sqlclient.Rollback(txHandle)
-	//		return c.Status(restErr.Status).JSON(restErr)
-	//	}
-	//	restErr = userService.WithTransaction(txHandle).VerifyEmail(model)
-	//	if restErr != nil {
-	//		sqlclient.Rollback(txHandle)
-	//		return c.Status(restErr.Status).JSON(restErr)
-	//	}
-	//}
+	usersCount, restErr := userService.Count()
+	if restErr != nil {
+		sqlclient.Rollback(txHandle)
+		return c.Status(restErr.Status).JSON(restErr)
+	}
+	if usersCount == 1 { //check if this user is first user in the cluster=>verify email address
+		restErr = verificationService.WithTransaction(txHandle).Verify(model.ID, token)
+		if restErr != nil {
+			sqlclient.Rollback(txHandle)
+			return c.Status(restErr.Status).JSON(restErr)
+		}
+		restErr = userService.WithTransaction(txHandle).VerifyEmail(model)
+		if restErr != nil {
+			sqlclient.Rollback(txHandle)
+			return c.Status(restErr.Status).JSON(restErr)
+		}
+	}
 
 	sqlclient.Commit(txHandle)
 
 	//Create Workspace
 	//Don't Roll back created user , but try to create the default workspace later  if not exits when user creates its first node
-	//workspaceService.CreateUserDefaultWorkspace(model.ID)
+	workspaceService.CreateUserDefaultWorkspace(model.ID)
 
 	//section that user don't need to wait for
-	//go func() {
-	//	if usersCount > 1 { // if this user isn't the first user in the cluster send verification email
-	//		//send email verification
-	//		mailRequest := new(sendgrid.MailRequestDto)
-	//		mailRequest.Token = token
-	//		mailRequest.Email = model.Email
-	//		mailService.SignUp(mailRequest)
-	//	}
-	//}()
+	go func() {
+		if usersCount > 1 { // if this user isn't the first user in the cluster send verification email
+			//send email verification
+			mailRequest := new(sendgrid.MailRequestDto)
+			mailRequest.Token = token
+			mailRequest.Email = model.Email
+			mailService.SignUp(mailRequest)
+		}
+	}()
 
 	return c.Status(http.StatusCreated).JSON(shared.NewResponse(new(user.UserResponseDto).Marshall(model)))
 }
