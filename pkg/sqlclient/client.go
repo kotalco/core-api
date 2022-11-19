@@ -30,7 +30,6 @@ func OpenDBConnection() *gorm.DB {
 		dbConfig(dbConnection)
 		DbClient = dbConnection
 	})
-
 	DbClient = dbConnection
 	return dbConnection
 }
