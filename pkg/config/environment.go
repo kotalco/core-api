@@ -61,7 +61,7 @@ var (
 		SendgridsenderEmail:                    getenv("SEND_GRID_SENDER_EMAIL", "notifications@kotal.co"),
 		SendgridAPIKey:                         SendgridAPIKey,
 		TwoFactorSecret:                        getenv("2_FACTOR_SECRET", "secret"), // TODO: change 2fa secret default value
-		RatelimiterPerMinute:                   getenv("RATE_LIMITER_PER_MINUTE", "10000"),
+		RatelimiterPerMinute:                   getenv("RATE_LIMITER_PER_MINUTE", "100"),
 		SubscriptionAPIBaseURL:                 getenv("SUBSCRIPTION_API_BASE_URL", "http://localhost:8081"),
 		ECCPublicKey:                           ECCPublicKey,
 		DomainMatchBaseURL:                     os.Getenv("DOMAIN_MATCH_BASE_URL"),
