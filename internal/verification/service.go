@@ -26,11 +26,13 @@ type IService interface {
 }
 
 var (
-	verificationRepository = NewRepository()
-	hashing                = security.NewHashing()
+	verificationRepository IRepository
+	hashing                security.IHashing
 )
 
 func NewService() IService {
+	verificationRepository = NewRepository()
+	hashing = security.NewHashing()
 	newService := &service{}
 	return newService
 }
@@ -138,8 +140,6 @@ func (vService service) Resend(userId string) (string, *restErrors.RestErr) {
 	if err != nil {
 		return "", err
 	}
-
-	fmt.Println("token: ", token)
 
 	return token, nil
 }

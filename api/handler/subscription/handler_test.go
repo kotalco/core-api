@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/gofiber/fiber/v2"
+	"github.com/kotalco/cloud-api/internal/subscription"
 	subscriptionAPI "github.com/kotalco/cloud-api/pkg/subscription"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/shared"
@@ -17,7 +18,7 @@ import (
 )
 
 /*
- subscriptionAPI service  mocks
+subscriptionAPI service  mocks
 */
 var (
 	subscriptionAcknowledgmentFunc   func(activationKey string) *restErrors.RestErr
@@ -64,7 +65,7 @@ func newFiberCtx(dto interface{}, method func(c *fiber.Ctx) error, locals map[st
 
 func TestMain(m *testing.M) {
 
-	subscriptionService = &subscriptionServiceMock{}
+	subscriptionService = func() subscription.IService { return &subscriptionServiceMock{} }
 
 	code := m.Run()
 	os.Exit(code)

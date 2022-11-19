@@ -18,10 +18,9 @@ import (
 )
 
 var (
-	ingressRoutesService = ingressroute.NewIngressRoutesService()
-	k8MiddlewareService  = middleware.NewK8Middleware()
-	secretService        = secret.NewService()
-	k8Service            = k8svc.NewService()
+	ingressRoutesService ingressroute.IIngressRoute
+	k8MiddlewareService  middleware.IK8Middleware
+	secretService        secret.ISecret
 )
 
 type service struct{}
@@ -38,6 +37,9 @@ type IService interface {
 }
 
 func NewService() IService {
+	ingressRoutesService = ingressroute.NewIngressRoutesService()
+	k8MiddlewareService = middleware.NewK8Middleware()
+	secretService = secret.NewService()
 	return &service{}
 }
 

@@ -8,6 +8,7 @@ import (
 	"github.com/kotalco/cloud-api/internal/user"
 	"github.com/kotalco/cloud-api/internal/workspace"
 	"github.com/kotalco/cloud-api/internal/workspaceuser"
+	"github.com/kotalco/cloud-api/pkg/k8s"
 	"github.com/kotalco/cloud-api/pkg/roles"
 	"github.com/kotalco/cloud-api/pkg/sendgrid"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
@@ -242,10 +243,10 @@ func newFiberCtx(dto interface{}, method func(c *fiber.Ctx) error, locals map[st
 }
 
 func TestMain(m *testing.M) {
-	workspaceService = &workspaceServiceMock{}
-	namespaceService = &namespaceServiceMock{}
-	mailService = &mailServiceMock{}
-	userService = &userServiceMock{}
+	workspaceService = func() workspace.IService { return &workspaceServiceMock{} }
+	namespaceService = func() k8s.INamespace { return &namespaceServiceMock{} }
+	mailService = func() sendgrid.IService { return &mailServiceMock{} }
+	userService = func() user.IService { return &userServiceMock{} }
 	sqlclient.OpenDBConnection()
 
 	code := m.Run()

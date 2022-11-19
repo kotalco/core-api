@@ -1,7 +1,6 @@
 package sqlclient
 
 import (
-	"fmt"
 	"github.com/kotalco/cloud-api/pkg/config"
 	"github.com/kotalco/community-api/pkg/logger"
 	"gorm.io/gorm"
@@ -30,7 +29,6 @@ func dbConfig(gormDbConnection *gorm.DB) {
 		panic(err)
 	}
 	// Max Ideal Connection
-	fmt.Println(databaseMaxIdleConnections)
 	sqlDB.SetMaxIdleConns(databaseMaxIdleConnections)
 
 	databaseMaxLifetimeConnections, err := strconv.Atoi(config.Environment.DatabaseMaxLifetimeConnections)

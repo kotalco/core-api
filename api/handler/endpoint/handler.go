@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	endpointService   = endpoint.NewService()
-	svcService        = k8svc.NewService()
+	endpointService   = func() endpoint.IService { return endpoint.NewService() }
+	svcService        = func() k8svc.ISVC { return k8svc.NewService() }
 	availableProtocol = k8svc.AvailableProtocol
 )
 
@@ -33,7 +33,7 @@ func Create(c *fiber.Ctx) error {
 	}
 
 	//get service
-	corev1Svc, err := svcService.Get(dto.ServiceName, workspaceModel.K8sNamespace)
+	corev1Svc, err := svcService().Get(dto.ServiceName, workspaceModel.K8sNamespace)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -50,7 +50,7 @@ func Create(c *fiber.Ctx) error {
 		return c.Status(badReq.Status).JSON(badReq)
 	}
 
-	err = endpointService.Create(dto, corev1Svc)
+	err = endpointService().Create(dto, corev1Svc)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -62,7 +62,7 @@ func Create(c *fiber.Ctx) error {
 // List accept namespace , returns a list of ingressroute.Ingressroute  or err if any
 func List(c *fiber.Ctx) error {
 	workspaceModel := c.Locals("workspace").(workspace.Workspace)
-	list, err := endpointService.List(workspaceModel.K8sNamespace)
+	list, err := endpointService().List(workspaceModel.K8sNamespace)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -75,7 +75,7 @@ func Get(c *fiber.Ctx) error {
 	workspaceModel := c.Locals("workspace").(workspace.Workspace)
 	endpointName := c.Params("name")
 
-	record, err := endpointService.Get(endpointName, workspaceModel.K8sNamespace)
+	record, err := endpointService().Get(endpointName, workspaceModel.K8sNamespace)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -88,7 +88,7 @@ func Delete(c *fiber.Ctx) error {
 	workspaceModel := c.Locals("workspace").(workspace.Workspace)
 	endpointName := c.Params("name")
 
-	err := endpointService.Delete(endpointName, workspaceModel.K8sNamespace)
+	err := endpointService().Delete(endpointName, workspaceModel.K8sNamespace)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}

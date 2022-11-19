@@ -80,11 +80,11 @@ func (k k8ServiceMock) Get(name string, namespace string) (*corev1.Service, *res
 }
 
 func TestMain(m *testing.M) {
+	//should be called before the mocks coz the mocks should replace the services initiated in the NewService func
+	endpointService = NewService()
 	ingressRoutesService = &ingressRouteServiceMock{}
 	k8MiddlewareService = &k8MiddlewareServiceMock{}
 	secretService = &secretServiceMock{}
-	k8Service = &k8ServiceMock{}
-	endpointService = NewService()
 	code := m.Run()
 	os.Exit(code)
 }

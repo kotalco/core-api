@@ -61,7 +61,7 @@ func newFiberCtx(dto interface{}, method func(c *fiber.Ctx) error, locals map[st
 }
 
 func TestMain(m *testing.M) {
-	svcService = &k8sServiceMock{}
+	svcService = func() k8svc.ISVC { return &k8sServiceMock{} }
 	code := m.Run()
 	os.Exit(code)
 }

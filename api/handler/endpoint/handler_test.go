@@ -6,6 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/kotalco/cloud-api/internal/endpoint"
 	"github.com/kotalco/cloud-api/internal/workspace"
+	k8svc "github.com/kotalco/cloud-api/pkg/k8s/svc"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/shared"
 	"github.com/stretchr/testify/assert"
@@ -91,8 +92,8 @@ func newFiberCtx(dto interface{}, method func(c *fiber.Ctx) error, locals map[st
 }
 
 func TestMain(m *testing.M) {
-	endpointService = &endpointServiceMock{}
-	svcService = &svcServiceMock{}
+	endpointService = func() endpoint.IService { return &endpointServiceMock{} }
+	svcService = func() k8svc.ISVC { return &svcServiceMock{} }
 	code := m.Run()
 
 	os.Exit(code)

@@ -13,12 +13,12 @@ import (
 )
 
 var (
-	subscriptionService = subscription.NewService()
+	subscriptionService = func() subscription.IService { return subscription.NewService() }
 )
 
-//Acknowledgement accept the user activation_key
+// Acknowledgement accept the user activation_key
 // Runs subscription acknowledgement
-//validate subscription
+// validate subscription
 func Acknowledgement(c *fiber.Ctx) error {
 	//accept and validate the activation key
 	dto := new(subscription.AcknowledgementRequestDto)
@@ -32,7 +32,7 @@ func Acknowledgement(c *fiber.Ctx) error {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	err = subscriptionService.Acknowledgment(dto.ActivationKey)
+	err = subscriptionService().Acknowledgment(dto.ActivationKey)
 	if err != nil {
 		subscriptionAPI.Reset()
 		return c.Status(err.Status).JSON(err)

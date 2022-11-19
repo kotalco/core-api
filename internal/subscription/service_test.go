@@ -102,10 +102,11 @@ func (namespaceServiceMock) Delete(name string) *restErrors.RestErr {
 
 func TestMain(m *testing.M) {
 	sqlclient.OpenDBConnection()
+	//should be called before the mocks coz the mocks should replace the services initiated in the NewService func
+	subscriptionService = NewService()
 	subscriptionAPIService = &subscriptionApiServiceMock{}
 	ecService = &eccServiceMock{}
 	namespaceService = &namespaceServiceMock{}
-	subscriptionService = NewService()
 
 	code := m.Run()
 	os.Exit(code)

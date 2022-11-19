@@ -4,6 +4,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/kotalco/cloud-api/internal/workspaceuser"
 	"github.com/kotalco/cloud-api/pkg/roles"
+	"github.com/kotalco/cloud-api/pkg/sqlclient"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
@@ -109,9 +110,11 @@ func (workspaceRepositoryMock) GetByNamespace(namespace string) (*Workspace, *re
 }
 
 func TestMain(m *testing.M) {
+	sqlclient.OpenDBConnection()
+	//should be called before the mocks coz the mocks should replace the services initiated in the NewService func
+	workspaceTestService = NewService()
 	workspaceRepo = &workspaceRepositoryMock{}
 	namespaceService = &namespaceServiceMock{}
-	workspaceTestService = NewService()
 	code := m.Run()
 	os.Exit(code)
 }

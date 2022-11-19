@@ -3,7 +3,6 @@ package user
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"github.com/kotalco/cloud-api/pkg/token"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -107,13 +106,14 @@ func (tfaServiceMock) CheckOtp(userTOTPSecret string, otp string) bool {
 }
 
 func TestMain(m *testing.M) {
+	//should be called before the mocks coz the mocks should replace the services initiated in the NewService func
+	userService = NewService()
 	userRepository = &userRepositoryMock{}
 	encryption = &encryptionServiceMock{}
 	hashing = &hashingServiceMock{}
 	tokenService = &tokenServiceMock{}
 	tfaService = &tfaServiceMock{}
 
-	userService = NewService()
 	code := m.Run()
 	os.Exit(code)
 }
@@ -184,7 +184,6 @@ func TestService_SignIn(t *testing.T) {
 			return user, nil
 		}
 		session, err := userService.SignIn(dto)
-		fmt.Println(session, err)
 		assert.Nil(t, err)
 		assert.NotNil(t, session.Token)
 		assert.EqualValues(t, true, session.Authorized)

@@ -28,11 +28,13 @@ type IService interface {
 }
 
 var (
-	workspaceRepo    = NewRepository()
-	namespaceService = k8s.NewNamespaceService()
+	workspaceRepo    IRepository
+	namespaceService k8s.INamespace
 )
 
 func NewService() IService {
+	workspaceRepo = NewRepository()
+	namespaceService = k8s.NewNamespaceService()
 	return &service{}
 }
 

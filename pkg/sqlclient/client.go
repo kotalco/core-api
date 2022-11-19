@@ -18,6 +18,9 @@ var (
 	err          error
 )
 
+// OpenDBConnection when initiating new repository we should use this function
+// we use OpenDBConnection which returns the original dbConnection variable from sqlclient pkg
+// don't use sqlclinet.DbClient might have been polluted with another transaction
 func OpenDBConnection() *gorm.DB {
 	clientOnce.Do(func() {
 		dbConnection, err = gorm.Open(postgres.Open(config.Environment.DatabaseServerURL), &gorm.Config{

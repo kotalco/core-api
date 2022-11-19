@@ -16,9 +16,9 @@ import (
 const KUBE_SYSTEM_NAMESPACE = "kube-system"
 
 var (
-	subscriptionAPIService = subscriptionAPI.NewSubscriptionService()
-	ecService              = security.NewEllipticCurve()
-	namespaceService       = k8s.NewNamespaceService()
+	subscriptionAPIService subscriptionAPI.ISubscriptionService
+	ecService              security.IEllipticCurve
+	namespaceService       k8s.INamespace
 )
 
 type service struct{}
@@ -36,6 +36,9 @@ type IService interface {
 }
 
 func NewService() IService {
+	subscriptionAPIService = subscriptionAPI.NewSubscriptionService()
+	ecService = security.NewEllipticCurve()
+	namespaceService = k8s.NewNamespaceService()
 	return &service{}
 }
 

@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	svcService        = k8svc.NewService()
+	svcService        = func() k8svc.ISVC { return k8svc.NewService() }
 	availableProtocol = k8svc.AvailableProtocol
 )
 
@@ -18,7 +18,7 @@ var (
 func List(c *fiber.Ctx) error {
 	workspaceModel := c.Locals("workspace").(workspace.Workspace)
 
-	svcList, err := svcService.List(workspaceModel.K8sNamespace)
+	svcList, err := svcService().List(workspaceModel.K8sNamespace)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}

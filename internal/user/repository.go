@@ -25,6 +25,7 @@ type IRepository interface {
 }
 
 func NewRepository() IRepository {
+	sqlclient.OpenDBConnection()
 	newRepo := repository{}
 	return newRepo
 }

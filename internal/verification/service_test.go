@@ -2,7 +2,6 @@ package verification
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -52,9 +51,10 @@ func (hashingServiceMock) VerifyHash(hashedPassword, password string) error {
 }
 
 func TestMain(m *testing.M) {
+	//should be called before the mocks coz the mocks should replace the services initiated in the NewService func
+	verificationService = NewService()
 	verificationRepository = &verificationRepositoryMock{}
 	hashing = &hashingServiceMock{}
-	verificationService = NewService()
 	code := m.Run()
 	os.Exit(code)
 }
@@ -179,7 +179,6 @@ func TestService_Create(t *testing.T) {
 		assert.EqualValues(t, "", result)
 		assert.EqualValues(t, "something went wrong", err.Message)
 		config.Environment.VerificationTokenExpiryHours = current
-		fmt.Println(current)
 	})
 
 }
