@@ -24,7 +24,7 @@ type IMigration interface {
 	CreateVerificationTable() error
 	CreateWorkspaceTable() error
 	CreateWorkspaceUserTable() error
-	CreateDbConfigTable() error
+	CreateDbKeystoreTable() error
 }
 
 func NewMigration(dbClient *gorm.DB) IMigration {
@@ -69,10 +69,10 @@ func (m migration) CreateWorkspaceUserTable() error {
 	return nil
 }
 
-func (m migration) CreateDbConfigTable() error {
+func (m migration) CreateDbKeystoreTable() error {
 	exits := m.dbClient.Migrator().HasTable(dbkeystore.KeyStore{})
 	if !exits {
-		go logger.Info("CreateDbConfigTable")
+		go logger.Info("CreateDbKeystoreTable")
 		return m.dbClient.AutoMigrate(dbkeystore.KeyStore{})
 	}
 	return nil
