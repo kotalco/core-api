@@ -36,7 +36,7 @@ func (r repository) Get(key string) (string, *restErrors.RestErr) {
 		return "", restErrors.NewNotFoundError(fmt.Sprintf("can't find config for the key  %s", key))
 	}
 
-	return key, nil
+	return record.Value, nil
 }
 
 func (r repository) Set(key string, value string) *restErrors.RestErr {

@@ -1,10 +1,8 @@
 package onboarding
 
 import (
-	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/kotalco/cloud-api/internal/onboarding"
-	"github.com/kotalco/cloud-api/pkg/sendgrid"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/shared"
 	"net/http"
@@ -15,8 +13,6 @@ var (
 )
 
 func SetDomain(c *fiber.Ctx) error {
-
-	fmt.Println(sendgrid.GetDomainBaseUrl())
 	dto := new(onboarding.SetDomainBaseUrlRequestDto)
 	if err := c.BodyParser(dto); err != nil {
 		badReq := restErrors.NewBadRequestError("invalid request body")

@@ -3,6 +3,7 @@ package sendgrid
 import (
 	"errors"
 	"fmt"
+	"github.com/kotalco/cloud-api/pkg/k8s/domain"
 
 	"github.com/kotalco/cloud-api/pkg/config"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
@@ -36,8 +37,11 @@ func (service) SignUp(dto *MailRequestDto) *restErrors.RestErr {
 	subject := "Welcome to Kotal! Confirm Your Email"
 	to := mail.NewEmail(greeting, dto.Email)
 	plainTextContent := ""
-
-	baseUrl := fmt.Sprintf("%s/confirm-email?email=%s&token=%s", config.Environment.DomainMatchBaseURL, dto.Email, dto.Token)
+	domainBaseUrl, restErr := domain.GetDomainBaseUrl()
+	if restErr != nil {
+		return restErr
+	}
+	baseUrl := fmt.Sprintf("%s/confirm-email?email=%s&token=%s", domainBaseUrl, dto.Email, dto.Token)
 	htmlContent := fmt.Sprintf("please visit the following link to Confirm  your email address %s", baseUrl)
 	message := mail.NewSingleEmail(from, subject, to, plainTextContent, htmlContent)
 
@@ -55,11 +59,15 @@ func (service) SignUp(dto *MailRequestDto) *restErrors.RestErr {
 }
 
 func (service) ResendEmailVerification(dto *MailRequestDto) *restErrors.RestErr {
+	domainBaseUrl, restErr := domain.GetDomainBaseUrl()
+	if restErr != nil {
+		return restErr
+	}
 	from := mail.NewEmail(fromName, fromEmail)
 	subject := "Confirm Your Email"
 	to := mail.NewEmail(greeting, dto.Email)
 	plainTextContent := ""
-	baseUrl := fmt.Sprintf("%s/confirm-email?email=%s&token=%s", config.Environment.DomainMatchBaseURL, dto.Email, dto.Token)
+	baseUrl := fmt.Sprintf("%s/confirm-email?email=%s&token=%s", domainBaseUrl, dto.Email, dto.Token)
 	htmlContent := fmt.Sprintf("please visit the following link to Confirm  your email address %s", baseUrl)
 	message := mail.NewSingleEmail(from, subject, to, plainTextContent, htmlContent)
 

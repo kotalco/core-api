@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"github.com/gofiber/fiber/v2"
 	"github.com/kotalco/cloud-api/internal/endpoint"
+	"github.com/kotalco/cloud-api/internal/onboarding"
 	"github.com/kotalco/cloud-api/internal/workspace"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/shared"
 	"github.com/stretchr/testify/assert"
+	"gorm.io/gorm"
 	"io/ioutil"
 	corev1 "k8s.io/api/core/v1"
 	"net/http"
@@ -61,6 +63,26 @@ func (s svcServiceMock) Get(name string, namespace string) (*corev1.Service, *re
 	return svcServiceGetFunc(name, namespace)
 }
 
+var (
+	onboardingWithTransactionFunc     func(txHandle *gorm.DB) onboarding.IService
+	onboardingSetDomainBaseurlFunc    func(dto *onboarding.SetDomainBaseUrlRequestDto) *restErrors.RestErr
+	onboardingDomainBaseUrlExistsFunc func() bool
+)
+
+type onboardingServiceMock struct{}
+
+func (o onboardingServiceMock) WithTransaction(txHandle *gorm.DB) onboarding.IService {
+	return onboardingWithTransactionFunc(txHandle)
+}
+
+func (o onboardingServiceMock) SetDomainBaseurl(dto *onboarding.SetDomainBaseUrlRequestDto) *restErrors.RestErr {
+	return onboardingSetDomainBaseurlFunc(dto)
+}
+
+func (o onboardingServiceMock) DomainBaseUrlExists() bool {
+	return onboardingDomainBaseUrlExistsFunc()
+}
+
 func newFiberCtx(dto interface{}, method func(c *fiber.Ctx) error, locals map[string]interface{}) ([]byte, *http.Response) {
 	app := fiber.New()
 	app.Post("/test/", func(c *fiber.Ctx) error {
@@ -93,6 +115,7 @@ func newFiberCtx(dto interface{}, method func(c *fiber.Ctx) error, locals map[st
 func TestMain(m *testing.M) {
 	endpointService = &endpointServiceMock{}
 	svcService = &svcServiceMock{}
+	onboardingService = &onboardingServiceMock{}
 	code := m.Run()
 
 	os.Exit(code)
@@ -113,6 +136,9 @@ func TestCreate(t *testing.T) {
 	}
 
 	t.Run("create endpoint should pass", func(t *testing.T) {
+		onboardingDomainBaseUrlExistsFunc = func() bool {
+			return true
+		}
 		svcServiceGetFunc = func(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {
 			return &corev1.Service{Spec: corev1.ServiceSpec{Ports: []corev1.ServicePort{{}}}}, nil
 		}
@@ -153,8 +179,24 @@ func TestCreate(t *testing.T) {
 		assert.Equal(t, *badReqErr, result)
 		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
 	})
+	t.Run("create endpoint should throw if the user didn't configure the domain based url", func(t *testing.T) {
+		onboardingDomainBaseUrlExistsFunc = func() bool {
+			return false
+		}
+
+		body, resp := newFiberCtx(validDto, Create, locals)
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		assert.Nil(t, err)
+
+		assert.EqualValues(t, http.StatusForbidden, resp.StatusCode)
+		assert.EqualValues(t, "Domain hasn't been configured yet !", result.Message)
+	})
 
 	t.Run("create should throw if svcService.Get can't find service", func(t *testing.T) {
+		onboardingDomainBaseUrlExistsFunc = func() bool {
+			return true
+		}
 		svcServiceGetFunc = func(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {
 			return nil, restErrors.NewNotFoundError("no such record")
 		}
@@ -169,6 +211,9 @@ func TestCreate(t *testing.T) {
 	})
 
 	t.Run("create endpoint should throw if can't endpointService.create throws", func(t *testing.T) {
+		onboardingDomainBaseUrlExistsFunc = func() bool {
+			return true
+		}
 		svcServiceGetFunc = func(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {
 			return &corev1.Service{Spec: corev1.ServiceSpec{Ports: []corev1.ServicePort{{}}}}, nil
 		}
@@ -187,6 +232,9 @@ func TestCreate(t *testing.T) {
 		assert.EqualValues(t, "something went wrong", result.Message)
 	})
 	t.Run("create endpoint should throw if there is no valid protocols", func(t *testing.T) {
+		onboardingDomainBaseUrlExistsFunc = func() bool {
+			return true
+		}
 		svcServiceGetFunc = func(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {
 			return &corev1.Service{Spec: corev1.ServiceSpec{Ports: []corev1.ServicePort{{}}}}, nil
 		}
