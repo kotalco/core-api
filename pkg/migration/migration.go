@@ -1,11 +1,11 @@
 package migration
 
 import (
+	"github.com/kotalco/cloud-api/internal/setting"
 	"github.com/kotalco/cloud-api/internal/user"
 	"github.com/kotalco/cloud-api/internal/verification"
 	"github.com/kotalco/cloud-api/internal/workspace"
 	"github.com/kotalco/cloud-api/internal/workspaceuser"
-	"github.com/kotalco/cloud-api/pkg/keystore/dbkeystore"
 	"github.com/kotalco/community-api/pkg/logger"
 	"gorm.io/gorm"
 )
@@ -24,7 +24,7 @@ type IMigration interface {
 	CreateVerificationTable() error
 	CreateWorkspaceTable() error
 	CreateWorkspaceUserTable() error
-	CreateDbKeystoreTable() error
+	CreateSettingTable() error
 }
 
 func NewMigration(dbClient *gorm.DB) IMigration {
@@ -69,11 +69,11 @@ func (m migration) CreateWorkspaceUserTable() error {
 	return nil
 }
 
-func (m migration) CreateDbKeystoreTable() error {
-	exits := m.dbClient.Migrator().HasTable(dbkeystore.KeyStore{})
+func (m migration) CreateSettingTable() error {
+	exits := m.dbClient.Migrator().HasTable(setting.Setting{})
 	if !exits {
-		go logger.Info("CreateDbKeystoreTable")
-		return m.dbClient.AutoMigrate(dbkeystore.KeyStore{})
+		go logger.Info("CreateSettingTable")
+		return m.dbClient.AutoMigrate(setting.Setting{})
 	}
 	return nil
 }

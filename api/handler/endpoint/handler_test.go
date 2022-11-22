@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"github.com/gofiber/fiber/v2"
 	"github.com/kotalco/cloud-api/internal/endpoint"
-	"github.com/kotalco/cloud-api/internal/onboarding"
+	"github.com/kotalco/cloud-api/internal/setting"
 	"github.com/kotalco/cloud-api/internal/workspace"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/shared"
@@ -64,23 +64,33 @@ func (s svcServiceMock) Get(name string, namespace string) (*corev1.Service, *re
 }
 
 var (
-	onboardingWithTransactionFunc     func(txHandle *gorm.DB) onboarding.IService
-	onboardingSetDomainBaseurlFunc    func(dto *onboarding.SetDomainBaseUrlRequestDto) *restErrors.RestErr
-	onboardingDomainBaseUrlExistsFunc func() bool
+	settingWithTransaction               func(txHandle *gorm.DB) setting.IService
+	settingSettingsFunc                  func() (*setting.Setting, *restErrors.RestErr)
+	settingConfigureDomainFunc           func(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr
+	settingUpdateDomainConfigurationFunc func(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr
+	settingIsDomainConfiguredFunc        func() bool
 )
 
-type onboardingServiceMock struct{}
+type settingServiceMock struct{}
 
-func (o onboardingServiceMock) WithTransaction(txHandle *gorm.DB) onboarding.IService {
-	return onboardingWithTransactionFunc(txHandle)
+func (s settingServiceMock) WithTransaction(txHandle *gorm.DB) setting.IService {
+	return s
 }
 
-func (o onboardingServiceMock) SetDomainBaseurl(dto *onboarding.SetDomainBaseUrlRequestDto) *restErrors.RestErr {
-	return onboardingSetDomainBaseurlFunc(dto)
+func (s settingServiceMock) Settings() (*setting.Setting, *restErrors.RestErr) {
+	return settingSettingsFunc()
 }
 
-func (o onboardingServiceMock) DomainBaseUrlExists() bool {
-	return onboardingDomainBaseUrlExistsFunc()
+func (s settingServiceMock) ConfigureDomain(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr {
+	return settingConfigureDomainFunc(dto)
+}
+
+func (s settingServiceMock) UpdateDomainConfiguration(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr {
+	return settingUpdateDomainConfigurationFunc(dto)
+}
+
+func (s settingServiceMock) IsDomainConfigured() bool {
+	return settingIsDomainConfiguredFunc()
 }
 
 func newFiberCtx(dto interface{}, method func(c *fiber.Ctx) error, locals map[string]interface{}) ([]byte, *http.Response) {
@@ -115,7 +125,7 @@ func newFiberCtx(dto interface{}, method func(c *fiber.Ctx) error, locals map[st
 func TestMain(m *testing.M) {
 	endpointService = &endpointServiceMock{}
 	svcService = &svcServiceMock{}
-	onboardingService = &onboardingServiceMock{}
+	settingService = &settingServiceMock{}
 	code := m.Run()
 
 	os.Exit(code)
@@ -136,7 +146,7 @@ func TestCreate(t *testing.T) {
 	}
 
 	t.Run("create endpoint should pass", func(t *testing.T) {
-		onboardingDomainBaseUrlExistsFunc = func() bool {
+		settingIsDomainConfiguredFunc = func() bool {
 			return true
 		}
 		svcServiceGetFunc = func(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {
@@ -180,7 +190,7 @@ func TestCreate(t *testing.T) {
 		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
 	})
 	t.Run("create endpoint should throw if the user didn't configure the domain based url", func(t *testing.T) {
-		onboardingDomainBaseUrlExistsFunc = func() bool {
+		settingIsDomainConfiguredFunc = func() bool {
 			return false
 		}
 
@@ -194,7 +204,7 @@ func TestCreate(t *testing.T) {
 	})
 
 	t.Run("create should throw if svcService.Get can't find service", func(t *testing.T) {
-		onboardingDomainBaseUrlExistsFunc = func() bool {
+		settingIsDomainConfiguredFunc = func() bool {
 			return true
 		}
 		svcServiceGetFunc = func(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {
@@ -211,7 +221,7 @@ func TestCreate(t *testing.T) {
 	})
 
 	t.Run("create endpoint should throw if can't endpointService.create throws", func(t *testing.T) {
-		onboardingDomainBaseUrlExistsFunc = func() bool {
+		settingIsDomainConfiguredFunc = func() bool {
 			return true
 		}
 		svcServiceGetFunc = func(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {
@@ -232,7 +242,7 @@ func TestCreate(t *testing.T) {
 		assert.EqualValues(t, "something went wrong", result.Message)
 	})
 	t.Run("create endpoint should throw if there is no valid protocols", func(t *testing.T) {
-		onboardingDomainBaseUrlExistsFunc = func() bool {
+		settingIsDomainConfiguredFunc = func() bool {
 			return true
 		}
 		svcServiceGetFunc = func(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {

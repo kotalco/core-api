@@ -3,8 +3,7 @@ package sendgrid
 import (
 	"errors"
 	"fmt"
-	"github.com/kotalco/cloud-api/pkg/k8s/domain"
-
+	"github.com/kotalco/cloud-api/internal/setting"
 	"github.com/kotalco/cloud-api/pkg/config"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/logger"
@@ -37,7 +36,7 @@ func (service) SignUp(dto *MailRequestDto) *restErrors.RestErr {
 	subject := "Welcome to Kotal! Confirm Your Email"
 	to := mail.NewEmail(greeting, dto.Email)
 	plainTextContent := ""
-	domainBaseUrl, restErr := domain.GetDomainBaseUrl()
+	domainBaseUrl, restErr := setting.GetDomainBaseUrl()
 	if restErr != nil {
 		return restErr
 	}
@@ -59,7 +58,7 @@ func (service) SignUp(dto *MailRequestDto) *restErrors.RestErr {
 }
 
 func (service) ResendEmailVerification(dto *MailRequestDto) *restErrors.RestErr {
-	domainBaseUrl, restErr := domain.GetDomainBaseUrl()
+	domainBaseUrl, restErr := setting.GetDomainBaseUrl()
 	if restErr != nil {
 		return restErr
 	}

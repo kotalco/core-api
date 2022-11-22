@@ -46,9 +46,9 @@ func (service) Migrations() []Definition {
 				return migrator.CreateWorkspaceUserTable()
 			},
 		},
-		Definition{Name: "CreateDbKeystoreTable",
+		Definition{Name: "CreateSettingTable",
 			Run: func() error {
-				return migrator.CreateDbKeystoreTable()
+				return migrator.CreateSettingTable()
 			},
 		},
 	}

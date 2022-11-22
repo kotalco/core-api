@@ -39,7 +39,6 @@ var (
 		SubscriptionAPIBaseURL                 string
 		ECCPublicKey                           string
 		DomainMatchBaseURL                     string
-		DomainMatchBaseURLKey                  string
 	}{
 		ServerPort:                             getenv("CLOUD_API_SERVER_PORT", "6000"),
 		Environment:                            getenv("ENVIRONMENT", "development"),
@@ -64,7 +63,6 @@ var (
 		SubscriptionAPIBaseURL:                 getenv("SUBSCRIPTION_API_BASE_URL", "http://localhost:8081"),
 		ECCPublicKey:                           ECCPublicKey,
 		DomainMatchBaseURL:                     os.Getenv("DOMAIN_MATCH_BASE_URL"),
-		DomainMatchBaseURLKey:                  getenv("DOMAIN_MATCH_BASE_URL_KEY", "DOMAIN_MATCH_BASE_URL"),
 	}
 )
 

@@ -1,6 +1,6 @@
-package dbkeystore
+package setting
 
-type KeyStore struct {
+type Setting struct {
 	Key   string `gorm:"uniqueIndex"`
 	Value string
 }

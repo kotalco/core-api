@@ -1,4 +1,4 @@
-package dbkeystore
+package setting
 
 import (
 	"fmt"
@@ -16,6 +16,8 @@ type IRepository interface {
 	WithTransaction(txHandle *gorm.DB) IRepository
 	Get(key string) (string, *restErrors.RestErr)
 	Set(key string, value string) *restErrors.RestErr
+	Update(key string, value string) *restErrors.RestErr
+	Settings() (*Setting, *restErrors.RestErr)
 }
 
 func NewRepository() IRepository {
@@ -29,7 +31,7 @@ func (r repository) WithTransaction(txHandle *gorm.DB) IRepository {
 }
 
 func (r repository) Get(key string) (string, *restErrors.RestErr) {
-	var record = new(KeyStore)
+	var record = new(Setting)
 
 	result := sqlclient.DbClient.Where("key = ?", key).First(record)
 	if result.Error != nil {
@@ -40,7 +42,7 @@ func (r repository) Get(key string) (string, *restErrors.RestErr) {
 }
 
 func (r repository) Set(key string, value string) *restErrors.RestErr {
-	var record = &KeyStore{
+	var record = &Setting{
 		Key:   key,
 		Value: value,
 	}
@@ -61,4 +63,24 @@ func (r repository) Set(key string, value string) *restErrors.RestErr {
 	}
 
 	return nil
+}
+
+func (r repository) Update(key string, value string) *restErrors.RestErr {
+	result := sqlclient.DbClient.Model(Setting{}).Where("key = ?", key).Update("value", value)
+	if result.Error != nil {
+		go logger.Error(r.Update, result.Error)
+		return restErrors.NewInternalServerError("something went wrong")
+	}
+	return nil
+}
+
+func (r repository) Settings() (*Setting, *restErrors.RestErr) {
+	var setting *Setting
+
+	result := sqlclient.DbClient.First(&setting)
+	if result.Error != nil {
+		return nil, restErrors.NewNotFoundError(fmt.Sprintf("can't get setting"))
+	}
+
+	return setting, nil
 }
