@@ -14,7 +14,7 @@ type IService interface {
 }
 
 var (
-	dbConfigRepo = NewRepository()
+	keyStoreRpo = NewRepository()
 )
 
 func NewService() IService {
@@ -23,14 +23,14 @@ func NewService() IService {
 }
 
 func (s service) WithTransaction(txHandle *gorm.DB) IService {
-	dbConfigRepo = dbConfigRepo.WithTransaction(txHandle)
+	keyStoreRpo = keyStoreRpo.WithTransaction(txHandle)
 	return s
 }
 
 func (s service) Get(key string) (string, *restErrors.RestErr) {
-	return dbConfigRepo.Get(key)
+	return keyStoreRpo.Get(key)
 }
 
 func (s service) Set(key string, value string) *restErrors.RestErr {
-	return dbConfigRepo.Set(key, value)
+	return keyStoreRpo.Set(key, value)
 }
