@@ -64,11 +64,10 @@ func (s svcServiceMock) Get(name string, namespace string) (*corev1.Service, *re
 }
 
 var (
-	settingWithTransaction               func(txHandle *gorm.DB) setting.IService
-	settingSettingsFunc                  func() (*setting.Setting, *restErrors.RestErr)
-	settingConfigureDomainFunc           func(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr
-	settingUpdateDomainConfigurationFunc func(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr
-	settingIsDomainConfiguredFunc        func() bool
+	settingWithTransaction        func(txHandle *gorm.DB) setting.IService
+	settingSettingsFunc           func() ([]*setting.Setting, *restErrors.RestErr)
+	settingConfigureDomainFunc    func(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr
+	settingIsDomainConfiguredFunc func() bool
 )
 
 type settingServiceMock struct{}
@@ -77,16 +76,12 @@ func (s settingServiceMock) WithTransaction(txHandle *gorm.DB) setting.IService 
 	return s
 }
 
-func (s settingServiceMock) Settings() (*setting.Setting, *restErrors.RestErr) {
+func (s settingServiceMock) Settings() ([]*setting.Setting, *restErrors.RestErr) {
 	return settingSettingsFunc()
 }
 
 func (s settingServiceMock) ConfigureDomain(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr {
 	return settingConfigureDomainFunc(dto)
-}
-
-func (s settingServiceMock) UpdateDomainConfiguration(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr {
-	return settingUpdateDomainConfigurationFunc(dto)
 }
 
 func (s settingServiceMock) IsDomainConfigured() bool {

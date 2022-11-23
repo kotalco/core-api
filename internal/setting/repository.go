@@ -15,9 +15,9 @@ type repository struct{}
 type IRepository interface {
 	WithTransaction(txHandle *gorm.DB) IRepository
 	Get(key string) (string, *restErrors.RestErr)
-	Set(key string, value string) *restErrors.RestErr
+	Create(key string, value string) *restErrors.RestErr
 	Update(key string, value string) *restErrors.RestErr
-	Settings() (*Setting, *restErrors.RestErr)
+	Find() ([]*Setting, *restErrors.RestErr)
 }
 
 func NewRepository() IRepository {
@@ -41,7 +41,7 @@ func (r repository) Get(key string) (string, *restErrors.RestErr) {
 	return record.Value, nil
 }
 
-func (r repository) Set(key string, value string) *restErrors.RestErr {
+func (r repository) Create(key string, value string) *restErrors.RestErr {
 	var record = &Setting{
 		Key:   key,
 		Value: value,
@@ -58,7 +58,7 @@ func (r repository) Set(key string, value string) *restErrors.RestErr {
 				Name:    "Conflict",
 			}
 		}
-		go logger.Error(repository.Set, res.Error)
+		go logger.Error(repository.Create, res.Error)
 		return restErrors.NewInternalServerError("can't create config")
 	}
 
@@ -74,12 +74,12 @@ func (r repository) Update(key string, value string) *restErrors.RestErr {
 	return nil
 }
 
-func (r repository) Settings() (*Setting, *restErrors.RestErr) {
-	var setting *Setting
+func (r repository) Find() ([]*Setting, *restErrors.RestErr) {
+	var setting []*Setting
 
-	result := sqlclient.DbClient.First(&setting)
+	result := sqlclient.DbClient.Find(&setting)
 	if result.Error != nil {
-		return nil, restErrors.NewNotFoundError(fmt.Sprintf("can't get setting"))
+		return nil, restErrors.NewNotFoundError(fmt.Sprintf("can't get settings"))
 	}
 
 	return setting, nil

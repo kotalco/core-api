@@ -21,10 +21,9 @@ import (
 setting service  mocks
 */
 var (
-	settingSettingsFunc                  func() (*setting.Setting, *restErrors.RestErr)
-	settingConfigureDomainFunc           func(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr
-	settingUpdateDomainConfigurationFunc func(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr
-	settingIsDomainConfiguredFunc        func() bool
+	settingSettingsFunc           func() ([]*setting.Setting, *restErrors.RestErr)
+	settingConfigureDomainFunc    func(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr
+	settingIsDomainConfiguredFunc func() bool
 )
 
 type settingServiceMocks struct{}
@@ -33,16 +32,12 @@ func (s settingServiceMocks) WithTransaction(txHandle *gorm.DB) setting.IService
 	return s
 }
 
-func (s settingServiceMocks) Settings() (*setting.Setting, *restErrors.RestErr) {
+func (s settingServiceMocks) Settings() ([]*setting.Setting, *restErrors.RestErr) {
 	return settingSettingsFunc()
 }
 
 func (s settingServiceMocks) ConfigureDomain(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr {
 	return settingConfigureDomainFunc(dto)
-}
-
-func (s settingServiceMocks) UpdateDomainConfiguration(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr {
-	return settingUpdateDomainConfigurationFunc(dto)
 }
 
 func (s settingServiceMocks) IsDomainConfigured() bool {
@@ -143,68 +138,6 @@ func TestConfigureDomain(t *testing.T) {
 		assert.EqualValues(t, "something went wrong", result.Message)
 		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
 	})
-
-}
-func TestUpdateDomainConfiguration(t *testing.T) {
-	userDetails := new(token.UserDetails)
-	userDetails.ID = "test@test.com"
-	var locals = map[string]interface{}{}
-	locals["user"] = *userDetails
-	var validDto = map[string]string{
-		"domain": "kotal.co",
-	}
-	var invalidDto = map[string]string{}
-
-	t.Run("Update domain configuration should pass", func(t *testing.T) {
-		settingUpdateDomainConfigurationFunc = func(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr {
-			return nil
-		}
-		body, resp := newFiberCtx(validDto, UpdateDomainConfiguration, locals)
-
-		var result map[string]shared.SuccessMessage
-		err := json.Unmarshal(body, &result)
-		if err != nil {
-			panic(err.Error())
-		}
-		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
-		assert.EqualValues(t, "domain configuration updated successfully!", result["data"].Message)
-	})
-	t.Run("update domain configuration should throw bad request err", func(t *testing.T) {
-		body, resp := newFiberCtx("", UpdateDomainConfiguration, locals)
-		var result restErrors.RestErr
-		err := json.Unmarshal(body, &result)
-		assert.Nil(t, err)
-		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
-		assert.EqualValues(t, "invalid request body", result.Message)
-	})
-
-	t.Run("update domain configuration should throw validation err", func(t *testing.T) {
-		body, resp := newFiberCtx(invalidDto, UpdateDomainConfiguration, locals)
-		var result restErrors.RestErr
-		err := json.Unmarshal(body, &result)
-		assert.Nil(t, err)
-
-		var fields = map[string]string{}
-		fields["domain"] = "invalid domain"
-		badReqErr := restErrors.NewValidationError(fields)
-
-		assert.Equal(t, *badReqErr, result)
-		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
-	})
-
-	t.Run("update domain configuration should throw if service throws", func(t *testing.T) {
-		settingUpdateDomainConfigurationFunc = func(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr {
-			return restErrors.NewInternalServerError("something went wrong")
-		}
-		body, resp := newFiberCtx(validDto, UpdateDomainConfiguration, locals)
-		var result restErrors.RestErr
-		err := json.Unmarshal(body, &result)
-		assert.Nil(t, err)
-		assert.EqualValues(t, http.StatusInternalServerError, result.Status)
-		assert.EqualValues(t, "something went wrong", result.Message)
-		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
-	})
-
 }
 func TestSettings(t *testing.T) {
 	userDetails := new(token.UserDetails)
@@ -212,12 +145,12 @@ func TestSettings(t *testing.T) {
 	var locals = map[string]interface{}{}
 	locals["user"] = *userDetails
 	t.Run("settings should pass", func(t *testing.T) {
-		settingSettingsFunc = func() (*setting.Setting, *restErrors.RestErr) {
-			return &setting.Setting{}, nil
+		settingSettingsFunc = func() ([]*setting.Setting, *restErrors.RestErr) {
+			return []*setting.Setting{{}}, nil
 		}
 		body, resp := newFiberCtx("", Settings, locals)
 
-		var result map[string]setting.SettingResponseDto
+		var result map[string][]setting.SettingResponseDto
 		err := json.Unmarshal(body, &result)
 		if err != nil {
 			panic(err.Error())
@@ -225,7 +158,7 @@ func TestSettings(t *testing.T) {
 		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
 	})
 	t.Run("setting should throw if service throws", func(t *testing.T) {
-		settingSettingsFunc = func() (*setting.Setting, *restErrors.RestErr) {
+		settingSettingsFunc = func() ([]*setting.Setting, *restErrors.RestErr) {
 			return nil, restErrors.NewInternalServerError("something went wrong")
 		}
 		body, resp := newFiberCtx("", Settings, locals)

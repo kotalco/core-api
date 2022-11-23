@@ -23,7 +23,7 @@ func cleanUp(key string) {
 
 func TestRepository_GetAndSet(t *testing.T) {
 	t.Run("set key store should pass", func(t *testing.T) {
-		err := repo.Set("testKey", "testValue")
+		err := repo.Create("testKey", "testValue")
 		assert.Nil(t, err)
 
 		value, err := repo.Get("testKey")

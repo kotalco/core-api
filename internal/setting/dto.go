@@ -1,6 +1,7 @@
 package setting
 
 import (
+	"fmt"
 	"github.com/go-playground/validator/v10"
 	k8svc "github.com/kotalco/cloud-api/pkg/k8s/svc"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
@@ -55,7 +56,7 @@ func GetDomainBaseUrl() (string, *restErrors.RestErr) {
 	repo := NewRepository()
 	url, _ := repo.Get(DomainKey)
 	if url != "" {
-		return url, nil
+		return fmt.Sprintf("https://%s", url), nil
 	}
 
 	k8service := k8svc.NewService()
