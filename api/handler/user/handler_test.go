@@ -31,21 +31,22 @@ import (
 User service Mocks
 */
 var (
-	UserWithTransactionFunc  func(txHandle *gorm.DB) user.IService
-	SignUpFunc               func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr)
-	SignInFunc               func(dto *user.SignInRequestDto) (*user.UserSessionResponseDto, *restErrors.RestErr)
-	VerifyTOTPFunc           func(model *user.User, totp string) (*user.UserSessionResponseDto, *restErrors.RestErr)
-	GetByEmailFunc           func(email string) (*user.User, *restErrors.RestErr)
-	GetByIdFunc              func(Id string) (*user.User, *restErrors.RestErr)
-	VerifyEmailFunc          func(model *user.User) *restErrors.RestErr
-	ResetPasswordFunc        func(model *user.User, password string) *restErrors.RestErr
-	ChangePasswordFunc       func(model *user.User, dto *user.ChangePasswordRequestDto) *restErrors.RestErr
-	ChangeEmailFunc          func(model *user.User, dto *user.ChangeEmailRequestDto) *restErrors.RestErr
-	CreateTOTPFunc           func(model *user.User, dto *user.CreateTOTPRequestDto) (bytes.Buffer, *restErrors.RestErr)
-	EnableTwoFactorAuthFunc  func(model *user.User, totp string) (*user.User, *restErrors.RestErr)
-	DisableTwoFactorAuthFunc func(model *user.User, dto *user.DisableTOTPRequestDto) *restErrors.RestErr
-	FindWhereIdInSliceFunc   func(ids []string) ([]*user.User, *restErrors.RestErr)
-	usersCountFunc           func() (int64, *restErrors.RestErr)
+	UserWithTransactionFunc    func(txHandle *gorm.DB) user.IService
+	SignUpFunc                 func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr)
+	SignInFunc                 func(dto *user.SignInRequestDto) (*user.UserSessionResponseDto, *restErrors.RestErr)
+	VerifyTOTPFunc             func(model *user.User, totp string) (*user.UserSessionResponseDto, *restErrors.RestErr)
+	GetByEmailFunc             func(email string) (*user.User, *restErrors.RestErr)
+	GetByIdFunc                func(Id string) (*user.User, *restErrors.RestErr)
+	VerifyEmailFunc            func(model *user.User) *restErrors.RestErr
+	ResetPasswordFunc          func(model *user.User, password string) *restErrors.RestErr
+	ChangePasswordFunc         func(model *user.User, dto *user.ChangePasswordRequestDto) *restErrors.RestErr
+	ChangeEmailFunc            func(model *user.User, dto *user.ChangeEmailRequestDto) *restErrors.RestErr
+	CreateTOTPFunc             func(model *user.User, dto *user.CreateTOTPRequestDto) (bytes.Buffer, *restErrors.RestErr)
+	EnableTwoFactorAuthFunc    func(model *user.User, totp string) (*user.User, *restErrors.RestErr)
+	DisableTwoFactorAuthFunc   func(model *user.User, dto *user.DisableTOTPRequestDto) *restErrors.RestErr
+	FindWhereIdInSliceFunc     func(ids []string) ([]*user.User, *restErrors.RestErr)
+	usersCountFunc             func() (int64, *restErrors.RestErr)
+	usersSetAsClusterAdminFunc func(model *user.User) *restErrors.RestErr
 )
 
 type userServiceMock struct{}
@@ -106,6 +107,9 @@ func (userServiceMock) FindWhereIdInSlice(ids []string) ([]*user.User, *restErro
 }
 func (userServiceMock) Count() (int64, *restErrors.RestErr) {
 	return usersCountFunc()
+}
+func (userServiceMock) SetAsClusterAdmin(model *user.User) *restErrors.RestErr {
+	return usersSetAsClusterAdminFunc(model)
 }
 
 /*
@@ -338,6 +342,9 @@ func TestSignUp(t *testing.T) {
 		VerifyEmailFunc = func(model *user.User) *restErrors.RestErr {
 			return nil
 		}
+		usersSetAsClusterAdminFunc = func(model *user.User) *restErrors.RestErr {
+			return nil
+		}
 		CreateWorkspaceFunc = func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr) {
 			return nil, restErrors.NewInternalServerError("can't create workspace")
 		}
@@ -538,6 +545,40 @@ func TestSignUp(t *testing.T) {
 
 		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
 		assert.EqualValues(t, "user service verify email pass", result.Message)
+	})
+	t.Run("Sign_Up_Should_Throw_if_set_as_cluster_admin_throws", func(t *testing.T) {
+		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr) {
+			newUser := new(user.User)
+			newUser.Email = "test@test.com"
+			return newUser, nil
+		}
+
+		CreateFunc = func(userId string) (string, *restErrors.RestErr) {
+			return "JWT-token", nil
+		}
+		usersCountFunc = func() (int64, *restErrors.RestErr) {
+			return 1, nil
+		}
+		VerifyFunc = func(userId string, token string) *restErrors.RestErr {
+			return nil
+		}
+		VerifyEmailFunc = func(model *user.User) *restErrors.RestErr {
+			return nil
+		}
+		usersSetAsClusterAdminFunc = func(model *user.User) *restErrors.RestErr {
+			return restErrors.NewInternalServerError("can't set as cluster admin")
+		}
+
+		body, resp := newFiberCtx(validDto, SignUp, map[string]interface{}{})
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
+		assert.EqualValues(t, "can't set as cluster admin", result.Message)
 	})
 
 	t.Run("Sign_Up_Should_Throw_if_create_user_Throws", func(t *testing.T) {

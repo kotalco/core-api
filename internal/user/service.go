@@ -31,6 +31,7 @@ type IService interface {
 	DisableTwoFactorAuth(model *User, dto *DisableTOTPRequestDto) *restErrors.RestErr
 	FindWhereIdInSlice(ids []string) ([]*User, *restErrors.RestErr)
 	Count() (int64, *restErrors.RestErr)
+	SetAsClusterAdmin(model *User) *restErrors.RestErr
 }
 
 var (
@@ -319,4 +320,11 @@ func (service) FindWhereIdInSlice(ids []string) ([]*User, *restErrors.RestErr) {
 // Count returns count of the users model
 func (service) Count() (int64, *restErrors.RestErr) {
 	return userRepository.Count()
+}
+
+// SetAsClusterAdmin set the passed user as cluster admin
+func (service) SetAsClusterAdmin(model *User) *restErrors.RestErr {
+	model.ClusterAdmin = true
+	return userRepository.Update(model)
+
 }
