@@ -139,8 +139,6 @@ func (vService service) Resend(userId string) (string, *restErrors.RestErr) {
 		return "", err
 	}
 
-	fmt.Println("token: ", token)
-
 	return token, nil
 }
 

@@ -3,7 +3,6 @@ package user
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"github.com/kotalco/cloud-api/pkg/token"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -184,7 +183,6 @@ func TestService_SignIn(t *testing.T) {
 			return user, nil
 		}
 		session, err := userService.SignIn(dto)
-		fmt.Println(session, err)
 		assert.Nil(t, err)
 		assert.NotNil(t, session.Token)
 		assert.EqualValues(t, true, session.Authorized)

@@ -64,26 +64,10 @@ func (s secretServiceMock) Get(name string, namespace string) (*corev1.Secret, *
 	return secretGetFunc(name, namespace)
 }
 
-var (
-	k8ServiceListFunc func(namespace string) (*corev1.ServiceList, *restErrors.RestErr)
-	k8ServiceGetFunc  func(name string, namespace string) (*corev1.Service, *restErrors.RestErr)
-)
-
-type k8ServiceMock struct{}
-
-func (k k8ServiceMock) List(namespace string) (*corev1.ServiceList, *restErrors.RestErr) {
-	return k8ServiceListFunc(namespace)
-}
-
-func (k k8ServiceMock) Get(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {
-	return k8ServiceGetFunc(name, namespace)
-}
-
 func TestMain(m *testing.M) {
 	ingressRoutesService = &ingressRouteServiceMock{}
 	k8MiddlewareService = &k8MiddlewareServiceMock{}
 	secretService = &secretServiceMock{}
-	k8Service = &k8ServiceMock{}
 	endpointService = NewService()
 	code := m.Run()
 	os.Exit(code)
@@ -213,9 +197,6 @@ func TestService_List(t *testing.T) {
 				}},
 			}, nil
 		}
-		k8ServiceGetFunc = func(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {
-			return &corev1.Service{}, nil
-		}
 		secretGetFunc = func(name string, namespace string) (*corev1.Secret, *restErrors.RestErr) {
 			return &corev1.Secret{}, nil
 		}
@@ -247,9 +228,6 @@ func TestService_Get(t *testing.T) {
 					}},
 				},
 			}, nil
-		}
-		k8ServiceGetFunc = func(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {
-			return &corev1.Service{}, nil
 		}
 		secretGetFunc = func(name string, namespace string) (*corev1.Secret, *restErrors.RestErr) {
 			return &corev1.Secret{}, nil
