@@ -19,6 +19,7 @@ type service struct{}
 
 type IService interface {
 	WithTransaction(txHandle *gorm.DB) IService
+	WithoutTransaction() IService
 	Create(userId string) (string, *restErrors.RestErr)
 	GetByUserId(userId string) (*Verification, *restErrors.RestErr)
 	Resend(userId string) (string, *restErrors.RestErr)
@@ -37,6 +38,10 @@ func NewService() IService {
 
 func (vService service) WithTransaction(txHandle *gorm.DB) IService {
 	verificationRepository = verificationRepository.WithTransaction(txHandle)
+	return vService
+}
+func (vService service) WithoutTransaction() IService {
+	verificationRepository = verificationRepository.WithoutTransaction()
 	return vService
 }
 

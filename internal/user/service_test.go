@@ -46,6 +46,9 @@ type tfaServiceMock struct{}
 func (r userRepositoryMock) WithTransaction(txHandle *gorm.DB) IRepository {
 	return r
 }
+func (r userRepositoryMock) WithoutTransaction() IRepository {
+	return r
+}
 
 func (userRepositoryMock) Create(user *User) *restErrors.RestErr {
 	return CreateFunc(user)

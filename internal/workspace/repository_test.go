@@ -24,7 +24,7 @@ func init() {
 }
 
 func cleanUp(workspace Workspace) {
-	sqlclient.DbClient.Delete(workspace)
+	sqlclient.OpenDBConnection().Delete(workspace)
 }
 
 func TestRepository_Create(t *testing.T) {

@@ -12,12 +12,14 @@ import (
 )
 
 var (
-	DbClient     *gorm.DB
 	dbConnection *gorm.DB
 	clientOnce   sync.Once
 	err          error
 )
 
+// OpenDBConnection when initiating new repository we should use this function
+// we use OpenDBConnection which returns the original dbConnection variable from sqlclient pkg
+// don't use sqlclinet.DbClient might have been polluted with another transaction
 func OpenDBConnection() *gorm.DB {
 	clientOnce.Do(func() {
 		dbConnection, err = gorm.Open(postgres.Open(config.Environment.DatabaseServerURL), &gorm.Config{
@@ -27,25 +29,20 @@ func OpenDBConnection() *gorm.DB {
 			go logger.Panic("DATABASE_CONNECTION_ERROR", err)
 			panic(err)
 		}
-		DbClient = dbConnection
+		dbConfig(dbConnection)
 	})
-	DbClient = dbConnection
-
-	return DbClient
+	return dbConnection
 }
 
-func Begin() gorm.DB {
-	DbClient = dbConnection
-	begin := DbClient.Begin()
-	return *begin
+func Begin() *gorm.DB {
+	return dbConnection.Begin()
+
 }
 
 func Rollback(txHandle *gorm.DB) {
 	txHandle.Rollback()
-	DbClient = dbConnection
 }
 
 func Commit(txHandle *gorm.DB) {
 	txHandle.Commit()
-	DbClient = dbConnection
 }

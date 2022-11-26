@@ -50,6 +50,10 @@ var (
 
 type userServiceMock struct{}
 
+func (uService userServiceMock) WithoutTransaction() user.IService {
+	return uService
+}
+
 func (uService userServiceMock) WithTransaction(txHandle *gorm.DB) user.IService {
 	return uService
 }
@@ -121,6 +125,10 @@ var (
 
 type verificationServiceMock struct{}
 
+func (vService verificationServiceMock) WithoutTransaction() verification.IService {
+	return vService
+}
+
 func (vService verificationServiceMock) WithTransaction(txHandle *gorm.DB) verification.IService {
 	return vService
 }
@@ -182,6 +190,10 @@ var (
 )
 
 type workspaceServiceMock struct{}
+
+func (wService workspaceServiceMock) WithoutTransaction() workspace.IService {
+	return wService
+}
 
 func (wService workspaceServiceMock) WithTransaction(txHandle *gorm.DB) workspace.IService {
 	return wService
