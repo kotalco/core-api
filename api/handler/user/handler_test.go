@@ -566,7 +566,7 @@ func TestSignUp(t *testing.T) {
 			return nil
 		}
 		usersSetAsPlatformAdminFunc = func(model *user.User) *restErrors.RestErr {
-			return restErrors.NewInternalServerError("can't set as cluster admin")
+			return restErrors.NewInternalServerError("can't set as platform admin")
 		}
 
 		body, resp := newFiberCtx(validDto, SignUp, map[string]interface{}{})
@@ -578,7 +578,7 @@ func TestSignUp(t *testing.T) {
 		}
 
 		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
-		assert.EqualValues(t, "can't set as cluster admin", result.Message)
+		assert.EqualValues(t, "can't set as platform admin", result.Message)
 	})
 
 	t.Run("Sign_Up_Should_Throw_if_create_user_Throws", func(t *testing.T) {

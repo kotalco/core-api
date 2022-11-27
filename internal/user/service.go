@@ -322,7 +322,7 @@ func (service) Count() (int64, *restErrors.RestErr) {
 	return userRepository.Count()
 }
 
-// SetAsPlatformAdmin set the passed user as cluster admin
+// SetAsPlatformAdmin set the passed user as platform admin
 func (service) SetAsPlatformAdmin(model *User) *restErrors.RestErr {
 	model.PlatformAdmin = true
 	return userRepository.Update(model)

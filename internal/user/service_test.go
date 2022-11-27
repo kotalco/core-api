@@ -821,7 +821,7 @@ func TestService_Count(t *testing.T) {
 func TestService_SetAsPlatformAdmin(t *testing.T) {
 	user := new(User)
 
-	t.Run("Set as cluster admin should pass", func(t *testing.T) {
+	t.Run("Set as platform admin should pass", func(t *testing.T) {
 		UpdateFunc = func(user *User) *restErrors.RestErr {
 			return nil
 		}
