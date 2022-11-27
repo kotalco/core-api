@@ -1,7 +1,6 @@
 package security
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -13,7 +12,6 @@ func TestHashing_Hash(t *testing.T) {
 		hash, err := hashingService.Hash("123456", 13)
 		assert.Nil(t, err)
 		assert.NotNil(t, hash)
-		fmt.Println(string(hash))
 	})
 }
 

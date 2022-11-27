@@ -21,7 +21,6 @@ var (
 	ingressRoutesService = ingressroute.NewIngressRoutesService()
 	k8MiddlewareService  = middleware.NewK8Middleware()
 	secretService        = secret.NewService()
-	k8Service            = k8svc.NewService()
 )
 
 type service struct{}
