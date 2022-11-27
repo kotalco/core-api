@@ -43,7 +43,7 @@ func (s service) Seeds() []Definition {
 				developUser.Email = "develop@kotal.co"
 				developUser.IsEmailVerified = true
 				developUser.Password = string(hashedPassword)
-				developUser.ClusterAdmin = true
+				developUser.PlatformAdmin = true
 				return seeders.SeedUserTable(developUser)
 			},
 		},

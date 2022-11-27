@@ -59,7 +59,7 @@ type TOTPRequestDto struct {
 type UserResponseDto struct {
 	PublicUserResponseDto
 	TwoFactorEnabled bool `json:"two_factor_enabled"`
-	ClusterAdmin     bool `json:"cluster_admin"`
+	PlatformAdmin    bool `json:"platform_admin"`
 }
 
 type PublicUserResponseDto struct {
@@ -78,7 +78,7 @@ func (dto UserResponseDto) Marshall(model *User) UserResponseDto {
 	dto.ID = model.ID
 	dto.Email = model.Email
 	dto.TwoFactorEnabled = model.TwoFactorEnabled
-	dto.ClusterAdmin = model.ClusterAdmin
+	dto.PlatformAdmin = model.PlatformAdmin
 	return dto
 }
 

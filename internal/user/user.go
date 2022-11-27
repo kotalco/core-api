@@ -7,5 +7,5 @@ type User struct {
 	Password         string
 	TwoFactorCipher  string
 	TwoFactorEnabled bool
-	ClusterAdmin     bool ` gorm:"default:false"`
+	PlatformAdmin    bool ` gorm:"default:false"`
 }

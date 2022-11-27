@@ -818,7 +818,7 @@ func TestService_Count(t *testing.T) {
 		assert.EqualValues(t, "something went wrong", err.Message)
 	})
 }
-func TestService_SetAsClusterAdmin(t *testing.T) {
+func TestService_SetAsPlatformAdmin(t *testing.T) {
 	user := new(User)
 
 	t.Run("Set as cluster admin should pass", func(t *testing.T) {
@@ -826,9 +826,9 @@ func TestService_SetAsClusterAdmin(t *testing.T) {
 			return nil
 		}
 
-		resErr := userService.SetAsClusterAdmin(user)
+		resErr := userService.SetAsPlatformAdmin(user)
 		assert.Nil(t, resErr)
-		assert.EqualValues(t, true, user.ClusterAdmin)
+		assert.EqualValues(t, true, user.PlatformAdmin)
 	})
 
 	t.Run("Change_Password_Should_Throw_If_Repo_Throws", func(t *testing.T) {
@@ -836,7 +836,7 @@ func TestService_SetAsClusterAdmin(t *testing.T) {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 
-		restErr := userService.SetAsClusterAdmin(user)
+		restErr := userService.SetAsPlatformAdmin(user)
 		assert.EqualValues(t, "something went wrong", restErr.Message)
 	})
 }
