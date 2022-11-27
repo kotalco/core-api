@@ -64,6 +64,12 @@ func SignUp(c *fiber.Ctx) error {
 			sqlclient.Rollback(&txHandle)
 			return c.Status(restErr.Status).JSON(restErr)
 		}
+		//set as platform admin
+		restErr = userService.SetAsPlatformAdmin(model)
+		if restErr != nil {
+			sqlclient.Rollback(&txHandle)
+			return c.Status(restErr.Status).JSON(restErr)
+		}
 	}
 
 	sqlclient.Commit(&txHandle)

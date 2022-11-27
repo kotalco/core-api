@@ -28,21 +28,22 @@ import (
 User service Mocks
 */
 var (
-	UserWithTransactionFunc  func(txHandle *gorm.DB) user.IService
-	SignUpFunc               func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr)
-	SignInFunc               func(dto *user.SignInRequestDto) (*user.UserSessionResponseDto, *restErrors.RestErr)
-	VerifyTOTPFunc           func(model *user.User, totp string) (*user.UserSessionResponseDto, *restErrors.RestErr)
-	GetByEmailFunc           func(email string) (*user.User, *restErrors.RestErr)
-	GetByIdFunc              func(Id string) (*user.User, *restErrors.RestErr)
-	VerifyEmailFunc          func(model *user.User) *restErrors.RestErr
-	ResetPasswordFunc        func(model *user.User, password string) *restErrors.RestErr
-	ChangePasswordFunc       func(model *user.User, dto *user.ChangePasswordRequestDto) *restErrors.RestErr
-	ChangeEmailFunc          func(model *user.User, dto *user.ChangeEmailRequestDto) *restErrors.RestErr
-	CreateTOTPFunc           func(model *user.User, dto *user.CreateTOTPRequestDto) (bytes.Buffer, *restErrors.RestErr)
-	EnableTwoFactorAuthFunc  func(model *user.User, totp string) (*user.User, *restErrors.RestErr)
-	DisableTwoFactorAuthFunc func(model *user.User, dto *user.DisableTOTPRequestDto) *restErrors.RestErr
-	FindWhereIdInSliceFunc   func(ids []string) ([]*user.User, *restErrors.RestErr)
-	usersCountFunc           func() (int64, *restErrors.RestErr)
+	UserWithTransactionFunc     func(txHandle *gorm.DB) user.IService
+	SignUpFunc                  func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr)
+	SignInFunc                  func(dto *user.SignInRequestDto) (*user.UserSessionResponseDto, *restErrors.RestErr)
+	VerifyTOTPFunc              func(model *user.User, totp string) (*user.UserSessionResponseDto, *restErrors.RestErr)
+	GetByEmailFunc              func(email string) (*user.User, *restErrors.RestErr)
+	GetByIdFunc                 func(Id string) (*user.User, *restErrors.RestErr)
+	VerifyEmailFunc             func(model *user.User) *restErrors.RestErr
+	ResetPasswordFunc           func(model *user.User, password string) *restErrors.RestErr
+	ChangePasswordFunc          func(model *user.User, dto *user.ChangePasswordRequestDto) *restErrors.RestErr
+	ChangeEmailFunc             func(model *user.User, dto *user.ChangeEmailRequestDto) *restErrors.RestErr
+	CreateTOTPFunc              func(model *user.User, dto *user.CreateTOTPRequestDto) (bytes.Buffer, *restErrors.RestErr)
+	EnableTwoFactorAuthFunc     func(model *user.User, totp string) (*user.User, *restErrors.RestErr)
+	DisableTwoFactorAuthFunc    func(model *user.User, dto *user.DisableTOTPRequestDto) *restErrors.RestErr
+	FindWhereIdInSliceFunc      func(ids []string) ([]*user.User, *restErrors.RestErr)
+	usersCountFunc              func() (int64, *restErrors.RestErr)
+	usersSetAsPlatformAdminFunc func(model *user.User) *restErrors.RestErr
 )
 
 type userServiceMock struct{}
@@ -104,6 +105,9 @@ func (userServiceMock) FindWhereIdInSlice(ids []string) ([]*user.User, *restErro
 }
 func (uService userServiceMock) Count() (int64, *restErrors.RestErr) {
 	return usersCountFunc()
+}
+func (uService userServiceMock) SetAsPlatformAdmin(model *user.User) *restErrors.RestErr {
+	return usersSetAsPlatformAdminFunc(model)
 }
 
 /*
