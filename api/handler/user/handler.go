@@ -65,7 +65,7 @@ func SignUp(c *fiber.Ctx) error {
 			return c.Status(restErr.Status).JSON(restErr)
 		}
 		//set as platform admin
-		restErr = userService.SetAsPlatformAdmin(model)
+		restErr = userService.WithTransaction(txHandle).SetAsPlatformAdmin(model)
 		if restErr != nil {
 			sqlclient.Rollback(txHandle)
 			return c.Status(restErr.Status).JSON(restErr)
@@ -143,7 +143,7 @@ func SendEmailVerification(c *fiber.Ctx) error {
 		return c.Status(badReq.Status).JSON(badReq)
 	}
 
-	token, err := verificationService.Resend(userModel.ID)
+	token, err := verificationService.WithoutTransaction().Resend(userModel.ID)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
