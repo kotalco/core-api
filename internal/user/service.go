@@ -17,6 +17,7 @@ type service struct{}
 
 type IService interface {
 	WithTransaction(txHandle *gorm.DB) IService
+	WithoutTransaction() IService
 	SignUp(dto *SignUpRequestDto) (*User, *restErrors.RestErr)
 	SignIn(dto *SignInRequestDto) (*UserSessionResponseDto, *restErrors.RestErr)
 	VerifyTOTP(model *User, totp string) (*UserSessionResponseDto, *restErrors.RestErr)
@@ -49,6 +50,10 @@ func NewService() IService {
 
 func (uService service) WithTransaction(txHandle *gorm.DB) IService {
 	userRepository = userRepository.WithTransaction(txHandle)
+	return uService
+}
+func (uService service) WithoutTransaction() IService {
+	userRepository = userRepository.WithoutTransaction()
 	return uService
 }
 

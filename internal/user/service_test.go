@@ -45,6 +45,9 @@ type tfaServiceMock struct{}
 func (r userRepositoryMock) WithTransaction(txHandle *gorm.DB) IRepository {
 	return r
 }
+func (r userRepositoryMock) WithoutTransaction() IRepository {
+	return r
+}
 
 func (userRepositoryMock) Create(user *User) *restErrors.RestErr {
 	return CreateFunc(user)
@@ -818,6 +821,7 @@ func TestService_Count(t *testing.T) {
 		assert.EqualValues(t, "something went wrong", err.Message)
 	})
 }
+
 func TestService_SetAsPlatformAdmin(t *testing.T) {
 	user := new(User)
 

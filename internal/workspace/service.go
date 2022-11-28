@@ -5,16 +5,20 @@ import (
 	"github.com/kotalco/cloud-api/internal/workspaceuser"
 	"github.com/kotalco/cloud-api/pkg/k8s"
 	"github.com/kotalco/cloud-api/pkg/roles"
+	"github.com/kotalco/cloud-api/pkg/sqlclient"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/logger"
 	"gorm.io/gorm"
 	"net/http"
 )
 
-type service struct{}
+type service struct {
+	db *gorm.DB
+}
 
 type IService interface {
 	WithTransaction(txHandle *gorm.DB) IService
+	WithoutTransaction() IService
 	Create(dto *CreateWorkspaceRequestDto, userId string) (*Workspace, *restErrors.RestErr)
 	Update(dto *UpdateWorkspaceRequestDto, workspace *Workspace) *restErrors.RestErr
 	Delete(workspace *Workspace) *restErrors.RestErr
@@ -33,11 +37,17 @@ var (
 )
 
 func NewService() IService {
-	return &service{}
+	return &service{
+		db: sqlclient.OpenDBConnection(),
+	}
 }
 
 func (wService service) WithTransaction(txHandle *gorm.DB) IService {
 	workspaceRepo = workspaceRepo.WithTransaction(txHandle)
+	return wService
+}
+func (wService service) WithoutTransaction() IService {
+	workspaceRepo = workspaceRepo.WithoutTransaction()
 	return wService
 }
 

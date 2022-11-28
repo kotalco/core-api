@@ -59,14 +59,16 @@ var (
 
 type workspaceRepositoryMock struct{}
 
-func (r workspaceRepositoryMock) UpdateWorkspaceUser(workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr {
-	return UpdateWorkspaceUserFunc(workspaceUser)
+func (r workspaceRepositoryMock) WithoutTransaction() IRepository {
+	return r
 }
-
 func (r workspaceRepositoryMock) WithTransaction(txHandle *gorm.DB) IRepository {
 	return r
 }
 
+func (r workspaceRepositoryMock) UpdateWorkspaceUser(workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr {
+	return UpdateWorkspaceUserFunc(workspaceUser)
+}
 func (workspaceRepositoryMock) Create(workspace *Workspace) *restErrors.RestErr {
 	return CreateWorkspaceFunc(workspace)
 }

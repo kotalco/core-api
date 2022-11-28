@@ -39,19 +39,19 @@ func Create(c *fiber.Ctx) error {
 	}
 
 	txHandle := sqlclient.Begin()
-	model, err := workspaceService.WithTransaction(&txHandle).Create(dto, userId)
+	model, err := workspaceService.WithTransaction(txHandle).Create(dto, userId)
 	if err != nil {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
 
 	err = namespaceService.Create(model.K8sNamespace)
 	if err != nil {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
 
-	sqlclient.Commit(&txHandle)
+	sqlclient.Commit(txHandle)
 
 	return c.Status(http.StatusCreated).JSON(shared.NewResponse(new(workspace.WorkspaceResponseDto).Marshall(model)))
 
@@ -76,12 +76,12 @@ func Update(c *fiber.Ctx) error {
 	}
 
 	txHandle := sqlclient.Begin()
-	err = workspaceService.WithTransaction(&txHandle).Update(dto, &model)
+	err = workspaceService.WithTransaction(txHandle).Update(dto, &model)
 	if err != nil {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
-	sqlclient.Commit(&txHandle)
+	sqlclient.Commit(txHandle)
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(new(workspace.WorkspaceResponseDto).Marshall(&model)))
 }
@@ -91,7 +91,7 @@ func Delete(c *fiber.Ctx) error {
 	model := c.Locals("workspace").(workspace.Workspace)
 	userId := c.Locals("user").(token.UserDetails).ID
 
-	count, err := workspaceService.CountByUserId(userId)
+	count, err := workspaceService.WithoutTransaction().CountByUserId(userId)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -101,19 +101,19 @@ func Delete(c *fiber.Ctx) error {
 	}
 
 	txHandle := sqlclient.Begin()
-	err = workspaceService.WithTransaction(&txHandle).Delete(&model)
+	err = workspaceService.WithTransaction(txHandle).Delete(&model)
 	if err != nil {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
 
 	err = namespaceService.Delete(model.K8sNamespace)
 	if err != nil && err.Status != http.StatusNotFound {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
 
-	sqlclient.Commit(&txHandle)
+	sqlclient.Commit(txHandle)
 
 	return c.SendStatus(http.StatusNoContent)
 }
@@ -122,7 +122,7 @@ func Delete(c *fiber.Ctx) error {
 func GetByUserId(c *fiber.Ctx) error {
 	userId := c.Locals("user").(token.UserDetails).ID
 
-	list, err := workspaceService.GetByUserId(userId)
+	list, err := workspaceService.WithoutTransaction().GetByUserId(userId)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -159,7 +159,7 @@ func AddMember(c *fiber.Ctx) error {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	member, err := userService.GetByEmail(dto.Email)
+	member, err := userService.WithoutTransaction().GetByEmail(dto.Email)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -174,13 +174,13 @@ func AddMember(c *fiber.Ctx) error {
 	}
 
 	txHandle := sqlclient.Begin()
-	err = workspaceService.WithTransaction(&txHandle).AddWorkspaceMember(&model, member.ID, dto.Role)
+	err = workspaceService.WithTransaction(txHandle).AddWorkspaceMember(&model, member.ID, dto.Role)
 	if err != nil {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
 
-	sqlclient.Commit(&txHandle)
+	sqlclient.Commit(txHandle)
 
 	mailRequestDto := new(sendgrid.WorkspaceInvitationMailRequestDto)
 	mailRequestDto.Email = dto.Email
@@ -215,13 +215,13 @@ func Leave(c *fiber.Ctx) error {
 	}
 
 	txHandle := sqlclient.Begin()
-	err := workspaceService.WithTransaction(&txHandle).DeleteWorkspaceMember(&model, userId)
+	err := workspaceService.WithTransaction(txHandle).DeleteWorkspaceMember(&model, userId)
 	if err != nil {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
 
-	sqlclient.Commit(&txHandle)
+	sqlclient.Commit(txHandle)
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{
 		Message: "You're no longer member of this workspace",
@@ -252,13 +252,13 @@ func RemoveMember(c *fiber.Ctx) error {
 	}
 
 	txHandle := sqlclient.Begin()
-	err := workspaceService.WithTransaction(&txHandle).DeleteWorkspaceMember(&model, memberId)
+	err := workspaceService.WithTransaction(txHandle).DeleteWorkspaceMember(&model, memberId)
 	if err != nil {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
 
-	sqlclient.Commit(&txHandle)
+	sqlclient.Commit(txHandle)
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{
 		Message: "User has been removed from workspace",
@@ -273,7 +273,7 @@ func Members(c *fiber.Ctx) error {
 		userIds[k] = v.UserId
 	}
 
-	workspaceMembersList, err := userService.FindWhereIdInSlice(userIds)
+	workspaceMembersList, err := userService.WithoutTransaction().FindWhereIdInSlice(userIds)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -334,13 +334,13 @@ func UpdateWorkspaceUser(c *fiber.Ctx) error {
 	}
 
 	txHandle := sqlclient.Begin()
-	err = workspaceService.WithTransaction(&txHandle).UpdateWorkspaceUser(workspaceUser, dto)
+	err = workspaceService.WithTransaction(txHandle).UpdateWorkspaceUser(workspaceUser, dto)
 	if err != nil {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
 
-	sqlclient.Commit(&txHandle)
+	sqlclient.Commit(txHandle)
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{
 		Message: "User role changed successfully",
@@ -351,7 +351,7 @@ func UpdateWorkspaceUser(c *fiber.Ctx) error {
 func ValidateWorkspaceExist(c *fiber.Ctx) error {
 	workspaceId := c.Params("id")
 
-	model, err := workspaceService.GetById(workspaceId)
+	model, err := workspaceService.WithoutTransaction().GetById(workspaceId)
 	if err != nil {
 		if err.Status == http.StatusNotFound {
 			notFoundErr := restErrors.NewNotFoundError("no such record")

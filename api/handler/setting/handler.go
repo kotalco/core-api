@@ -24,14 +24,14 @@ func ConfigureDomain(c *fiber.Ctx) error {
 		return c.Status(restErr.Status).JSON(restErr)
 	}
 
-	err := settingService.ConfigureDomain(dto)
+	err := settingService.WithoutTransaction().ConfigureDomain(dto)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{Message: "domain configured successfully!"}))
 }
 func Settings(c *fiber.Ctx) error {
-	list, err := settingService.Settings()
+	list, err := settingService.WithoutTransaction().Settings()
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}

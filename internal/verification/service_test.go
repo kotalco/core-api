@@ -24,6 +24,11 @@ var (
 )
 
 type verificationRepositoryMock struct{}
+
+func (vRepository verificationRepositoryMock) WithoutTransaction() IRepository {
+	return vRepository
+}
+
 type hashingServiceMock struct{}
 
 // verification repository methods

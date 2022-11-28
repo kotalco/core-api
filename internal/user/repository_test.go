@@ -21,7 +21,7 @@ func init() {
 }
 
 func cleanUp(user User) {
-	sqlclient.DbClient.Delete(user)
+	sqlclient.OpenDBConnection().Delete(user)
 }
 
 func TestRepository_Create(t *testing.T) {

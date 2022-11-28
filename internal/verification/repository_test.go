@@ -21,7 +21,7 @@ func init() {
 }
 
 func cleanUp(verification Verification) {
-	sqlclient.DbClient.Delete(verification)
+	sqlclient.OpenDBConnection().Delete(verification)
 }
 
 func TestRepository_Create(t *testing.T) {
@@ -33,7 +33,7 @@ func TestRepository_Create(t *testing.T) {
 
 	t.Run("Create_Should_Throw_If_Already_Exits", func(t *testing.T) {
 		verification := createVerification(t)
-		restErr := repo.Create(&verification)
+		restErr := repo.WithoutTransaction().Create(&verification)
 		assert.EqualValues(t, "verification already exits", restErr.Message)
 	})
 }
@@ -41,13 +41,13 @@ func TestRepository_Create(t *testing.T) {
 func TestRepository_GetByUserId(t *testing.T) {
 	t.Run("Get_Use_By_Id_Should_Pass", func(t *testing.T) {
 		verification := createVerification(t)
-		result, restErr := repo.GetByUserId(verification.UserId)
+		result, restErr := repo.WithoutTransaction().GetByUserId(verification.UserId)
 		assert.Nil(t, restErr)
 		assert.EqualValues(t, verification.ID, result.ID)
 		cleanUp(verification)
 	})
 	t.Run("Get_User_By_Id_Should_Throw_If_Verification_With_User_Id_Does't_Exit", func(t *testing.T) {
-		verification, restErr := repo.GetByUserId("")
+		verification, restErr := repo.WithoutTransaction().GetByUserId("")
 		assert.Nil(t, verification)
 		assert.EqualValues(t, fmt.Sprintf("can't find verification with userId  %s", ""), restErr.Message)
 		assert.EqualValues(t, http.StatusNotFound, restErr.Status)
@@ -60,7 +60,7 @@ func TestRepository_Update(t *testing.T) {
 		verification := createVerification(t)
 		verification.Completed = true
 
-		restErr := repo.Update(&verification)
+		restErr := repo.WithoutTransaction().Update(&verification)
 
 		assert.Nil(t, restErr)
 		cleanUp(verification)
@@ -71,7 +71,7 @@ func createVerification(t *testing.T) Verification {
 	verification := new(Verification)
 	verification.ID = uuid.New().String()
 	verification.UserId = uuid.New().String()
-	restErr := repo.Create(verification)
+	restErr := repo.WithoutTransaction().Create(verification)
 	assert.Nil(t, restErr)
 	return *verification
 }

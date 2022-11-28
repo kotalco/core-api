@@ -36,47 +36,51 @@ func SignUp(c *fiber.Ctx) error {
 	}
 
 	txHandle := sqlclient.Begin()
-	model, restErr := userService.WithTransaction(&txHandle).SignUp(dto)
+	model, restErr := userService.WithTransaction(txHandle).SignUp(dto)
 	if restErr != nil {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(restErr.Status).JSON(restErr)
 	}
 
-	token, restErr := verificationService.WithTransaction(&txHandle).Create(model.ID)
+	token, restErr := verificationService.WithTransaction(txHandle).Create(model.ID)
 	if restErr != nil {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(restErr.Status).JSON(restErr)
 	}
 
-	usersCount, restErr := userService.Count()
+	usersCount, restErr := userService.WithoutTransaction().Count()
 	if restErr != nil {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(restErr.Status).JSON(restErr)
 	}
 	if usersCount == 1 { //check if this user is first user in the cluster=>verify email address
-		restErr = verificationService.WithTransaction(&txHandle).Verify(model.ID, token)
+		restErr = verificationService.WithTransaction(txHandle).Verify(model.ID, token)
 		if restErr != nil {
-			sqlclient.Rollback(&txHandle)
+			sqlclient.Rollback(txHandle)
 			return c.Status(restErr.Status).JSON(restErr)
 		}
-		restErr = userService.VerifyEmail(model)
+		restErr = userService.WithTransaction(txHandle).VerifyEmail(model)
 		if restErr != nil {
-			sqlclient.Rollback(&txHandle)
+			sqlclient.Rollback(txHandle)
 			return c.Status(restErr.Status).JSON(restErr)
 		}
 		//set as platform admin
-		restErr = userService.SetAsPlatformAdmin(model)
+		restErr = userService.WithTransaction(txHandle).SetAsPlatformAdmin(model)
 		if restErr != nil {
-			sqlclient.Rollback(&txHandle)
+			sqlclient.Rollback(txHandle)
 			return c.Status(restErr.Status).JSON(restErr)
 		}
 	}
 
-	sqlclient.Commit(&txHandle)
-
 	//Create Workspace
 	//Don't Roll back created user , but try to create the default workspace later  if not exits when user creates its first node
-	workspaceService.CreateUserDefaultWorkspace(model.ID)
+	restErr = workspaceService.WithTransaction(txHandle).CreateUserDefaultWorkspace(model.ID)
+	if restErr != nil {
+		sqlclient.Rollback(txHandle)
+		return c.Status(restErr.Status).JSON(restErr)
+	}
+
+	sqlclient.Commit(txHandle)
 
 	//section that user don't need to wait for
 	go func() {
@@ -106,7 +110,7 @@ func SignIn(c *fiber.Ctx) error {
 		return c.Status(restErr.Status).JSON(restErr)
 	}
 
-	session, restErr := userService.SignIn(dto)
+	session, restErr := userService.WithoutTransaction().SignIn(dto)
 	if restErr != nil {
 		return c.Status(restErr.Status).JSON(restErr)
 	}
@@ -129,7 +133,7 @@ func SendEmailVerification(c *fiber.Ctx) error {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	userModel, err := userService.GetByEmail(dto.Email)
+	userModel, err := userService.WithoutTransaction().GetByEmail(dto.Email)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -139,7 +143,7 @@ func SendEmailVerification(c *fiber.Ctx) error {
 		return c.Status(badReq.Status).JSON(badReq)
 	}
 
-	token, err := verificationService.Resend(userModel.ID)
+	token, err := verificationService.WithoutTransaction().Resend(userModel.ID)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -173,7 +177,7 @@ func VerifyEmail(c *fiber.Ctx) error {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	userModel, err := userService.GetByEmail(dto.Email)
+	userModel, err := userService.WithoutTransaction().GetByEmail(dto.Email)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -184,19 +188,19 @@ func VerifyEmail(c *fiber.Ctx) error {
 	}
 
 	txHandle := sqlclient.Begin()
-	err = verificationService.WithTransaction(&txHandle).Verify(userModel.ID, dto.Token)
+	err = verificationService.WithTransaction(txHandle).Verify(userModel.ID, dto.Token)
 	if err != nil {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
 
-	err = userService.WithTransaction(&txHandle).VerifyEmail(userModel)
+	err = userService.WithTransaction(txHandle).VerifyEmail(userModel)
 	if err != nil {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
 
-	sqlclient.Commit(&txHandle)
+	sqlclient.Commit(txHandle)
 
 	resp := struct {
 		Message string `json:"message"`
@@ -220,12 +224,12 @@ func ForgetPassword(c *fiber.Ctx) error {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	userModel, err := userService.GetByEmail(dto.Email)
+	userModel, err := userService.WithoutTransaction().GetByEmail(dto.Email)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	token, err := verificationService.Resend(userModel.ID)
+	token, err := verificationService.WithoutTransaction().Resend(userModel.ID)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -258,7 +262,7 @@ func ResetPassword(c *fiber.Ctx) error {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	userModel, err := userService.GetByEmail(dto.Email)
+	userModel, err := userService.WithoutTransaction().GetByEmail(dto.Email)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -275,18 +279,18 @@ func ResetPassword(c *fiber.Ctx) error {
 
 	txHandle := sqlclient.Begin()
 
-	err = verificationService.WithTransaction(&txHandle).Verify(userModel.ID, dto.Token)
+	err = verificationService.WithTransaction(txHandle).Verify(userModel.ID, dto.Token)
 	if err != nil {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
-	err = userService.WithTransaction(&txHandle).ResetPassword(userModel, dto.Password)
+	err = userService.WithTransaction(txHandle).ResetPassword(userModel, dto.Password)
 	if err != nil {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
 
-	sqlclient.Commit(&txHandle)
+	sqlclient.Commit(txHandle)
 
 	resp := struct {
 		Message string `json:"message"`
@@ -301,7 +305,7 @@ func ResetPassword(c *fiber.Ctx) error {
 // todo log all user token out
 func ChangePassword(c *fiber.Ctx) error {
 	userId := c.Locals("user").(token.UserDetails).ID
-	userDetails, err := userService.GetById(userId)
+	userDetails, err := userService.WithoutTransaction().GetById(userId)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -317,7 +321,7 @@ func ChangePassword(c *fiber.Ctx) error {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	err = userService.ChangePassword(userDetails, dto)
+	err = userService.WithoutTransaction().ChangePassword(userDetails, dto)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -335,7 +339,7 @@ func ChangePassword(c *fiber.Ctx) error {
 // ChangeEmail change user email and send verification token to the user email
 func ChangeEmail(c *fiber.Ctx) error {
 	userId := c.Locals("user").(token.UserDetails).ID
-	userDetails, err := userService.GetById(userId)
+	userDetails, err := userService.WithoutTransaction().GetById(userId)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -353,19 +357,19 @@ func ChangeEmail(c *fiber.Ctx) error {
 
 	txHandle := sqlclient.Begin()
 
-	err = userService.WithTransaction(&txHandle).ChangeEmail(userDetails, dto)
+	err = userService.WithTransaction(txHandle).ChangeEmail(userDetails, dto)
 	if err != nil {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
 
-	token, err := verificationService.WithTransaction(&txHandle).Resend(userDetails.ID)
+	token, err := verificationService.WithTransaction(txHandle).Resend(userDetails.ID)
 	if err != nil {
-		sqlclient.Rollback(&txHandle)
+		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
 
-	sqlclient.Commit(&txHandle)
+	sqlclient.Commit(txHandle)
 
 	mailRequest := new(sendgrid.MailRequestDto)
 	mailRequest.Token = token
@@ -383,7 +387,7 @@ func ChangeEmail(c *fiber.Ctx) error {
 
 func Whoami(c *fiber.Ctx) error {
 	userId := c.Locals("user").(token.UserDetails).ID
-	userDetails, err := userService.GetById(userId)
+	userDetails, err := userService.WithoutTransaction().GetById(userId)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -395,7 +399,7 @@ func Whoami(c *fiber.Ctx) error {
 // CreateTOTP create time based one time password QR code so user can scan it with his mobile app
 func CreateTOTP(c *fiber.Ctx) error {
 	userId := c.Locals("user").(token.UserDetails).ID
-	userDetails, err := userService.GetById(userId)
+	userDetails, err := userService.WithoutTransaction().GetById(userId)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -412,7 +416,7 @@ func CreateTOTP(c *fiber.Ctx) error {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	qr, err := userService.CreateTOTP(userDetails, dto)
+	qr, err := userService.WithoutTransaction().CreateTOTP(userDetails, dto)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -432,7 +436,7 @@ func CreateTOTP(c *fiber.Ctx) error {
 // then it enables two-factor auth for the user
 func EnableTwoFactorAuth(c *fiber.Ctx) error {
 	userId := c.Locals("user").(token.UserDetails).ID
-	userDetails, err := userService.GetById(userId)
+	userDetails, err := userService.WithoutTransaction().GetById(userId)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -443,7 +447,7 @@ func EnableTwoFactorAuth(c *fiber.Ctx) error {
 		return c.Status(badReq.Status).JSON(badReq)
 	}
 
-	model, err := userService.EnableTwoFactorAuth(userDetails, dto.TOTP)
+	model, err := userService.WithoutTransaction().EnableTwoFactorAuth(userDetails, dto.TOTP)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -455,7 +459,7 @@ func EnableTwoFactorAuth(c *fiber.Ctx) error {
 // create new bearer token for the user after totp validation
 func VerifyTOTP(c *fiber.Ctx) error {
 	userId := c.Locals("user").(token.UserDetails).ID
-	userDetails, err := userService.GetById(userId)
+	userDetails, err := userService.WithoutTransaction().GetById(userId)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -466,7 +470,7 @@ func VerifyTOTP(c *fiber.Ctx) error {
 		return c.Status(badReq.Status).JSON(badReq)
 	}
 
-	session, err := userService.VerifyTOTP(userDetails, dto.TOTP)
+	session, err := userService.WithoutTransaction().VerifyTOTP(userDetails, dto.TOTP)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -476,7 +480,7 @@ func VerifyTOTP(c *fiber.Ctx) error {
 
 func DisableTwoFactorAuth(c *fiber.Ctx) error {
 	userId := c.Locals("user").(token.UserDetails).ID
-	userDetails, err := userService.GetById(userId)
+	userDetails, err := userService.WithoutTransaction().GetById(userId)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
@@ -493,7 +497,7 @@ func DisableTwoFactorAuth(c *fiber.Ctx) error {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	err = userService.DisableTwoFactorAuth(userDetails, dto)
+	err = userService.WithoutTransaction().DisableTwoFactorAuth(userDetails, dto)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
