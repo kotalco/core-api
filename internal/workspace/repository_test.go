@@ -1,7 +1,6 @@
 package workspace
 
 import (
-	"fmt"
 	"github.com/google/uuid"
 	"github.com/kotalco/cloud-api/internal/workspaceuser"
 	"github.com/kotalco/cloud-api/pkg/roles"
@@ -55,7 +54,6 @@ func TestRepository_GetByNameAndUserId(t *testing.T) {
 	t.Run("Get_Workspace_By_Name_Should_Return_Workspace", func(t *testing.T) {
 		workspace := createWorkspace(t)
 		resp, err := repo.GetByNameAndUserId(workspace.Name, workspace.UserId)
-		fmt.Println(resp, err)
 		assert.Nil(t, err)
 		assert.EqualValues(t, 1, len(resp))
 		cleanUp(workspace)
@@ -72,7 +70,6 @@ func TestRepository_GetById(t *testing.T) {
 	t.Run("Get_Workspace_By_Id_Should_Return_Workspace", func(t *testing.T) {
 		workspace := createWorkspace(t)
 		resp, err := repo.GetById(workspace.ID)
-		fmt.Println(workspace.WorkspaceUsers)
 		assert.Nil(t, err)
 		assert.NotNil(t, resp)
 		cleanUp(workspace)

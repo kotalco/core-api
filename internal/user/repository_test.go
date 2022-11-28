@@ -1,7 +1,6 @@
 package user
 
 import (
-	"fmt"
 	"github.com/google/uuid"
 	"github.com/kotalco/cloud-api/pkg/security"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
@@ -52,7 +51,6 @@ func TestRepository_GetByEmail(t *testing.T) {
 		result, restErr := repo.GetByEmail(user.Email)
 
 		assert.Nil(t, restErr)
-		fmt.Println(result, user)
 		assert.EqualValues(t, user.Email, result.Email)
 
 		cleanUp(user)

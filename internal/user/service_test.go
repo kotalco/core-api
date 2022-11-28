@@ -3,7 +3,6 @@ package user
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"github.com/kotalco/cloud-api/pkg/token"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -187,7 +186,6 @@ func TestService_SignIn(t *testing.T) {
 			return user, nil
 		}
 		session, err := userService.SignIn(dto)
-		fmt.Println(session, err)
 		assert.Nil(t, err)
 		assert.NotNil(t, session.Token)
 		assert.EqualValues(t, true, session.Authorized)
@@ -821,5 +819,28 @@ func TestService_Count(t *testing.T) {
 		count, err := userService.Count()
 		assert.EqualValues(t, 0, count)
 		assert.EqualValues(t, "something went wrong", err.Message)
+	})
+}
+
+func TestService_SetAsPlatformAdmin(t *testing.T) {
+	user := new(User)
+
+	t.Run("Set as platform admin should pass", func(t *testing.T) {
+		UpdateFunc = func(user *User) *restErrors.RestErr {
+			return nil
+		}
+
+		resErr := userService.SetAsPlatformAdmin(user)
+		assert.Nil(t, resErr)
+		assert.EqualValues(t, true, user.PlatformAdmin)
+	})
+
+	t.Run("Change_Password_Should_Throw_If_Repo_Throws", func(t *testing.T) {
+		UpdateFunc = func(user *User) *restErrors.RestErr {
+			return restErrors.NewInternalServerError("something went wrong")
+		}
+
+		restErr := userService.SetAsPlatformAdmin(user)
+		assert.EqualValues(t, "something went wrong", restErr.Message)
 	})
 }

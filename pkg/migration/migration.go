@@ -1,6 +1,7 @@
 package migration
 
 import (
+	"github.com/kotalco/cloud-api/internal/setting"
 	"github.com/kotalco/cloud-api/internal/user"
 	"github.com/kotalco/cloud-api/internal/verification"
 	"github.com/kotalco/cloud-api/internal/workspace"
@@ -23,6 +24,7 @@ type IMigration interface {
 	CreateVerificationTable() error
 	CreateWorkspaceTable() error
 	CreateWorkspaceUserTable() error
+	CreateSettingTable() error
 }
 
 func NewMigration(dbClient *gorm.DB) IMigration {
@@ -32,37 +34,50 @@ func NewMigration(dbClient *gorm.DB) IMigration {
 }
 
 func (m migration) CreateUserTable() error {
-	exits := m.dbClient.Migrator().HasTable(user.User{})
-	if !exits {
-		go logger.Info("CreateUserTable")
-		return m.dbClient.AutoMigrate(user.User{})
+	err := m.dbClient.Migrator().AutoMigrate(user.User{})
+	if err != nil {
+		go logger.Error(m.CreateWorkspaceTable, err)
+		return err
 	}
+	go logger.Info("CreateUserTable")
 	return nil
 }
 
 func (m migration) CreateVerificationTable() error {
-	exits := m.dbClient.Migrator().HasTable(verification.Verification{})
-	if !exits {
-		go logger.Info("CreateVerificationTable")
-		return m.dbClient.AutoMigrate(verification.Verification{})
+	err := m.dbClient.Migrator().AutoMigrate(verification.Verification{})
+	if err != nil {
+		go logger.Error(m.CreateVerificationTable, err)
+		return err
 	}
+	go logger.Info("CreateVerificationTable")
 	return nil
 }
 
 func (m migration) CreateWorkspaceTable() error {
-	exits := m.dbClient.Migrator().HasTable(workspace.Workspace{})
-	if !exits {
-		go logger.Info("CreateWorkspaceTable")
-		return m.dbClient.AutoMigrate(workspace.Workspace{})
+	err := m.dbClient.Migrator().AutoMigrate(workspace.Workspace{})
+	if err != nil {
+		go logger.Error(m.CreateWorkspaceUserTable, err)
+		return err
 	}
+	go logger.Info("CreateWorkspaceTable")
 	return nil
 }
 
 func (m migration) CreateWorkspaceUserTable() error {
-	exits := m.dbClient.Migrator().HasTable(workspaceuser.WorkspaceUser{})
+	err := m.dbClient.Migrator().AutoMigrate(workspaceuser.WorkspaceUser{})
+	if err != nil {
+		go logger.Error(m.CreateWorkspaceUserTable, err)
+		return err
+	}
+	go logger.Info("CreateWorkspaceUserTable")
+	return nil
+}
+
+func (m migration) CreateSettingTable() error {
+	exits := m.dbClient.Migrator().HasTable(setting.Setting{})
 	if !exits {
-		go logger.Info("CreateWorkspaceUserTable")
-		return m.dbClient.AutoMigrate(workspaceuser.WorkspaceUser{})
+		go logger.Info("CreateSettingTable")
+		return m.dbClient.AutoMigrate(setting.Setting{})
 	}
 	return nil
 }

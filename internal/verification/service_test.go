@@ -2,7 +2,6 @@ package verification
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -184,7 +183,6 @@ func TestService_Create(t *testing.T) {
 		assert.EqualValues(t, "", result)
 		assert.EqualValues(t, "something went wrong", err.Message)
 		config.Environment.VerificationTokenExpiryHours = current
-		fmt.Println(current)
 	})
 
 }
