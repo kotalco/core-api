@@ -53,7 +53,7 @@ var (
 		DatabaseTestingServerURL:               getenv("DB_TESTING_SERVER_URL", "postgres://postgres:somePassword@localhost:5432/testing-cloud-api?sslmode=disable"),
 		DatabaseMaxConnections:                 getenv("DB_MAX_CONNECTIONS", "100"),
 		DatabaseMaxIdleConnections:             getenv("DB_MAX_IDLE_CONNECTIONS", "100"),
-		DatabaseMaxIdleLifetimeConnections:     getenv("DB_MAX_IDLE_CONNECTIONS", "10"),
+		DatabaseMaxIdleLifetimeConnections:     getenv("DB_MAX_IDLE_LIFETIME_CONNECTIONS", "10"),
 		DatabaseMaxLifetimeConnections:         getenv("DB_MAX_LIFETIME_CONNECTIONS", "10"),
 		VerificationTokenLength:                getenv("VERIFICATION_TOKEN_LENGTH", "80"),
 		VerificationTokenExpiryHours:           getenv("VERIFICATION_TOKEN_EXPIRY_HOURS", "24"),

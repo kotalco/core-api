@@ -10,10 +10,13 @@ import (
 	"regexp"
 )
 
-type repository struct{}
+type repository struct {
+	db *gorm.DB
+}
 
 type IRepository interface {
 	WithTransaction(txHandle *gorm.DB) IRepository
+	WithoutTransaction() IRepository
 	Get(key string) (string, *restErrors.RestErr)
 	Create(key string, value string) *restErrors.RestErr
 	Update(key string, value string) *restErrors.RestErr
@@ -22,18 +25,23 @@ type IRepository interface {
 
 func NewRepository() IRepository {
 	newRepo := repository{}
+	newRepo.db = sqlclient.OpenDBConnection()
 	return newRepo
 }
 
 func (r repository) WithTransaction(txHandle *gorm.DB) IRepository {
-	sqlclient.DbClient = txHandle
+	r.db = txHandle
+	return r
+}
+func (r repository) WithoutTransaction() IRepository {
+	r.db = sqlclient.OpenDBConnection()
 	return r
 }
 
 func (r repository) Get(key string) (string, *restErrors.RestErr) {
 	var record = new(Setting)
 
-	result := sqlclient.DbClient.Where("key = ?", key).First(record)
+	result := r.db.Where("key = ?", key).First(record)
 	if result.Error != nil {
 		return "", restErrors.NewNotFoundError(fmt.Sprintf("can't find config for the key  %s", key))
 	}
@@ -47,7 +55,7 @@ func (r repository) Create(key string, value string) *restErrors.RestErr {
 		Value: value,
 	}
 
-	res := sqlclient.DbClient.Create(record)
+	res := r.db.Create(record)
 	if res.Error != nil {
 		duplicateEmail, _ := regexp.Match("duplicate key", []byte(res.Error.Error()))
 		if duplicateEmail {
@@ -66,7 +74,7 @@ func (r repository) Create(key string, value string) *restErrors.RestErr {
 }
 
 func (r repository) Update(key string, value string) *restErrors.RestErr {
-	result := sqlclient.DbClient.Model(Setting{}).Where("key = ?", key).Update("value", value)
+	result := r.db.Model(Setting{}).Where("key = ?", key).Update("value", value)
 	if result.Error != nil {
 		go logger.Error(r.Update, result.Error)
 		return restErrors.NewInternalServerError("something went wrong")
@@ -77,7 +85,7 @@ func (r repository) Update(key string, value string) *restErrors.RestErr {
 func (r repository) Find() ([]*Setting, *restErrors.RestErr) {
 	var setting []*Setting
 
-	result := sqlclient.DbClient.Find(&setting)
+	result := r.db.Find(&setting)
 	if result.Error != nil {
 		return nil, restErrors.NewNotFoundError(fmt.Sprintf("can't get settings"))
 	}

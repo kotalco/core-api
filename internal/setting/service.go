@@ -10,6 +10,7 @@ type service struct{}
 
 type IService interface {
 	WithTransaction(txHandle *gorm.DB) IService
+	WithoutTransaction() IService
 	Settings() ([]*Setting, *restErrors.RestErr)
 	ConfigureDomain(dto *ConfigureDomainRequestDto) *restErrors.RestErr
 	IsDomainConfigured() bool
@@ -26,6 +27,10 @@ func NewService() IService {
 
 func (s service) WithTransaction(txHandle *gorm.DB) IService {
 	settingRepo = settingRepo.WithTransaction(txHandle)
+	return s
+}
+func (s service) WithoutTransaction() IService {
+	settingRepo = settingRepo.WithoutTransaction()
 	return s
 }
 
