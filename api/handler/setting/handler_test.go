@@ -28,6 +28,10 @@ var (
 
 type settingServiceMocks struct{}
 
+func (s settingServiceMocks) WithoutTransaction() setting.IService {
+	return s
+}
+
 func (s settingServiceMocks) WithTransaction(txHandle *gorm.DB) setting.IService {
 	return s
 }

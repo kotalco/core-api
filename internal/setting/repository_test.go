@@ -18,7 +18,7 @@ func init() {
 }
 
 func cleanUp(key string) {
-	sqlclient.DbClient.Where("key = ?", key).Delete(&Setting{})
+	sqlclient.OpenDBConnection().Where("key = ?", key).Delete(&Setting{})
 }
 
 func TestRepository_GetAndSet(t *testing.T) {

@@ -18,6 +18,10 @@ var (
 
 type settingRepoMocks struct{}
 
+func (s settingRepoMocks) WithoutTransaction() IRepository {
+	return s
+}
+
 func (s settingRepoMocks) WithTransaction(txHandle *gorm.DB) IRepository {
 	return s
 }
