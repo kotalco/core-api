@@ -28,15 +28,7 @@ type SettingResponseDto struct {
 
 func Validate(dto interface{}) *restErrors.RestErr {
 	newValidator := validator.New()
-	err := newValidator.RegisterValidation("exists", func(fl validator.FieldLevel) bool {
-		fmt.Println(fl.Field())
-		return true
-	})
-	if err != nil {
-		logger.Panic("USER_DTO_VALIDATE", err)
-		return restErrors.NewInternalServerError("something went wrong!")
-	}
-	err = newValidator.Struct(dto)
+	err := newValidator.Struct(dto)
 
 	if err != nil {
 		fields := map[string]string{}
