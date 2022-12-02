@@ -2,6 +2,7 @@ package user
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/kotalco/cloud-api/internal/setting"
 	"github.com/kotalco/cloud-api/internal/user"
 	"github.com/kotalco/cloud-api/internal/verification"
 	"github.com/kotalco/cloud-api/internal/workspace"
@@ -20,6 +21,7 @@ var (
 	mailService         = sendgrid.NewService()
 	verificationService = verification.NewService()
 	workspaceService    = workspace.NewService()
+	settingService      = setting.NewService()
 )
 
 // SignUp validate dto , create user , send verification token, create the default namespace and create the default workspace
@@ -33,6 +35,11 @@ func SignUp(c *fiber.Ctx) error {
 	restErr := user.Validate(dto)
 	if restErr != nil {
 		return c.Status(restErr.Status).JSON(restErr)
+	}
+
+	if !settingService.WithoutTransaction().IsRegistrationEnabled() {
+		err := restErrors.NewForbiddenError("Registration disabled")
+		return c.Status(err.Status).JSON(err)
 	}
 
 	txHandle := sqlclient.Begin()
@@ -66,6 +73,15 @@ func SignUp(c *fiber.Ctx) error {
 		}
 		//set as platform admin
 		restErr = userService.WithTransaction(txHandle).SetAsPlatformAdmin(model)
+		if restErr != nil {
+			sqlclient.Rollback(txHandle)
+			return c.Status(restErr.Status).JSON(restErr)
+		}
+		// set registration to false
+		enableRegistration := false
+		restErr = settingService.WithoutTransaction().ConfigureRegistration(&setting.ConfigureRegistrationRequestDto{
+			EnableRegistration: &enableRegistration,
+		})
 		if restErr != nil {
 			sqlclient.Rollback(txHandle)
 			return c.Status(restErr.Status).JSON(restErr)

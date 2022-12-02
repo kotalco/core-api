@@ -1,6 +1,7 @@
 package setting
 
 import (
+	"github.com/kotalco/cloud-api/pkg/sqlclient"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
@@ -43,6 +44,7 @@ func (s settingRepoMocks) Find() ([]*Setting, *restErrors.RestErr) {
 }
 
 func TestMain(m *testing.M) {
+	sqlclient.OpenDBConnection()
 	settingService = NewService()
 	settingRepo = &settingRepoMocks{}
 	code := m.Run()
@@ -107,6 +109,57 @@ func TestService_IsDomainConfigured(t *testing.T) {
 	t.Run("is domain configured should pass", func(t *testing.T) {
 		settingGetFunc = func(key string) (string, *restErrors.RestErr) {
 			return "key", nil
+		}
+		assert.True(t, settingService.IsDomainConfigured())
+	})
+
+	t.Run("is domain configured should return false", func(t *testing.T) {
+		settingGetFunc = func(key string) (string, *restErrors.RestErr) {
+			return "", restErrors.NewInternalServerError("something went wrong")
+		}
+		assert.False(t, settingService.IsDomainConfigured())
+	})
+}
+func TestService_ConfigureRegistration(t *testing.T) {
+	t.Run("configure registration should pass with and create new record", func(t *testing.T) {
+		settingGetFunc = func(key string) (string, *restErrors.RestErr) {
+			return "", restErrors.NewNotFoundError("no such record")
+		}
+		settingCreateFunc = func(key string, value string) *restErrors.RestErr {
+			return nil
+		}
+		enableReg := true
+		err := settingService.ConfigureRegistration(&ConfigureRegistrationRequestDto{EnableRegistration: &enableReg})
+		assert.Nil(t, err)
+	})
+	t.Run("configure registration should pass with and update the old record", func(t *testing.T) {
+		settingGetFunc = func(key string) (string, *restErrors.RestErr) {
+			return "value", nil
+		}
+		settingUpdateFunc = func(key string, value string) *restErrors.RestErr {
+			return nil
+		}
+		enableReg := true
+		err := settingService.ConfigureRegistration(&ConfigureRegistrationRequestDto{EnableRegistration: &enableReg})
+		assert.Nil(t, err)
+	})
+
+	t.Run("configure registration should throw if repo throws", func(t *testing.T) {
+		settingGetFunc = func(key string) (string, *restErrors.RestErr) {
+			return "", restErrors.NewNotFoundError("")
+		}
+		settingCreateFunc = func(key string, value string) *restErrors.RestErr {
+			return restErrors.NewInternalServerError("something went wrong")
+		}
+		enableReg := true
+		err := settingService.ConfigureRegistration(&ConfigureRegistrationRequestDto{EnableRegistration: &enableReg})
+		assert.EqualValues(t, "something went wrong", err.Message)
+	})
+}
+func TestService_IsRegistrationEnabled(t *testing.T) {
+	t.Run("is registration enabled should pass", func(t *testing.T) {
+		settingGetFunc = func(key string) (string, *restErrors.RestErr) {
+			return "true", nil
 		}
 		assert.True(t, settingService.IsDomainConfigured())
 	})

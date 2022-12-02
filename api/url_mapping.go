@@ -84,6 +84,7 @@ func MapUrl(app *fiber.App) {
 	settingGroup := v1.Group("settings")
 	settingGroup.Get("/", middleware.JWTProtected, middleware.TFAProtected, setting.Settings)
 	settingGroup.Post("/domain", middleware.JWTProtected, middleware.TFAProtected, setting.ConfigureDomain)
+	settingGroup.Post("/registration", middleware.JWTProtected, middleware.TFAProtected, setting.ConfigureRegistration)
 	mapDeploymentUrl(v1)
 }
 

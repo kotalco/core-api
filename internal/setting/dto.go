@@ -9,11 +9,16 @@ import (
 )
 
 const (
-	DomainKey = "domain"
+	DomainKey       = "domain"
+	RegistrationKey = "registration"
 )
 
 type ConfigureDomainRequestDto struct {
 	Domain string `json:"domain" validate:"required"`
+}
+
+type ConfigureRegistrationRequestDto struct {
+	EnableRegistration *bool `json:"enable_registration" validate:"required,boolean"`
 }
 
 type SettingResponseDto struct {
@@ -23,7 +28,15 @@ type SettingResponseDto struct {
 
 func Validate(dto interface{}) *restErrors.RestErr {
 	newValidator := validator.New()
-	err := newValidator.Struct(dto)
+	err := newValidator.RegisterValidation("exists", func(fl validator.FieldLevel) bool {
+		fmt.Println(fl.Field())
+		return true
+	})
+	if err != nil {
+		logger.Panic("USER_DTO_VALIDATE", err)
+		return restErrors.NewInternalServerError("something went wrong!")
+	}
+	err = newValidator.Struct(dto)
 
 	if err != nil {
 		fields := map[string]string{}
@@ -31,6 +44,9 @@ func Validate(dto interface{}) *restErrors.RestErr {
 			switch err.Field() {
 			case "Domain":
 				fields["domain"] = "invalid domain"
+				break
+			case "EnableRegistration":
+				fields["enable_registration"] = "invalid registration value"
 				break
 			}
 		}
