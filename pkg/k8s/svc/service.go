@@ -26,7 +26,7 @@ func NewService() ISVC {
 
 func (s *svc) List(namespace string) (*corev1.ServiceList, *restError.RestErr) {
 	records := &corev1.ServiceList{}
-	err := k8s.K8sClient.List(context.Background(), records, &client.ListOptions{Namespace: namespace}, &client.MatchingLabels{"app.kubernetes.io/managed-by": "kotal"})
+	err := k8s.K8sClient.List(context.Background(), records, &client.ListOptions{Namespace: namespace}, &client.MatchingLabels{"app.kubernetes.io/managed-by": "kotal-operator"})
 	if err != nil {
 		go logger.Error(s.List, err)
 		return nil, restError.NewInternalServerError(err.Error())
