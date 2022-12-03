@@ -93,7 +93,7 @@ func (subApi *subscriptionService) CurrentTimeStamp() ([]byte, *restErrors.RestE
 
 	if res.StatusCode != http.StatusOK {
 		go logger.Error(subApi.CurrentTimeStamp, errors.New(res.Status))
-		return nil, restErrors.NewInternalServerError(err.Error())
+		return nil, restErrors.NewInternalServerError("can't get current timestamp!")
 	}
 
 	responseData, err := ioutil.ReadAll(res.Body)

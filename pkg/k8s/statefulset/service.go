@@ -23,7 +23,7 @@ func NewService() IStatefulSet {
 func (s *stateful) Count() (uint, *restError.RestErr) {
 	list := &appsv1.StatefulSetList{}
 
-	err := k8s.K8sClient.List(context.Background(), list, &client.MatchingLabels{"app.kubernetes.io/created-by": "kotal-api"})
+	err := k8s.K8sClient.List(context.Background(), list, &client.MatchingLabels{"app.kubernetes.io/managed-by": "kotal-operator"})
 	if err != nil {
 		go logger.Error(s.Count, err)
 		return 0, restError.NewInternalServerError("can't get stateful set count")
