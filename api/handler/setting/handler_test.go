@@ -178,3 +178,39 @@ func TestSettings(t *testing.T) {
 	})
 
 }
+func TestGetDomainBaseUrl(t *testing.T) {
+	userDetails := new(token.UserDetails)
+	userDetails.ID = "test@test.com"
+	var locals = map[string]interface{}{}
+	locals["user"] = *userDetails
+	t.Run("get domain should pass", func(t *testing.T) {
+		getDomainBaseUrl = func() (string, *restErrors.RestErr) {
+			return "baseUrl", nil
+		}
+
+		body, resp := newFiberCtx("", GetDomainBaseUrl, locals)
+
+		var result map[string]setting.DomainBaseUrlResponseDto
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
+		assert.EqualValues(t, "baseUrl", result["data"].BaseUrl)
+	})
+	t.Run("get domain base url should throw if service throws", func(t *testing.T) {
+		getDomainBaseUrl = func() (string, *restErrors.RestErr) {
+			return "", restErrors.NewInternalServerError("can't get domain base url")
+		}
+		body, resp := newFiberCtx("", GetDomainBaseUrl, locals)
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
+		assert.EqualValues(t, http.StatusInternalServerError, result.Status)
+		assert.EqualValues(t, "can't get domain base url", result.Message)
+	})
+
+}

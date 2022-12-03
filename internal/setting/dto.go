@@ -21,6 +21,10 @@ type SettingResponseDto struct {
 	Value string `json:"value"`
 }
 
+type DomainBaseUrlResponseDto struct {
+	BaseUrl string `json:"base_url"`
+}
+
 func Validate(dto interface{}) *restErrors.RestErr {
 	newValidator := validator.New()
 	err := newValidator.Struct(dto)

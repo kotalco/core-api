@@ -9,7 +9,8 @@ import (
 )
 
 var (
-	settingService = setting.NewService()
+	settingService   = setting.NewService()
+	getDomainBaseUrl = setting.GetDomainBaseUrl
 )
 
 func ConfigureDomain(c *fiber.Ctx) error {
@@ -30,6 +31,15 @@ func ConfigureDomain(c *fiber.Ctx) error {
 	}
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{Message: "domain configured successfully!"}))
 }
+
+func GetDomainBaseUrl(c *fiber.Ctx) error {
+	baseUrl, err := getDomainBaseUrl()
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(&setting.DomainBaseUrlResponseDto{BaseUrl: baseUrl}))
+}
+
 func Settings(c *fiber.Ctx) error {
 	list, err := settingService.WithoutTransaction().Settings()
 	if err != nil {
