@@ -30,9 +30,10 @@ func IsSubscription(c *fiber.Ctx) error {
 	}
 
 	lastCheckDate := time.Unix(subscriptionAPI.CheckDate, 0)
-	lastCheckDateInUnixWithGracePeriod := lastCheckDate.Add(time.Hour * 24).Unix()
+	lastCheckDateInUnixWithGracePeriod := lastCheckDate.Add(time.Hour * 1).Unix()
 
-	if lastCheckDateInUnixWithGracePeriod < currenTimeInUnix {
+	//do periodic check with every login attempt , and every hour
+	if lastCheckDateInUnixWithGracePeriod < currenTimeInUnix || c.Path() == "/api/v1/sessions" {
 		//check if activation key exits
 		if subscriptionAPI.ActivationKey == "" {
 			invalidSubErr := restErrors.RestErr{Status: http.StatusForbidden, Message: "invalid subscription", Name: InvalidSubscriptionStatusMessage}
