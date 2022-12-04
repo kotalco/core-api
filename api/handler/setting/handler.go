@@ -3,13 +3,16 @@ package setting
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/kotalco/cloud-api/internal/setting"
+	k8svc "github.com/kotalco/cloud-api/pkg/k8s/svc"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
+	"github.com/kotalco/community-api/pkg/logger"
 	"github.com/kotalco/community-api/pkg/shared"
 	"net/http"
 )
 
 var (
 	settingService = setting.NewService()
+	k8service      = k8svc.NewService()
 )
 
 func ConfigureDomain(c *fiber.Ctx) error {
@@ -60,4 +63,21 @@ func Settings(c *fiber.Ctx) error {
 		marshalledList = append(marshalledList, new(setting.SettingResponseDto).Marshall(v))
 	}
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(marshalledList))
+}
+
+func IPAddress(c *fiber.Ctx) error {
+	record, err := k8service.Get("traefik", "traefik")
+	if err != nil {
+		go logger.Error("SETTING_GET_IP_ADDRESS", err)
+		customErr := restErrors.NewNotFoundError("can't get traefik service")
+		return c.Status(customErr.Status).JSON(customErr)
+	}
+
+	defer func() {
+		if err := recover(); err != nil {
+			c.Status(http.StatusNotFound).JSON(restErrors.NewNotFoundError("can't get ip address, still provisioning!"))
+		}
+	}()
+
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(&setting.IPAddressResponseDto{IPAddress: record.Status.LoadBalancer.Ingress[0].IP}))
 }

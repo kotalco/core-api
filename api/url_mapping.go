@@ -31,7 +31,7 @@ func MapUrl(app *fiber.App) {
 
 	//subscription
 	v1.Post("subscriptions/acknowledgment", subscription.Acknowledgement)
-	v1.Use(middleware.IsSubscription)
+	//v1.Use(middleware.IsSubscription)
 
 	//users group
 	v1.Post("sessions", user.SignIn)
@@ -85,6 +85,7 @@ func MapUrl(app *fiber.App) {
 	settingGroup.Get("/", middleware.JWTProtected, middleware.TFAProtected, setting.Settings)
 	settingGroup.Post("/domain", middleware.JWTProtected, middleware.TFAProtected, setting.ConfigureDomain)
 	settingGroup.Post("/registration", middleware.JWTProtected, middleware.TFAProtected, setting.ConfigureRegistration)
+	settingGroup.Get("/ip-address", middleware.JWTProtected, middleware.TFAProtected, setting.IPAddress)
 	mapDeploymentUrl(v1)
 }
 
