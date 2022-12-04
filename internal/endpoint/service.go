@@ -59,11 +59,12 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) *restError
 
 	//create ingress-route
 	ingressRouteObject, err := ingressRoutesService.Create(&ingressroute.IngressRouteDto{
-		Name:        dto.Name,
-		Namespace:   svc.Namespace,
-		ServiceName: svc.Name,
-		ServiceID:   string(svc.UID),
-		Ports:       ingressRoutePorts,
+		Name:            dto.Name,
+		Namespace:       svc.Namespace,
+		ServiceName:     svc.Name,
+		ServiceProtocol: svc.Labels["kotal.io/protocol"],
+		ServiceID:       string(svc.UID),
+		Ports:           ingressRoutePorts,
 		Middlewares: func() []ingressroute.IngressRouteMiddlewareRefDto {
 			refs := make([]ingressroute.IngressRouteMiddlewareRefDto, 0)
 			refs = append(refs, ingressroute.IngressRouteMiddlewareRefDto{
