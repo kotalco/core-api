@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/kotalco/cloud-api/internal/setting"
 	"github.com/kotalco/cloud-api/internal/workspace"
 	"github.com/kotalco/cloud-api/internal/workspaceuser"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
@@ -240,11 +241,53 @@ func (wService workspaceServiceMock) CreateUserDefaultWorkspace(userId string) *
 	return CreateUserDefaultWorkspaceFunc(userId)
 }
 
+/*
+setting service  mocks
+*/
+var (
+	settingSettingsFunc              func() ([]*setting.Setting, *restErrors.RestErr)
+	settingConfigureDomainFunc       func(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr
+	settingIsDomainConfiguredFunc    func() bool
+	settingConfigureRegistrationFunc func(dto *setting.ConfigureRegistrationRequestDto) *restErrors.RestErr
+	settingIsRegistrationEnabledFunc func() bool
+)
+
+type settingServiceMocks struct{}
+
+func (s settingServiceMocks) ConfigureRegistration(dto *setting.ConfigureRegistrationRequestDto) *restErrors.RestErr {
+	return settingConfigureRegistrationFunc(dto)
+}
+
+func (s settingServiceMocks) IsRegistrationEnabled() bool {
+	return settingIsRegistrationEnabledFunc()
+}
+
+func (s settingServiceMocks) WithoutTransaction() setting.IService {
+	return s
+}
+
+func (s settingServiceMocks) WithTransaction(txHandle *gorm.DB) setting.IService {
+	return s
+}
+
+func (s settingServiceMocks) Settings() ([]*setting.Setting, *restErrors.RestErr) {
+	return settingSettingsFunc()
+}
+
+func (s settingServiceMocks) ConfigureDomain(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr {
+	return settingConfigureDomainFunc(dto)
+}
+
+func (s settingServiceMocks) IsDomainConfigured() bool {
+	return settingIsDomainConfiguredFunc()
+}
+
 func TestMain(m *testing.M) {
 	userService = &userServiceMock{}
 	verificationService = &verificationServiceMock{}
 	mailService = &mailServiceMock{}
 	workspaceService = &workspaceServiceMock{}
+	settingService = &settingServiceMocks{}
 
 	sqlclient.OpenDBConnection()
 
@@ -294,6 +337,9 @@ func TestSignUp(t *testing.T) {
 	}
 
 	t.Run("Sign_Up_Should_Pass", func(t *testing.T) {
+		settingIsRegistrationEnabledFunc = func() bool {
+			return true
+		}
 		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr) {
 			newUser := new(user.User)
 			newUser.Email = "test@test.com"
@@ -336,6 +382,9 @@ func TestSignUp(t *testing.T) {
 	})
 
 	t.Run("Sign_Up_Should_Pass_Even_If_Can't_Create_Work_Space", func(t *testing.T) {
+		settingIsRegistrationEnabledFunc = func() bool {
+			return true
+		}
 		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr) {
 			newUser := new(user.User)
 			newUser.Email = "test@test.com"
@@ -355,6 +404,9 @@ func TestSignUp(t *testing.T) {
 			return nil
 		}
 		usersSetAsPlatformAdminFunc = func(model *user.User) *restErrors.RestErr {
+			return nil
+		}
+		settingConfigureRegistrationFunc = func(dto *setting.ConfigureRegistrationRequestDto) *restErrors.RestErr {
 			return nil
 		}
 		CreateWorkspaceFunc = func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr) {
@@ -377,6 +429,9 @@ func TestSignUp(t *testing.T) {
 		assert.EqualValues(t, "test@test.com", result["data"].Email)
 	})
 	t.Run("Sign_Up_Should_Pass_Even_If_Can't_Create_Namespace", func(t *testing.T) {
+		settingIsRegistrationEnabledFunc = func() bool {
+			return true
+		}
 		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr) {
 			newUser := new(user.User)
 			newUser.Email = "test@test.com"
@@ -393,6 +448,12 @@ func TestSignUp(t *testing.T) {
 			return nil
 		}
 		VerifyEmailFunc = func(model *user.User) *restErrors.RestErr {
+			return nil
+		}
+		usersSetAsPlatformAdminFunc = func(model *user.User) *restErrors.RestErr {
+			return nil
+		}
+		settingConfigureRegistrationFunc = func(dto *setting.ConfigureRegistrationRequestDto) *restErrors.RestErr {
 			return nil
 		}
 
@@ -458,7 +519,27 @@ func TestSignUp(t *testing.T) {
 		assert.EqualValues(t, "invalid request body", result.Message)
 	})
 
+	t.Run("Sing_Up_Should_Throw_if_registration_is_disabled", func(t *testing.T) {
+		settingIsRegistrationEnabledFunc = func() bool {
+			return false
+		}
+
+		body, resp := newFiberCtx(validDto, SignUp, map[string]interface{}{})
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		assert.EqualValues(t, http.StatusForbidden, resp.StatusCode)
+		assert.EqualValues(t, result.Message, "Registration disabled")
+	})
+
 	t.Run("Sing_Up_Should_Throw_if_Service_Throws", func(t *testing.T) {
+		settingIsRegistrationEnabledFunc = func() bool {
+			return true
+		}
 		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr) {
 			return nil, restErrors.NewBadRequestError("user service errors")
 		}
@@ -475,6 +556,9 @@ func TestSignUp(t *testing.T) {
 		assert.EqualValues(t, result.Message, "user service errors")
 	})
 	t.Run("Sign_Up_Should_Throw_if_Count_Fun_throws", func(t *testing.T) {
+		settingIsRegistrationEnabledFunc = func() bool {
+			return true
+		}
 		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr) {
 			newUser := new(user.User)
 			newUser.Email = "test@test.com"
@@ -500,6 +584,9 @@ func TestSignUp(t *testing.T) {
 		assert.EqualValues(t, "count users throws", result.Message)
 	})
 	t.Run("Sign_Up_Should_Throw_if_Count_Fun_Pass_But_verification_verify_throws", func(t *testing.T) {
+		settingIsRegistrationEnabledFunc = func() bool {
+			return true
+		}
 		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr) {
 			newUser := new(user.User)
 			newUser.Email = "test@test.com"
@@ -528,6 +615,9 @@ func TestSignUp(t *testing.T) {
 		assert.EqualValues(t, "verification verify error", result.Message)
 	})
 	t.Run("Sign_Up_Should_Throw_if_Count_Fun_Pass_and_verification_pass_but_user_service_verifyEmail_throws", func(t *testing.T) {
+		settingIsRegistrationEnabledFunc = func() bool {
+			return true
+		}
 		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr) {
 			newUser := new(user.User)
 			newUser.Email = "test@test.com"
@@ -559,6 +649,9 @@ func TestSignUp(t *testing.T) {
 		assert.EqualValues(t, "user service verify email pass", result.Message)
 	})
 	t.Run("Sign_Up_Should_Throw_if_set_as_platform_admin_throws", func(t *testing.T) {
+		settingIsRegistrationEnabledFunc = func() bool {
+			return true
+		}
 		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr) {
 			newUser := new(user.User)
 			newUser.Email = "test@test.com"
@@ -592,8 +685,51 @@ func TestSignUp(t *testing.T) {
 		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
 		assert.EqualValues(t, "can't set as platform admin", result.Message)
 	})
+	t.Run("Sign_Up_Should_Throw_if_configureRegistrationThrows", func(t *testing.T) {
+		settingIsRegistrationEnabledFunc = func() bool {
+			return true
+		}
+		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr) {
+			newUser := new(user.User)
+			newUser.Email = "test@test.com"
+			return newUser, nil
+		}
+
+		CreateFunc = func(userId string) (string, *restErrors.RestErr) {
+			return "JWT-token", nil
+		}
+		usersCountFunc = func() (int64, *restErrors.RestErr) {
+			return 1, nil
+		}
+		VerifyFunc = func(userId string, token string) *restErrors.RestErr {
+			return nil
+		}
+		VerifyEmailFunc = func(model *user.User) *restErrors.RestErr {
+			return nil
+		}
+		usersSetAsPlatformAdminFunc = func(model *user.User) *restErrors.RestErr {
+			return nil
+		}
+		settingConfigureRegistrationFunc = func(dto *setting.ConfigureRegistrationRequestDto) *restErrors.RestErr {
+			return restErrors.NewInternalServerError("can't configure registration")
+		}
+
+		body, resp := newFiberCtx(validDto, SignUp, map[string]interface{}{})
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
+		assert.EqualValues(t, "can't configure registration", result.Message)
+	})
 
 	t.Run("Sign_Up_Should_Throw_if_create_user_Throws", func(t *testing.T) {
+		settingIsRegistrationEnabledFunc = func() bool {
+			return true
+		}
 		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr) {
 			return new(user.User), nil
 		}

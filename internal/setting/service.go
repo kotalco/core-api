@@ -4,6 +4,7 @@ import (
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"gorm.io/gorm"
 	"net/http"
+	"strconv"
 )
 
 type service struct{}
@@ -14,6 +15,8 @@ type IService interface {
 	Settings() ([]*Setting, *restErrors.RestErr)
 	ConfigureDomain(dto *ConfigureDomainRequestDto) *restErrors.RestErr
 	IsDomainConfigured() bool
+	ConfigureRegistration(dto *ConfigureRegistrationRequestDto) *restErrors.RestErr
+	IsRegistrationEnabled() bool
 }
 
 var (
@@ -52,8 +55,29 @@ func (s service) ConfigureDomain(dto *ConfigureDomainRequestDto) *restErrors.Res
 }
 
 func (s service) IsDomainConfigured() bool {
-	key, _ := settingRepo.Get(DomainKey)
-	if key != "" {
+	value, _ := settingRepo.Get(DomainKey)
+	if value != "" {
+		return true
+	}
+	return false
+}
+
+func (s service) ConfigureRegistration(dto *ConfigureRegistrationRequestDto) *restErrors.RestErr {
+	_, err := settingRepo.Get(RegistrationKey)
+	if err != nil {
+		if err.Status == http.StatusNotFound {
+			//the record doesn't exist create new one
+			return settingRepo.Create(RegistrationKey, strconv.FormatBool(*dto.EnableRegistration))
+		}
+		return err
+	}
+	//record exits update it
+	return settingRepo.Update(RegistrationKey, strconv.FormatBool(*dto.EnableRegistration))
+}
+
+func (s service) IsRegistrationEnabled() bool {
+	value, _ := settingRepo.Get(RegistrationKey)
+	if value == "true" {
 		return true
 	}
 	return false

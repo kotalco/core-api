@@ -2,6 +2,7 @@ package seeder
 
 import (
 	"github.com/google/uuid"
+	"github.com/kotalco/cloud-api/internal/setting"
 	"github.com/kotalco/cloud-api/internal/user"
 	"github.com/kotalco/cloud-api/internal/workspace"
 	"github.com/kotalco/cloud-api/internal/workspaceuser"
@@ -65,6 +66,15 @@ func (s service) Seeds() []Definition {
 				newWorkspace.WorkspaceUsers = append(newWorkspace.WorkspaceUsers, *newWorkspaceuser)
 
 				return seeders.SeedWorkspaceTable(newWorkspace)
+			},
+		},
+		Definition{
+			Name: "SeedSettingTable",
+			Run: func() error {
+				record := new(setting.Setting)
+				record.Key = setting.RegistrationKey
+				record.Value = "true"
+				return seeders.SeedSettingTable(record)
 			},
 		},
 	}
