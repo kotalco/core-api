@@ -79,7 +79,7 @@ func SignUp(c *fiber.Ctx) error {
 		}
 		// set registration to false
 		enableRegistration := false
-		restErr = settingService.WithoutTransaction().ConfigureRegistration(&setting.ConfigureRegistrationRequestDto{
+		restErr = settingService.WithTransaction(txHandle).ConfigureRegistration(&setting.ConfigureRegistrationRequestDto{
 			EnableRegistration: &enableRegistration,
 		})
 		if restErr != nil {
