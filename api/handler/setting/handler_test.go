@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 	"io/ioutil"
+	corev1 "k8s.io/api/core/v1"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -59,6 +60,21 @@ func (s settingServiceMocks) IsDomainConfigured() bool {
 	return settingIsDomainConfiguredFunc()
 }
 
+var (
+	k8svcListFunc func(namespace string) (*corev1.ServiceList, *restErrors.RestErr)
+	k8svcGetFunc  func(name string, namespace string) (*corev1.Service, *restErrors.RestErr)
+)
+
+type k8sServiceMock struct{}
+
+func (k *k8sServiceMock) List(namespace string) (*corev1.ServiceList, *restErrors.RestErr) {
+	return k8svcListFunc(namespace)
+}
+
+func (k *k8sServiceMock) Get(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {
+	return k8svcGetFunc(name, namespace)
+}
+
 func newFiberCtx(dto interface{}, method func(c *fiber.Ctx) error, locals map[string]interface{}) ([]byte, *http.Response) {
 	app := fiber.New()
 	app.Post("/test/", func(c *fiber.Ctx) error {
@@ -90,6 +106,7 @@ func newFiberCtx(dto interface{}, method func(c *fiber.Ctx) error, locals map[st
 
 func TestMain(m *testing.M) {
 	settingService = &settingServiceMocks{}
+	k8service = &k8sServiceMock{}
 
 	code := m.Run()
 	os.Exit(code)
@@ -248,6 +265,75 @@ func TestSettings(t *testing.T) {
 		assert.EqualValues(t, http.StatusInternalServerError, result.Status)
 		assert.EqualValues(t, "something went wrong", result.Message)
 
+	})
+
+}
+func TestIPAddress(t *testing.T) {
+	userDetails := new(token.UserDetails)
+	userDetails.ID = "test@test.com"
+	var locals = map[string]interface{}{}
+	locals["user"] = *userDetails
+	t.Run("get ip address should pass", func(t *testing.T) {
+		k8svcGetFunc = func(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {
+			return &corev1.Service{
+				Status: corev1.ServiceStatus{
+					LoadBalancer: corev1.LoadBalancerStatus{
+						Ingress: []corev1.LoadBalancerIngress{
+							{
+								IP: "1234",
+							},
+						},
+					},
+				},
+			}, nil
+		}
+		body, resp := newFiberCtx("", IPAddress, locals)
+		fmt.Println(string(body))
+
+		var result map[string]setting.IPAddressResponseDto
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
+		assert.EqualValues(t, "1234", result["data"].IPAddress)
+	})
+	t.Run("get ip address should throw if can't get traefik service", func(t *testing.T) {
+		k8svcGetFunc = func(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {
+			return nil, restErrors.NewNotFoundError("can't get traefik service")
+		}
+		body, resp := newFiberCtx("", IPAddress, locals)
+		fmt.Println(string(body))
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+		assert.EqualValues(t, http.StatusNotFound, resp.StatusCode)
+		assert.EqualValues(t, "can't get traefik service", result.Message)
+	})
+	t.Run("get ip address should throw if load balancer ip address didn't get provisioned", func(t *testing.T) {
+		k8svcGetFunc = func(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {
+			return &corev1.Service{
+				Status: corev1.ServiceStatus{
+					LoadBalancer: corev1.LoadBalancerStatus{
+						Ingress: []corev1.LoadBalancerIngress{},
+					},
+				},
+			}, nil
+		}
+		body, resp := newFiberCtx("", IPAddress, locals)
+		fmt.Println(string(body))
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+		assert.EqualValues(t, http.StatusNotFound, resp.StatusCode)
+		assert.EqualValues(t, http.StatusNotFound, result.Status)
+		assert.EqualValues(t, "can't get ip address, still provisioning!", result.Message)
 	})
 
 }

@@ -26,6 +26,10 @@ type SettingResponseDto struct {
 	Value string `json:"value"`
 }
 
+type IPAddressResponseDto struct {
+	IPAddress string `json:"ip_address"`
+}
+
 func Validate(dto interface{}) *restErrors.RestErr {
 	newValidator := validator.New()
 	err := newValidator.Struct(dto)
