@@ -16,6 +16,7 @@ type CreateEndpointDto struct {
 }
 
 type EndpointDto struct {
+	Protocol  string            `json:"protocol"`
 	Name      string            `json:"name"`
 	Routes    map[string]string `json:"routes"`
 	BasicAuth *BasicAuthDto     `json:"basic_auth,omitempty"`
@@ -53,6 +54,7 @@ func Validate(dto interface{}) *restErrors.RestErr {
 func (endpoint *EndpointDto) Marshall(dtoIngressRoute *traefikv1alpha1.IngressRoute, secret *corev1.Secret) *EndpointDto {
 	endpoint.Name = dtoIngressRoute.Name
 	endpoint.Routes = map[string]string{}
+	endpoint.Protocol = dtoIngressRoute.Labels["kotal.io/protocol"]
 	for _, route := range dtoIngressRoute.Spec.Routes {
 		str := strings.ReplaceAll(route.Match, "Host(`", "")
 		str = strings.ReplaceAll(str, "`)", "")
