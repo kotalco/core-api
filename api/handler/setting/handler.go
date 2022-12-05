@@ -68,9 +68,17 @@ func Settings(c *fiber.Ctx) error {
 func IPAddress(c *fiber.Ctx) error {
 	record, err := k8service.Get("traefik", "traefik")
 	if err != nil {
-		go logger.Error("SETTING_GET_IP_ADDRESS", err)
-		customErr := restErrors.NewNotFoundError("can't get traefik service")
-		return c.Status(customErr.Status).JSON(customErr)
+		if err.Status == http.StatusNotFound {
+			record, err = k8service.Get("kotal-traefik", "traefik")
+			if err != nil {
+				go logger.Error("SETTING_GET_IP_ADDRESS", err)
+				return c.Status(err.Status).JSON(err)
+			}
+		} else {
+			go logger.Error("SETTING_GET_IP_ADDRESS", err)
+			return c.Status(err.Status).JSON(err)
+		}
+
 	}
 
 	defer func() {
