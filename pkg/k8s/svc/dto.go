@@ -7,9 +7,9 @@ type SvcDto struct {
 
 var AvailableProtocol = func(protocol string) bool {
 	switch protocol {
-	case "ws", "p2p":
+	case "p2p", "metrics", "discovery", "tls", "tracing", "swarm", "swarm-udp", "prometheus":
 		return false
 	default:
-		return true
+		return true //rpc,ws,api,graphql,gateway,grpc,rest
 	}
 }
