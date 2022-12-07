@@ -88,7 +88,7 @@ func (i *ingressroute) Create(dto *IngressRouteDto) (*traefikv1alpha1.IngressRou
 
 func (i *ingressroute) List(namespace string) (*traefikv1alpha1.IngressRouteList, *restErrors.RestErr) {
 	records := &traefikv1alpha1.IngressRouteList{}
-	err := k8s.K8sClient.List(context.Background(), records, &client.ListOptions{Namespace: namespace})
+	err := k8s.K8sClient.List(context.Background(), records, &client.ListOptions{Namespace: namespace}, &client.MatchingLabels{"app.kubernetes.io/created-by": "kotal-api"})
 	if err != nil {
 		go logger.Error(i.List, err)
 	}
