@@ -10,7 +10,10 @@ WORKDIR /api
 
 COPY . .
 
-RUN CGO_ENABLED=0 go build -v -o server
+ARG EC_PUBLIC_KEY
+ARG SENDGRID_API_KEY
+
+RUN CGO_ENABLED=0 go build -ldflags="-X 'github.com/kotalco/cloud-api/pkg/config.SendgridAPIKey=${SENDGRID_API_KEY}' -X 'github.com/kotalco/cloud-api/pkg/config.ECCPublicKey=${EC_PUBLIC_KEY}'" -v -o server
 
 FROM alpine
 
