@@ -5,6 +5,7 @@ import (
 	k8svc "github.com/kotalco/cloud-api/pkg/k8s/svc"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/logger"
+	v1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -76,10 +77,6 @@ func GetDomainBaseUrl() (string, *restErrors.RestErr) {
 		go logger.Error("SEND_GRID_GET_DOMAIN_BASE_URL", err)
 		return "", restErrors.NewInternalServerError("can't get traefik service")
 	}
-	defer func() {
-		if err := recover(); err != nil {
-			err = restErrors.NewNotFoundError("can't get ip address, still provisioning!")
-		}
-	}()
+	record.Status.LoadBalancer = v1.LoadBalancerStatus{}
 	return record.Status.LoadBalancer.Ingress[0].IP, err
 }

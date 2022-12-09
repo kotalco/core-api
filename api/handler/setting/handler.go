@@ -31,7 +31,7 @@ func ConfigureDomain(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
-	//set domain baseUrl env variable
+
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{Message: "domain configured successfully!"}))
 }
 
