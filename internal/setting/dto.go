@@ -1,7 +1,6 @@
 package setting
 
 import (
-	"fmt"
 	"github.com/go-playground/validator/v10"
 	k8svc "github.com/kotalco/cloud-api/pkg/k8s/svc"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
@@ -68,7 +67,7 @@ func GetDomainBaseUrl() (string, *restErrors.RestErr) {
 	repo := NewRepository()
 	url, _ := repo.Get(DomainKey)
 	if url != "" {
-		return fmt.Sprintf("https://%s", url), nil
+		return url, nil
 	}
 
 	k8service := k8svc.NewService()
@@ -77,5 +76,10 @@ func GetDomainBaseUrl() (string, *restErrors.RestErr) {
 		go logger.Error("SEND_GRID_GET_DOMAIN_BASE_URL", err)
 		return "", restErrors.NewInternalServerError("can't get traefik service")
 	}
-	return record.Status.LoadBalancer.Ingress[0].IP, nil
+	defer func() {
+		if err := recover(); err != nil {
+			err = restErrors.NewNotFoundError("can't get ip address, still provisioning!")
+		}
+	}()
+	return record.Status.LoadBalancer.Ingress[0].IP, err
 }

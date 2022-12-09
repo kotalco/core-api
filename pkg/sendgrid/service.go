@@ -40,7 +40,7 @@ func (service) SignUp(dto *MailRequestDto) *restErrors.RestErr {
 	if restErr != nil {
 		return restErr
 	}
-	baseUrl := fmt.Sprintf("%s/confirm-email?email=%s&token=%s", domainBaseUrl, dto.Email, dto.Token)
+	baseUrl := fmt.Sprintf("https://%s/confirm-email?email=%s&token=%s", domainBaseUrl, dto.Email, dto.Token)
 	htmlContent := fmt.Sprintf("please visit the following link to Confirm  your email address %s", baseUrl)
 	message := mail.NewSingleEmail(from, subject, to, plainTextContent, htmlContent)
 
@@ -66,7 +66,7 @@ func (service) ResendEmailVerification(dto *MailRequestDto) *restErrors.RestErr 
 	subject := "Confirm Your Email"
 	to := mail.NewEmail(greeting, dto.Email)
 	plainTextContent := ""
-	baseUrl := fmt.Sprintf("%s/confirm-email?email=%s&token=%s", domainBaseUrl, dto.Email, dto.Token)
+	baseUrl := fmt.Sprintf("https://%s/confirm-email?email=%s&token=%s", domainBaseUrl, dto.Email, dto.Token)
 	htmlContent := fmt.Sprintf("please visit the following link to Confirm  your email address %s", baseUrl)
 	message := mail.NewSingleEmail(from, subject, to, plainTextContent, htmlContent)
 
@@ -84,11 +84,15 @@ func (service) ResendEmailVerification(dto *MailRequestDto) *restErrors.RestErr 
 }
 
 func (service) ForgetPassword(dto *MailRequestDto) *restErrors.RestErr {
+	domainBaseUrl, restErr := setting.GetDomainBaseUrl()
+	if restErr != nil {
+		return restErr
+	}
 	from := mail.NewEmail(fromName, fromEmail)
 	subject := "Reset Password"
 	to := mail.NewEmail(greeting, dto.Email)
 	plainTextContent := ""
-	baseUrl := fmt.Sprintf("%s/reset-password?email=%s&token=%s", config.Environment.DomainMatchBaseURL, dto.Email, dto.Token)
+	baseUrl := fmt.Sprintf("https://%s/reset-password?email=%s&token=%s", domainBaseUrl, dto.Email, dto.Token)
 	htmlContent := fmt.Sprintf("please visit the following link to reset  your password %s", baseUrl)
 	message := mail.NewSingleEmail(from, subject, to, plainTextContent, htmlContent)
 
@@ -106,11 +110,15 @@ func (service) ForgetPassword(dto *MailRequestDto) *restErrors.RestErr {
 }
 
 func (service) WorkspaceInvitation(dto *WorkspaceInvitationMailRequestDto) *restErrors.RestErr {
+	domainBaseUrl, restErr := setting.GetDomainBaseUrl()
+	if restErr != nil {
+		return restErr
+	}
 	from := mail.NewEmail(fromName, fromEmail)
 	subject := "Workspace Invitation"
 	to := mail.NewEmail(greeting, dto.Email)
 	plainTextContent := ""
-	baseUrl := fmt.Sprintf("%s/workspaces/%s", config.Environment.DomainMatchBaseURL, dto.WorkspaceId)
+	baseUrl := fmt.Sprintf("https://%s/workspaces/%s", domainBaseUrl, dto.WorkspaceId)
 	htmlContent := fmt.Sprintf("You've been invited to %s workspace..   %s ", dto.WorkspaceName, baseUrl)
 	message := mail.NewSingleEmail(from, subject, to, plainTextContent, htmlContent)
 

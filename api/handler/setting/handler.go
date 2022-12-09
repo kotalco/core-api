@@ -3,7 +3,6 @@ package setting
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/kotalco/cloud-api/internal/setting"
-	"github.com/kotalco/cloud-api/pkg/config"
 	k8svc "github.com/kotalco/cloud-api/pkg/k8s/svc"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/logger"
@@ -33,7 +32,6 @@ func ConfigureDomain(c *fiber.Ctx) error {
 		return c.Status(err.Status).JSON(err)
 	}
 	//set domain baseUrl env variable
-	config.Environment.DomainMatchBaseURL = dto.Domain
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{Message: "domain configured successfully!"}))
 }
 
@@ -81,7 +79,6 @@ func IPAddress(c *fiber.Ctx) error {
 			go logger.Error("SETTING_GET_IP_ADDRESS", err)
 			return c.Status(err.Status).JSON(err)
 		}
-
 	}
 
 	defer func() {
