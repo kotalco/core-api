@@ -1,18 +1,23 @@
 package setting
 
 import (
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/kotalco/cloud-api/internal/setting"
+	"github.com/kotalco/cloud-api/pkg/k8s/ingressroute"
 	k8svc "github.com/kotalco/cloud-api/pkg/k8s/svc"
+	"github.com/kotalco/cloud-api/pkg/sqlclient"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/logger"
 	"github.com/kotalco/community-api/pkg/shared"
+	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"net/http"
 )
 
 var (
-	settingService = setting.NewService()
-	k8service      = k8svc.NewService()
+	settingService      = setting.NewService()
+	k8service           = k8svc.NewService()
+	ingressRouteService = ingressroute.NewIngressRoutesService()
 )
 
 func ConfigureDomain(c *fiber.Ctx) error {
@@ -27,11 +32,45 @@ func ConfigureDomain(c *fiber.Ctx) error {
 		return c.Status(restErr.Status).JSON(restErr)
 	}
 
-	err := settingService.WithoutTransaction().ConfigureDomain(dto)
+	txHandle := sqlclient.Begin()
+	err := settingService.WithTransaction(txHandle).ConfigureDomain(dto)
 	if err != nil {
+		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
 
+	//Update API and dashboard ingress routes
+	//get ingressRoute
+	kotalStackIR, err := ingressRouteService.Get("kotal-stack", "kotal")
+	if err != nil {
+		go logger.Panic("CONFIGURE_DOMAIN", err)
+		sqlclient.Rollback(txHandle)
+		return c.Status(err.Status).JSON(err)
+	}
+
+	//update ingress-route
+	kotalStackIR.Spec.TLS = &traefikv1alpha1.TLS{
+		CertResolver: "myresolver",
+	}
+	kotalStackIR.Spec.EntryPoints = []string{"websecure"}
+
+	for i, v := range kotalStackIR.Spec.Routes {
+		switch v.Services[0].Name {
+		case "kotal-dashboard":
+			kotalStackIR.Spec.Routes[i].Match = fmt.Sprintf("Host(`%s`) && PathPrefix(`/`)", dto.Domain)
+		case "kotal-api":
+			kotalStackIR.Spec.Routes[i].Match = fmt.Sprintf("Host(`%s`) && PathPrefix(`/api`)", dto.Domain)
+		}
+	}
+
+	err = ingressRouteService.Update(kotalStackIR)
+	if err != nil {
+		go logger.Panic("CONFIGURE_DOMAIN", err)
+		sqlclient.Rollback(txHandle)
+		return c.Status(err.Status).JSON(err)
+	}
+
+	sqlclient.Commit(txHandle)
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{Message: "domain configured successfully!"}))
 }
 

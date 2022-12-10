@@ -6,13 +6,17 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/kotalco/cloud-api/internal/setting"
+	"github.com/kotalco/cloud-api/pkg/k8s/ingressroute"
+	"github.com/kotalco/cloud-api/pkg/k8s/middleware"
 	"github.com/kotalco/cloud-api/pkg/token"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/shared"
 	"github.com/stretchr/testify/assert"
+	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"gorm.io/gorm"
 	"io/ioutil"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -75,6 +79,45 @@ func (k *k8sServiceMock) Get(name string, namespace string) (*corev1.Service, *r
 	return k8svcGetFunc(name, namespace)
 }
 
+var (
+	ingressRouteCreateFunc func(dto *ingressroute.IngressRouteDto) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr)
+	ingressRouteListFunc   func(namesapce string) (*traefikv1alpha1.IngressRouteList, *restErrors.RestErr)
+	ingressRouteGetFunc    func(name string, namespace string) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr)
+	ingressRouteDeleteFunc func(name string, namespace string) *restErrors.RestErr
+	ingressRouteUpdateFunc func(record *traefikv1alpha1.IngressRoute) *restErrors.RestErr
+)
+
+type ingressRouteServiceMock struct{}
+
+func (i ingressRouteServiceMock) Create(dto *ingressroute.IngressRouteDto) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr) {
+	return ingressRouteCreateFunc(dto)
+}
+
+func (i ingressRouteServiceMock) List(namesapce string) (*traefikv1alpha1.IngressRouteList, *restErrors.RestErr) {
+	return ingressRouteListFunc(namesapce)
+}
+
+func (i ingressRouteServiceMock) Get(name string, namespace string) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr) {
+	return ingressRouteGetFunc(name, namespace)
+}
+
+func (i ingressRouteServiceMock) Delete(name string, namespace string) *restErrors.RestErr {
+	return ingressRouteDeleteFunc(name, namespace)
+}
+func (i ingressRouteServiceMock) Update(record *traefikv1alpha1.IngressRoute) *restErrors.RestErr {
+	return ingressRouteUpdateFunc(record)
+}
+
+type k8MiddlewareServiceMock struct{}
+
+var (
+	k8middlewareCreateFunc func(dto *middleware.CreateMiddlewareDto) *restErrors.RestErr
+)
+
+func (k k8MiddlewareServiceMock) Create(dto *middleware.CreateMiddlewareDto) *restErrors.RestErr {
+	return k8middlewareCreateFunc(dto)
+}
+
 func newFiberCtx(dto interface{}, method func(c *fiber.Ctx) error, locals map[string]interface{}) ([]byte, *http.Response) {
 	app := fiber.New()
 	app.Post("/test/", func(c *fiber.Ctx) error {
@@ -107,6 +150,7 @@ func newFiberCtx(dto interface{}, method func(c *fiber.Ctx) error, locals map[st
 func TestMain(m *testing.M) {
 	settingService = &settingServiceMocks{}
 	k8service = &k8sServiceMock{}
+	ingressRouteService = &ingressRouteServiceMock{}
 
 	code := m.Run()
 	os.Exit(code)
@@ -123,6 +167,26 @@ func TestConfigureDomain(t *testing.T) {
 
 	t.Run("ConfigureDomain should pass", func(t *testing.T) {
 		settingConfigureDomainFunc = func(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr {
+			return nil
+		}
+
+		ingressRouteGetFunc = func(name string, namespace string) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr) {
+			return &traefikv1alpha1.IngressRoute{
+				TypeMeta:   metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{},
+				Spec: traefikv1alpha1.IngressRouteSpec{
+					Routes: []traefikv1alpha1.Route{{
+						Services: []traefikv1alpha1.Service{{
+							LoadBalancerSpec: traefikv1alpha1.LoadBalancerSpec{Name: "kotal-dashboard"},
+						}, {
+							LoadBalancerSpec: traefikv1alpha1.LoadBalancerSpec{Name: "kotal-api"},
+						}},
+					}},
+				},
+			}, nil
+		}
+
+		ingressRouteUpdateFunc = func(record *traefikv1alpha1.IngressRoute) *restErrors.RestErr {
 			return nil
 		}
 		body, resp := newFiberCtx(validDto, ConfigureDomain, locals)
@@ -170,6 +234,61 @@ func TestConfigureDomain(t *testing.T) {
 		assert.EqualValues(t, "something went wrong", result.Message)
 		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
 	})
+	t.Run("ConfigureDomain should throw if can't get kotal stack ingress-route", func(t *testing.T) {
+		settingConfigureDomainFunc = func(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr {
+			return nil
+		}
+
+		ingressRouteGetFunc = func(name string, namespace string) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr) {
+			return nil, restErrors.NewNotFoundError("no such record")
+		}
+
+		body, resp := newFiberCtx(validDto, ConfigureDomain, locals)
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+		assert.EqualValues(t, http.StatusNotFound, resp.StatusCode)
+		assert.EqualValues(t, "no such record", result.Message)
+	})
+
+	t.Run("ConfigureDomain should throw if can't update kotal stack", func(t *testing.T) {
+		settingConfigureDomainFunc = func(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr {
+			return nil
+		}
+
+		ingressRouteGetFunc = func(name string, namespace string) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr) {
+			return &traefikv1alpha1.IngressRoute{
+				TypeMeta:   metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{},
+				Spec: traefikv1alpha1.IngressRouteSpec{
+					Routes: []traefikv1alpha1.Route{{
+						Services: []traefikv1alpha1.Service{{
+							LoadBalancerSpec: traefikv1alpha1.LoadBalancerSpec{Name: "kotal-dashboard"},
+						}, {
+							LoadBalancerSpec: traefikv1alpha1.LoadBalancerSpec{Name: "kotal-api"},
+						}},
+					}},
+				},
+			}, nil
+		}
+
+		ingressRouteUpdateFunc = func(record *traefikv1alpha1.IngressRoute) *restErrors.RestErr {
+			return restErrors.NewInternalServerError("something went wrong")
+		}
+		body, resp := newFiberCtx(validDto, ConfigureDomain, locals)
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
+		assert.EqualValues(t, "something went wrong", result.Message)
+	})
+
 }
 func TestConfigureRegistration(t *testing.T) {
 	userDetails := new(token.UserDetails)
