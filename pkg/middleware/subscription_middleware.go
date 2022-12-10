@@ -64,18 +64,18 @@ func IsSubscription(c *fiber.Ctx) error {
 
 func NodesLimitProtected(c *fiber.Ctx) error {
 	//validate nodes limit
-	limit, err := statefulSetService.Count()
-	if err != nil {
-		return c.Status(err.Status).JSON(err)
-	}
-	if limit >= subscriptionAPI.SubscriptionDetails.NodesLimit {
-		err := restErrors.RestErr{
-			Message: "reached nodes limit",
-			Status:  http.StatusForbidden,
-			Name:    NodeLimitStatusMessage,
-		}
-		return c.Status(err.Status).JSON(err)
-	}
+	//limit, err := statefulSetService.Count()
+	//if err != nil {
+	//	return c.Status(err.Status).JSON(err)
+	//}
+	//if limit >= subscriptionAPI.SubscriptionDetails.NodesLimit {
+	//	err := restErrors.RestErr{
+	//		Message: "reached nodes limit",
+	//		Status:  http.StatusForbidden,
+	//		Name:    NodeLimitStatusMessage,
+	//	}
+	//	return c.Status(err.Status).JSON(err)
+	//}
 
 	return c.Next()
 }

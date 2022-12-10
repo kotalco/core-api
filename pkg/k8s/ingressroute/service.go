@@ -28,6 +28,8 @@ type IIngressRoute interface {
 	Get(name string, namespace string) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr)
 	// Delete takes name  and namespace of the ingressRoute, check if it exists and delete it if found. Returns an error if one occurs.
 	Delete(name string, namespace string) *restErrors.RestErr
+	//Update takes IngressRoute and updates it, return an error if any
+	Update(record *traefikv1alpha1.IngressRoute) *restErrors.RestErr
 }
 
 func NewIngressRoutesService() IIngressRoute {
@@ -125,9 +127,18 @@ func (i *ingressroute) Delete(name string, namespace string) *restErrors.RestErr
 
 	intErr := k8s.K8sClient.Delete(context.Background(), record)
 	if intErr != nil {
-		go logger.Error(i.Delete, err)
+		go logger.Error(i.Delete, intErr)
 		return restErrors.NewInternalServerError("something went wrong")
 	}
 
+	return nil
+}
+
+func (i *ingressroute) Update(record *traefikv1alpha1.IngressRoute) *restErrors.RestErr {
+	intErr := k8s.K8sClient.Update(context.Background(), record)
+	if intErr != nil {
+		go logger.Error(i.Update, intErr)
+		return restErrors.NewInternalServerError("can't update ingressRoute")
+	}
 	return nil
 }

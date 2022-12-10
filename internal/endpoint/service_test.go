@@ -20,6 +20,7 @@ var (
 	ingressRouteListFunc   func(namesapce string) (*traefikv1alpha1.IngressRouteList, *restErrors.RestErr)
 	ingressRouteGetFunc    func(name string, namespace string) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr)
 	ingressRouteDeleteFunc func(name string, namespace string) *restErrors.RestErr
+	ingressRouteUpdateFunc func(record *traefikv1alpha1.IngressRoute) *restErrors.RestErr
 )
 
 type ingressRouteServiceMock struct{}
@@ -38,6 +39,9 @@ func (i ingressRouteServiceMock) Get(name string, namespace string) (*traefikv1a
 
 func (i ingressRouteServiceMock) Delete(name string, namespace string) *restErrors.RestErr {
 	return ingressRouteDeleteFunc(name, namespace)
+}
+func (i ingressRouteServiceMock) Update(record *traefikv1alpha1.IngressRoute) *restErrors.RestErr {
+	return ingressRouteUpdateFunc(record)
 }
 
 type k8MiddlewareServiceMock struct{}
