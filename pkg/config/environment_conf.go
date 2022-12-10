@@ -39,7 +39,6 @@ var (
 		RatelimiterPerMinute                   string
 		SubscriptionAPIBaseURL                 string
 		ECCPublicKey                           string
-		DomainMatchBaseURL                     string
 	}{
 		ServerPort:                             getenv("CLOUD_API_SERVER_PORT", "6000"),
 		Environment:                            getenv("ENVIRONMENT", "development"),
@@ -64,7 +63,6 @@ var (
 		RatelimiterPerMinute:                   getenv("RATE_LIMITER_PER_MINUTE", "100"),
 		SubscriptionAPIBaseURL:                 getenv("SUBSCRIPTION_API_BASE_URL", "http://localhost:8081"),
 		ECCPublicKey:                           ECCPublicKey,
-		DomainMatchBaseURL:                     os.Getenv("DOMAIN_MATCH_BASE_URL"),
 	}
 )
 

@@ -31,6 +31,7 @@ func ConfigureDomain(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
+
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{Message: "domain configured successfully!"}))
 }
 
@@ -78,7 +79,6 @@ func IPAddress(c *fiber.Ctx) error {
 			go logger.Error("SETTING_GET_IP_ADDRESS", err)
 			return c.Status(err.Status).JSON(err)
 		}
-
 	}
 
 	defer func() {
