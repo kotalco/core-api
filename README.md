@@ -40,7 +40,6 @@ in production, staging environment it should passed as a build time variables
 - `SEND_GRID_SENDER_EMAIL` the email address used to send the emails with
 - `2_FACTOR_SECRET` symmetric key used to sign the user verification key
 - `RATE_LIMITER_PER_MINUTE` 
-- `DOMAIN_MATCH_BASE_URL`
 
 
 
