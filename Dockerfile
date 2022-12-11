@@ -13,7 +13,11 @@ COPY . .
 ARG EC_PUBLIC_KEY
 ARG SENDGRID_API_KEY
 
-RUN CGO_ENABLED=0 go build -ldflags="-X 'github.com/kotalco/cloud-api/pkg/config.SendgridAPIKey=${SENDGRID_API_KEY}' -X 'github.com/kotalco/cloud-api/pkg/config.ECCPublicKey=${EC_PUBLIC_KEY}'" -v -o server
+RUN --mount=type=secret,id=SENDGRID_API_KEY \
+    --mount=type=secret,id=EC_PUBLIC_KEY \
+    export SENDGRID_API_KEY=$(cat /run/secrets/SENDGRID_API_KEY) && \
+    export EC_PUBLIC_KEY=$(cat /run/secrets/EC_PUBLIC_KEY) && \
+    CGO_ENABLED=0 go build -ldflags="-X 'github.com/kotalco/cloud-api/pkg/config.SendgridAPIKey=${SENDGRID_API_KEY}' -X 'github.com/kotalco/cloud-api/pkg/config.ECCPublicKey=${EC_PUBLIC_KEY}'" -v -o server
 
 FROM alpine
 
