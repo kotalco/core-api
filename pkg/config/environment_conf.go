@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"os"
 )
 
@@ -59,22 +58,21 @@ var (
 		VerificationTokenExpiryHours:           getenv("VERIFICATION_TOKEN_EXPIRY_HOURS", "24"),
 		SendgridSenderName:                     getenv("SEND_GRID_SENDER_NAME", "Kotal Notifications"),
 		SendgridsenderEmail:                    getenv("SEND_GRID_SENDER_EMAIL", "notifications@kotal.co"),
-		SendgridAPIKey:                         SendgridAPIKey,
+		SendgridAPIKey:                         os.Getenv("SEND_GRID_API_KEY"),
 		TwoFactorSecret:                        getenv("2_FACTOR_SECRET", "secret"), // TODO: change 2fa secret default value
 		RatelimiterPerMinute:                   getenv("RATE_LIMITER_PER_MINUTE", "100"),
 		SubscriptionAPIBaseURL:                 getenv("SUBSCRIPTION_API_BASE_URL", "http://localhost:8081"),
-		ECCPublicKey:                           ECCPublicKey,
+		ECCPublicKey:                           os.Getenv("ECC_PUBLIC_KEY"),
 	}
 )
 
 func init() {
 
-	// If runtime environment is developlent
-	// Set public key from the environment variable
-	if Environment.Environment == "development" {
-		Environment.ECCPublicKey = os.Getenv("ECC_PUBLIC_KEY")
-		Environment.SendgridAPIKey = os.Getenv("SEND_GRID_API_KEY")
+	// If runtime environment is production
+	// Set sendgrid api key and ec public key from build-time variables
+	if Environment.Environment == "production" {
+		Environment.ECCPublicKey = ECCPublicKey
+		Environment.SendgridAPIKey = SendgridAPIKey
 	}
 
-	fmt.Printf("EC public key is %s", Environment.ECCPublicKey)
 }
