@@ -48,5 +48,5 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           secrets: |
-            "SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}"
-            "EC_PUBLIC_KEY=${{ secrets.EC_PUBLIC_KEY }}"
+            SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}
+            EC_PUBLIC_KEY=${{ secrets.EC_PUBLIC_KEY }}
