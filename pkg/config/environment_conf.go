@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 )
 
@@ -75,4 +76,5 @@ func init() {
 		Environment.SendgridAPIKey = os.Getenv("SEND_GRID_API_KEY")
 	}
 
+	fmt.Printf("EC public key is %s", Environment.ECCPublicKey)
 }
