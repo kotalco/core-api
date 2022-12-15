@@ -12,10 +12,17 @@ import (
 	"gorm.io/gorm"
 )
 
-type service struct{}
+const (
+	SeedUsersTable     = "SeedUsersTable"
+	SeedWorkspaceTable = "SeedWorkspaceTable"
+	SeedSettingTable   = "SeedSettingTable"
+)
+
+type service struct {
+}
 
 type IService interface {
-	Seeds() []Definition
+	Seeds() map[string]Definition
 }
 
 var (
@@ -29,11 +36,10 @@ func NewService(dbClient *gorm.DB) IService {
 	return newService
 }
 
-func (s service) Seeds() []Definition {
+func (s service) Seeds() map[string]Definition {
 	defaultUserId := uuid.NewString()
-	return []Definition{
-		Definition{
-			Name: "SeedUsersTable",
+	return map[string]Definition{
+		SeedUsersTable: {
 			Run: func() error {
 				hashedPassword, err := hashing.Hash("develop", 13)
 				if err != nil {
@@ -48,8 +54,7 @@ func (s service) Seeds() []Definition {
 				return seeders.SeedUserTable(developUser)
 			},
 		},
-		Definition{
-			Name: "SeedWorkspaceTable",
+		SeedWorkspaceTable: {
 			Run: func() error {
 				newWorkspace := new(workspace.Workspace)
 				newWorkspace.ID = uuid.New().String()
@@ -68,8 +73,7 @@ func (s service) Seeds() []Definition {
 				return seeders.SeedWorkspaceTable(newWorkspace)
 			},
 		},
-		Definition{
-			Name: "SeedSettingTable",
+		SeedSettingTable: {
 			Run: func() error {
 				record := new(setting.Setting)
 				record.Key = setting.RegistrationKey

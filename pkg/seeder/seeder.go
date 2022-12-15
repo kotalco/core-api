@@ -11,8 +11,7 @@ import (
 )
 
 type Definition struct {
-	Name string
-	Run  func() error
+	Run func() error
 }
 
 type seeder struct {

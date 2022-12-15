@@ -32,11 +32,18 @@ func main() {
 			go logger.Error(step.Name, err)
 		}
 	}
+
+	//seed production tables
+	seederService := seeder.NewService(dbClient)
+	err := seederService.Seeds()[seeder.SeedSettingTable].Run()
+	if err != nil {
+		go logger.Error(seeder.SeedSettingTable, err)
+	}
+	//seed developments tables
 	if config.Environment.Environment == "development" {
-		seederService := seeder.NewService(dbClient)
-		for _, step := range seederService.Seeds() {
+		for v, step := range seederService.Seeds() {
 			if err := step.Run(); err != nil {
-				go logger.Error(step.Name, err)
+				go logger.Error(v, err)
 			}
 		}
 	}
