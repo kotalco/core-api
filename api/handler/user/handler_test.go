@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
 	"github.com/kotalco/cloud-api/internal/setting"
 	"github.com/kotalco/cloud-api/internal/workspace"
 	"github.com/kotalco/cloud-api/internal/workspaceuser"
@@ -350,15 +349,7 @@ func TestSignUp(t *testing.T) {
 			return "JWT-token", nil
 		}
 		usersCountFunc = func() (int64, *restErrors.RestErr) {
-			return 2, nil
-		}
-
-		CreateWorkspaceFunc = func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr) {
-			responseDto := new(workspace.Workspace)
-			responseDto.ID = uuid.New().String()
-			responseDto.Name = "testNamespace"
-			responseDto.K8sNamespace = "testNamespace" + "-" + responseDto.ID
-			return responseDto, nil
+			return 1, nil
 		}
 
 		CreateUserDefaultWorkspaceFunc = func(userId string) *restErrors.RestErr {
@@ -380,8 +371,7 @@ func TestSignUp(t *testing.T) {
 		assert.EqualValues(t, http.StatusCreated, resp.StatusCode)
 		assert.EqualValues(t, "test@test.com", result["data"].Email)
 	})
-
-	t.Run("Sign_Up_Should_Pass_Even_If_Can't_Create_Work_Space", func(t *testing.T) {
+	t.Run("sign up should throw if can't create user default workspace", func(t *testing.T) {
 		settingIsRegistrationEnabledFunc = func() bool {
 			return true
 		}
@@ -396,93 +386,22 @@ func TestSignUp(t *testing.T) {
 		}
 		usersCountFunc = func() (int64, *restErrors.RestErr) {
 			return 1, nil
-		}
-		VerifyFunc = func(userId string, token string) *restErrors.RestErr {
-			return nil
-		}
-		VerifyEmailFunc = func(model *user.User) *restErrors.RestErr {
-			return nil
-		}
-		usersSetAsPlatformAdminFunc = func(model *user.User) *restErrors.RestErr {
-			return nil
-		}
-		settingConfigureRegistrationFunc = func(dto *setting.ConfigureRegistrationRequestDto) *restErrors.RestErr {
-			return nil
-		}
-		CreateWorkspaceFunc = func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr) {
-			return nil, restErrors.NewInternalServerError("can't create workspace")
-		}
-
-		SignUpMailFunc = func(dto *sendgrid.MailRequestDto) *restErrors.RestErr {
-			return nil
-		}
-
-		body, resp := newFiberCtx(validDto, SignUp, map[string]interface{}{})
-
-		var result map[string]user.UserResponseDto
-		err := json.Unmarshal(body, &result)
-		if err != nil {
-			panic(err.Error())
-		}
-
-		assert.EqualValues(t, http.StatusCreated, resp.StatusCode)
-		assert.EqualValues(t, "test@test.com", result["data"].Email)
-	})
-	t.Run("Sign_Up_Should_Pass_Even_If_Can't_Create_Namespace", func(t *testing.T) {
-		settingIsRegistrationEnabledFunc = func() bool {
-			return true
-		}
-		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr) {
-			newUser := new(user.User)
-			newUser.Email = "test@test.com"
-			return newUser, nil
-		}
-
-		CreateFunc = func(userId string) (string, *restErrors.RestErr) {
-			return "JWT-token", nil
-		}
-		usersCountFunc = func() (int64, *restErrors.RestErr) {
-			return 1, nil
-		}
-		VerifyFunc = func(userId string, token string) *restErrors.RestErr {
-			return nil
-		}
-		VerifyEmailFunc = func(model *user.User) *restErrors.RestErr {
-			return nil
-		}
-		usersSetAsPlatformAdminFunc = func(model *user.User) *restErrors.RestErr {
-			return nil
-		}
-		settingConfigureRegistrationFunc = func(dto *setting.ConfigureRegistrationRequestDto) *restErrors.RestErr {
-			return nil
-		}
-
-		CreateWorkspaceFunc = func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr) {
-			responseDto := new(workspace.Workspace)
-			responseDto.ID = uuid.New().String()
-			responseDto.Name = "testNamespace"
-			responseDto.K8sNamespace = "testNamespace" + "-" + responseDto.ID
-			return responseDto, nil
 		}
 
 		CreateUserDefaultWorkspaceFunc = func(userId string) *restErrors.RestErr {
-			return nil
-		}
-
-		SignUpMailFunc = func(dto *sendgrid.MailRequestDto) *restErrors.RestErr {
-			return nil
+			return restErrors.NewInternalServerError("something went wrong")
 		}
 
 		body, resp := newFiberCtx(validDto, SignUp, map[string]interface{}{})
 
-		var result map[string]user.UserResponseDto
+		var result restErrors.RestErr
 		err := json.Unmarshal(body, &result)
 		if err != nil {
 			panic(err.Error())
 		}
 
-		assert.EqualValues(t, http.StatusCreated, resp.StatusCode)
-		assert.EqualValues(t, "test@test.com", result["data"].Email)
+		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
+		assert.EqualValues(t, "something went wrong", result.Message)
 	})
 
 	t.Run("Sign_Up_Should_Throw_Validation_Errors", func(t *testing.T) {
@@ -597,7 +516,7 @@ func TestSignUp(t *testing.T) {
 			return "JWT-token", nil
 		}
 		usersCountFunc = func() (int64, *restErrors.RestErr) {
-			return 1, nil
+			return 0, nil
 		}
 		VerifyFunc = func(userId string, token string) *restErrors.RestErr {
 			return restErrors.NewInternalServerError("verification verify error")
@@ -628,7 +547,7 @@ func TestSignUp(t *testing.T) {
 			return "JWT-token", nil
 		}
 		usersCountFunc = func() (int64, *restErrors.RestErr) {
-			return 1, nil
+			return 0, nil
 		}
 		VerifyFunc = func(userId string, token string) *restErrors.RestErr {
 			return nil
@@ -662,7 +581,7 @@ func TestSignUp(t *testing.T) {
 			return "JWT-token", nil
 		}
 		usersCountFunc = func() (int64, *restErrors.RestErr) {
-			return 1, nil
+			return 0, nil
 		}
 		VerifyFunc = func(userId string, token string) *restErrors.RestErr {
 			return nil
@@ -699,7 +618,7 @@ func TestSignUp(t *testing.T) {
 			return "JWT-token", nil
 		}
 		usersCountFunc = func() (int64, *restErrors.RestErr) {
-			return 1, nil
+			return 0, nil
 		}
 		VerifyFunc = func(userId string, token string) *restErrors.RestErr {
 			return nil
