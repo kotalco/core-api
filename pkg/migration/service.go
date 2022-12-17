@@ -1,14 +1,24 @@
 package migration
 
 import (
+	"github.com/kotalco/community-api/pkg/logger"
 	"gorm.io/gorm"
+)
+
+const (
+	MigrateUserTable          = "MigrateUserTable"
+	MigrateVerificationTable  = "MigrateVerificationTable"
+	MigrateWorkspaceTable     = "MigrateWorkspaceTable"
+	MigrateWorkspaceUserTable = "MigrateWorkspaceUserTable"
+	MigrateSettingTable       = "MigrateSettingTable"
 )
 
 type service struct {
 }
 
 type IService interface {
-	Migrations() []Definition
+	Migrations() map[string]Definition
+	Run()
 }
 
 var migrator IMigration
@@ -21,35 +31,45 @@ func NewService(dbClient *gorm.DB) IService {
 
 }
 
-func (service) Migrations() []Definition {
-	return []Definition{
-		Definition{
-			Name: "CreateUserTable",
+func (service) Migrations() map[string]Definition {
+	return map[string]Definition{
+		MigrateUserTable: {
+			Name: MigrateUserTable,
 			Run: func() error {
 				return migrator.CreateUserTable()
 			},
 		},
-		Definition{
-			Name: "CreateVerificationTable",
+		MigrateVerificationTable: {
+			Name: MigrateVerificationTable,
 			Run: func() error {
 				return migrator.CreateVerificationTable()
 			},
 		},
-		Definition{
-			Name: "CreateWorkspaceTable",
+		MigrateWorkspaceTable: {
+			Name: MigrateWorkspaceTable,
 			Run: func() error {
 				return migrator.CreateWorkspaceTable()
 			},
 		},
-		Definition{Name: "CreateWorkspaceUserTable",
+		MigrateWorkspaceUserTable: {
+			Name: MigrateWorkspaceUserTable,
 			Run: func() error {
 				return migrator.CreateWorkspaceUserTable()
 			},
 		},
-		Definition{Name: "CreateSettingTable",
+		MigrateSettingTable: {
+			Name: MigrateSettingTable,
 			Run: func() error {
 				return migrator.CreateSettingTable()
 			},
 		},
+	}
+}
+
+func (s service) Run() {
+	for _, step := range s.Migrations() {
+		if err := step.Run(); err != nil {
+			go logger.Error(step.Name, err)
+		}
 	}
 }

@@ -23,6 +23,7 @@ type service struct {
 
 type IService interface {
 	Seeds() map[string]Definition
+	Run()
 }
 
 var (
@@ -81,5 +82,13 @@ func (s service) Seeds() map[string]Definition {
 				return seeders.SeedSettingTable(record)
 			},
 		},
+	}
+}
+
+func (s service) Run() {
+	//seed setting table
+	err := s.Seeds()[SeedSettingTable].Run()
+	if err != nil {
+		go logger.Error(seeder.SeedSettingTable, err)
 	}
 }
