@@ -43,6 +43,11 @@ func SignUp(c *fiber.Ctx) error {
 		return c.Status(err.Status).JSON(err)
 	}
 
+	usersCount, restErr := userService.WithoutTransaction().Count()
+	if restErr != nil {
+		return c.Status(restErr.Status).JSON(restErr)
+	}
+
 	txHandle := sqlclient.Begin()
 	model, restErr := userService.WithTransaction(txHandle).SignUp(dto)
 	if restErr != nil {
@@ -51,12 +56,6 @@ func SignUp(c *fiber.Ctx) error {
 	}
 
 	token, restErr := verificationService.WithTransaction(txHandle).Create(model.ID)
-	if restErr != nil {
-		sqlclient.Rollback(txHandle)
-		return c.Status(restErr.Status).JSON(restErr)
-	}
-
-	usersCount, restErr := userService.WithoutTransaction().Count()
 	if restErr != nil {
 		sqlclient.Rollback(txHandle)
 		return c.Status(restErr.Status).JSON(restErr)
