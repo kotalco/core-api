@@ -13,6 +13,7 @@ import (
 	"github.com/kotalco/community-api/pkg/logger"
 	"github.com/kotalco/community-api/pkg/shared"
 	"net/http"
+	"reflect"
 	"strconv"
 )
 
@@ -42,6 +43,11 @@ func SignUp(c *fiber.Ctx) error {
 		return c.Status(err.Status).JSON(err)
 	}
 
+	usersCount, restErr := userService.WithoutTransaction().Count()
+	if restErr != nil {
+		return c.Status(restErr.Status).JSON(restErr)
+	}
+
 	txHandle := sqlclient.Begin()
 	model, restErr := userService.WithTransaction(txHandle).SignUp(dto)
 	if restErr != nil {
@@ -55,12 +61,7 @@ func SignUp(c *fiber.Ctx) error {
 		return c.Status(restErr.Status).JSON(restErr)
 	}
 
-	usersCount, restErr := userService.WithoutTransaction().Count()
-	if restErr != nil {
-		sqlclient.Rollback(txHandle)
-		return c.Status(restErr.Status).JSON(restErr)
-	}
-	if usersCount == 1 { //check if this user is first user in the cluster=>verify email address
+	if reflect.ValueOf(usersCount).IsZero() { //check if this user is first user in the cluster=>verify email address
 		restErr = verificationService.WithTransaction(txHandle).Verify(model.ID, token)
 		if restErr != nil {
 			sqlclient.Rollback(txHandle)
