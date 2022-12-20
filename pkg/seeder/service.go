@@ -8,9 +8,7 @@ import (
 )
 
 const (
-	SeedUsersTable     = "SeedUsersTable"
-	SeedWorkspaceTable = "SeedWorkspaceTable"
-	SeedSettingTable   = "SeedSettingTable"
+	SeedSettingTable = "SeedSettingTable"
 )
 
 type service struct {
