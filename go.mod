@@ -9,7 +9,7 @@ require (
 	github.com/gofiber/websocket/v2 v2.1.2
 	github.com/google/uuid v1.3.0
 	github.com/jackc/pgconn v1.13.0
-	github.com/kotalco/community-api v0.0.0-20221215144620-5bce22539141
+	github.com/kotalco/community-api v0.0.0-20221220083830-048ec57d76c7
 	github.com/pquerna/otp v1.4.0
 	github.com/sendgrid/sendgrid-go v3.12.0+incompatible
 	github.com/stretchr/testify v1.8.1
@@ -119,7 +119,7 @@ require (
 	k8s.io/apiextensions-apiserver v0.26.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20221207184640-f3cff1453715 // indirect
 	k8s.io/metrics v0.26.0 // indirect
-	sigs.k8s.io/controller-runtime v0.14.0
+	sigs.k8s.io/controller-runtime v0.14.1
 )
 
 replace (
