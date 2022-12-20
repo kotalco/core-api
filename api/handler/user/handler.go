@@ -1,6 +1,7 @@
 package user
 
 import (
+	"database/sql"
 	"github.com/gofiber/fiber/v2"
 	"github.com/kotalco/cloud-api/internal/setting"
 	"github.com/kotalco/cloud-api/internal/user"
@@ -43,10 +44,16 @@ func SignUp(c *fiber.Ctx) error {
 		return c.Status(err.Status).JSON(err)
 	}
 
-	usersCount, restErr := userService.WithoutTransaction().Count()
+	txRead := sqlclient.Begin(&sql.TxOptions{
+		Isolation: sql.LevelReadUncommitted,
+	})
+
+	usersCount, restErr := userService.WithTransaction(txRead).Count()
 	if restErr != nil {
+		sqlclient.Rollback(txRead)
 		return c.Status(restErr.Status).JSON(restErr)
 	}
+	sqlclient.Commit(txRead)
 
 	txHandle := sqlclient.Begin()
 	model, restErr := userService.WithTransaction(txHandle).SignUp(dto)
