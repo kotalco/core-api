@@ -1,6 +1,7 @@
 package sqlclient
 
 import (
+	"database/sql"
 	"sync"
 
 	glogger "gorm.io/gorm/logger"
@@ -34,8 +35,8 @@ func OpenDBConnection() *gorm.DB {
 	return dbConnection
 }
 
-func Begin() *gorm.DB {
-	return dbConnection.Begin()
+func Begin(opts ...*sql.TxOptions) *gorm.DB {
+	return dbConnection.Begin(opts...)
 
 }
 
