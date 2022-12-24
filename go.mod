@@ -9,7 +9,7 @@ require (
 	github.com/gofiber/websocket/v2 v2.1.2
 	github.com/google/uuid v1.3.0
 	github.com/jackc/pgconn v1.13.0
-	github.com/kotalco/community-api v0.0.0-20221220083830-048ec57d76c7
+	github.com/kotalco/community-api v0.0.0-20221224213837-a61969412675
 	github.com/pquerna/otp v1.4.0
 	github.com/sendgrid/sendgrid-go v3.12.0+incompatible
 	github.com/stretchr/testify v1.8.1
@@ -68,7 +68,7 @@ require (
 	github.com/prometheus/client_golang v1.14.0 // indirect
 	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.39.0 // indirect
-	github.com/prometheus/procfs v0.8.0 // indirect
+	github.com/prometheus/procfs v0.9.0 // indirect
 	github.com/rivo/uniseg v0.4.3 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect

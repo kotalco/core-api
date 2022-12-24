@@ -199,8 +199,8 @@ github.com/klauspost/compress v1.15.13 h1:NFn1Wr8cfnenSJSA46lLq4wHCcBzKTSjnBIexD
 github.com/klauspost/compress v1.15.13/go.mod h1:QPwzmACJjUTFsnSHH934V6woptycfrDDJnH7hvFVbGM=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
 github.com/konsorten/go-windows-terminal-sequences v1.0.2/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
-github.com/kotalco/community-api v0.0.0-20221220083830-048ec57d76c7 h1:/IDjYzdzpW+5HpPaqJTzoxRWlijPLUMT2VfP0gUxR8g=
-github.com/kotalco/community-api v0.0.0-20221220083830-048ec57d76c7/go.mod h1:OkvtrHgpnSafCXmo2UKgEWbhpGOF2+934SGfZxuy2lU=
+github.com/kotalco/community-api v0.0.0-20221224213837-a61969412675 h1:8gZESUbr0/CZi9UhFONdXP4AABXmXhFwCEa7Pc6j5KM=
+github.com/kotalco/community-api v0.0.0-20221224213837-a61969412675/go.mod h1:aRWulDr+18DinSsDEqGNU5Vkws82UOLmc54qVjgKUz0=
 github.com/kotalco/kotal v0.0.0-20221126235420-a65c5a9c285f h1:Q8YCOTXFyK9UU5dr1XLl2satI2ABiKj4ifEh5oCC2S8=
 github.com/kotalco/kotal v0.0.0-20221126235420-a65c5a9c285f/go.mod h1:fUDA69YfT7m+Tlu+ISRLtnG6J9StRK9Zr/cP4X33qQI=
 github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=
@@ -269,8 +269,8 @@ github.com/prometheus/client_model v0.3.0 h1:UBgGFHqYdG/TPFD1B1ogZywDqEkwp3fBMvq
 github.com/prometheus/client_model v0.3.0/go.mod h1:LDGWKZIo7rky3hgvBe+caln+Dr3dPggB5dvjtD7w9+w=
 github.com/prometheus/common v0.39.0 h1:oOyhkDq05hPZKItWVBkJ6g6AtGxi+fy7F4JvUV8uhsI=
 github.com/prometheus/common v0.39.0/go.mod h1:6XBZ7lYdLCbkAVhwRsWTZn+IN5AB9F/NXd5w0BbEX0Y=
-github.com/prometheus/procfs v0.8.0 h1:ODq8ZFEaYeCaZOJlZZdJA2AbQR98dSHSM1KW/You5mo=
-github.com/prometheus/procfs v0.8.0/go.mod h1:z7EfXMXOkbkqb9IINtpCn86r/to3BnA0uaxHdg830/4=
+github.com/prometheus/procfs v0.9.0 h1:wzCHvIvM5SxWqYvwgVL7yJY8Lz3PKn49KQtpgMYJfhI=
+github.com/prometheus/procfs v0.9.0/go.mod h1:+pB4zwohETzFnmlpe6yd2lSc+0/46IYZRB/chUwxUZY=
 github.com/rivo/uniseg v0.2.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=
 github.com/rivo/uniseg v0.4.3 h1:utMvzDsuh3suAEnhH0RdHmoPbU648o6CvXxTx4SBMOw=
 github.com/rivo/uniseg v0.4.3/go.mod h1:FN3SvrM+Zdj16jyLfmOkMNblXMcoc8DfTHruCPUcx88=
