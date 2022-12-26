@@ -4,13 +4,15 @@ import (
 	"fmt"
 	"github.com/go-playground/validator/v10"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
+	"github.com/kotalco/community-api/pkg/logger"
 	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
+	"regexp"
 	"strings"
 )
 
 type CreateEndpointDto struct {
-	Name         string `json:"name" validate:"required,lte=200"`
+	Name         string `json:"name" validate:"regexp,lt=64"`
 	ServiceName  string `json:"service_name" validate:"required"`
 	UseBasicAuth bool   `json:"use_basic_auth"`
 }
@@ -29,14 +31,22 @@ type BasicAuthDto struct {
 
 func Validate(dto interface{}) *restErrors.RestErr {
 	newValidator := validator.New()
-	err := newValidator.Struct(dto)
+	err := newValidator.RegisterValidation("regexp", func(fl validator.FieldLevel) bool {
+		re := regexp.MustCompile("^([a-z]|[0-9])([a-z]|[0-9]|-)+([a-z]|[0-9])$")
+		return re.MatchString(fl.Field().String())
+	})
+	if err != nil {
+		logger.Panic("ENDPOINT_DTO_VALIDATION", err)
+		return restErrors.NewInternalServerError("something went wrong!")
+	}
+	err = newValidator.Struct(dto)
 
 	if err != nil {
 		fields := map[string]string{}
 		for _, err := range err.(validator.ValidationErrors) {
 			switch err.Field() {
 			case "Name":
-				fields["name"] = "invalid name"
+				fields["name"] = "name must start and end with an alphanumeric, and contains no more than 64 alphanumeric characters and - in total."
 				break
 			case "ServiceName":
 				fields["service_name"] = "invalid service_name"
