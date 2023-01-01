@@ -120,7 +120,7 @@ func mapDeploymentUrl(v1 fiber.Router) {
 	coreGroup := v1.Group("core", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership)
 	//secret group
 	secrets := coreGroup.Group("secrets")
-	secrets.Post("/", middleware.IsWriter, middleware.NodesLimitProtected, secret.Create)
+	secrets.Post("/", middleware.IsWriter, secret.Create)
 	secrets.Head("/", middleware.IsReader, secret.Count)
 	secrets.Get("/", middleware.IsReader, secret.List)
 	secrets.Get("/:name", middleware.IsReader, secret.ValidateSecretExist, secret.Get)
@@ -128,7 +128,7 @@ func mapDeploymentUrl(v1 fiber.Router) {
 	secrets.Delete("/:name", middleware.IsAdmin, secret.ValidateSecretExist, secret.Delete)
 	//storage class group
 	storageClasses := coreGroup.Group("storageclasses", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership)
-	storageClasses.Post("/", middleware.IsWriter, middleware.NodesLimitProtected, storage_class.Create)
+	storageClasses.Post("/", middleware.IsWriter, storage_class.Create)
 	storageClasses.Get("/", middleware.IsReader, storage_class.List)
 	storageClasses.Get("/:name", middleware.IsReader, storage_class.ValidateStorageClassExist, storage_class.Get)
 	storageClasses.Put("/:name", middleware.IsWriter, storage_class.ValidateStorageClassExist, storage_class.Update)
