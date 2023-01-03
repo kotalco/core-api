@@ -43,7 +43,7 @@ func ConfigureDomain(c *fiber.Ctx) error {
 	//get ingressRoute
 	kotalStackIR, err := ingressRouteService.Get("kotal-stack", "kotal")
 	if err != nil {
-		go logger.Panic("CONFIGURE_DOMAIN", err)
+		go logger.Warn("CONFIGURE_DOMAIN", err)
 		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}
@@ -65,7 +65,7 @@ func ConfigureDomain(c *fiber.Ctx) error {
 
 	err = ingressRouteService.Update(kotalStackIR)
 	if err != nil {
-		go logger.Panic("CONFIGURE_DOMAIN", err)
+		go logger.Warn("CONFIGURE_DOMAIN", err)
 		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
 	}

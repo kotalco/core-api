@@ -11,13 +11,13 @@ import (
 func dbConfig(gormDbConnection *gorm.DB) {
 	sqlDB, err := gormDbConnection.DB()
 	if err != nil {
-		go logger.Panic("DATABASE_CONNECTION_ERROR", err)
+		go logger.Warn("DATABASE_CONNECTION_ERROR", err)
 		panic(err)
 	}
 
 	databaseMaxConnections, err := strconv.Atoi(config.Environment.DatabaseMaxConnections)
 	if err != nil {
-		go logger.Panic("DATABASE_CONNECTION_ERROR", err)
+		go logger.Warn("DATABASE_CONNECTION_ERROR", err)
 		panic(err)
 	}
 	// Max Open Connection
@@ -25,7 +25,7 @@ func dbConfig(gormDbConnection *gorm.DB) {
 
 	databaseMaxIdleConnections, err := strconv.Atoi(config.Environment.DatabaseMaxIdleConnections)
 	if err != nil {
-		go logger.Panic("DATABASE_CONNECTION_ERROR", err)
+		go logger.Warn("DATABASE_CONNECTION_ERROR", err)
 		panic(err)
 	}
 	// Max Ideal Connection
@@ -33,7 +33,7 @@ func dbConfig(gormDbConnection *gorm.DB) {
 
 	databaseMaxLifetimeConnections, err := strconv.Atoi(config.Environment.DatabaseMaxLifetimeConnections)
 	if err != nil {
-		go logger.Panic("DATABASE_CONNECTION_ERROR", err)
+		go logger.Warn("DATABASE_CONNECTION_ERROR", err)
 		panic(err)
 	}
 	// Connection Lifetime
@@ -42,7 +42,7 @@ func dbConfig(gormDbConnection *gorm.DB) {
 	// Idle Connection Timeout
 	databaseMaxIdleLifetimeConnections, err := strconv.Atoi(config.Environment.DatabaseMaxIdleLifetimeConnections)
 	if err != nil {
-		go logger.Panic("DATABASE_CONNECTION_ERROR", err)
+		go logger.Warn("DATABASE_CONNECTION_ERROR", err)
 		panic(err)
 	}
 	sqlDB.SetConnMaxIdleTime(time.Duration(databaseMaxIdleLifetimeConnections) * time.Minute)

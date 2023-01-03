@@ -36,7 +36,7 @@ func Validate(dto interface{}) *restErrors.RestErr {
 		return re.MatchString(fl.Field().String())
 	})
 	if err != nil {
-		logger.Panic("ENDPOINT_DTO_VALIDATION", err)
+		logger.Warn("ENDPOINT_DTO_VALIDATION", err)
 		return restErrors.NewInternalServerError("something went wrong!")
 	}
 	err = newValidator.Struct(dto)

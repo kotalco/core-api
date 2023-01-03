@@ -33,7 +33,7 @@ type AddWorkspaceMemberDto struct {
 	Role  string `json:"role" validate:"roles"`
 }
 
-//Marshall creates workspace response from workspace model
+// Marshall creates workspace response from workspace model
 func (dto *WorkspaceResponseDto) Marshall(model *Workspace) *WorkspaceResponseDto {
 	dto.ID = model.ID
 	dto.Name = model.Name
@@ -42,14 +42,14 @@ func (dto *WorkspaceResponseDto) Marshall(model *Workspace) *WorkspaceResponseDt
 	return dto
 }
 
-//Validate validates workspace requests fields
+// Validate validates workspace requests fields
 func Validate(dto interface{}) *restErrors.RestErr {
 	newValidator := validator.New()
 	err := newValidator.RegisterValidation("roles", func(fl validator.FieldLevel) bool {
 		return roles.New().Exist(fl.Field().String())
 	})
 	if err != nil {
-		logger.Panic("USER_DTO_VALIDATE", err)
+		logger.Warn("USER_DTO_VALIDATE", err)
 		return restErrors.NewInternalServerError("something went wrong!")
 	}
 	err = newValidator.Struct(dto)

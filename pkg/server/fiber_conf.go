@@ -24,7 +24,7 @@ func FiberConfig() fiber.Config {
 // logs resterror using logger pkg
 // return custom error struct using restError pkg
 var defaultErrorHandler = func(c *fiber.Ctx, err error) error {
-	go logger.Panic("PANICKING_UNHANDLED_ERROR", err)
+	go logger.Warn("PANICKING_UNHANDLED_ERROR", err)
 	internalErr := restErrors.NewInternalServerError("some thing went wrong")
 
 	return c.Status(internalErr.Status).JSON(internalErr)
@@ -33,7 +33,7 @@ var defaultErrorHandler = func(c *fiber.Ctx, err error) error {
 func FiberLimiter() fiber.Handler {
 	maxLimiter, err := strconv.Atoi(config.Environment.RatelimiterPerMinute)
 	if err != nil {
-		logger.Panic("FIBER_CONFIG_LIMITER", err)
+		logger.Warn("FIBER_CONFIG_LIMITER", err)
 	}
 
 	return limiter.New(limiter.Config{
