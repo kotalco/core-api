@@ -39,7 +39,7 @@ func (m migration) CreateUserTable() error {
 		go logger.Error(m.CreateWorkspaceTable, err)
 		return err
 	}
-	go logger.Info("CreateUserTable")
+	go logger.Info(m.CreateUserTable(), "CreateUserTable")
 	return nil
 }
 
@@ -49,7 +49,7 @@ func (m migration) CreateVerificationTable() error {
 		go logger.Error(m.CreateVerificationTable, err)
 		return err
 	}
-	go logger.Info("CreateVerificationTable")
+	go logger.Info(m.CreateVerificationTable(), "CreateVerificationTable")
 	return nil
 }
 
@@ -59,7 +59,7 @@ func (m migration) CreateWorkspaceTable() error {
 		go logger.Error(m.CreateWorkspaceUserTable, err)
 		return err
 	}
-	go logger.Info("CreateWorkspaceTable")
+	go logger.Info(m.CreateWorkspaceTable, "CreateWorkspaceTable")
 	return nil
 }
 
@@ -69,14 +69,14 @@ func (m migration) CreateWorkspaceUserTable() error {
 		go logger.Error(m.CreateWorkspaceUserTable, err)
 		return err
 	}
-	go logger.Info("CreateWorkspaceUserTable")
+	go logger.Info(m.CreateWorkspaceUserTable, "CreateWorkspaceUserTable")
 	return nil
 }
 
 func (m migration) CreateSettingTable() error {
 	exits := m.dbClient.Migrator().HasTable(setting.Setting{})
 	if !exits {
-		go logger.Info("CreateSettingTable")
+		go logger.Info(m.CreateSettingTable(), "CreateSettingTable")
 		return m.dbClient.AutoMigrate(setting.Setting{})
 	}
 	return nil
