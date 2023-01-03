@@ -199,8 +199,8 @@ github.com/klauspost/compress v1.15.13 h1:NFn1Wr8cfnenSJSA46lLq4wHCcBzKTSjnBIexD
 github.com/klauspost/compress v1.15.13/go.mod h1:QPwzmACJjUTFsnSHH934V6woptycfrDDJnH7hvFVbGM=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
 github.com/konsorten/go-windows-terminal-sequences v1.0.2/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
-github.com/kotalco/community-api v0.0.0-20221224213837-a61969412675 h1:8gZESUbr0/CZi9UhFONdXP4AABXmXhFwCEa7Pc6j5KM=
-github.com/kotalco/community-api v0.0.0-20221224213837-a61969412675/go.mod h1:aRWulDr+18DinSsDEqGNU5Vkws82UOLmc54qVjgKUz0=
+github.com/kotalco/community-api v0.0.0-20230102204003-6f698385d6b0 h1:jHmuqnk7MjdrNprEGkhp5IZJwPR+7MXdDM8k+DzZAJA=
+github.com/kotalco/community-api v0.0.0-20230102204003-6f698385d6b0/go.mod h1:aRWulDr+18DinSsDEqGNU5Vkws82UOLmc54qVjgKUz0=
 github.com/kotalco/kotal v0.0.0-20221126235420-a65c5a9c285f h1:Q8YCOTXFyK9UU5dr1XLl2satI2ABiKj4ifEh5oCC2S8=
 github.com/kotalco/kotal v0.0.0-20221126235420-a65c5a9c285f/go.mod h1:fUDA69YfT7m+Tlu+ISRLtnG6J9StRK9Zr/cP4X33qQI=
 github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=
