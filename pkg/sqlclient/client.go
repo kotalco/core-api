@@ -27,7 +27,7 @@ func OpenDBConnection() *gorm.DB {
 			Logger: glogger.Default.LogMode(glogger.Error),
 		})
 		if err != nil {
-			go logger.Panic("DATABASE_CONNECTION_ERROR", err)
+			go logger.Warn("DATABASE_CONNECTION_ERROR", err)
 			panic(err)
 		}
 		dbConfig(dbConnection)
