@@ -71,14 +71,15 @@ func (endpoint *EndpointDto) Marshall(dtoIngressRoute *traefikv1alpha1.IngressRo
 		str = strings.ReplaceAll(str, " && ", "")
 		str = strings.ReplaceAll(str, "PathPrefix(`", "")
 
+		if secret != nil {
+			str = fmt.Sprintf("%s:%s@%s", secret.Data["username"], secret.Data["password"], str)
+		}
 		if route.Services[0].Port.StrVal == "ws" {
 			str = fmt.Sprintf("wss://%s", str)
 		} else {
 			str = fmt.Sprintf("https://%s", str)
 		}
-		if secret != nil {
-			str = fmt.Sprintf("%s:%s@%s", secret.Data["username"], secret.Data["password"], str)
-		}
+
 		endpoint.Routes[route.Services[0].Port.StrVal] = str
 	}
 
