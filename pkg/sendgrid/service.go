@@ -128,7 +128,7 @@ func (service) WorkspaceInvitation(dto *WorkspaceInvitationMailRequestDto) *rest
 	to := mail.NewEmail(greeting, dto.Email)
 	plainTextContent := ""
 	baseUrl := fmt.Sprintf("https://%s/workspaces/%s", domainBaseUrl, dto.WorkspaceId)
-	content := strings.Replace(ResetPasswordTemplate, "CALL_TO_ACTION_HREF", baseUrl, 1)
+	content := strings.Replace(WorkspaceInvitationTemplate, "CALL_TO_ACTION_HREF", baseUrl, 1)
 	content = strings.Replace(content, "KOTAL_WORKSPACE_NAME", dto.WorkspaceName, 1)
 	message := mail.NewSingleEmail(from, subject, to, plainTextContent, content)
 
