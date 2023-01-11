@@ -32,7 +32,7 @@ type IService interface {
 	//-return error if any
 	Create(dto *CreateEndpointDto, svc *corev1.Service) *restErrors.RestErr
 	List(namespace string) ([]*EndpointDto, *restErrors.RestErr)
-	Get(name string, namespace string) (*EndpointDto, *restErrors.RestErr)
+	Get(name string, namespace string) (*EndpointSpecsDto, *restErrors.RestErr)
 	Delete(name string, namespace string) *restErrors.RestErr
 }
 
@@ -171,16 +171,13 @@ func (s *service) List(namespace string) ([]*EndpointDto, *restErrors.RestErr) {
 
 	marshalledDto := make([]*EndpointDto, 0)
 	for _, item := range records.Items {
-		//get secret
-		secretName := fmt.Sprintf("%s-secret", item.Name)
-		v1Secret, _ := secretService.Get(secretName, namespace)
-		marshalledDto = append(marshalledDto, new(EndpointDto).Marshall(&item, v1Secret))
+		marshalledDto = append(marshalledDto, new(EndpointDto).Marshall(&item))
 	}
 
 	return marshalledDto, nil
 }
 
-func (s *service) Get(name string, namespace string) (*EndpointDto, *restErrors.RestErr) {
+func (s *service) Get(name string, namespace string) (*EndpointSpecsDto, *restErrors.RestErr) {
 	record, err := ingressRoutesService.Get(name, namespace)
 	if err != nil {
 		return nil, err
@@ -190,7 +187,7 @@ func (s *service) Get(name string, namespace string) (*EndpointDto, *restErrors.
 	secretName := fmt.Sprintf("%s-secret", record.Name)
 	v1Secret, _ := secretService.Get(secretName, namespace)
 
-	return new(EndpointDto).Marshall(record, v1Secret), nil
+	return new(EndpointSpecsDto).Marshall(record, v1Secret), nil
 }
 
 func (s *service) Delete(name string, namespace string) *restErrors.RestErr {
