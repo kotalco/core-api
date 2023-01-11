@@ -10,6 +10,7 @@ import (
 const (
 	DomainKey       = "domain"
 	RegistrationKey = "registration"
+	ActivationKey   = "activation"
 )
 
 type ConfigureDomainRequestDto struct {

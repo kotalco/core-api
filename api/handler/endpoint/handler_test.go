@@ -64,15 +64,25 @@ func (s svcServiceMock) Get(name string, namespace string) (*corev1.Service, *re
 }
 
 var (
-	settingWithTransaction           func(txHandle *gorm.DB) setting.IService
-	settingSettingsFunc              func() ([]*setting.Setting, *restErrors.RestErr)
-	settingConfigureDomainFunc       func(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr
-	settingIsDomainConfiguredFunc    func() bool
-	settingConfigureRegistrationFunc func(dto *setting.ConfigureRegistrationRequestDto) *restErrors.RestErr
-	settingIsRegistrationEnabledFunc func() bool
+	settingWithTransaction            func(txHandle *gorm.DB) setting.IService
+	settingSettingsFunc               func() ([]*setting.Setting, *restErrors.RestErr)
+	settingConfigureDomainFunc        func(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr
+	settingIsDomainConfiguredFunc     func() bool
+	settingConfigureRegistrationFunc  func(dto *setting.ConfigureRegistrationRequestDto) *restErrors.RestErr
+	settingIsRegistrationEnabledFunc  func() bool
+	settingConfigureActivationKeyFunc func(key string) *restErrors.RestErr
+	settingGetActivationKeyFunc       func() (string, *restErrors.RestErr)
 )
 
 type settingServiceMock struct{}
+
+func (s settingServiceMock) ConfigureActivationKey(key string) *restErrors.RestErr {
+	return settingConfigureActivationKeyFunc(key)
+}
+
+func (s settingServiceMock) GetActivationKey() (string, *restErrors.RestErr) {
+	return settingGetActivationKeyFunc()
+}
 
 func (s settingServiceMock) ConfigureRegistration(dto *setting.ConfigureRegistrationRequestDto) *restErrors.RestErr {
 	return settingConfigureRegistrationFunc(dto)

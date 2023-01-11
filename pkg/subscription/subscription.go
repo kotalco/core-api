@@ -3,7 +3,6 @@ package subscription
 var (
 	SubscriptionDetails *SubscriptionDetailsDto
 	CheckDate           int64
-	ActivationKey       string
 )
 
 type SubscriptionDetailsDto struct {
@@ -30,5 +29,4 @@ var IsValid = func() bool {
 func Reset() {
 	SubscriptionDetails = nil
 	CheckDate = 0
-	ActivationKey = ""
 }

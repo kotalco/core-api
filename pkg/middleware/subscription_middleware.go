@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/kotalco/cloud-api/internal/setting"
 	"github.com/kotalco/cloud-api/internal/subscription"
 	"github.com/kotalco/cloud-api/pkg/k8s/statefulset"
 	subscriptionAPI "github.com/kotalco/cloud-api/pkg/subscription"
@@ -19,6 +20,7 @@ const (
 var (
 	subscriptionService = subscription.NewService()
 	statefulSetService  = statefulset.NewService()
+	settingService      = setting.NewService()
 )
 
 func IsSubscription(c *fiber.Ctx) error {
@@ -29,19 +31,27 @@ func IsSubscription(c *fiber.Ctx) error {
 		return err
 	}
 
+	//get activation key
+	activationKey, err := settingService.GetActivationKey()
+	if err != nil {
+		go logger.Warn("IS_SUBSCRIPTION_MIDDLEWARE", err)
+		invalidSubErr := restErrors.RestErr{Status: http.StatusForbidden, Message: "invalid subscription", Name: InvalidSubscriptionStatusMessage}
+		return c.Status(invalidSubErr.Status).JSON(invalidSubErr)
+	}
+
 	lastCheckDate := time.Unix(subscriptionAPI.CheckDate, 0)
 	lastCheckDateInUnixWithGracePeriod := lastCheckDate.Add(time.Hour * 1).Unix()
 
 	//do periodic check with every login attempt , and every hour
 	if lastCheckDateInUnixWithGracePeriod < currenTimeInUnix || c.Path() == "/api/v1/sessions" {
 		//check if activation key exits
-		if subscriptionAPI.ActivationKey == "" {
+		if activationKey == "" {
 			invalidSubErr := restErrors.RestErr{Status: http.StatusForbidden, Message: "invalid subscription", Name: InvalidSubscriptionStatusMessage}
 			return c.Status(invalidSubErr.Status).JSON(invalidSubErr)
 		}
 
 		//run subscription validity check coz the elapsed time exceeded check time
-		err := subscriptionService.Acknowledgment(subscriptionAPI.ActivationKey)
+		err := subscriptionService.Acknowledgment(activationKey)
 		if err != nil {
 			return c.Status(err.Status).JSON(err)
 		}
