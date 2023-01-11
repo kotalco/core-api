@@ -3,8 +3,6 @@ name: Build-Push kotal cloud api
 on:
   push:
     branches: [master]
-    tags:
-      - "v*"
   pull_request:
     branches: [master]
 
@@ -49,4 +47,4 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           secrets: |
             SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}
-            EC_PUBLIC_KEY=${{ secrets.EC_PUBLIC_KEY }}
+            EC_PUBLIC_KEY=${{ secrets.STAGING_EC_PUBLIC_KEY }}
