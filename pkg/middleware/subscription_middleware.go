@@ -32,7 +32,7 @@ func IsSubscription(c *fiber.Ctx) error {
 	}
 
 	//get activation key
-	activationKey, err := settingService.GetActivationKey()
+	activationKey, err := settingService.WithoutTransaction().GetActivationKey()
 	if err != nil {
 		go logger.Warn("IS_SUBSCRIPTION_MIDDLEWARE", err)
 		invalidSubErr := restErrors.RestErr{Status: http.StatusForbidden, Message: "invalid subscription", Name: InvalidSubscriptionStatusMessage}
