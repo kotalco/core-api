@@ -1,12 +1,9 @@
-name: Build-Push kotal cloud api
+name: Build-Push-production-cloud-api
 
 on:
   push:
-    branches: [master]
     tags:
       - "v*"
-  pull_request:
-    branches: [master]
 
 jobs:
   build:
@@ -24,8 +21,6 @@ jobs:
           tags: |
             type=ref,event=tag
             type=sha,prefix=,suffix=,format=short
-          flavor: |
-            latest=true
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -49,4 +44,4 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           secrets: |
             SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}
-            EC_PUBLIC_KEY=${{ secrets.EC_PUBLIC_KEY }}
+            EC_PUBLIC_KEY=${{ secrets.PRODUCTION_EC_PUBLIC_KEY }}
