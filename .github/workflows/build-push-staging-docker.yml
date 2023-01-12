@@ -1,4 +1,4 @@
-name: Build-Push kotal cloud api
+name: Build-Push-staging-cloud-api
 
 on:
   push:
