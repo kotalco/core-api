@@ -3,6 +3,7 @@ package subscription
 import (
 	"errors"
 	"github.com/gofiber/fiber/v2"
+	"github.com/kotalco/cloud-api/internal/setting"
 	"github.com/kotalco/cloud-api/internal/subscription"
 	"github.com/kotalco/cloud-api/pkg/middleware"
 	subscriptionAPI "github.com/kotalco/cloud-api/pkg/subscription"
@@ -14,11 +15,12 @@ import (
 
 var (
 	subscriptionService = subscription.NewService()
+	settingService      = setting.NewService()
 )
 
-//Acknowledgement accept the user activation_key
+// Acknowledgement accept the user activation_key
 // Runs subscription acknowledgement
-//validate subscription
+// validate subscription
 func Acknowledgement(c *fiber.Ctx) error {
 	//accept and validate the activation key
 	dto := new(subscription.AcknowledgementRequestDto)
@@ -46,6 +48,16 @@ func Acknowledgement(c *fiber.Ctx) error {
 			Name:    middleware.InvalidSubscriptionStatusMessage,
 		}
 		return c.Status(err.Status).JSON(err)
+	}
+
+	//store subscription activation key
+	err = settingService.WithoutTransaction().ConfigureActivationKey(dto.ActivationKey)
+	if err != nil {
+		//reset the subscription status can't coz we can't save the activation key
+		subscriptionAPI.Reset()
+		go logger.Warn("Acknowledgement", err)
+		intErr := restErrors.NewInternalServerError("can't save activation key")
+		return c.Status(intErr.Status).JSON(intErr)
 	}
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{Message: "subscription activated"}))

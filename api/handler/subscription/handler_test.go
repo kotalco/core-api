@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/gofiber/fiber/v2"
+	"github.com/kotalco/cloud-api/internal/setting"
 	subscriptionAPI "github.com/kotalco/cloud-api/pkg/subscription"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/shared"
 	"github.com/stretchr/testify/assert"
+	"gorm.io/gorm"
 	"io/ioutil"
 	"net/http/httptest"
 
@@ -17,7 +19,7 @@ import (
 )
 
 /*
- subscriptionAPI service  mocks
+subscriptionAPI service  mocks
 */
 var (
 	subscriptionAcknowledgmentFunc   func(activationKey string) *restErrors.RestErr
@@ -31,6 +33,57 @@ func (s subscriptionServiceMock) Acknowledgment(activationKey string) *restError
 }
 func (s subscriptionServiceMock) CurrentTimestamp() (int64, *restErrors.RestErr) {
 	return subscriptionCurrentTimestampFunc()
+}
+
+/*
+setting service  mocks
+*/
+var (
+	settingSettingsFunc               func() ([]*setting.Setting, *restErrors.RestErr)
+	settingConfigureDomainFunc        func(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr
+	settingIsDomainConfiguredFunc     func() bool
+	settingConfigureRegistrationFunc  func(dto *setting.ConfigureRegistrationRequestDto) *restErrors.RestErr
+	settingIsRegistrationEnabledFunc  func() bool
+	settingConfigureActivationKeyFunc func(key string) *restErrors.RestErr
+	settingGetActivationKey           func() (string, *restErrors.RestErr)
+)
+
+type settingServiceMocks struct{}
+
+func (s settingServiceMocks) ConfigureActivationKey(key string) *restErrors.RestErr {
+	return settingConfigureActivationKeyFunc(key)
+}
+
+func (s settingServiceMocks) GetActivationKey() (string, *restErrors.RestErr) {
+	return settingGetActivationKey()
+}
+
+func (s settingServiceMocks) ConfigureRegistration(dto *setting.ConfigureRegistrationRequestDto) *restErrors.RestErr {
+	return settingConfigureRegistrationFunc(dto)
+}
+
+func (s settingServiceMocks) IsRegistrationEnabled() bool {
+	return settingIsRegistrationEnabledFunc()
+}
+
+func (s settingServiceMocks) WithoutTransaction() setting.IService {
+	return s
+}
+
+func (s settingServiceMocks) WithTransaction(txHandle *gorm.DB) setting.IService {
+	return s
+}
+
+func (s settingServiceMocks) Settings() ([]*setting.Setting, *restErrors.RestErr) {
+	return settingSettingsFunc()
+}
+
+func (s settingServiceMocks) ConfigureDomain(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr {
+	return settingConfigureDomainFunc(dto)
+}
+
+func (s settingServiceMocks) IsDomainConfigured() bool {
+	return settingIsDomainConfiguredFunc()
 }
 
 func newFiberCtx(dto interface{}, method func(c *fiber.Ctx) error, locals map[string]interface{}) ([]byte, *http.Response) {
@@ -65,6 +118,7 @@ func newFiberCtx(dto interface{}, method func(c *fiber.Ctx) error, locals map[st
 func TestMain(m *testing.M) {
 
 	subscriptionService = &subscriptionServiceMock{}
+	settingService = &settingServiceMocks{}
 
 	code := m.Run()
 	os.Exit(code)
@@ -82,6 +136,10 @@ func TestAcknowledgement(t *testing.T) {
 
 		subscriptionAPI.IsValid = func() bool {
 			return true
+		}
+
+		settingConfigureActivationKeyFunc = func(key string) *restErrors.RestErr {
+			return nil
 		}
 		body, resp := newFiberCtx(validDto, Acknowledgement, map[string]interface{}{})
 
@@ -159,6 +217,30 @@ func TestAcknowledgement(t *testing.T) {
 		}
 
 		assert.EqualValues(t, http.StatusForbidden, resp.StatusCode)
+
+	})
+	t.Run("Acknowledgement should throw if can't configure the activation key", func(t *testing.T) {
+		subscriptionAcknowledgmentFunc = func(activationKey string) *restErrors.RestErr {
+			return nil
+		}
+
+		subscriptionAPI.IsValid = func() bool {
+			return true
+		}
+
+		settingConfigureActivationKeyFunc = func(key string) *restErrors.RestErr {
+			return restErrors.NewInternalServerError("something went wrong")
+		}
+		body, resp := newFiberCtx(validDto, Acknowledgement, map[string]interface{}{})
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
+		assert.EqualValues(t, "can't save activation key", result.Message)
 
 	})
 

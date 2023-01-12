@@ -26,7 +26,7 @@ func NewSeeder(dbClient *gorm.DB) ISeeder {
 }
 
 func (s seeder) SeedSettingTable(setting *setting.Setting) error {
-	res := s.dbClient.FirstOrCreate(setting)
+	res := s.dbClient.Create(setting)
 	if res.Error != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(res.Error, &pgErr) {

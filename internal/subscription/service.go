@@ -118,9 +118,6 @@ func (subService *service) Acknowledgment(activationKey string) *restErrors.Rest
 		NodesLimit:   licenseAcknowledgmentDto.Subscription.NodesLimit,
 	}
 
-	//store activation key
-	subscriptionAPI.ActivationKey = activationKey
-
 	return nil
 }
 
