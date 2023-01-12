@@ -18,14 +18,14 @@ type CreateEndpointDto struct {
 	UseBasicAuth bool   `json:"use_basic_auth"`
 }
 
-type EndpointDto struct {
+type EndpointMetaDto struct {
 	Name      string `json:"name"`
 	Protocol  string `json:"protocol"`
 	CreatedAt string `json:"created_at"`
 }
 
-type EndpointSpecsDto struct {
-	EndpointDto
+type EndpointDto struct {
+	EndpointMetaDto
 	Routes    map[string]string `json:"routes"`
 	BasicAuth *BasicAuthDto     `json:"basic_auth,omitempty"`
 }
@@ -67,14 +67,14 @@ func Validate(dto interface{}) *restErrors.RestErr {
 	return nil
 }
 
-func (endpoint *EndpointDto) Marshall(dtoIngressRoute *traefikv1alpha1.IngressRoute) *EndpointDto {
+func (endpoint *EndpointMetaDto) Marshall(dtoIngressRoute *traefikv1alpha1.IngressRoute) *EndpointMetaDto {
 	endpoint.Name = dtoIngressRoute.Name
 	endpoint.Protocol = dtoIngressRoute.Labels["kotal.io/protocol"]
 	endpoint.CreatedAt = dtoIngressRoute.CreationTimestamp.UTC().Format(shared.JavascriptISOString)
 	return endpoint
 }
 
-func (endpoint *EndpointSpecsDto) Marshall(dtoIngressRoute *traefikv1alpha1.IngressRoute, secret *corev1.Secret) *EndpointSpecsDto {
+func (endpoint *EndpointDto) Marshall(dtoIngressRoute *traefikv1alpha1.IngressRoute, secret *corev1.Secret) *EndpointDto {
 	endpoint.Name = dtoIngressRoute.Name
 	endpoint.Routes = map[string]string{}
 	endpoint.Protocol = dtoIngressRoute.Labels["kotal.io/protocol"]

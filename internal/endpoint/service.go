@@ -31,8 +31,8 @@ type IService interface {
 	//-creating an ingressRoute (Traefik HTTP router) which uses the previous middleware
 	//-return error if any
 	Create(dto *CreateEndpointDto, svc *corev1.Service) *restErrors.RestErr
-	List(namespace string) ([]*EndpointDto, *restErrors.RestErr)
-	Get(name string, namespace string) (*EndpointSpecsDto, *restErrors.RestErr)
+	List(namespace string) ([]*EndpointMetaDto, *restErrors.RestErr)
+	Get(name string, namespace string) (*EndpointDto, *restErrors.RestErr)
 	Delete(name string, namespace string) *restErrors.RestErr
 }
 
@@ -163,21 +163,21 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) *restError
 	return nil
 }
 
-func (s *service) List(namespace string) ([]*EndpointDto, *restErrors.RestErr) {
+func (s *service) List(namespace string) ([]*EndpointMetaDto, *restErrors.RestErr) {
 	records, err := ingressRoutesService.List(namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	marshalledDto := make([]*EndpointDto, 0)
+	marshalledDto := make([]*EndpointMetaDto, 0)
 	for _, item := range records.Items {
-		marshalledDto = append(marshalledDto, new(EndpointDto).Marshall(&item))
+		marshalledDto = append(marshalledDto, new(EndpointMetaDto).Marshall(&item))
 	}
 
 	return marshalledDto, nil
 }
 
-func (s *service) Get(name string, namespace string) (*EndpointSpecsDto, *restErrors.RestErr) {
+func (s *service) Get(name string, namespace string) (*EndpointDto, *restErrors.RestErr) {
 	record, err := ingressRoutesService.Get(name, namespace)
 	if err != nil {
 		return nil, err
@@ -187,7 +187,7 @@ func (s *service) Get(name string, namespace string) (*EndpointSpecsDto, *restEr
 	secretName := fmt.Sprintf("%s-secret", record.Name)
 	v1Secret, _ := secretService.Get(secretName, namespace)
 
-	return new(EndpointSpecsDto).Marshall(record, v1Secret), nil
+	return new(EndpointDto).Marshall(record, v1Secret), nil
 }
 
 func (s *service) Delete(name string, namespace string) *restErrors.RestErr {
