@@ -24,7 +24,7 @@ endpoint service mocks
 */
 var (
 	endpointServiceCreateFunc func(dto *endpoint.CreateEndpointDto, svc *corev1.Service) *restErrors.RestErr
-	endpointServiceListFunc   func(namespace string) ([]*endpoint.EndpointDto, *restErrors.RestErr)
+	endpointServiceListFunc   func(namespace string) ([]*endpoint.EndpointMetaDto, *restErrors.RestErr)
 	endpointServiceGetFunc    func(name string, namespace string) (*endpoint.EndpointDto, *restErrors.RestErr)
 	endpointServiceDeleteFunc func(name string, namespace string) *restErrors.RestErr
 )
@@ -34,7 +34,7 @@ type endpointServiceMock struct{}
 func (e endpointServiceMock) Create(dto *endpoint.CreateEndpointDto, svc *corev1.Service) *restErrors.RestErr {
 	return endpointServiceCreateFunc(dto, svc)
 }
-func (e endpointServiceMock) List(namespace string) ([]*endpoint.EndpointDto, *restErrors.RestErr) {
+func (e endpointServiceMock) List(namespace string) ([]*endpoint.EndpointMetaDto, *restErrors.RestErr) {
 	return endpointServiceListFunc(namespace)
 }
 func (e endpointServiceMock) Get(name string, namespace string) (*endpoint.EndpointDto, *restErrors.RestErr) {
@@ -287,12 +287,12 @@ func TestList(t *testing.T) {
 	locals["workspace"] = *workspaceModel
 
 	t.Run("list endpoints should pass", func(t *testing.T) {
-		endpointServiceListFunc = func(namespace string) ([]*endpoint.EndpointDto, *restErrors.RestErr) {
-			return []*endpoint.EndpointDto{{}}, nil
+		endpointServiceListFunc = func(namespace string) ([]*endpoint.EndpointMetaDto, *restErrors.RestErr) {
+			return []*endpoint.EndpointMetaDto{{}}, nil
 		}
 
 		body, resp := newFiberCtx("", List, locals)
-		var result map[string][]*endpoint.EndpointDto
+		var result map[string][]*endpoint.EndpointMetaDto
 		err := json.Unmarshal(body, &result)
 		assert.Nil(t, err)
 
@@ -301,7 +301,7 @@ func TestList(t *testing.T) {
 	})
 
 	t.Run("list endpoint should throw if endpointServiceList throws", func(t *testing.T) {
-		endpointServiceListFunc = func(namespace string) ([]*endpoint.EndpointDto, *restErrors.RestErr) {
+		endpointServiceListFunc = func(namespace string) ([]*endpoint.EndpointMetaDto, *restErrors.RestErr) {
 			return nil, restErrors.NewInternalServerError("something went wrong")
 		}
 
