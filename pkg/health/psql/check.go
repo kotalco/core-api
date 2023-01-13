@@ -1,9 +1,10 @@
 package psql
 
 import (
+	"context"
+	"errors"
 	"fmt"
-	"github.com/gofiber/fiber/v2"
-	"github.com/kotalco/subscriptions-api/pkg/logger"
+	"github.com/kotalco/community-api/pkg/logger"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	glogger "gorm.io/gorm/logger"
@@ -13,8 +14,13 @@ type Config struct {
 	DBServerURL string
 }
 
-func New(config Config) func(ctx *fiber.Ctx) error {
-	return func(ctx *fiber.Ctx) (checkErr error) {
+func New(config Config) func() error {
+	return func() (checkErr error) {
+		if config.DBServerURL == "" {
+			checkErr = fmt.Errorf("PostgreSQL health check failed on connect: %w", errors.New("DBServerURL empty"))
+			go logger.Error("PSQL_HEALTH_CHECK", checkErr)
+			return
+		}
 
 		dbConnection, err := gorm.Open(postgres.Open(config.DBServerURL), &gorm.Config{
 			Logger: glogger.Default.LogMode(glogger.Error),
@@ -39,14 +45,14 @@ func New(config Config) func(ctx *fiber.Ctx) error {
 			}
 		}()
 
-		err = dbInstance.PingContext(ctx.Context())
+		err = dbInstance.PingContext(context.Background())
 		if err != nil {
 			go logger.Error("DATABASE_CONNECTION_ERROR", err)
 			checkErr = fmt.Errorf("PostgreSQL health check failed on ping: %w", err)
 			return
 		}
 
-		rows, err := dbInstance.QueryContext(ctx.Context(), `SELECT VERSION()`)
+		rows, err := dbInstance.QueryContext(context.Background(), `SELECT VERSION()`)
 		if err != nil {
 			go logger.Error("DATABASE_CONNECTION_ERROR", err)
 			checkErr = fmt.Errorf("PostgreSQL health check failed on select: %w", err)

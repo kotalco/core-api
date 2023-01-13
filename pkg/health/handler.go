@@ -2,41 +2,42 @@ package health
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/kotalco/subscriptions-api/pkg/config"
-	httpCheck "github.com/kotalco/subscriptions-api/pkg/health/http"
-	psqlCheck "github.com/kotalco/subscriptions-api/pkg/health/psql"
-	stripeCheck "github.com/kotalco/subscriptions-api/pkg/health/stripe"
+	"github.com/kotalco/cloud-api/pkg/config"
+	httpCheck "github.com/kotalco/cloud-api/pkg/health/http"
+	psqlCheck "github.com/kotalco/cloud-api/pkg/health/psql"
+	"github.com/kotalco/cloud-api/pkg/subscription"
 	"net/http"
 )
 
+var h IHealth
+var newHealthCheckService = New
+
 func Healthz(c *fiber.Ctx) error {
-	h := New()
+	h = newHealthCheckService()
 	err := h.Register(Config{
 		Name:      "PSQL",
 		SkipOnErr: false,
 		Measure:   psqlCheck.New(psqlCheck.Config{DBServerURL: config.Environment.DatabaseServerURL}),
-	}, Config{
-		Name:      "Stripe",
-		SkipOnErr: false,
-		Measure:   stripeCheck.New(stripeCheck.Config{StripeAPIKey: config.Environment.StripeAPIKey}),
-	}, Config{
-		Name:      "Google",
-		SkipOnErr: false,
-		Measure: httpCheck.New(httpCheck.Config{
-			URL:            "https://google.com",
-			RequestTimeout: 1,
-		}),
-	})
+	},
+		Config{
+			Name:      "Subscription-Api",
+			SkipOnErr: false,
+			Measure: httpCheck.New(httpCheck.Config{
+				URL:            config.Environment.SubscriptionAPIBaseURL + subscription.CURRENT_TIMESTAMP,
+				RequestTimeout: 5,
+			}),
+		},
+	)
 
 	if err != nil {
 		healthDto := ResponseDto{
 			Checks: []Check{},
 			Status: StatusUnavailable,
 		}
-		return c.Status(http.StatusInternalServerError).JSON(healthDto)
+		return c.Status(http.StatusServiceUnavailable).JSON(healthDto)
 	}
 
-	res := h.Measure(c)
+	res := h.Measure()
 
 	return c.Status(intStatus(res.Status)).JSON(res)
 

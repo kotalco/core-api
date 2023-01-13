@@ -4,8 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/gofiber/fiber/v2"
-	"github.com/kotalco/subscriptions-api/pkg/logger"
+	"github.com/kotalco/community-api/pkg/logger"
 	"net/http"
 	"time"
 )
@@ -18,12 +17,12 @@ type Config struct {
 	RequestTimeout time.Duration
 }
 
-func New(config Config) func(ctx *fiber.Ctx) error {
+func New(config Config) func() error {
 	if config.RequestTimeout == 0 {
 		config.RequestTimeout = defaultRequestTimeout
 	}
 
-	return func(ctx *fiber.Ctx) error {
+	return func() error {
 
 		req, err := http.NewRequest(http.MethodGet, config.URL, bytes.NewReader([]byte{}))
 		if err != nil {

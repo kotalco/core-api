@@ -3,7 +3,6 @@ package health
 import (
 	"errors"
 	"fmt"
-	"github.com/gofiber/fiber/v2"
 	"time"
 )
 
@@ -17,6 +16,10 @@ const (
 	StatusUnavailable        Status = "Unavailable"
 )
 
+type IHealth interface {
+	Register(list ...Config) error
+	Measure() *ResponseDto
+}
 type Health struct {
 	configs map[string]Config
 }
@@ -28,7 +31,7 @@ type Config struct {
 	// SkipOnErr if set to true, it will retrieve StatusOK providing the error message from the failed resource.
 	SkipOnErr bool
 	// Check is the func which executes the check.
-	Measure func(ctx *fiber.Ctx) error
+	Measure func() error
 }
 
 // Check represents the health check response.
@@ -49,7 +52,7 @@ type ResponseDto struct {
 }
 
 // New instantiates and build new health check container
-func New() *Health {
+func New() IHealth {
 	return &Health{
 		configs: make(map[string]Config),
 	}
@@ -72,7 +75,7 @@ func (h *Health) Register(list ...Config) error {
 }
 
 // Measure runs all the registered health checks and returns summary status
-func (h *Health) Measure(ctx *fiber.Ctx) *ResponseDto {
+func (h *Health) Measure() *ResponseDto {
 	res := new(ResponseDto)
 	res.Status = StatusOK
 	checks := make([]Check, 0)
@@ -85,7 +88,7 @@ func (h *Health) Measure(ctx *fiber.Ctx) *ResponseDto {
 			Status:    StatusOK,
 			Timestamp: time.Now(),
 		}
-		err := v.Measure(ctx)
+		err := v.Measure()
 		if err != nil {
 			check.Status = StatusUnavailable
 			check.Failure = err.Error()
