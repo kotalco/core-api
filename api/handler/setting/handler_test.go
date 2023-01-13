@@ -27,14 +27,24 @@ import (
 setting service  mocks
 */
 var (
-	settingSettingsFunc              func() ([]*setting.Setting, *restErrors.RestErr)
-	settingConfigureDomainFunc       func(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr
-	settingIsDomainConfiguredFunc    func() bool
-	settingConfigureRegistrationFunc func(dto *setting.ConfigureRegistrationRequestDto) *restErrors.RestErr
-	settingIsRegistrationEnabledFunc func() bool
+	settingSettingsFunc               func() ([]*setting.Setting, *restErrors.RestErr)
+	settingConfigureDomainFunc        func(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr
+	settingIsDomainConfiguredFunc     func() bool
+	settingConfigureRegistrationFunc  func(dto *setting.ConfigureRegistrationRequestDto) *restErrors.RestErr
+	settingIsRegistrationEnabledFunc  func() bool
+	settingConfigureActivationKeyFunc func(key string) *restErrors.RestErr
+	settingGetActivationKey           func() (string, *restErrors.RestErr)
 )
 
 type settingServiceMocks struct{}
+
+func (s settingServiceMocks) ConfigureActivationKey(key string) *restErrors.RestErr {
+	return settingConfigureActivationKeyFunc(key)
+}
+
+func (s settingServiceMocks) GetActivationKey() (string, *restErrors.RestErr) {
+	return settingGetActivationKey()
+}
 
 func (s settingServiceMocks) ConfigureRegistration(dto *setting.ConfigureRegistrationRequestDto) *restErrors.RestErr {
 	return settingConfigureRegistrationFunc(dto)

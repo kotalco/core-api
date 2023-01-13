@@ -5,6 +5,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/logger"
+	"github.com/kotalco/community-api/pkg/shared"
 	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"regexp"
@@ -17,9 +18,14 @@ type CreateEndpointDto struct {
 	UseBasicAuth bool   `json:"use_basic_auth"`
 }
 
+type EndpointMetaDto struct {
+	Name      string `json:"name"`
+	Protocol  string `json:"protocol"`
+	CreatedAt string `json:"created_at"`
+}
+
 type EndpointDto struct {
-	Protocol  string            `json:"protocol"`
-	Name      string            `json:"name"`
+	EndpointMetaDto
 	Routes    map[string]string `json:"routes"`
 	BasicAuth *BasicAuthDto     `json:"basic_auth,omitempty"`
 }
@@ -61,10 +67,18 @@ func Validate(dto interface{}) *restErrors.RestErr {
 	return nil
 }
 
+func (endpoint *EndpointMetaDto) Marshall(dtoIngressRoute *traefikv1alpha1.IngressRoute) *EndpointMetaDto {
+	endpoint.Name = dtoIngressRoute.Name
+	endpoint.Protocol = dtoIngressRoute.Labels["kotal.io/protocol"]
+	endpoint.CreatedAt = dtoIngressRoute.CreationTimestamp.UTC().Format(shared.JavascriptISOString)
+	return endpoint
+}
+
 func (endpoint *EndpointDto) Marshall(dtoIngressRoute *traefikv1alpha1.IngressRoute, secret *corev1.Secret) *EndpointDto {
 	endpoint.Name = dtoIngressRoute.Name
 	endpoint.Routes = map[string]string{}
 	endpoint.Protocol = dtoIngressRoute.Labels["kotal.io/protocol"]
+	endpoint.CreatedAt = dtoIngressRoute.CreationTimestamp.UTC().Format(shared.JavascriptISOString)
 	for _, route := range dtoIngressRoute.Spec.Routes {
 		str := strings.ReplaceAll(route.Match, "Host(`", "")
 		str = strings.ReplaceAll(str, "`)", "")

@@ -34,7 +34,7 @@ func Create(c *fiber.Ctx) error {
 	}
 
 	//check if the user configured the domain base url
-	if !settingService.IsDomainConfigured() {
+	if !settingService.WithoutTransaction().IsDomainConfigured() {
 		forbiddenRes := restErrors.NewForbiddenError("Domain hasn't been configured yet !")
 		return c.Status(forbiddenRes.Status).JSON(forbiddenRes)
 	}

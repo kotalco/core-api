@@ -24,7 +24,7 @@ endpoint service mocks
 */
 var (
 	endpointServiceCreateFunc func(dto *endpoint.CreateEndpointDto, svc *corev1.Service) *restErrors.RestErr
-	endpointServiceListFunc   func(namespace string) ([]*endpoint.EndpointDto, *restErrors.RestErr)
+	endpointServiceListFunc   func(namespace string) ([]*endpoint.EndpointMetaDto, *restErrors.RestErr)
 	endpointServiceGetFunc    func(name string, namespace string) (*endpoint.EndpointDto, *restErrors.RestErr)
 	endpointServiceDeleteFunc func(name string, namespace string) *restErrors.RestErr
 )
@@ -34,7 +34,7 @@ type endpointServiceMock struct{}
 func (e endpointServiceMock) Create(dto *endpoint.CreateEndpointDto, svc *corev1.Service) *restErrors.RestErr {
 	return endpointServiceCreateFunc(dto, svc)
 }
-func (e endpointServiceMock) List(namespace string) ([]*endpoint.EndpointDto, *restErrors.RestErr) {
+func (e endpointServiceMock) List(namespace string) ([]*endpoint.EndpointMetaDto, *restErrors.RestErr) {
 	return endpointServiceListFunc(namespace)
 }
 func (e endpointServiceMock) Get(name string, namespace string) (*endpoint.EndpointDto, *restErrors.RestErr) {
@@ -64,15 +64,25 @@ func (s svcServiceMock) Get(name string, namespace string) (*corev1.Service, *re
 }
 
 var (
-	settingWithTransaction           func(txHandle *gorm.DB) setting.IService
-	settingSettingsFunc              func() ([]*setting.Setting, *restErrors.RestErr)
-	settingConfigureDomainFunc       func(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr
-	settingIsDomainConfiguredFunc    func() bool
-	settingConfigureRegistrationFunc func(dto *setting.ConfigureRegistrationRequestDto) *restErrors.RestErr
-	settingIsRegistrationEnabledFunc func() bool
+	settingWithTransaction            func(txHandle *gorm.DB) setting.IService
+	settingSettingsFunc               func() ([]*setting.Setting, *restErrors.RestErr)
+	settingConfigureDomainFunc        func(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr
+	settingIsDomainConfiguredFunc     func() bool
+	settingConfigureRegistrationFunc  func(dto *setting.ConfigureRegistrationRequestDto) *restErrors.RestErr
+	settingIsRegistrationEnabledFunc  func() bool
+	settingConfigureActivationKeyFunc func(key string) *restErrors.RestErr
+	settingGetActivationKeyFunc       func() (string, *restErrors.RestErr)
 )
 
 type settingServiceMock struct{}
+
+func (s settingServiceMock) ConfigureActivationKey(key string) *restErrors.RestErr {
+	return settingConfigureActivationKeyFunc(key)
+}
+
+func (s settingServiceMock) GetActivationKey() (string, *restErrors.RestErr) {
+	return settingGetActivationKeyFunc()
+}
 
 func (s settingServiceMock) ConfigureRegistration(dto *setting.ConfigureRegistrationRequestDto) *restErrors.RestErr {
 	return settingConfigureRegistrationFunc(dto)
@@ -277,12 +287,12 @@ func TestList(t *testing.T) {
 	locals["workspace"] = *workspaceModel
 
 	t.Run("list endpoints should pass", func(t *testing.T) {
-		endpointServiceListFunc = func(namespace string) ([]*endpoint.EndpointDto, *restErrors.RestErr) {
-			return []*endpoint.EndpointDto{{}}, nil
+		endpointServiceListFunc = func(namespace string) ([]*endpoint.EndpointMetaDto, *restErrors.RestErr) {
+			return []*endpoint.EndpointMetaDto{{}}, nil
 		}
 
 		body, resp := newFiberCtx("", List, locals)
-		var result map[string][]*endpoint.EndpointDto
+		var result map[string][]*endpoint.EndpointMetaDto
 		err := json.Unmarshal(body, &result)
 		assert.Nil(t, err)
 
@@ -291,7 +301,7 @@ func TestList(t *testing.T) {
 	})
 
 	t.Run("list endpoint should throw if endpointServiceList throws", func(t *testing.T) {
-		endpointServiceListFunc = func(namespace string) ([]*endpoint.EndpointDto, *restErrors.RestErr) {
+		endpointServiceListFunc = func(namespace string) ([]*endpoint.EndpointMetaDto, *restErrors.RestErr) {
 			return nil, restErrors.NewInternalServerError("something went wrong")
 		}
 
