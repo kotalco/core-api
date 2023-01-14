@@ -11,6 +11,7 @@ const (
 	DomainKey       = "domain"
 	RegistrationKey = "registration_is_enabled"
 	ActivationKey   = "activation_key"
+	TxtRecord       = "txt_record"
 )
 
 type ConfigureDomainRequestDto struct {
@@ -28,6 +29,10 @@ type SettingResponseDto struct {
 
 type IPAddressResponseDto struct {
 	IPAddress string `json:"ip_address"`
+}
+
+type DomainVerificationTxtRecordResponseDto struct {
+	DomainVerificationTxtRecord string `json:"domain_verification_txt_record"`
 }
 
 func Validate(dto interface{}) *restErrors.RestErr {

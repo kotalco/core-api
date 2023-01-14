@@ -11,6 +11,7 @@ import (
 	"github.com/kotalco/community-api/pkg/logger"
 	"github.com/kotalco/community-api/pkg/shared"
 	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
+	"net"
 	"net/http"
 )
 
@@ -19,6 +20,14 @@ var (
 	k8service           = k8svc.NewService()
 	ingressRouteService = ingressroute.NewIngressRoutesService()
 )
+
+func VerificationTxtRecord(c *fiber.Ctx) error {
+	value, err := settingService.GetDomainTxtRecord()
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(setting.DomainVerificationTxtRecordResponseDto{DomainVerificationTxtRecord: value}))
+}
 
 func ConfigureDomain(c *fiber.Ctx) error {
 	dto := new(setting.ConfigureDomainRequestDto)
@@ -32,8 +41,30 @@ func ConfigureDomain(c *fiber.Ctx) error {
 		return c.Status(restErr.Status).JSON(restErr)
 	}
 
+	//validate txt record
+	dnsTxtRecords, lookErr := net.LookupTXT(dto.Domain)
+	if lookErr != nil {
+		go logger.Error("CONFIGURE_DOMAIN", lookErr)
+		badReq := restErrors.NewBadRequestError(lookErr.Error())
+		return c.Status(badReq.Status).JSON(badReq)
+	}
+	txtRecord, err := settingService.GetDomainTxtRecord()
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
+	verified := false
+	for _, record := range dnsTxtRecords {
+		if record == txtRecord {
+			verified = true
+		}
+	}
+	if !verified {
+		badReqErr := restErrors.NewBadRequestError("can't find kotal-verification-txt-record")
+		return c.Status(badReqErr.Status).JSON(badReqErr)
+	}
+
 	txHandle := sqlclient.Begin()
-	err := settingService.WithTransaction(txHandle).ConfigureDomain(dto)
+	err = settingService.WithTransaction(txHandle).ConfigureDomain(dto)
 	if err != nil {
 		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)

@@ -1,7 +1,10 @@
 package setting
 
 import (
+	"fmt"
+	"github.com/kotalco/cloud-api/pkg/security"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
+	"github.com/kotalco/community-api/pkg/logger"
 	"gorm.io/gorm"
 	"net/http"
 	"strconv"
@@ -20,6 +23,7 @@ type IService interface {
 	//ConfigureActivationKey create or update the current subscription activation key
 	ConfigureActivationKey(key string) *restErrors.RestErr
 	GetActivationKey() (string, *restErrors.RestErr)
+	GetDomainTxtRecord() (string, *restErrors.RestErr)
 }
 
 var (
@@ -97,6 +101,22 @@ func (s service) ConfigureActivationKey(key string) *restErrors.RestErr {
 	}
 	//record exits update it
 	return settingRepo.Update(ActivationKey, key)
+}
+func (s service) GetDomainTxtRecord() (string, *restErrors.RestErr) {
+	record, err := settingRepo.Get(TxtRecord)
+	if err != nil {
+		if err.Status == http.StatusNotFound {
+			record = fmt.Sprintf("kotal-verificaiton-txt=%s", security.GenerateRandomString(20))
+			err = settingRepo.Create(TxtRecord, record)
+			if err != nil {
+				go logger.Error(s.GetDomainTxtRecord, err)
+				return "", err
+			}
+			return record, nil
+		}
+		return "", err
+	}
+	return record, nil
 }
 
 func (s service) GetActivationKey() (string, *restErrors.RestErr) {
