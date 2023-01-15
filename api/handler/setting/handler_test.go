@@ -176,7 +176,7 @@ func TestConfigureDomain(t *testing.T) {
 	var locals = map[string]interface{}{}
 	locals["user"] = *userDetails
 	var validDto = map[string]string{
-		"domain": "kotalco",
+		"domain": "kotal.co",
 	}
 	var invalidDto = map[string]string{}
 
