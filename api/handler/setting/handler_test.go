@@ -34,9 +34,14 @@ var (
 	settingIsRegistrationEnabledFunc  func() bool
 	settingConfigureActivationKeyFunc func(key string) *restErrors.RestErr
 	settingGetActivationKey           func() (string, *restErrors.RestErr)
+	settingGetDomainTxtRecordFunc     func() (string, *restErrors.RestErr)
 )
 
 type settingServiceMocks struct{}
+
+func (s settingServiceMocks) GetDomainTxtRecord() (string, *restErrors.RestErr) {
+	return settingGetDomainTxtRecordFunc()
+}
 
 func (s settingServiceMocks) ConfigureActivationKey(key string) *restErrors.RestErr {
 	return settingConfigureActivationKeyFunc(key)
@@ -171,11 +176,14 @@ func TestConfigureDomain(t *testing.T) {
 	var locals = map[string]interface{}{}
 	locals["user"] = *userDetails
 	var validDto = map[string]string{
-		"domain": "kotal.co",
+		"domain": "kotalco",
 	}
 	var invalidDto = map[string]string{}
 
 	t.Run("ConfigureDomain should pass", func(t *testing.T) {
+		verifyDomain = func(domain string) *restErrors.RestErr {
+			return nil
+		}
 		settingConfigureDomainFunc = func(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr {
 			return nil
 		}
@@ -232,7 +240,24 @@ func TestConfigureDomain(t *testing.T) {
 		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
 	})
 
+	t.Run("configure domain should throw if can't verify domain", func(t *testing.T) {
+		verifyDomain = func(domain string) *restErrors.RestErr {
+			return restErrors.NewBadRequestError("can't verify domain")
+		}
+
+		body, resp := newFiberCtx(validDto, ConfigureDomain, locals)
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		assert.Nil(t, err)
+		assert.EqualValues(t, http.StatusBadRequest, result.Status)
+		assert.EqualValues(t, "can't verify domain", result.Message)
+		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
+	})
+
 	t.Run("configure domain should throw if service throws", func(t *testing.T) {
+		verifyDomain = func(domain string) *restErrors.RestErr {
+			return nil
+		}
 		settingConfigureDomainFunc = func(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
@@ -245,6 +270,9 @@ func TestConfigureDomain(t *testing.T) {
 		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
 	})
 	t.Run("ConfigureDomain should throw if can't get kotal stack ingress-route", func(t *testing.T) {
+		verifyDomain = func(domain string) *restErrors.RestErr {
+			return nil
+		}
 		settingConfigureDomainFunc = func(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr {
 			return nil
 		}
@@ -265,6 +293,9 @@ func TestConfigureDomain(t *testing.T) {
 	})
 
 	t.Run("ConfigureDomain should throw if can't update kotal stack", func(t *testing.T) {
+		verifyDomain = func(domain string) *restErrors.RestErr {
+			return nil
+		}
 		settingConfigureDomainFunc = func(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr {
 			return nil
 		}
@@ -417,7 +448,6 @@ func TestIPAddress(t *testing.T) {
 			}, nil
 		}
 		body, resp := newFiberCtx("", IPAddress, locals)
-		fmt.Println(string(body))
 
 		var result map[string]setting.IPAddressResponseDto
 		err := json.Unmarshal(body, &result)
@@ -432,7 +462,6 @@ func TestIPAddress(t *testing.T) {
 			return nil, restErrors.NewNotFoundError("can't get traefik service")
 		}
 		body, resp := newFiberCtx("", IPAddress, locals)
-		fmt.Println(string(body))
 
 		var result restErrors.RestErr
 		err := json.Unmarshal(body, &result)
@@ -453,7 +482,6 @@ func TestIPAddress(t *testing.T) {
 			}, nil
 		}
 		body, resp := newFiberCtx("", IPAddress, locals)
-		fmt.Println(string(body))
 
 		var result restErrors.RestErr
 		err := json.Unmarshal(body, &result)
@@ -463,6 +491,41 @@ func TestIPAddress(t *testing.T) {
 		assert.EqualValues(t, http.StatusNotFound, resp.StatusCode)
 		assert.EqualValues(t, http.StatusNotFound, result.Status)
 		assert.EqualValues(t, "can't get ip address, still provisioning!", result.Message)
+	})
+
+}
+func TestVerificationTxtRecord(t *testing.T) {
+	userDetails := new(token.UserDetails)
+	userDetails.ID = "test@test.com"
+	var locals = map[string]interface{}{}
+	locals["user"] = *userDetails
+	t.Run("get txt record should pass", func(t *testing.T) {
+		settingGetDomainTxtRecordFunc = func() (string, *restErrors.RestErr) {
+			return "test", nil
+		}
+		body, resp := newFiberCtx("", VerificationTxtRecord, locals)
+
+		var result map[string]setting.DomainVerificationTxtRecordResponseDto
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
+		assert.EqualValues(t, "test", result["data"].DomainVerificationTxtRecord)
+	})
+	t.Run("get txt record should throw if can't Get txt record", func(t *testing.T) {
+		settingGetDomainTxtRecordFunc = func() (string, *restErrors.RestErr) {
+			return "", restErrors.NewInternalServerError("something went wrong")
+		}
+		body, resp := newFiberCtx("", VerificationTxtRecord, locals)
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
+		assert.EqualValues(t, "something went wrong", result.Message)
 	})
 
 }

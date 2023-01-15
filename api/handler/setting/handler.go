@@ -36,31 +36,14 @@ func ConfigureDomain(c *fiber.Ctx) error {
 		return c.Status(badReq.Status).JSON(badReq)
 	}
 
-	restErr := setting.Validate(dto)
-	if restErr != nil {
-		return c.Status(restErr.Status).JSON(restErr)
-	}
-
-	//validate txt record
-	dnsTxtRecords, lookErr := net.LookupTXT(dto.Domain)
-	if lookErr != nil {
-		go logger.Error("CONFIGURE_DOMAIN", lookErr)
-		badReq := restErrors.NewBadRequestError(lookErr.Error())
-		return c.Status(badReq.Status).JSON(badReq)
-	}
-	txtRecord, err := settingService.GetDomainTxtRecord()
+	err := setting.Validate(dto)
 	if err != nil {
 		return c.Status(err.Status).JSON(err)
 	}
-	verified := false
-	for _, record := range dnsTxtRecords {
-		if record == txtRecord {
-			verified = true
-		}
-	}
-	if !verified {
-		badReqErr := restErrors.NewBadRequestError("can't find kotal-verification-txt-record")
-		return c.Status(badReqErr.Status).JSON(badReqErr)
+
+	err = verifyDomain(dto.Domain)
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
 	}
 
 	txHandle := sqlclient.Begin()
@@ -158,4 +141,30 @@ func IPAddress(c *fiber.Ctx) error {
 	}()
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(&setting.IPAddressResponseDto{IPAddress: record.Status.LoadBalancer.Ingress[0].IP}))
+}
+
+var verifyDomain = func(domain string) *restErrors.RestErr {
+	//verify txt record
+	dnsTxtRecords, lookErr := net.LookupTXT(domain)
+	if lookErr != nil {
+		go logger.Error("VALIDATE_TXT_RECORD", lookErr)
+		badReq := restErrors.NewBadRequestError(lookErr.Error())
+		return badReq
+
+	}
+	txtRecord, err := settingService.WithoutTransaction().GetDomainTxtRecord()
+	if err != nil {
+		return err
+	}
+	verified := false
+	for _, record := range dnsTxtRecords {
+		if record == txtRecord {
+			verified = true
+		}
+	}
+	if !verified {
+		badReqErr := restErrors.NewBadRequestError("can't find kotal-verification-txt-record")
+		return badReqErr
+	}
+	return nil
 }

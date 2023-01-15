@@ -72,9 +72,14 @@ var (
 	settingIsRegistrationEnabledFunc  func() bool
 	settingConfigureActivationKeyFunc func(key string) *restErrors.RestErr
 	settingGetActivationKeyFunc       func() (string, *restErrors.RestErr)
+	settingGetDomainTxtRecordFunc     func() (string, *restErrors.RestErr)
 )
 
 type settingServiceMock struct{}
+
+func (s settingServiceMock) GetDomainTxtRecord() (string, *restErrors.RestErr) {
+	return settingGetDomainTxtRecordFunc()
+}
 
 func (s settingServiceMock) ConfigureActivationKey(key string) *restErrors.RestErr {
 	return settingConfigureActivationKeyFunc(key)

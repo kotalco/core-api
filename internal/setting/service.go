@@ -106,7 +106,7 @@ func (s service) GetDomainTxtRecord() (string, *restErrors.RestErr) {
 	record, err := settingRepo.Get(TxtRecord)
 	if err != nil {
 		if err.Status == http.StatusNotFound {
-			record = fmt.Sprintf("kotal-verificaiton-txt=%s", security.GenerateRandomString(20))
+			record = fmt.Sprintf("kotal-verificaiton=%s", security.GenerateRandomString(20))
 			err = settingRepo.Create(TxtRecord, record)
 			if err != nil {
 				go logger.Error(s.GetDomainTxtRecord, err)
