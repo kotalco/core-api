@@ -9,7 +9,6 @@ import (
 	"github.com/kotalco/cloud-api/api/handler/svc"
 	"github.com/kotalco/cloud-api/api/handler/user"
 	"github.com/kotalco/cloud-api/api/handler/workspace"
-	"github.com/kotalco/cloud-api/pkg/health"
 	"github.com/kotalco/cloud-api/pkg/middleware"
 	"github.com/kotalco/community-api/api/handlers/chainlink"
 	"github.com/kotalco/community-api/api/handlers/core/secret"
@@ -29,7 +28,6 @@ import (
 func MapUrl(app *fiber.App) {
 	api := app.Group("api")
 	v1 := api.Group("v1")
-	v1.Get("/healthz", health.Healthz)
 
 	//subscription
 	v1.Post("subscriptions/acknowledgment", subscription.Acknowledgement)
