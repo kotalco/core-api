@@ -1,8 +1,6 @@
 package health
 
 import (
-	"errors"
-	"fmt"
 	"time"
 )
 
@@ -17,11 +15,9 @@ const (
 )
 
 type IHealth interface {
-	Register(list ...Config) error
-	Measure() *ResponseDto
+	Measure(list ...Config) *ResponseDto
 }
 type Health struct {
-	configs map[string]Config
 }
 
 // Config carries the parameters to run the check.
@@ -53,38 +49,20 @@ type ResponseDto struct {
 
 // New instantiates and build new health check container
 func New() IHealth {
-	return &Health{
-		configs: make(map[string]Config),
-	}
-}
-
-// Register registers a check config to be performed.
-func (h *Health) Register(list ...Config) error {
-	for _, c := range list {
-		if c.Name == "" {
-			return errors.New("health check must have a name to be registered")
-		}
-
-		if _, ok := h.configs[c.Name]; ok {
-			return fmt.Errorf("health check %q is already registered", c.Name)
-		}
-		h.configs[c.Name] = c
-	}
-
-	return nil
+	return &Health{}
 }
 
 // Measure runs all the registered health checks and returns summary status
-func (h *Health) Measure() *ResponseDto {
+func (h *Health) Measure(list ...Config) *ResponseDto {
 	res := new(ResponseDto)
 	res.Status = StatusOK
 	checks := make([]Check, 0)
 
 	//run the checks
-	for k, v := range h.configs {
+	for _, v := range list {
 
 		check := &Check{
-			Name:      k,
+			Name:      v.Name,
 			Status:    StatusOK,
 			Timestamp: time.Now(),
 		}

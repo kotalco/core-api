@@ -9,12 +9,10 @@ import (
 	"net/http"
 )
 
-var h IHealth
-var newHealthCheckService = New
+var h = New()
 
 func Healthz(c *fiber.Ctx) error {
-	h = newHealthCheckService()
-	err := h.Register(Config{
+	res := h.Measure(Config{
 		Name:      "PSQL",
 		SkipOnErr: false,
 		Measure:   psqlCheck.New(psqlCheck.Config{DBServerURL: config.Environment.DatabaseServerURL}),
@@ -26,21 +24,9 @@ func Healthz(c *fiber.Ctx) error {
 				URL:            config.Environment.SubscriptionAPIBaseURL + subscription.CURRENT_TIMESTAMP,
 				RequestTimeout: 5,
 			}),
-		},
-	)
-
-	if err != nil {
-		healthDto := ResponseDto{
-			Checks: []Check{},
-			Status: StatusUnavailable,
-		}
-		return c.Status(http.StatusServiceUnavailable).JSON(healthDto)
-	}
-
-	res := h.Measure()
+		})
 
 	return c.Status(intStatus(res.Status)).JSON(res)
-
 }
 
 func intStatus(status Status) int {
