@@ -57,17 +57,15 @@ func (service) Create(userId string) (string, *restErrors.RestErr) {
 		return "", restErr
 	}
 
-	tokenExpires, convErr := strconv.Atoi(config.Environment.VerificationTokenExpiryHours)
-	if convErr != nil {
-		go logger.Error(service.Create, convErr)
-		return "", restErrors.NewInternalServerError("something went wrong")
-	}
-
 	verification := new(Verification)
 	verification.ID = uuid.New().String()
 	verification.Token = hashedToken
 	verification.UserId = userId
-	verification.ExpiresAt = time.Now().UTC().Add(time.Duration(tokenExpires) * time.Hour).Unix()
+	expiresAt, err := expiryDate()
+	if err != nil {
+		return "", err
+	}
+	verification.ExpiresAt = expiresAt
 
 	restErr = verificationRepository.Create(verification)
 	if restErr != nil {
@@ -139,6 +137,11 @@ func (vService service) Resend(userId string) (string, *restErrors.RestErr) {
 
 	verification.Completed = false
 	verification.Token = hashedToken
+	expiresAt, err := expiryDate()
+	if err != nil {
+		return "", err
+	}
+	verification.ExpiresAt = expiresAt
 	err = verificationRepository.Update(verification)
 	if err != nil {
 		return "", err
@@ -172,4 +175,13 @@ var hashToken = func(token string) (string, *restErrors.RestErr) {
 	stringifyToken := string(hashedToken)
 
 	return stringifyToken, nil
+}
+
+var expiryDate = func() (int64, *restErrors.RestErr) {
+	tokenExpires, convErr := strconv.Atoi(config.Environment.VerificationTokenExpiryHours)
+	if convErr != nil {
+		go logger.Warn("VERIFICATION_EXPIRY_DATE", convErr)
+		return 0, restErrors.NewInternalServerError("something went wrong")
+	}
+	return time.Now().UTC().Add(time.Duration(tokenExpires) * time.Hour).Unix(), nil
 }
