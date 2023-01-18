@@ -11,6 +11,7 @@ import (
 	"github.com/kotalco/community-api/pkg/logger"
 	"github.com/kotalco/community-api/pkg/shared"
 	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
+	"net"
 	"net/http"
 )
 
@@ -32,8 +33,22 @@ func ConfigureDomain(c *fiber.Ctx) error {
 		return c.Status(restErr.Status).JSON(restErr)
 	}
 
+	ip, err := ipAddress()
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
+
+	err = verifyDomainHost(dto.Domain, ip)
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
+	err = verifyDomainHost(fmt.Sprintf("*.%s", dto.Domain), ip)
+	if err != nil {
+		return c.Status(err.Status).JSON(err)
+	}
+
 	txHandle := sqlclient.Begin()
-	err := settingService.WithTransaction(txHandle).ConfigureDomain(dto)
+	err = settingService.WithTransaction(txHandle).ConfigureDomain(dto)
 	if err != nil {
 		sqlclient.Rollback(txHandle)
 		return c.Status(err.Status).JSON(err)
@@ -106,25 +121,55 @@ func Settings(c *fiber.Ctx) error {
 }
 
 func IPAddress(c *fiber.Ctx) error {
-	record, err := k8service.Get("traefik", "traefik")
+	record, err := ipAddress()
 	if err != nil {
-		if err.Status == http.StatusNotFound {
-			record, err = k8service.Get("kotal-traefik", "traefik")
-			if err != nil {
-				go logger.Error("SETTING_GET_IP_ADDRESS", err)
-				return c.Status(err.Status).JSON(err)
+		return c.Status(err.Status).JSON(err)
+	}
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(&setting.IPAddressResponseDto{IPAddress: record}))
+}
+
+var ipAddress = func() (ip string, restErr *restErrors.RestErr) {
+	record, restErr := k8service.Get("traefik", "traefik")
+	if restErr != nil {
+		if restErr.Status == http.StatusNotFound {
+			record, restErr = k8service.Get("kotal-traefik", "traefik")
+			if restErr != nil {
+				go logger.Error("SETTING_GET_IP_ADDRESS", restErr)
+				return
 			}
 		} else {
-			go logger.Error("SETTING_GET_IP_ADDRESS", err)
-			return c.Status(err.Status).JSON(err)
+			go logger.Error("SETTING_GET_IP_ADDRESS", restErr)
+			return
 		}
 	}
 
 	defer func() {
 		if err := recover(); err != nil {
-			c.Status(http.StatusNotFound).JSON(restErrors.NewNotFoundError("can't get ip address, still provisioning!"))
+			restErr = restErrors.NewNotFoundError("can't get ip address, still provisioning!")
+			return
 		}
 	}()
+	ip = record.Status.LoadBalancer.Ingress[0].IP
 
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(&setting.IPAddressResponseDto{IPAddress: record.Status.LoadBalancer.Ingress[0].IP}))
+	return
+}
+
+var verifyDomainHost = func(domain string, ipAddress string) *restErrors.RestErr {
+	records, lookErr := net.LookupHost(domain)
+	if lookErr != nil {
+		go logger.Error("VERIFY_DOMAIN_A_RECORDS", lookErr)
+		badReq := restErrors.NewBadRequestError(lookErr.Error())
+		return badReq
+	}
+	verified := false
+	for _, record := range records {
+		if record == ipAddress {
+			verified = true
+		}
+	}
+	if !verified {
+		badReqErr := restErrors.NewBadRequestError(fmt.Sprintf("couldn't find A record to mapped to this ip %s for this domian %s", ipAddress, domain))
+		return badReqErr
+	}
+	return nil
 }
