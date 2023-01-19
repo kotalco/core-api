@@ -173,9 +173,19 @@ func TestConfigureDomain(t *testing.T) {
 	var validDto = map[string]string{
 		"domain": "kotal.co",
 	}
+
+	tmpIpAddress := ipAddress
+	tmpVerifyDomainHost := verifyDomainHost
+
 	var invalidDto = map[string]string{}
 
 	t.Run("ConfigureDomain should pass", func(t *testing.T) {
+		ipAddress = func() (ip string, restErr *restErrors.RestErr) {
+			return "1223", nil
+		}
+		verifyDomainHost = func(domain string, ipAddress string) *restErrors.RestErr {
+			return nil
+		}
 		settingConfigureDomainFunc = func(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr {
 			return nil
 		}
@@ -217,7 +227,6 @@ func TestConfigureDomain(t *testing.T) {
 		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
 		assert.EqualValues(t, "invalid request body", result.Message)
 	})
-
 	t.Run("configure domain should throw validation err", func(t *testing.T) {
 		body, resp := newFiberCtx(invalidDto, ConfigureDomain, locals)
 		var result restErrors.RestErr
@@ -231,8 +240,46 @@ func TestConfigureDomain(t *testing.T) {
 		assert.Equal(t, *badReqErr, result)
 		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
 	})
+	t.Run("ConfigureDomain should throw if can't get ip address", func(t *testing.T) {
+		ipAddress = func() (ip string, restErr *restErrors.RestErr) {
+			return "", restErrors.NewInternalServerError("can't get ip address")
+		}
 
+		body, resp := newFiberCtx(validDto, ConfigureDomain, locals)
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
+		assert.EqualValues(t, "can't get ip address", result.Message)
+	})
+	t.Run("ConfigureDomain should throw if can't verify domain", func(t *testing.T) {
+		ipAddress = func() (ip string, restErr *restErrors.RestErr) {
+			return "", nil
+		}
+
+		verifyDomainHost = func(domain string, ipAddress string) *restErrors.RestErr {
+			return restErrors.NewInternalServerError("can't verify domain")
+		}
+		body, resp := newFiberCtx(validDto, ConfigureDomain, locals)
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
+		assert.EqualValues(t, "can't verify domain", result.Message)
+	})
 	t.Run("configure domain should throw if service throws", func(t *testing.T) {
+		ipAddress = func() (ip string, restErr *restErrors.RestErr) {
+			return "1223", nil
+		}
+		verifyDomainHost = func(domain string, ipAddress string) *restErrors.RestErr {
+			return nil
+		}
 		settingConfigureDomainFunc = func(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
@@ -245,6 +292,12 @@ func TestConfigureDomain(t *testing.T) {
 		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
 	})
 	t.Run("ConfigureDomain should throw if can't get kotal stack ingress-route", func(t *testing.T) {
+		ipAddress = func() (ip string, restErr *restErrors.RestErr) {
+			return "1223", nil
+		}
+		verifyDomainHost = func(domain string, ipAddress string) *restErrors.RestErr {
+			return nil
+		}
 		settingConfigureDomainFunc = func(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr {
 			return nil
 		}
@@ -263,8 +316,13 @@ func TestConfigureDomain(t *testing.T) {
 		assert.EqualValues(t, http.StatusNotFound, resp.StatusCode)
 		assert.EqualValues(t, "no such record", result.Message)
 	})
-
 	t.Run("ConfigureDomain should throw if can't update kotal stack", func(t *testing.T) {
+		ipAddress = func() (ip string, restErr *restErrors.RestErr) {
+			return "1223", nil
+		}
+		verifyDomainHost = func(domain string, ipAddress string) *restErrors.RestErr {
+			return nil
+		}
 		settingConfigureDomainFunc = func(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr {
 			return nil
 		}
@@ -298,6 +356,8 @@ func TestConfigureDomain(t *testing.T) {
 		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
 		assert.EqualValues(t, "something went wrong", result.Message)
 	})
+	ipAddress = tmpIpAddress
+	verifyDomainHost = tmpVerifyDomainHost
 
 }
 func TestConfigureRegistration(t *testing.T) {
@@ -453,7 +513,6 @@ func TestIPAddress(t *testing.T) {
 			}, nil
 		}
 		body, resp := newFiberCtx("", IPAddress, locals)
-		fmt.Println(string(body))
 
 		var result restErrors.RestErr
 		err := json.Unmarshal(body, &result)
