@@ -168,7 +168,7 @@ var verifyDomainHost = func(domain string, ipAddress string) *restErrors.RestErr
 		}
 	}
 	if !verified {
-		badReqErr := restErrors.NewBadRequestError(fmt.Sprintf("couldn't find A record to mapped to this ip %s for this domian %s", ipAddress, domain))
+		badReqErr := restErrors.NewBadRequestError(fmt.Sprintf("Domain DNS records hasn't been updated with an A record that maps %s to %s.", domain, ipAddress))
 		return badReqErr
 	}
 	return nil
