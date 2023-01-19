@@ -308,7 +308,6 @@ func TestService_Verify(t *testing.T) {
 
 func TestService_Resend(t *testing.T) {
 	verification := new(Verification)
-	verification.ExpiresAt = time.Now().UTC().Add(time.Duration(1) * time.Hour).Unix()
 
 	t.Run("Resend_Should_Pass", func(t *testing.T) {
 
@@ -322,6 +321,9 @@ func TestService_Resend(t *testing.T) {
 
 		hashToken = func(token string) (string, *restErrors.RestErr) {
 			return "hash", nil
+		}
+		expiryDate = func() (int64, *restErrors.RestErr) {
+			return time.Now().UTC().Add(time.Duration(1) * time.Hour).Unix(), nil
 		}
 
 		UpdateFunc = func(verification *Verification) *restErrors.RestErr {
@@ -345,6 +347,9 @@ func TestService_Resend(t *testing.T) {
 
 		hashToken = func(token string) (string, *restErrors.RestErr) {
 			return "hash", nil
+		}
+		expiryDate = func() (int64, *restErrors.RestErr) {
+			return time.Now().UTC().Add(time.Duration(1) * time.Hour).Unix(), nil
 		}
 
 		CreateFunc = func(verification *Verification) *restErrors.RestErr {
@@ -403,6 +408,29 @@ func TestService_Resend(t *testing.T) {
 		assert.EqualValues(t, "can't hash token", err.Message)
 	})
 
+	t.Run("Resend_Should_Throw_If_Can't_create_expiry_date", func(t *testing.T) {
+
+		GetByUserIdFunc = func(userId string) (*Verification, *restErrors.RestErr) {
+			return verification, nil
+		}
+
+		generateToken = func() (string, *restErrors.RestErr) {
+			return "token", nil
+		}
+
+		hashToken = func(token string) (string, *restErrors.RestErr) {
+			return "", nil
+		}
+		expiryDate = func() (int64, *restErrors.RestErr) {
+			return 0, restErrors.NewInternalServerError("something went wrong")
+		}
+
+		token, err := verificationService.Resend("123")
+
+		assert.EqualValues(t, "", token)
+		assert.EqualValues(t, "something went wrong", err.Message)
+	})
+
 	t.Run("Resend_Should_Throw_If_Repo_Throws", func(t *testing.T) {
 
 		GetByUserIdFunc = func(userId string) (*Verification, *restErrors.RestErr) {
@@ -415,6 +443,9 @@ func TestService_Resend(t *testing.T) {
 
 		hashToken = func(token string) (string, *restErrors.RestErr) {
 			return "hash", nil
+		}
+		expiryDate = func() (int64, *restErrors.RestErr) {
+			return time.Now().UTC().Add(time.Duration(1) * time.Hour).Unix(), nil
 		}
 
 		UpdateFunc = func(verification *Verification) *restErrors.RestErr {
