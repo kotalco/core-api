@@ -26,8 +26,15 @@ type EndpointMetaDto struct {
 
 type EndpointDto struct {
 	EndpointMetaDto
-	Routes    map[string]string `json:"routes"`
-	BasicAuth *BasicAuthDto     `json:"basic_auth,omitempty"`
+	Routes    []*RouteDto   `json:"routes"`
+	BasicAuth *BasicAuthDto `json:"basic_auth,omitempty"`
+}
+
+type RouteDto struct {
+	Port       string   `json:"port"`
+	Route      string   `json:"route"`
+	Example    string   `json:"example"`
+	References []string `json:"references"`
 }
 
 type BasicAuthDto struct {
@@ -76,8 +83,9 @@ func (endpoint *EndpointMetaDto) Marshall(dtoIngressRoute *traefikv1alpha1.Ingre
 
 func (endpoint *EndpointDto) Marshall(dtoIngressRoute *traefikv1alpha1.IngressRoute, secret *corev1.Secret) *EndpointDto {
 	endpoint.Name = dtoIngressRoute.Name
-	endpoint.Routes = map[string]string{}
+	endpoint.Routes = make([]*RouteDto, 0)
 	endpoint.Protocol = dtoIngressRoute.Labels["kotal.io/protocol"]
+	//endpoint.Protocol = dtoIngressRoute.Labels["kotal.io/protocol"]//app.kubernetes.io/component
 	endpoint.CreatedAt = dtoIngressRoute.CreationTimestamp.UTC().Format(shared.JavascriptISOString)
 	for _, route := range dtoIngressRoute.Spec.Routes {
 		str := strings.ReplaceAll(route.Match, "Host(`", "")
@@ -94,7 +102,12 @@ func (endpoint *EndpointDto) Marshall(dtoIngressRoute *traefikv1alpha1.IngressRo
 			str = fmt.Sprintf("https://%s", str)
 		}
 
-		endpoint.Routes[route.Services[0].Port.StrVal] = str
+		endpoint.Routes = append(endpoint.Routes, &RouteDto{
+			Port:       route.Services[0].Port.StrVal,
+			Route:      str,
+			Example:    endpointExamples[dtoIngressRoute.Labels["kotal.io/kind"]][route.Services[0].Port.StrVal],
+			References: endpointReferences[dtoIngressRoute.Labels["kotal.io/kind"]],
+		})
 	}
 
 	return endpoint

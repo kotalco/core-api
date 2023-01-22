@@ -62,6 +62,7 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) *restError
 		Name:            dto.Name,
 		Namespace:       svc.Namespace,
 		ServiceName:     svc.Name,
+		ServiceKind:     svc.Labels["app.kubernetes.io/component"],
 		ServiceProtocol: svc.Labels["kotal.io/protocol"],
 		ServiceID:       string(svc.UID),
 		Ports:           ingressRoutePorts,
