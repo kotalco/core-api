@@ -3,6 +3,7 @@ package endpoint
 import (
 	"fmt"
 	"github.com/go-playground/validator/v10"
+	"github.com/kotalco/cloud-api/pkg/memdb"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/logger"
 	"github.com/kotalco/community-api/pkg/shared"
@@ -11,6 +12,8 @@ import (
 	"regexp"
 	"strings"
 )
+
+var newMemDb = memdb.NewMemDb()
 
 type CreateEndpointDto struct {
 	Name         string `json:"name" validate:"regexp,lt=64"`
@@ -31,7 +34,7 @@ type EndpointDto struct {
 }
 
 type RouteDto struct {
-	Port       string   `json:"port"`
+	Name       string   `json:"name"`
 	Route      string   `json:"route"`
 	Example    string   `json:"example"`
 	References []string `json:"references"`
@@ -101,14 +104,54 @@ func (endpoint *EndpointDto) Marshall(dtoIngressRoute *traefikv1alpha1.IngressRo
 		} else {
 			str = fmt.Sprintf("https://%s", str)
 		}
-
+		newMemDb.Begin(memdb.OpenMemDbConnection(), false)
 		endpoint.Routes = append(endpoint.Routes, &RouteDto{
-			Port:       route.Services[0].Port.StrVal,
+			Name:       route.Services[0].Port.StrVal,
 			Route:      str,
-			Example:    endpointExamples[dtoIngressRoute.Labels["kotal.io/kind"]][route.Services[0].Port.StrVal],
-			References: endpointReferences[dtoIngressRoute.Labels["kotal.io/kind"]],
+			Example:    getExample(dtoIngressRoute.Labels["kotal.io/kind"], route.Services[0].Port.StrVal, str),
+			References: getRef(dtoIngressRoute.Labels["kotal.io/kind"]),
 		})
 	}
 
 	return endpoint
+}
+
+func getExample(kind string, name string, route string) (str string) {
+	newMemDb.Begin(memdb.OpenMemDbConnection(), false)
+	it, err := newMemDb.Get("endpointExample", "kind", kind)
+	if err != nil {
+		go logger.Warn("ENDPOINT_GET_EXAMPLE", err)
+		return ""
+	}
+	defer func() {
+		if err := recover(); err != nil {
+			return
+		}
+	}()
+
+	for obj := it.Next(); obj != nil; obj = it.Next() {
+		p := obj.(*memdb.EndpointExample)
+		if p.Name == name {
+			str = p.Example
+			str = strings.ReplaceAll(str, "${route}", route)
+			return
+		}
+	}
+	return
+}
+
+func getRef(kind string) (ref []string) {
+	newMemDb.Begin(memdb.OpenMemDbConnection(), false)
+	raw, err := newMemDb.First("endpointRef", "kind", kind)
+	if err != nil {
+		go logger.Warn("ENDPOINT_GET_Ref", err)
+		return
+	}
+	defer func() {
+		if err := recover(); err != nil {
+			return
+		}
+	}()
+
+	return raw.(*memdb.EndpointRef).Ref
 }

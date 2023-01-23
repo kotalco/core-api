@@ -5,6 +5,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/pprof"
 	"github.com/kotalco/cloud-api/api"
 	"github.com/kotalco/cloud-api/pkg/k8s"
+	"github.com/kotalco/cloud-api/pkg/memdb"
 	"github.com/kotalco/cloud-api/pkg/middleware"
 	"github.com/kotalco/cloud-api/pkg/migration"
 	"github.com/kotalco/cloud-api/pkg/monitor"
@@ -30,6 +31,8 @@ func main() {
 
 	seederService := seeder.NewService(dbClient)
 	seederService.Run()
+
+	memdb.SeedMemDB()
 
 	server.StartServerWithGracefulShutdown(app)
 }
