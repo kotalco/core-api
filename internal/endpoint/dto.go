@@ -2,7 +2,7 @@ package endpoint
 
 import (
 	"fmt"
-	"github.com/go-playground/validator/v10"
+	validate "github.com/go-playground/validator/v10"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/logger"
 	"github.com/kotalco/community-api/pkg/shared"
@@ -26,8 +26,15 @@ type EndpointMetaDto struct {
 
 type EndpointDto struct {
 	EndpointMetaDto
-	Routes    map[string]string `json:"routes"`
-	BasicAuth *BasicAuthDto     `json:"basic_auth,omitempty"`
+	Routes    []*RouteDto   `json:"routes"`
+	BasicAuth *BasicAuthDto `json:"basic_auth,omitempty"`
+}
+
+type RouteDto struct {
+	Name       string   `json:"name"`
+	Route      string   `json:"route"`
+	Example    string   `json:"example"`
+	References []string `json:"references"`
 }
 
 type BasicAuthDto struct {
@@ -36,8 +43,8 @@ type BasicAuthDto struct {
 }
 
 func Validate(dto interface{}) *restErrors.RestErr {
-	newValidator := validator.New()
-	err := newValidator.RegisterValidation("regexp", func(fl validator.FieldLevel) bool {
+	newValidator := validate.New()
+	err := newValidator.RegisterValidation("regexp", func(fl validate.FieldLevel) bool {
 		re := regexp.MustCompile("^([a-z]|[0-9])([a-z]|[0-9]|-)+([a-z]|[0-9])$")
 		return re.MatchString(fl.Field().String())
 	})
@@ -49,7 +56,7 @@ func Validate(dto interface{}) *restErrors.RestErr {
 
 	if err != nil {
 		fields := map[string]string{}
-		for _, err := range err.(validator.ValidationErrors) {
+		for _, err := range err.(validate.ValidationErrors) {
 			switch err.Field() {
 			case "Name":
 				fields["name"] = "name must start and end with an alphanumeric, and contains no more than 64 alphanumeric characters and - in total."
@@ -76,7 +83,7 @@ func (endpoint *EndpointMetaDto) Marshall(dtoIngressRoute *traefikv1alpha1.Ingre
 
 func (endpoint *EndpointDto) Marshall(dtoIngressRoute *traefikv1alpha1.IngressRoute, secret *corev1.Secret) *EndpointDto {
 	endpoint.Name = dtoIngressRoute.Name
-	endpoint.Routes = map[string]string{}
+	endpoint.Routes = make([]*RouteDto, 0)
 	endpoint.Protocol = dtoIngressRoute.Labels["kotal.io/protocol"]
 	endpoint.CreatedAt = dtoIngressRoute.CreationTimestamp.UTC().Format(shared.JavascriptISOString)
 	for _, route := range dtoIngressRoute.Spec.Routes {
@@ -94,7 +101,20 @@ func (endpoint *EndpointDto) Marshall(dtoIngressRoute *traefikv1alpha1.IngressRo
 			str = fmt.Sprintf("https://%s", str)
 		}
 
-		endpoint.Routes[route.Services[0].Port.StrVal] = str
+		protocol := protocol(endpoint.Protocol)
+		kind := kind(dtoIngressRoute.Labels["kotal.io/kind"])
+		port := port(route.Services[0].Port.StrVal)
+		routeExample := strings.ReplaceAll(examples[protocol][kind][port], `${route}`, str)
+		routeRefs := references[protocol][kind][port]
+		if routeRefs == nil {
+			routeRefs = []string{}
+		}
+		endpoint.Routes = append(endpoint.Routes, &RouteDto{
+			Name:       route.Services[0].Port.StrVal,
+			Route:      str,
+			Example:    routeExample,
+			References: routeRefs,
+		})
 	}
 
 	return endpoint

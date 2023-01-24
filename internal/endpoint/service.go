@@ -2,6 +2,7 @@ package endpoint
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/kotalco/cloud-api/pkg/k8s/ingressroute"
@@ -58,10 +59,13 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) *restError
 	}
 
 	//create ingress-route
+	component := strings.Split(svc.Labels["app.kubernetes.io/component"], "-")
+	kind := component[len(component)-1]
 	ingressRouteObject, err := ingressRoutesService.Create(&ingressroute.IngressRouteDto{
 		Name:            dto.Name,
 		Namespace:       svc.Namespace,
 		ServiceName:     svc.Name,
+		ServiceKind:     kind,
 		ServiceProtocol: svc.Labels["kotal.io/protocol"],
 		ServiceID:       string(svc.UID),
 		Ports:           ingressRoutePorts,
