@@ -1,30 +1,31 @@
 package endpoint
 
-var references = map[protocol]map[kind][]string{
+var references = map[protocol]map[kind]map[port][]string{
 	ipfs: {
 		peer: {
-			"google.com",
-			"kotal.co",
-		},
-		clusterpeer: {
-			"google.com",
-			"kotal.co",
+			api:     []string{"google.com", "kotal.co"},
+			gateway: []string{"google.com", "kotal.co"},
 		},
 	},
 	ethereum: {
 		node: {
-			"google.com",
-			"kotal.co",
+			rpc:     []string{"google.com", "kotal.co"},
+			ws:      []string{"google.com", "kotal.co"},
+			qraphql: []string{"google.com", "kotal.co"},
 		},
 	},
 	ethereum2: {
 		beaconnode: {
-			"google.com",
-			"kotal.co",
+			rpc: []string{"google.com", "kotal.co"},
 		},
 		validator: {
-			"google.com",
-			"kotal.co",
+			ws: []string{"google.com", "kotal.co"},
+		},
+	},
+	polkadot: {
+		node: {
+			rpc: []string{"google.com", "kotal.co"},
+			ws:  []string{"google.com", "kotal.co"},
 		},
 	},
 }

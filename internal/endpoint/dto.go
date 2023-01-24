@@ -101,8 +101,11 @@ func (endpoint *EndpointDto) Marshall(dtoIngressRoute *traefikv1alpha1.IngressRo
 			str = fmt.Sprintf("https://%s", str)
 		}
 
-		routeExample := strings.ReplaceAll(examples[protocol(endpoint.Protocol)][kind(dtoIngressRoute.Labels["kotal.io/kind"])][port(route.Services[0].Port.StrVal)], `${route}`, str)
-		routeRefs := references[protocol(endpoint.Protocol)][kind(dtoIngressRoute.Labels["kotal.io/kind"])]
+		protocol := protocol(endpoint.Protocol)
+		kind := kind(dtoIngressRoute.Labels["kotal.io/kind"])
+		port := port(route.Services[0].Port.StrVal)
+		routeExample := strings.ReplaceAll(examples[protocol][kind][port], `${route}`, str)
+		routeRefs := references[protocol][kind][port]
 		if routeRefs == nil {
 			routeRefs = []string{}
 		}

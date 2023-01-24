@@ -6,24 +6,25 @@ type (
 	port     string
 )
 
-var (
+const (
 	ipfs      protocol = "ipfs"
 	ethereum  protocol = "ethereum"
 	ethereum2 protocol = "ethereum2"
 	polkadot  protocol = "polkadot"
 )
-var (
+const (
 	peer        kind = "peer"
 	clusterpeer kind = "clusterpeer"
 	node        kind = "node"
 	beaconnode  kind = "beaconnode"
 	validator   kind = "validator"
 )
-var (
+const (
 	api     port = "api"
 	gateway port = "gateway"
 	rpc     port = "rpc"
 	ws      port = "ws"
+	qraphql port = "graphql"
 )
 
 var examples = map[protocol]map[kind]map[port]string{
@@ -42,7 +43,7 @@ var examples = map[protocol]map[kind]map[port]string{
             web3.eth.getBlockNumber().then(function (blockNumber) {
             console.log('block number is ${blockNumber}')
             process.exit(0)})`,
-			"graphql": `curl -X POST -H "Content-Type: application/json" --data '{ "query": "{syncing{startingBlock currentBlock highestBlock}}"}' ${route}`,
+			qraphql: `curl -X POST -H "Content-Type: application/json" --data '{ "query": "{syncing{startingBlock currentBlock highestBlock}}"}' ${route}`,
 		},
 	},
 	ethereum2: {
