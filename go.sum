@@ -188,6 +188,8 @@ github.com/kotalco/community-api v0.0.0-20230122213615-5a2d115fce4e h1:vwkuqA94S
 github.com/kotalco/community-api v0.0.0-20230122213615-5a2d115fce4e/go.mod h1:2fHnxDElAOB3V5BgyLT6OPBT6gCYVuuvGMqRrwV0eXg=
 github.com/kotalco/community-api v0.0.0-20230124212338-b88923f7a801 h1:MhFqlrCK9Ng2CL5HIUJb67mFtO7A/ZBk5qNCKf44dvw=
 github.com/kotalco/community-api v0.0.0-20230124212338-b88923f7a801/go.mod h1:9HGDyY0QnOhH3BcaxvhCjl0l93FR3pll7Tz4HJjVH7k=
+github.com/kotalco/community-api v0.0.0-20230125160559-2c0c47d88682 h1:ZL86oA1p4Ny811llZ/gG9ooLhsVrLWf6ys+58Y0AdRM=
+github.com/kotalco/community-api v0.0.0-20230125160559-2c0c47d88682/go.mod h1:9HGDyY0QnOhH3BcaxvhCjl0l93FR3pll7Tz4HJjVH7k=
 github.com/kotalco/kotal v0.0.0-20230112203831-11a04f3b7512 h1:zv7bBRrdOqJ8CaR4mGqeco/cTOcHe6tViqenSImhk7k=
 github.com/kotalco/kotal v0.0.0-20230112203831-11a04f3b7512/go.mod h1:fUDA69YfT7m+Tlu+ISRLtnG6J9StRK9Zr/cP4X33qQI=
 github.com/kotalco/kotal v0.0.0-20230124184344-65d52739f9c5 h1:b09b967MN2SVCQrIqwXIIigwUkpWtQb4c4Zrwb9vnmU=
