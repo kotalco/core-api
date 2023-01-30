@@ -79,7 +79,7 @@ var references = map[protocol]map[kind]map[port][]string{
 	},
 	filecoin: {
 		node: {
-			rpc: {
+			api: {
 				"https://docs.filecoin.io/developers/reference/json-rpc/introduction/",
 			},
 		},

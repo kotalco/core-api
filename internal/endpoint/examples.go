@@ -94,7 +94,7 @@ chainlink --remote-node-url $NODE_ENDPOINT keys eth list
 	},
 	filecoin: {
 		node: {
-			rpc: `curl -X POST -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","id":1,"method":"Filecoin.ChainHead","params":[]}' ${route}`,
+			api: `curl -X POST -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","id":1,"method":"Filecoin.ChainHead","params":[]}' ${route}`,
 		},
 	},
 }
