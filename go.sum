@@ -186,6 +186,8 @@ github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxv
 github.com/konsorten/go-windows-terminal-sequences v1.0.2/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
 github.com/kotalco/community-api v0.1.0 h1:mZQ6lgcTkkv+Gsa2nPKo4cnjV0a3FUTXROGZuupoy6I=
 github.com/kotalco/community-api v0.1.0/go.mod h1:WHUE6wZoxXb6m3txGhK9howfQnL+buBMhmQeyZRZ7rg=
+github.com/kotalco/community-api v0.1.1-0.20230227195103-8d9248770217 h1:ua+aVUecppPBSzlWvz2nK+qR+hRaOFqiJrrel5eB/EA=
+github.com/kotalco/community-api v0.1.1-0.20230227195103-8d9248770217/go.mod h1:WHUE6wZoxXb6m3txGhK9howfQnL+buBMhmQeyZRZ7rg=
 github.com/kotalco/kotal v0.1.0 h1:KjjE5nfIt883fXyOqHh9gF6aN4F4jHXGvXCrjCQGoEU=
 github.com/kotalco/kotal v0.1.0/go.mod h1:fUDA69YfT7m+Tlu+ISRLtnG6J9StRK9Zr/cP4X33qQI=
 github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=
