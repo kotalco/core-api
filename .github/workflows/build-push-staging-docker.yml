@@ -53,4 +53,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: ./.github/workflows/testing-helm-chart.yml
+      - uses: actions/checkout@v2
+
+      - name: Run Testing Workflows
+        uses: ./.github/workflows/testing-helm-chart.yml
