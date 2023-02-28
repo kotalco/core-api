@@ -1,17 +1,17 @@
 name: Testing-Helm-Chart
 # Only trigger, when the Build-Push-cloud-api workflow succeeded
 
-on:
-  workflow_run:
-    workflows: [Build-Push-staging-cloud-api, Build-Push-production-cloud-api]
-    types:
-      - completed
-    branches: [test/helm-chart]
+on: [workflow_call]
+#  workflow_run:
+#    workflows: [Build-Push-staging-cloud-api, Build-Push-production-cloud-api]
+#    types:
+#      - completed
+#    branches: [test/helm-chart]
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    #    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - uses: actions/checkout@v3

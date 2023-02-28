@@ -49,3 +49,8 @@ jobs:
           secrets: |
             SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}
             EC_PUBLIC_KEY=${{ secrets.STAGING_EC_PUBLIC_KEY }}
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: ./.github/workflows/testing-helm-chart.yml
