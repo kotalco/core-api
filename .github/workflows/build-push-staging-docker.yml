@@ -2,7 +2,9 @@ name: Build-Push-staging-cloud-api
 
 on:
   push:
-    branches: [master]
+    branches:
+      - master
+      - test/helm-chart
   pull_request:
     branches: [master]
 
