@@ -76,6 +76,7 @@ jobs:
           for dir in $(ls -d kotal-helm-chart/charts/*/); do
             helm dependency list $dir 2> /dev/null | tail +2 | head -n -1 | awk '{ print "helm repo add " $1 " " $3 }' | while read cmd; do $cmd; done
           done
+          helm dependency update kotal-helm-chart/charts/kotal
 
       - name: Testing Kotal-Helm-Chart with Cloud-api new image
         uses: 'vimeda/helm@v1.6.8'
