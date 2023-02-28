@@ -9,6 +9,7 @@ on:
     branches: [master]
 
 jobs:
+
   build:
     runs-on: ubuntu-latest
 
@@ -49,10 +50,31 @@ jobs:
           secrets: |
             SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}
             EC_PUBLIC_KEY=${{ secrets.STAGING_EC_PUBLIC_KEY }}
-  test:
+  test-on-digital-ocean:
     runs-on: ubuntu-latest
     needs: [build]
 
     steps:
-      - name: Run Testing Workflows
-        uses: ./.github/workflows/testing-helm-chart.yml
+      - uses: actions/checkout@v3
+
+      - name: Add SHORT_SHA env property with commit short sha
+        run: echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-8`" >> $GITHUB_ENV
+
+      - name: Checkout kotal-helm-chart Repo
+        uses: actions/checkout@v3
+        with:
+          repository: kotalco/kotal-helm-chart
+          path: kotal-helm-chart
+
+      - name: Testing Kotal-Helm-Chart with Cloud-api new image
+        uses: 'vimeda/helm@v1.6.8'
+        with:
+          release: 'kotal'
+          namespace: 'kotal'
+          chart: 'kotal-helm-chart/charts/kotal'
+          helm: 'helm3'
+          token: '${{ github.token }}'
+          values: |
+            api.tag: ${SHORT_SHA}
+        env:
+          KUBECONFIG_FILE: '${{ secrets.KUBECONFIG_DO_TESTING }}'
