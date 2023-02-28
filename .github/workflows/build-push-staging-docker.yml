@@ -79,14 +79,9 @@ jobs:
           helm dependency update kotal-helm-chart/charts/kotal
 
       - name: Testing Kotal-Helm-Chart with Cloud-api new image
-        uses: 'vimeda/helm@v1.6.8'
+        uses: azure/k8s-set-context@v1
         with:
-          release: 'kotal'
-          namespace: 'kotal'
-          chart: 'kotal-helm-chart/charts/kotal'
-          helm: 'helm3'
-          token: '${{ github.token }}'
-          values: |
-            api.tag: ${SHORT_SHA}
-        env:
-          KUBECONFIG_FILE: '${{ secrets.KUBECONFIG_DO_TESTING }}'
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBECONFIG_DO_TESTING }}
+        run: |
+          helm upgrade kotal kotal-helm-chart/charts/kotal --install --wait --namespace=kotal --create-namespace --set "api.tag=${SHORT_SHA}" --set=app.name=kotal --atomic 
