@@ -78,10 +78,12 @@ jobs:
           done
           helm dependency update kotal-helm-chart/charts/kotal
 
-      - name: Testing Kotal-Helm-Chart with Cloud-api new image
+      - name: K8s-set-context
         uses: azure/k8s-set-context@v1
         with:
           method: kubeconfig
           kubeconfig: ${{ secrets.KUBECONFIG_DO_TESTING }}
+
+      - name: Testing Kotal-Helm-Chart with Cloud-api new image
         run: |
-          helm upgrade kotal kotal-helm-chart/charts/kotal --install --wait --namespace=kotal --create-namespace --set "api.tag=${SHORT_SHA}" --set=app.name=kotal --atomic 
+          helm upgrade kotal kotal-helm-chart/charts/kotal --install --wait --namespace=kotal --create-namespace --set "api.tag=${SHORT_SHA}" --set=app.name=kotal --atomic
