@@ -66,6 +66,17 @@ jobs:
           repository: kotalco/kotal-helm-chart
           path: kotal-helm-chart
 
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.10.0
+
+      - name: Add helm dependencies repositories
+        run: |
+          for dir in $(ls -d kotal-helm-chart/charts/*/); do
+            helm dependency list $dir 2> /dev/null | tail +2 | head -n -1 | awk '{ print "helm repo add " $1 " " $3 }' | while read cmd; do $cmd; done
+          done
+
       - name: Testing Kotal-Helm-Chart with Cloud-api new image
         uses: 'vimeda/helm@v1.6.8'
         with:
