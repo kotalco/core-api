@@ -51,9 +51,8 @@ jobs:
             EC_PUBLIC_KEY=${{ secrets.STAGING_EC_PUBLIC_KEY }}
   test:
     runs-on: ubuntu-latest
+    needs: [build]
 
     steps:
-      - uses: actions/checkout@v2
-
       - name: Run Testing Workflows
         uses: ./.github/workflows/testing-helm-chart.yml
