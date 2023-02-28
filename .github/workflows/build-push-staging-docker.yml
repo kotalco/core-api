@@ -2,9 +2,7 @@ name: Build-Push-staging-cloud-api
 
 on:
   push:
-    branches:
-      - master
-      - test/helm-chart
+    branches: [master]
   pull_request:
     branches: [master]
 
@@ -84,6 +82,6 @@ jobs:
           method: kubeconfig
           kubeconfig: ${{ secrets.KUBECONFIG_DO_TESTING }}
 
-      - name: Testing Kotal-Helm-Chart with Cloud-api new image
+      - name: Testing and Update Kotal-Helm-Chart with Cloud-api new image
         run: |
           helm upgrade kotal kotal-helm-chart/charts/kotal --install --wait --namespace=kotal --create-namespace --set "api.tag=${SHORT_SHA}" --set=app.name=kotal --atomic
