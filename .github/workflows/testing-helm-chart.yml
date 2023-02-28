@@ -3,11 +3,7 @@ name: Testing-Helm-Chart
 
 on:
   workflow_run:
-    workflows: ["Build-Push-staging-cloud-api"]
-    types:
-      - completed
-  workflow_run:
-    workflows: ["Build-Push-production-cloud-api"]
+    workflows: [Build-Push-staging-cloud-api, Build-Push-production-cloud-api]
     types:
       - completed
 
