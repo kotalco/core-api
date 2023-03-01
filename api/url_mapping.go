@@ -100,6 +100,7 @@ func mapDeploymentUrl(v1 fiber.Router) {
 	chainlinkNodes.Get("/:name", middleware.IsReader, chainlink.ValidateNodeExist, chainlink.Get)
 	chainlinkNodes.Get("/:name/logs", middleware.IsReader, websocket.New(shared.Logger))
 	chainlinkNodes.Get("/:name/status", middleware.IsReader, websocket.New(shared.Status))
+	chainlinkNodes.Get("/:name/metrics", middleware.IsReader, websocket.New(shared.Metrics))
 	chainlinkNodes.Put("/:name", middleware.IsWriter, chainlink.ValidateNodeExist, chainlink.Update)
 	chainlinkNodes.Delete("/:name", middleware.IsAdmin, chainlink.ValidateNodeExist, chainlink.Delete)
 
@@ -112,6 +113,7 @@ func mapDeploymentUrl(v1 fiber.Router) {
 	ethereumNodes.Get("/:name", middleware.IsReader, ethereum.ValidateNodeExist, ethereum.Get)
 	ethereumNodes.Get("/:name/logs", middleware.IsReader, websocket.New(shared.Logger))
 	ethereumNodes.Get("/:name/status", middleware.IsReader, websocket.New(shared.Status))
+	ethereumNodes.Get("/:name/metrics", middleware.IsReader, websocket.New(shared.Metrics))
 	ethereumNodes.Get("/:name/stats", middleware.IsReader, websocket.New(ethereum.Stats))
 	ethereumNodes.Put("/:name", middleware.IsWriter, ethereum.ValidateNodeExist, ethereum.Update)
 	ethereumNodes.Delete("/:name", middleware.IsAdmin, ethereum.ValidateNodeExist, ethereum.Delete)
@@ -144,6 +146,7 @@ func mapDeploymentUrl(v1 fiber.Router) {
 	beaconnodesGroup.Get("/:name", middleware.IsReader, beacon_node.ValidateBeaconNodeExist, beacon_node.Get)
 	beaconnodesGroup.Get("/:name/logs", middleware.IsReader, websocket.New(shared.Logger))
 	beaconnodesGroup.Get("/:name/status", middleware.IsReader, websocket.New(shared.Status))
+	beaconnodesGroup.Get("/:name/metrics", middleware.IsReader, websocket.New(shared.Metrics))
 	beaconnodesGroup.Put("/:name", middleware.IsWriter, beacon_node.ValidateBeaconNodeExist, beacon_node.Update)
 	beaconnodesGroup.Delete("/:name", middleware.IsAdmin, beacon_node.ValidateBeaconNodeExist, beacon_node.Delete)
 	//validators group
@@ -154,6 +157,7 @@ func mapDeploymentUrl(v1 fiber.Router) {
 	validatorsGroup.Get("/:name", middleware.IsReader, validator.ValidateValidatorExist, validator.Get)
 	validatorsGroup.Get("/:name/logs", middleware.IsReader, websocket.New(shared.Logger))
 	validatorsGroup.Get("/:name/status", middleware.IsReader, websocket.New(shared.Status))
+	validatorsGroup.Get("/:name/metrics", middleware.IsReader, websocket.New(shared.Metrics))
 	validatorsGroup.Put("/:name", middleware.IsWriter, validator.ValidateValidatorExist, validator.Update)
 	validatorsGroup.Delete("/:name", middleware.IsAdmin, validator.ValidateValidatorExist, validator.Delete)
 
@@ -166,6 +170,7 @@ func mapDeploymentUrl(v1 fiber.Router) {
 	filecoinNodes.Get("/:name", middleware.IsReader, filecoin.ValidateNodeExist, filecoin.Get)
 	filecoinNodes.Get("/:name/logs", middleware.IsReader, websocket.New(shared.Logger))
 	filecoinNodes.Get("/:name/status", middleware.IsReader, websocket.New(shared.Status))
+	filecoinNodes.Get("/:name/metrics", middleware.IsReader, websocket.New(shared.Metrics))
 	filecoinNodes.Put("/:name", middleware.IsWriter, filecoin.ValidateNodeExist, filecoin.Update)
 	filecoinNodes.Delete("/:name", middleware.IsAdmin, filecoin.ValidateNodeExist, filecoin.Delete)
 
@@ -179,6 +184,8 @@ func mapDeploymentUrl(v1 fiber.Router) {
 	ipfsPeersGroup.Get("/:name", middleware.IsReader, ipfs_peer.ValidatePeerExist, ipfs_peer.Get)
 	ipfsPeersGroup.Get("/:name/logs", middleware.IsReader, websocket.New(shared.Logger))
 	ipfsPeersGroup.Get("/:name/status", middleware.IsReader, websocket.New(shared.Status))
+	ipfsPeersGroup.Get("/:name/metrics", middleware.IsReader, websocket.New(shared.Metrics))
+	ipfsPeersGroup.Get("/:name/stats", middleware.IsReader, websocket.New(ipfs_peer.Stats))
 	ipfsPeersGroup.Put("/:name", middleware.IsWriter, ipfs_peer.ValidatePeerExist, ipfs_peer.Update)
 	ipfsPeersGroup.Delete("/:name", middleware.IsAdmin, ipfs_peer.ValidatePeerExist, ipfs_peer.Delete)
 	//ipfs peer group
@@ -189,6 +196,7 @@ func mapDeploymentUrl(v1 fiber.Router) {
 	clusterpeersGroup.Get("/:name", middleware.IsReader, ipfs_cluster_peer.ValidateClusterPeerExist, ipfs_cluster_peer.Get)
 	clusterpeersGroup.Get("/:name/logs", middleware.IsReader, websocket.New(shared.Logger))
 	clusterpeersGroup.Get("/:name/status", middleware.IsReader, websocket.New(shared.Status))
+	clusterpeersGroup.Get("/:name/metrics", middleware.IsReader, websocket.New(shared.Metrics))
 	clusterpeersGroup.Put("/:name", middleware.IsWriter, ipfs_cluster_peer.ValidateClusterPeerExist, ipfs_cluster_peer.Update)
 	clusterpeersGroup.Delete("/:name", middleware.IsAdmin, ipfs_cluster_peer.ValidateClusterPeerExist, ipfs_cluster_peer.Delete)
 
@@ -201,6 +209,7 @@ func mapDeploymentUrl(v1 fiber.Router) {
 	nearNodesGroup.Get("/:name", middleware.IsReader, near.ValidateNodeExist, near.Get)
 	nearNodesGroup.Get("/:name/logs", middleware.IsReader, websocket.New(shared.Logger))
 	nearNodesGroup.Get("/:name/status", middleware.IsReader, websocket.New(shared.Status))
+	nearNodesGroup.Get("/:name/metrics", middleware.IsReader, websocket.New(shared.Metrics))
 	nearNodesGroup.Get("/:name/stats", middleware.IsReader, websocket.New(near.Stats))
 	nearNodesGroup.Put("/:name", middleware.IsWriter, near.ValidateNodeExist, near.Update)
 	nearNodesGroup.Delete("/:name", middleware.IsAdmin, near.ValidateNodeExist, near.Delete)
@@ -213,6 +222,7 @@ func mapDeploymentUrl(v1 fiber.Router) {
 	polkadotNodesGroup.Get("/:name", middleware.IsReader, polkadot.ValidateNodeExist, polkadot.Get)
 	polkadotNodesGroup.Get("/:name/logs", middleware.IsReader, websocket.New(shared.Logger))
 	polkadotNodesGroup.Get("/:name/status", middleware.IsReader, websocket.New(shared.Status))
+	polkadotNodesGroup.Get("/:name/metrics", middleware.IsReader, websocket.New(shared.Metrics))
 	polkadotNodesGroup.Get("/:name/stats", middleware.IsReader, websocket.New(polkadot.Stats))
 	polkadotNodesGroup.Put("/:name", middleware.IsWriter, polkadot.ValidateNodeExist, polkadot.Update)
 	polkadotNodesGroup.Delete("/:name", middleware.IsAdmin, polkadot.ValidateNodeExist, polkadot.Delete)
