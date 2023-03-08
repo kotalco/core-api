@@ -51,6 +51,7 @@ jobs:
   test-on-digital-ocean:
     runs-on: ubuntu-latest
     needs: [build]
+    if: github.event_name == 'push'
 
     steps:
       - uses: actions/checkout@v3
