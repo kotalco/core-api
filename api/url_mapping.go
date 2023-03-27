@@ -10,6 +10,7 @@ import (
 	"github.com/kotalco/cloud-api/api/handler/user"
 	"github.com/kotalco/cloud-api/api/handler/workspace"
 	"github.com/kotalco/cloud-api/pkg/middleware"
+	"github.com/kotalco/community-api/api/handlers/bitcoin"
 	"github.com/kotalco/community-api/api/handlers/chainlink"
 	"github.com/kotalco/community-api/api/handlers/core/secret"
 	"github.com/kotalco/community-api/api/handlers/core/storage_class"
@@ -147,6 +148,7 @@ func mapDeploymentUrl(v1 fiber.Router) {
 	beaconnodesGroup.Get("/:name/logs", middleware.IsReader, websocket.New(shared.Logger))
 	beaconnodesGroup.Get("/:name/status", middleware.IsReader, websocket.New(shared.Status))
 	beaconnodesGroup.Get("/:name/metrics", middleware.IsReader, websocket.New(shared.Metrics))
+	beaconnodesGroup.Get("/:name/stats", middleware.IsReader, websocket.New(beacon_node.Stats))
 	beaconnodesGroup.Put("/:name", middleware.IsWriter, beacon_node.ValidateBeaconNodeExist, beacon_node.Update)
 	beaconnodesGroup.Delete("/:name", middleware.IsAdmin, beacon_node.ValidateBeaconNodeExist, beacon_node.Delete)
 	//validators group
@@ -226,5 +228,18 @@ func mapDeploymentUrl(v1 fiber.Router) {
 	polkadotNodesGroup.Get("/:name/stats", middleware.IsReader, websocket.New(polkadot.Stats))
 	polkadotNodesGroup.Put("/:name", middleware.IsWriter, polkadot.ValidateNodeExist, polkadot.Update)
 	polkadotNodesGroup.Delete("/:name", middleware.IsAdmin, polkadot.ValidateNodeExist, polkadot.Delete)
+
+	bitcoinGroup := v1.Group("bitcoin", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership)
+	bitcoinNodesGroup := bitcoinGroup.Group("nodes")
+	bitcoinNodesGroup.Post("/", middleware.IsWriter, middleware.NodesLimitProtected, bitcoin.Create)
+	bitcoinNodesGroup.Head("/", middleware.IsReader, bitcoin.Count)
+	bitcoinNodesGroup.Get("/", middleware.IsReader, bitcoin.List)
+	bitcoinNodesGroup.Get("/:name", middleware.IsReader, bitcoin.ValidateNodeExist, bitcoin.Get)
+	bitcoinNodesGroup.Get("/:name/logs", middleware.IsReader, websocket.New(shared.Logger))
+	bitcoinNodesGroup.Get("/:name/status", middleware.IsReader, websocket.New(shared.Status))
+	bitcoinNodesGroup.Get("/:name/metrics", middleware.IsReader, websocket.New(shared.Metrics))
+	bitcoinNodesGroup.Get("/:name/stats", middleware.IsReader, websocket.New(bitcoin.Stats))
+	bitcoinNodesGroup.Put("/:name", middleware.IsWriter, bitcoin.ValidateNodeExist, bitcoin.Update)
+	bitcoinNodesGroup.Delete("/:name", middleware.IsAdmin, bitcoin.ValidateNodeExist, bitcoin.Delete)
 
 }
