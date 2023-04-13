@@ -9,7 +9,7 @@ require (
 	github.com/gofiber/websocket/v2 v2.1.2
 	github.com/google/uuid v1.3.0
 	github.com/jackc/pgconn v1.13.0
-	github.com/kotalco/community-api v0.1.1-0.20230408220103-e33c33507908
+	github.com/kotalco/community-api v0.1.1-0.20230413234152-464a85ce5cdd
 	github.com/pquerna/otp v1.4.0
 	github.com/sendgrid/sendgrid-go v3.12.0+incompatible
 	github.com/stretchr/testify v1.8.1
