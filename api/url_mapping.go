@@ -23,6 +23,7 @@ import (
 	"github.com/kotalco/community-api/api/handlers/near"
 	"github.com/kotalco/community-api/api/handlers/polkadot"
 	"github.com/kotalco/community-api/api/handlers/shared"
+	"github.com/kotalco/community-api/api/handlers/stacks"
 )
 
 // MapUrl abstracted function to map and register all the url for the application
@@ -241,5 +242,17 @@ func mapDeploymentUrl(v1 fiber.Router) {
 	bitcoinNodesGroup.Get("/:name/stats", middleware.IsReader, websocket.New(bitcoin.Stats))
 	bitcoinNodesGroup.Put("/:name", middleware.IsWriter, bitcoin.ValidateNodeExist, bitcoin.Update)
 	bitcoinNodesGroup.Delete("/:name", middleware.IsAdmin, bitcoin.ValidateNodeExist, bitcoin.Delete)
+
+	stacksGroup := v1.Group("stacks", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership)
+	stacksNodesGroup := stacksGroup.Group("nodes")
+	stacksNodesGroup.Post("/", middleware.IsWriter, middleware.NodesLimitProtected, stacks.Create)
+	stacksNodesGroup.Head("/", middleware.IsReader, stacks.Count)
+	stacksNodesGroup.Get("/", middleware.IsReader, stacks.List)
+	stacksNodesGroup.Get("/:name", middleware.IsReader, stacks.ValidateNodeExist, stacks.Get)
+	stacksNodesGroup.Get("/:name/logs", middleware.IsReader, websocket.New(shared.Logger))
+	stacksNodesGroup.Get("/:name/status", middleware.IsReader, websocket.New(shared.Status))
+	stacksNodesGroup.Get("/:name/metrics", middleware.IsReader, websocket.New(shared.Metrics))
+	stacksNodesGroup.Put("/:name", middleware.IsWriter, stacks.ValidateNodeExist, stacks.Update)
+	stacksNodesGroup.Delete("/:name", middleware.IsAdmin, stacks.ValidateNodeExist, stacks.Delete)
 
 }
