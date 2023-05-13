@@ -26,33 +26,33 @@ func ConfigureDomain(c *fiber.Ctx) error {
 	dto := new(setting.ConfigureDomainRequestDto)
 	if err := c.BodyParser(dto); err != nil {
 		badReq := restErrors.NewBadRequestError("invalid request body")
-		return c.Status(badReq.Status).JSON(badReq)
+		return c.Status(badReq.StatusCode()).JSON(badReq)
 	}
 
 	restErr := setting.Validate(dto)
 	if restErr != nil {
-		return c.Status(restErr.Status).JSON(restErr)
+		return c.Status(restErr.StatusCode()).JSON(restErr)
 	}
 
 	ip, err := ipAddress()
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	err = verifyDomainHost(dto.Domain, ip)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 	err = verifyDomainHost(fmt.Sprintf("%s.%s", uuid.NewString(), dto.Domain), ip)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	txHandle := sqlclient.Begin()
 	err = settingService.WithTransaction(txHandle).ConfigureDomain(dto)
 	if err != nil {
 		sqlclient.Rollback(txHandle)
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	//Update API and dashboard ingress routes
@@ -61,7 +61,7 @@ func ConfigureDomain(c *fiber.Ctx) error {
 	if err != nil {
 		go logger.Warn("CONFIGURE_DOMAIN", err)
 		sqlclient.Rollback(txHandle)
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	//update ingress-route
@@ -83,7 +83,7 @@ func ConfigureDomain(c *fiber.Ctx) error {
 	if err != nil {
 		go logger.Warn("CONFIGURE_DOMAIN", err)
 		sqlclient.Rollback(txHandle)
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	sqlclient.Commit(txHandle)
@@ -94,16 +94,16 @@ func ConfigureRegistration(c *fiber.Ctx) error {
 	dto := new(setting.ConfigureRegistrationRequestDto)
 	if err := c.BodyParser(dto); err != nil {
 		badReq := restErrors.NewBadRequestError("invalid request body")
-		return c.Status(badReq.Status).JSON(badReq)
+		return c.Status(badReq.StatusCode()).JSON(badReq)
 	}
 	restErr := setting.Validate(dto)
 	if restErr != nil {
-		return c.Status(restErr.Status).JSON(restErr)
+		return c.Status(restErr.StatusCode()).JSON(restErr)
 	}
 
 	err := settingService.WithoutTransaction().ConfigureRegistration(dto)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{Message: "registration configured successfully!"}))
 }
@@ -111,7 +111,7 @@ func ConfigureRegistration(c *fiber.Ctx) error {
 func Settings(c *fiber.Ctx) error {
 	list, err := settingService.WithoutTransaction().Settings()
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	marshalledList := make([]setting.SettingResponseDto, 0)
@@ -124,15 +124,15 @@ func Settings(c *fiber.Ctx) error {
 func IPAddress(c *fiber.Ctx) error {
 	record, err := ipAddress()
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(&setting.IPAddressResponseDto{IPAddress: record}))
 }
 
-var ipAddress = func() (ip string, restErr *restErrors.RestErr) {
+var ipAddress = func() (ip string, restErr restErrors.IRestErr) {
 	record, restErr := k8service.Get("traefik", "traefik")
 	if restErr != nil {
-		if restErr.Status == http.StatusNotFound {
+		if restErr.StatusCode() == http.StatusNotFound {
 			record, restErr = k8service.Get("kotal-traefik", "traefik")
 			if restErr != nil {
 				go logger.Error("SETTING_GET_IP_ADDRESS", restErr)
@@ -155,7 +155,7 @@ var ipAddress = func() (ip string, restErr *restErrors.RestErr) {
 	return
 }
 
-var verifyDomainHost = func(domain string, ipAddress string) *restErrors.RestErr {
+var verifyDomainHost = func(domain string, ipAddress string) restErrors.IRestErr {
 	records, lookErr := net.LookupHost(domain)
 	if lookErr != nil {
 		go logger.Error("VERIFY_DOMAIN_A_RECORDS", lookErr)

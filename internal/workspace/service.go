@@ -19,16 +19,16 @@ type service struct {
 type IService interface {
 	WithTransaction(txHandle *gorm.DB) IService
 	WithoutTransaction() IService
-	Create(dto *CreateWorkspaceRequestDto, userId string) (*Workspace, *restErrors.RestErr)
-	Update(dto *UpdateWorkspaceRequestDto, workspace *Workspace) *restErrors.RestErr
-	Delete(workspace *Workspace) *restErrors.RestErr
-	GetById(Id string) (*Workspace, *restErrors.RestErr)
-	GetByUserId(UserId string) ([]*Workspace, *restErrors.RestErr)
-	AddWorkspaceMember(workspace *Workspace, memberId string, role string) *restErrors.RestErr
-	DeleteWorkspaceMember(workspace *Workspace, memberId string) *restErrors.RestErr
-	CountByUserId(userId string) (int64, *restErrors.RestErr)
-	UpdateWorkspaceUser(workspaceUser *workspaceuser.WorkspaceUser, dto *UpdateWorkspaceUserRequestDto) *restErrors.RestErr
-	CreateUserDefaultWorkspace(userId string) *restErrors.RestErr
+	Create(dto *CreateWorkspaceRequestDto, userId string) (*Workspace, restErrors.IRestErr)
+	Update(dto *UpdateWorkspaceRequestDto, workspace *Workspace) restErrors.IRestErr
+	Delete(workspace *Workspace) restErrors.IRestErr
+	GetById(Id string) (*Workspace, restErrors.IRestErr)
+	GetByUserId(UserId string) ([]*Workspace, restErrors.IRestErr)
+	AddWorkspaceMember(workspace *Workspace, memberId string, role string) restErrors.IRestErr
+	DeleteWorkspaceMember(workspace *Workspace, memberId string) restErrors.IRestErr
+	CountByUserId(userId string) (int64, restErrors.IRestErr)
+	UpdateWorkspaceUser(workspaceUser *workspaceuser.WorkspaceUser, dto *UpdateWorkspaceUserRequestDto) restErrors.IRestErr
+	CreateUserDefaultWorkspace(userId string) restErrors.IRestErr
 }
 
 var (
@@ -52,9 +52,9 @@ func (wService service) WithoutTransaction() IService {
 }
 
 // Create creates new workspace and workspace-user record  from a given dto.
-func (service) Create(dto *CreateWorkspaceRequestDto, userId string) (*Workspace, *restErrors.RestErr) {
+func (service) Create(dto *CreateWorkspaceRequestDto, userId string) (*Workspace, restErrors.IRestErr) {
 	exist, err := workspaceRepo.GetByNameAndUserId(dto.Name, userId)
-	if err != nil && err.Status != http.StatusNotFound {
+	if err != nil && err.StatusCode() != http.StatusNotFound {
 		return nil, err
 	}
 
@@ -86,9 +86,9 @@ func (service) Create(dto *CreateWorkspaceRequestDto, userId string) (*Workspace
 }
 
 // Update updates the workspace name only ,updating K8sNamespace not allowed.
-func (service) Update(dto *UpdateWorkspaceRequestDto, workspace *Workspace) *restErrors.RestErr {
+func (service) Update(dto *UpdateWorkspaceRequestDto, workspace *Workspace) restErrors.IRestErr {
 	exist, err := workspaceRepo.GetByNameAndUserId(dto.Name, workspace.UserId)
-	if err != nil && err.Status != http.StatusNotFound {
+	if err != nil && err.StatusCode() != http.StatusNotFound {
 		return err
 	}
 
@@ -109,12 +109,12 @@ func (service) Update(dto *UpdateWorkspaceRequestDto, workspace *Workspace) *res
 }
 
 // GetById gets workspace by given id.
-func (service) GetById(Id string) (*Workspace, *restErrors.RestErr) {
+func (service) GetById(Id string) (*Workspace, restErrors.IRestErr) {
 	return workspaceRepo.GetById(Id)
 }
 
 // Delete workspace by given id for specific user
-func (service) Delete(workspace *Workspace) *restErrors.RestErr {
+func (service) Delete(workspace *Workspace) restErrors.IRestErr {
 	err := workspaceRepo.Delete(workspace)
 	if err != nil {
 		return err
@@ -124,12 +124,12 @@ func (service) Delete(workspace *Workspace) *restErrors.RestErr {
 }
 
 // GetByUserId Finds workspaces by given userId
-func (service) GetByUserId(userId string) ([]*Workspace, *restErrors.RestErr) {
+func (service) GetByUserId(userId string) ([]*Workspace, restErrors.IRestErr) {
 	return workspaceRepo.GetByUserId(userId)
 }
 
 // AddWorkspaceMember creates new workspaceUser record for a given workspace
-func (service) AddWorkspaceMember(workspace *Workspace, memberId string, role string) *restErrors.RestErr {
+func (service) AddWorkspaceMember(workspace *Workspace, memberId string, role string) restErrors.IRestErr {
 	newWorkspaceUser := new(workspaceuser.WorkspaceUser)
 	newWorkspaceUser.ID = uuid.NewString()
 	newWorkspaceUser.WorkspaceID = workspace.ID
@@ -140,7 +140,7 @@ func (service) AddWorkspaceMember(workspace *Workspace, memberId string, role st
 }
 
 // DeleteWorkspaceMember removes workspaceUser record for a given workspace
-func (service) DeleteWorkspaceMember(workspace *Workspace, memberId string) *restErrors.RestErr {
+func (service) DeleteWorkspaceMember(workspace *Workspace, memberId string) restErrors.IRestErr {
 	member, err := workspaceRepo.GetWorkspaceMemberByWorkspaceIdAndUserId(workspace.ID, memberId)
 	if err != nil {
 		return err
@@ -150,11 +150,11 @@ func (service) DeleteWorkspaceMember(workspace *Workspace, memberId string) *res
 }
 
 // CountByUserId returns user's workspaces count
-func (service) CountByUserId(userId string) (int64, *restErrors.RestErr) {
+func (service) CountByUserId(userId string) (int64, restErrors.IRestErr) {
 	return workspaceRepo.CountByUserId(userId)
 }
 
-func (service) UpdateWorkspaceUser(workspaceUser *workspaceuser.WorkspaceUser, dto *UpdateWorkspaceUserRequestDto) *restErrors.RestErr {
+func (service) UpdateWorkspaceUser(workspaceUser *workspaceuser.WorkspaceUser, dto *UpdateWorkspaceUserRequestDto) restErrors.IRestErr {
 	workspaceUser.Role = dto.Role
 	return workspaceRepo.UpdateWorkspaceUser(workspaceUser)
 }
@@ -164,7 +164,7 @@ func (service) UpdateWorkspaceUser(workspaceUser *workspaceuser.WorkspaceUser, d
 // if the default namespace already bound to workspace, creates another namespace with  randomName
 // creates the default workspace
 // this should only be used once in the user registration scenario
-func (service) CreateUserDefaultWorkspace(userId string) *restErrors.RestErr {
+func (service) CreateUserDefaultWorkspace(userId string) restErrors.IRestErr {
 	defaultNamespace := "default"
 
 	//check if user don't have any workspaces
@@ -179,7 +179,7 @@ func (service) CreateUserDefaultWorkspace(userId string) *restErrors.RestErr {
 	//check if the cluster has default namespace with the name default, create if it doesn't exist
 	_, err = namespaceService.Get(defaultNamespace)
 	if err != nil {
-		if err.Status == http.StatusNotFound { //cluster don't have default namespace create one
+		if err.StatusCode() == http.StatusNotFound { //cluster don't have default namespace create one
 			err = namespaceService.Create(defaultNamespace)
 			if err != nil {
 				go logger.Error(service.CreateUserDefaultWorkspace, err)

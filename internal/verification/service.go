@@ -20,10 +20,10 @@ type service struct{}
 type IService interface {
 	WithTransaction(txHandle *gorm.DB) IService
 	WithoutTransaction() IService
-	Create(userId string) (string, *restErrors.RestErr)
-	GetByUserId(userId string) (*Verification, *restErrors.RestErr)
-	Resend(userId string) (string, *restErrors.RestErr)
-	Verify(userId string, token string) *restErrors.RestErr
+	Create(userId string) (string, restErrors.IRestErr)
+	GetByUserId(userId string) (*Verification, restErrors.IRestErr)
+	Resend(userId string) (string, restErrors.IRestErr)
+	Verify(userId string, token string) restErrors.IRestErr
 }
 
 var (
@@ -46,7 +46,7 @@ func (vService service) WithoutTransaction() IService {
 }
 
 // Create creates a new verification token for the user
-func (service) Create(userId string) (string, *restErrors.RestErr) {
+func (service) Create(userId string) (string, restErrors.IRestErr) {
 	token, restErr := generateToken()
 	if restErr != nil {
 		return "", restErr
@@ -76,7 +76,7 @@ func (service) Create(userId string) (string, *restErrors.RestErr) {
 }
 
 // GetByUserId get verification by user id
-func (service) GetByUserId(userId string) (*Verification, *restErrors.RestErr) {
+func (service) GetByUserId(userId string) (*Verification, restErrors.IRestErr) {
 	verification, err := verificationRepository.GetByUserId(userId)
 	if err != nil {
 		return nil, restErrors.NewNotFoundError(fmt.Sprintf("No such verification"))
@@ -86,7 +86,7 @@ func (service) GetByUserId(userId string) (*Verification, *restErrors.RestErr) {
 }
 
 // Verify verify token hash
-func (service) Verify(userId string, token string) *restErrors.RestErr {
+func (service) Verify(userId string, token string) restErrors.IRestErr {
 	verification, err := verificationRepository.GetByUserId(userId)
 	if err != nil {
 		return restErrors.NewNotFoundError(fmt.Sprintf("No such verification"))
@@ -117,10 +117,10 @@ func (service) Verify(userId string, token string) *restErrors.RestErr {
 }
 
 // Resend  verification token to user
-func (vService service) Resend(userId string) (string, *restErrors.RestErr) {
+func (vService service) Resend(userId string) (string, restErrors.IRestErr) {
 	verification, err := verificationRepository.GetByUserId(userId)
 	if err != nil {
-		if err.Status == http.StatusNotFound {
+		if err.StatusCode() == http.StatusNotFound {
 			return vService.Create(userId)
 		}
 		return "", err
@@ -151,7 +151,7 @@ func (vService service) Resend(userId string) (string, *restErrors.RestErr) {
 }
 
 // generateToken creates a random token to the user which will be sent to user email
-var generateToken = func() (string, *restErrors.RestErr) {
+var generateToken = func() (string, restErrors.IRestErr) {
 	tokenLength, err := strconv.Atoi(config.Environment.VerificationTokenLength)
 	if err != nil {
 		go logger.Error("generateToken", err)
@@ -164,7 +164,7 @@ var generateToken = func() (string, *restErrors.RestErr) {
 }
 
 // hashToken hashes the verification token before sending it to the user email
-var hashToken = func(token string) (string, *restErrors.RestErr) {
+var hashToken = func(token string) (string, restErrors.IRestErr) {
 
 	hashedToken, err := hashing.Hash(token, 6)
 	if err != nil {
@@ -177,7 +177,7 @@ var hashToken = func(token string) (string, *restErrors.RestErr) {
 	return stringifyToken, nil
 }
 
-var expiryDate = func() (int64, *restErrors.RestErr) {
+var expiryDate = func() (int64, restErrors.IRestErr) {
 	tokenExpires, convErr := strconv.Atoi(config.Environment.VerificationTokenExpiryHours)
 	if convErr != nil {
 		go logger.Warn("VERIFICATION_EXPIRY_DATE", convErr)

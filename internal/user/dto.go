@@ -90,7 +90,7 @@ func (dto PublicUserResponseDto) Marshall(model *User) PublicUserResponseDto {
 }
 
 // Validate validates user request field for all request dto`s
-func Validate(dto interface{}) *restErrors.RestErr {
+func Validate(dto interface{}) restErrors.IRestErr {
 	newValidator := validator.New()
 	err := newValidator.Struct(dto)
 

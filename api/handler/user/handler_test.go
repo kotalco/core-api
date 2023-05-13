@@ -32,21 +32,21 @@ User service Mocks
 */
 var (
 	UserWithTransactionFunc     func(txHandle *gorm.DB) user.IService
-	SignUpFunc                  func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr)
-	SignInFunc                  func(dto *user.SignInRequestDto) (*user.UserSessionResponseDto, *restErrors.RestErr)
-	VerifyTOTPFunc              func(model *user.User, totp string) (*user.UserSessionResponseDto, *restErrors.RestErr)
-	GetByEmailFunc              func(email string) (*user.User, *restErrors.RestErr)
-	GetByIdFunc                 func(Id string) (*user.User, *restErrors.RestErr)
-	VerifyEmailFunc             func(model *user.User) *restErrors.RestErr
-	ResetPasswordFunc           func(model *user.User, password string) *restErrors.RestErr
-	ChangePasswordFunc          func(model *user.User, dto *user.ChangePasswordRequestDto) *restErrors.RestErr
-	ChangeEmailFunc             func(model *user.User, dto *user.ChangeEmailRequestDto) *restErrors.RestErr
-	CreateTOTPFunc              func(model *user.User, dto *user.CreateTOTPRequestDto) (bytes.Buffer, *restErrors.RestErr)
-	EnableTwoFactorAuthFunc     func(model *user.User, totp string) (*user.User, *restErrors.RestErr)
-	DisableTwoFactorAuthFunc    func(model *user.User, dto *user.DisableTOTPRequestDto) *restErrors.RestErr
-	FindWhereIdInSliceFunc      func(ids []string) ([]*user.User, *restErrors.RestErr)
-	usersCountFunc              func() (int64, *restErrors.RestErr)
-	usersSetAsPlatformAdminFunc func(model *user.User) *restErrors.RestErr
+	SignUpFunc                  func(dto *user.SignUpRequestDto) (*user.User, restErrors.IRestErr)
+	SignInFunc                  func(dto *user.SignInRequestDto) (*user.UserSessionResponseDto, restErrors.IRestErr)
+	VerifyTOTPFunc              func(model *user.User, totp string) (*user.UserSessionResponseDto, restErrors.IRestErr)
+	GetByEmailFunc              func(email string) (*user.User, restErrors.IRestErr)
+	GetByIdFunc                 func(Id string) (*user.User, restErrors.IRestErr)
+	VerifyEmailFunc             func(model *user.User) restErrors.IRestErr
+	ResetPasswordFunc           func(model *user.User, password string) restErrors.IRestErr
+	ChangePasswordFunc          func(model *user.User, dto *user.ChangePasswordRequestDto) restErrors.IRestErr
+	ChangeEmailFunc             func(model *user.User, dto *user.ChangeEmailRequestDto) restErrors.IRestErr
+	CreateTOTPFunc              func(model *user.User, dto *user.CreateTOTPRequestDto) (bytes.Buffer, restErrors.IRestErr)
+	EnableTwoFactorAuthFunc     func(model *user.User, totp string) (*user.User, restErrors.IRestErr)
+	DisableTwoFactorAuthFunc    func(model *user.User, dto *user.DisableTOTPRequestDto) restErrors.IRestErr
+	FindWhereIdInSliceFunc      func(ids []string) ([]*user.User, restErrors.IRestErr)
+	usersCountFunc              func() (int64, restErrors.IRestErr)
+	usersSetAsPlatformAdminFunc func(model *user.User) restErrors.IRestErr
 )
 
 type userServiceMock struct{}
@@ -59,60 +59,60 @@ func (uService userServiceMock) WithTransaction(txHandle *gorm.DB) user.IService
 	return uService
 }
 
-func (userServiceMock) SignUp(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr) {
+func (userServiceMock) SignUp(dto *user.SignUpRequestDto) (*user.User, restErrors.IRestErr) {
 	return SignUpFunc(dto)
 }
 
-func (userServiceMock) SignIn(dto *user.SignInRequestDto) (*user.UserSessionResponseDto, *restErrors.RestErr) {
+func (userServiceMock) SignIn(dto *user.SignInRequestDto) (*user.UserSessionResponseDto, restErrors.IRestErr) {
 	return SignInFunc(dto)
 }
 
-func (userServiceMock) GetByEmail(email string) (*user.User, *restErrors.RestErr) {
+func (userServiceMock) GetByEmail(email string) (*user.User, restErrors.IRestErr) {
 	return GetByEmailFunc(email)
 }
 
-func (userServiceMock) GetById(Id string) (*user.User, *restErrors.RestErr) {
+func (userServiceMock) GetById(Id string) (*user.User, restErrors.IRestErr) {
 	return GetByIdFunc(Id)
 }
 
-func (userServiceMock) VerifyEmail(model *user.User) *restErrors.RestErr {
+func (userServiceMock) VerifyEmail(model *user.User) restErrors.IRestErr {
 	return VerifyEmailFunc(model)
 }
 
-func (userServiceMock) ResetPassword(model *user.User, password string) *restErrors.RestErr {
+func (userServiceMock) ResetPassword(model *user.User, password string) restErrors.IRestErr {
 	return ResetPasswordFunc(model, password)
 }
 
-func (userServiceMock) ChangePassword(model *user.User, dto *user.ChangePasswordRequestDto) *restErrors.RestErr {
+func (userServiceMock) ChangePassword(model *user.User, dto *user.ChangePasswordRequestDto) restErrors.IRestErr {
 	return ChangePasswordFunc(model, dto)
 }
 
-func (userServiceMock) ChangeEmail(model *user.User, dto *user.ChangeEmailRequestDto) *restErrors.RestErr {
+func (userServiceMock) ChangeEmail(model *user.User, dto *user.ChangeEmailRequestDto) restErrors.IRestErr {
 	return ChangeEmailFunc(model, dto)
 }
 
-func (userServiceMock) CreateTOTP(model *user.User, dto *user.CreateTOTPRequestDto) (bytes.Buffer, *restErrors.RestErr) {
+func (userServiceMock) CreateTOTP(model *user.User, dto *user.CreateTOTPRequestDto) (bytes.Buffer, restErrors.IRestErr) {
 	return CreateTOTPFunc(model, dto)
 }
 
-func (userServiceMock) EnableTwoFactorAuth(model *user.User, totp string) (*user.User, *restErrors.RestErr) {
+func (userServiceMock) EnableTwoFactorAuth(model *user.User, totp string) (*user.User, restErrors.IRestErr) {
 	return EnableTwoFactorAuthFunc(model, totp)
 }
 
-func (userServiceMock) VerifyTOTP(model *user.User, totp string) (*user.UserSessionResponseDto, *restErrors.RestErr) {
+func (userServiceMock) VerifyTOTP(model *user.User, totp string) (*user.UserSessionResponseDto, restErrors.IRestErr) {
 	return VerifyTOTPFunc(model, totp)
 }
 
-func (userServiceMock) DisableTwoFactorAuth(model *user.User, dto *user.DisableTOTPRequestDto) *restErrors.RestErr {
+func (userServiceMock) DisableTwoFactorAuth(model *user.User, dto *user.DisableTOTPRequestDto) restErrors.IRestErr {
 	return DisableTwoFactorAuthFunc(model, dto)
 }
-func (userServiceMock) FindWhereIdInSlice(ids []string) ([]*user.User, *restErrors.RestErr) {
+func (userServiceMock) FindWhereIdInSlice(ids []string) ([]*user.User, restErrors.IRestErr) {
 	return FindWhereIdInSliceFunc(ids)
 }
-func (userServiceMock) Count() (int64, *restErrors.RestErr) {
+func (userServiceMock) Count() (int64, restErrors.IRestErr) {
 	return usersCountFunc()
 }
-func (userServiceMock) SetAsPlatformAdmin(model *user.User) *restErrors.RestErr {
+func (userServiceMock) SetAsPlatformAdmin(model *user.User) restErrors.IRestErr {
 	return usersSetAsPlatformAdminFunc(model)
 }
 
@@ -120,10 +120,10 @@ func (userServiceMock) SetAsPlatformAdmin(model *user.User) *restErrors.RestErr 
 Verification service Mocks
 */
 var (
-	CreateFunc                      func(userId string) (string, *restErrors.RestErr)
-	GetByUserIdFunc                 func(userId string) (*verification.Verification, *restErrors.RestErr)
-	ResendFunc                      func(userId string) (string, *restErrors.RestErr)
-	VerifyFunc                      func(userId string, token string) *restErrors.RestErr
+	CreateFunc                      func(userId string) (string, restErrors.IRestErr)
+	GetByUserIdFunc                 func(userId string) (*verification.Verification, restErrors.IRestErr)
+	ResendFunc                      func(userId string) (string, restErrors.IRestErr)
+	VerifyFunc                      func(userId string, token string) restErrors.IRestErr
 	VerificationWithTransactionFunc func(txHandle *gorm.DB) verification.IService
 )
 
@@ -137,42 +137,42 @@ func (vService verificationServiceMock) WithTransaction(txHandle *gorm.DB) verif
 	return vService
 }
 
-func (verificationServiceMock) Create(userId string) (string, *restErrors.RestErr) {
+func (verificationServiceMock) Create(userId string) (string, restErrors.IRestErr) {
 	return CreateFunc(userId)
 }
 
-func (verificationServiceMock) GetByUserId(userId string) (*verification.Verification, *restErrors.RestErr) {
+func (verificationServiceMock) GetByUserId(userId string) (*verification.Verification, restErrors.IRestErr) {
 	return GetByUserIdFunc(userId)
 }
 
-func (verificationServiceMock) Verify(userId string, token string) *restErrors.RestErr {
+func (verificationServiceMock) Verify(userId string, token string) restErrors.IRestErr {
 	return VerifyFunc(userId, token)
 }
 
-func (vService verificationServiceMock) Resend(userId string) (string, *restErrors.RestErr) {
+func (vService verificationServiceMock) Resend(userId string) (string, restErrors.IRestErr) {
 	return ResendFunc(userId)
 }
 
 // Mail Service mocks
 var (
-	SignUpMailFunc              func(dto *sendgrid.MailRequestDto) *restErrors.RestErr
-	ResendEmailVerificationFunc func(dto *sendgrid.MailRequestDto) *restErrors.RestErr
-	ForgetPasswordMailFunc      func(dto *sendgrid.MailRequestDto) *restErrors.RestErr
-	WorkspaceInvitationFunc     func(dto *sendgrid.WorkspaceInvitationMailRequestDto) *restErrors.RestErr
+	SignUpMailFunc              func(dto *sendgrid.MailRequestDto) restErrors.IRestErr
+	ResendEmailVerificationFunc func(dto *sendgrid.MailRequestDto) restErrors.IRestErr
+	ForgetPasswordMailFunc      func(dto *sendgrid.MailRequestDto) restErrors.IRestErr
+	WorkspaceInvitationFunc     func(dto *sendgrid.WorkspaceInvitationMailRequestDto) restErrors.IRestErr
 )
 
 type mailServiceMock struct{}
 
-func (mailServiceMock) SignUp(dto *sendgrid.MailRequestDto) *restErrors.RestErr {
+func (mailServiceMock) SignUp(dto *sendgrid.MailRequestDto) restErrors.IRestErr {
 	return SignUpMailFunc(dto)
 }
-func (mailServiceMock) ResendEmailVerification(dto *sendgrid.MailRequestDto) *restErrors.RestErr {
+func (mailServiceMock) ResendEmailVerification(dto *sendgrid.MailRequestDto) restErrors.IRestErr {
 	return ResendEmailVerificationFunc(dto)
 }
-func (mailServiceMock) ForgetPassword(dto *sendgrid.MailRequestDto) *restErrors.RestErr {
+func (mailServiceMock) ForgetPassword(dto *sendgrid.MailRequestDto) restErrors.IRestErr {
 	return ForgetPasswordMailFunc(dto)
 }
-func (mailServiceMock) WorkspaceInvitation(dto *sendgrid.WorkspaceInvitationMailRequestDto) *restErrors.RestErr {
+func (mailServiceMock) WorkspaceInvitation(dto *sendgrid.WorkspaceInvitationMailRequestDto) restErrors.IRestErr {
 	return WorkspaceInvitationFunc(dto)
 }
 
@@ -181,16 +181,16 @@ Workspace service Mocks
 */
 var (
 	WorkspaceWithTransaction       func(txHandle *gorm.DB) workspace.IService
-	CreateWorkspaceFunc            func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr)
-	UpdateWorkspaceFunc            func(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) *restErrors.RestErr
-	DeleteWorkspace                func(workspace *workspace.Workspace) *restErrors.RestErr
-	GetWorkspaceByIdFunc           func(Id string) (*workspace.Workspace, *restErrors.RestErr)
-	GetWorkspacesByUserIdFunc      func(userId string) ([]*workspace.Workspace, *restErrors.RestErr)
-	addWorkspaceMemberFunc         func(workspace *workspace.Workspace, memberId string, role string) *restErrors.RestErr
-	DeleteWorkspaceMemberFunc      func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr
-	CountByUserIdFunc              func(userId string) (int64, *restErrors.RestErr)
-	UpdateWorkspaceUserFunc        func(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) *restErrors.RestErr
-	CreateUserDefaultWorkspaceFunc func(userId string) *restErrors.RestErr
+	CreateWorkspaceFunc            func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, restErrors.IRestErr)
+	UpdateWorkspaceFunc            func(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) restErrors.IRestErr
+	DeleteWorkspace                func(workspace *workspace.Workspace) restErrors.IRestErr
+	GetWorkspaceByIdFunc           func(Id string) (*workspace.Workspace, restErrors.IRestErr)
+	GetWorkspacesByUserIdFunc      func(userId string) ([]*workspace.Workspace, restErrors.IRestErr)
+	addWorkspaceMemberFunc         func(workspace *workspace.Workspace, memberId string, role string) restErrors.IRestErr
+	DeleteWorkspaceMemberFunc      func(workspace *workspace.Workspace, memberId string) restErrors.IRestErr
+	CountByUserIdFunc              func(userId string) (int64, restErrors.IRestErr)
+	UpdateWorkspaceUserFunc        func(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) restErrors.IRestErr
+	CreateUserDefaultWorkspaceFunc func(userId string) restErrors.IRestErr
 )
 
 type workspaceServiceMock struct{}
@@ -203,40 +203,40 @@ func (wService workspaceServiceMock) WithTransaction(txHandle *gorm.DB) workspac
 	return wService
 }
 
-func (workspaceServiceMock) Create(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr) {
+func (workspaceServiceMock) Create(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, restErrors.IRestErr) {
 	return CreateWorkspaceFunc(dto, userId)
 }
 
-func (workspaceServiceMock) Update(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) *restErrors.RestErr {
+func (workspaceServiceMock) Update(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) restErrors.IRestErr {
 	return UpdateWorkspaceFunc(dto, workspace)
 }
 
-func (workspaceServiceMock) Delete(workspace *workspace.Workspace) *restErrors.RestErr {
+func (workspaceServiceMock) Delete(workspace *workspace.Workspace) restErrors.IRestErr {
 	return DeleteWorkspace(workspace)
 }
 
-func (workspaceServiceMock) GetById(id string) (*workspace.Workspace, *restErrors.RestErr) {
+func (workspaceServiceMock) GetById(id string) (*workspace.Workspace, restErrors.IRestErr) {
 	return GetWorkspaceByIdFunc(id)
 }
 
-func (workspaceServiceMock) GetByUserId(userId string) ([]*workspace.Workspace, *restErrors.RestErr) {
+func (workspaceServiceMock) GetByUserId(userId string) ([]*workspace.Workspace, restErrors.IRestErr) {
 	return GetWorkspacesByUserIdFunc(userId)
 }
 
-func (workspaceServiceMock) AddWorkspaceMember(workspace *workspace.Workspace, memberId string, role string) *restErrors.RestErr {
+func (workspaceServiceMock) AddWorkspaceMember(workspace *workspace.Workspace, memberId string, role string) restErrors.IRestErr {
 	return addWorkspaceMemberFunc(workspace, memberId, role)
 }
 
-func (workspaceServiceMock) DeleteWorkspaceMember(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
+func (workspaceServiceMock) DeleteWorkspaceMember(workspace *workspace.Workspace, memberId string) restErrors.IRestErr {
 	return DeleteWorkspaceMemberFunc(workspace, memberId)
 }
-func (workspaceServiceMock) CountByUserId(userId string) (int64, *restErrors.RestErr) {
+func (workspaceServiceMock) CountByUserId(userId string) (int64, restErrors.IRestErr) {
 	return CountByUserIdFunc(userId)
 }
-func (workspaceServiceMock) UpdateWorkspaceUser(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) *restErrors.RestErr {
+func (workspaceServiceMock) UpdateWorkspaceUser(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) restErrors.IRestErr {
 	return UpdateWorkspaceUserFunc(workspaceUser, dto)
 }
-func (wService workspaceServiceMock) CreateUserDefaultWorkspace(userId string) *restErrors.RestErr {
+func (wService workspaceServiceMock) CreateUserDefaultWorkspace(userId string) restErrors.IRestErr {
 	return CreateUserDefaultWorkspaceFunc(userId)
 }
 
@@ -244,26 +244,26 @@ func (wService workspaceServiceMock) CreateUserDefaultWorkspace(userId string) *
 setting service  mocks
 */
 var (
-	settingSettingsFunc               func() ([]*setting.Setting, *restErrors.RestErr)
-	settingConfigureDomainFunc        func(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr
+	settingSettingsFunc               func() ([]*setting.Setting, restErrors.IRestErr)
+	settingConfigureDomainFunc        func(dto *setting.ConfigureDomainRequestDto) restErrors.IRestErr
 	settingIsDomainConfiguredFunc     func() bool
-	settingConfigureRegistrationFunc  func(dto *setting.ConfigureRegistrationRequestDto) *restErrors.RestErr
+	settingConfigureRegistrationFunc  func(dto *setting.ConfigureRegistrationRequestDto) restErrors.IRestErr
 	settingIsRegistrationEnabledFunc  func() bool
-	settingConfigureActivationKeyFunc func(key string) *restErrors.RestErr
-	settingGetActivationKey           func() (string, *restErrors.RestErr)
+	settingConfigureActivationKeyFunc func(key string) restErrors.IRestErr
+	settingGetActivationKey           func() (string, restErrors.IRestErr)
 )
 
 type settingServiceMocks struct{}
 
-func (s settingServiceMocks) ConfigureActivationKey(key string) *restErrors.RestErr {
+func (s settingServiceMocks) ConfigureActivationKey(key string) restErrors.IRestErr {
 	return settingConfigureActivationKeyFunc(key)
 }
 
-func (s settingServiceMocks) GetActivationKey() (string, *restErrors.RestErr) {
+func (s settingServiceMocks) GetActivationKey() (string, restErrors.IRestErr) {
 	return settingGetActivationKey()
 }
 
-func (s settingServiceMocks) ConfigureRegistration(dto *setting.ConfigureRegistrationRequestDto) *restErrors.RestErr {
+func (s settingServiceMocks) ConfigureRegistration(dto *setting.ConfigureRegistrationRequestDto) restErrors.IRestErr {
 	return settingConfigureRegistrationFunc(dto)
 }
 
@@ -279,11 +279,11 @@ func (s settingServiceMocks) WithTransaction(txHandle *gorm.DB) setting.IService
 	return s
 }
 
-func (s settingServiceMocks) Settings() ([]*setting.Setting, *restErrors.RestErr) {
+func (s settingServiceMocks) Settings() ([]*setting.Setting, restErrors.IRestErr) {
 	return settingSettingsFunc()
 }
 
-func (s settingServiceMocks) ConfigureDomain(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr {
+func (s settingServiceMocks) ConfigureDomain(dto *setting.ConfigureDomainRequestDto) restErrors.IRestErr {
 	return settingConfigureDomainFunc(dto)
 }
 
@@ -349,24 +349,24 @@ func TestSignUp(t *testing.T) {
 		settingIsRegistrationEnabledFunc = func() bool {
 			return true
 		}
-		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr) {
+		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, restErrors.IRestErr) {
 			newUser := new(user.User)
 			newUser.Email = "test@test.com"
 			return newUser, nil
 		}
 
-		CreateFunc = func(userId string) (string, *restErrors.RestErr) {
+		CreateFunc = func(userId string) (string, restErrors.IRestErr) {
 			return "JWT-token", nil
 		}
-		usersCountFunc = func() (int64, *restErrors.RestErr) {
+		usersCountFunc = func() (int64, restErrors.IRestErr) {
 			return 1, nil
 		}
 
-		CreateUserDefaultWorkspaceFunc = func(userId string) *restErrors.RestErr {
+		CreateUserDefaultWorkspaceFunc = func(userId string) restErrors.IRestErr {
 			return nil
 		}
 
-		SignUpMailFunc = func(dto *sendgrid.MailRequestDto) *restErrors.RestErr {
+		SignUpMailFunc = func(dto *sendgrid.MailRequestDto) restErrors.IRestErr {
 			return nil
 		}
 
@@ -385,20 +385,20 @@ func TestSignUp(t *testing.T) {
 		settingIsRegistrationEnabledFunc = func() bool {
 			return true
 		}
-		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr) {
+		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, restErrors.IRestErr) {
 			newUser := new(user.User)
 			newUser.Email = "test@test.com"
 			return newUser, nil
 		}
 
-		CreateFunc = func(userId string) (string, *restErrors.RestErr) {
+		CreateFunc = func(userId string) (string, restErrors.IRestErr) {
 			return "JWT-token", nil
 		}
-		usersCountFunc = func() (int64, *restErrors.RestErr) {
+		usersCountFunc = func() (int64, restErrors.IRestErr) {
 			return 1, nil
 		}
 
-		CreateUserDefaultWorkspaceFunc = func(userId string) *restErrors.RestErr {
+		CreateUserDefaultWorkspaceFunc = func(userId string) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 
@@ -431,7 +431,7 @@ func TestSignUp(t *testing.T) {
 		badReqErr := restErrors.NewValidationError(fields)
 
 		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
-		assert.Equal(t, *badReqErr, result)
+		assert.Equal(t, badReqErr, result)
 	})
 
 	t.Run("Sing_Up_Should_Throw_Invalid_Request_Error", func(t *testing.T) {
@@ -469,7 +469,7 @@ func TestSignUp(t *testing.T) {
 		settingIsRegistrationEnabledFunc = func() bool {
 			return true
 		}
-		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr) {
+		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, restErrors.IRestErr) {
 			return nil, restErrors.NewBadRequestError("user service errors")
 		}
 
@@ -488,16 +488,16 @@ func TestSignUp(t *testing.T) {
 		settingIsRegistrationEnabledFunc = func() bool {
 			return true
 		}
-		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr) {
+		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, restErrors.IRestErr) {
 			newUser := new(user.User)
 			newUser.Email = "test@test.com"
 			return newUser, nil
 		}
 
-		CreateFunc = func(userId string) (string, *restErrors.RestErr) {
+		CreateFunc = func(userId string) (string, restErrors.IRestErr) {
 			return "JWT-token", nil
 		}
-		usersCountFunc = func() (int64, *restErrors.RestErr) {
+		usersCountFunc = func() (int64, restErrors.IRestErr) {
 			return 0, restErrors.NewInternalServerError("count users throws")
 		}
 
@@ -516,19 +516,19 @@ func TestSignUp(t *testing.T) {
 		settingIsRegistrationEnabledFunc = func() bool {
 			return true
 		}
-		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr) {
+		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, restErrors.IRestErr) {
 			newUser := new(user.User)
 			newUser.Email = "test@test.com"
 			return newUser, nil
 		}
 
-		CreateFunc = func(userId string) (string, *restErrors.RestErr) {
+		CreateFunc = func(userId string) (string, restErrors.IRestErr) {
 			return "JWT-token", nil
 		}
-		usersCountFunc = func() (int64, *restErrors.RestErr) {
+		usersCountFunc = func() (int64, restErrors.IRestErr) {
 			return 0, nil
 		}
-		VerifyFunc = func(userId string, token string) *restErrors.RestErr {
+		VerifyFunc = func(userId string, token string) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("verification verify error")
 		}
 
@@ -547,22 +547,22 @@ func TestSignUp(t *testing.T) {
 		settingIsRegistrationEnabledFunc = func() bool {
 			return true
 		}
-		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr) {
+		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, restErrors.IRestErr) {
 			newUser := new(user.User)
 			newUser.Email = "test@test.com"
 			return newUser, nil
 		}
 
-		CreateFunc = func(userId string) (string, *restErrors.RestErr) {
+		CreateFunc = func(userId string) (string, restErrors.IRestErr) {
 			return "JWT-token", nil
 		}
-		usersCountFunc = func() (int64, *restErrors.RestErr) {
+		usersCountFunc = func() (int64, restErrors.IRestErr) {
 			return 0, nil
 		}
-		VerifyFunc = func(userId string, token string) *restErrors.RestErr {
+		VerifyFunc = func(userId string, token string) restErrors.IRestErr {
 			return nil
 		}
-		VerifyEmailFunc = func(model *user.User) *restErrors.RestErr {
+		VerifyEmailFunc = func(model *user.User) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("user service verify email pass")
 		}
 
@@ -581,25 +581,25 @@ func TestSignUp(t *testing.T) {
 		settingIsRegistrationEnabledFunc = func() bool {
 			return true
 		}
-		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr) {
+		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, restErrors.IRestErr) {
 			newUser := new(user.User)
 			newUser.Email = "test@test.com"
 			return newUser, nil
 		}
 
-		CreateFunc = func(userId string) (string, *restErrors.RestErr) {
+		CreateFunc = func(userId string) (string, restErrors.IRestErr) {
 			return "JWT-token", nil
 		}
-		usersCountFunc = func() (int64, *restErrors.RestErr) {
+		usersCountFunc = func() (int64, restErrors.IRestErr) {
 			return 0, nil
 		}
-		VerifyFunc = func(userId string, token string) *restErrors.RestErr {
+		VerifyFunc = func(userId string, token string) restErrors.IRestErr {
 			return nil
 		}
-		VerifyEmailFunc = func(model *user.User) *restErrors.RestErr {
+		VerifyEmailFunc = func(model *user.User) restErrors.IRestErr {
 			return nil
 		}
-		usersSetAsPlatformAdminFunc = func(model *user.User) *restErrors.RestErr {
+		usersSetAsPlatformAdminFunc = func(model *user.User) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("can't set as platform admin")
 		}
 
@@ -618,28 +618,28 @@ func TestSignUp(t *testing.T) {
 		settingIsRegistrationEnabledFunc = func() bool {
 			return true
 		}
-		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr) {
+		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, restErrors.IRestErr) {
 			newUser := new(user.User)
 			newUser.Email = "test@test.com"
 			return newUser, nil
 		}
 
-		CreateFunc = func(userId string) (string, *restErrors.RestErr) {
+		CreateFunc = func(userId string) (string, restErrors.IRestErr) {
 			return "JWT-token", nil
 		}
-		usersCountFunc = func() (int64, *restErrors.RestErr) {
+		usersCountFunc = func() (int64, restErrors.IRestErr) {
 			return 0, nil
 		}
-		VerifyFunc = func(userId string, token string) *restErrors.RestErr {
+		VerifyFunc = func(userId string, token string) restErrors.IRestErr {
 			return nil
 		}
-		VerifyEmailFunc = func(model *user.User) *restErrors.RestErr {
+		VerifyEmailFunc = func(model *user.User) restErrors.IRestErr {
 			return nil
 		}
-		usersSetAsPlatformAdminFunc = func(model *user.User) *restErrors.RestErr {
+		usersSetAsPlatformAdminFunc = func(model *user.User) restErrors.IRestErr {
 			return nil
 		}
-		settingConfigureRegistrationFunc = func(dto *setting.ConfigureRegistrationRequestDto) *restErrors.RestErr {
+		settingConfigureRegistrationFunc = func(dto *setting.ConfigureRegistrationRequestDto) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("can't configure registration")
 		}
 
@@ -659,11 +659,11 @@ func TestSignUp(t *testing.T) {
 		settingIsRegistrationEnabledFunc = func() bool {
 			return true
 		}
-		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr) {
+		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, restErrors.IRestErr) {
 			return new(user.User), nil
 		}
 
-		CreateFunc = func(userId string) (string, *restErrors.RestErr) {
+		CreateFunc = func(userId string) (string, restErrors.IRestErr) {
 			return "", restErrors.NewBadRequestError("create user service errors")
 		}
 
@@ -692,15 +692,15 @@ func TestVerifyEmail(t *testing.T) {
 	}
 
 	t.Run("Verify_Email_Should_Pass", func(t *testing.T) {
-		GetByEmailFunc = func(email string) (*user.User, *restErrors.RestErr) {
+		GetByEmailFunc = func(email string) (*user.User, restErrors.IRestErr) {
 			return new(user.User), nil
 		}
 
-		VerifyEmailFunc = func(model *user.User) *restErrors.RestErr {
+		VerifyEmailFunc = func(model *user.User) restErrors.IRestErr {
 			return nil
 		}
 
-		VerifyFunc = func(userId string, token string) *restErrors.RestErr {
+		VerifyFunc = func(userId string, token string) restErrors.IRestErr {
 			return nil
 		}
 
@@ -734,7 +734,7 @@ func TestVerifyEmail(t *testing.T) {
 		badReqErr := restErrors.NewValidationError(fields)
 
 		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
-		assert.Equal(t, *badReqErr, result)
+		assert.Equal(t, badReqErr, result)
 	})
 
 	t.Run("Verify_Email_Should_Throw_Invalid_Request_Error", func(t *testing.T) {
@@ -751,7 +751,7 @@ func TestVerifyEmail(t *testing.T) {
 	})
 
 	t.Run("Verify_Email_Should_Throw_No_Such_Email", func(t *testing.T) {
-		GetByEmailFunc = func(email string) (*user.User, *restErrors.RestErr) {
+		GetByEmailFunc = func(email string) (*user.User, restErrors.IRestErr) {
 			return nil, restErrors.NewNotFoundError(fmt.Sprintf("can't find user with email  %s", email))
 		}
 
@@ -768,7 +768,7 @@ func TestVerifyEmail(t *testing.T) {
 	})
 
 	t.Run("Verify_Email_Should_Throw_Email_Already_Verified", func(t *testing.T) {
-		GetByEmailFunc = func(email string) (*user.User, *restErrors.RestErr) {
+		GetByEmailFunc = func(email string) (*user.User, restErrors.IRestErr) {
 			newUser := new(user.User)
 			newUser.IsEmailVerified = true
 			return newUser, nil
@@ -787,17 +787,17 @@ func TestVerifyEmail(t *testing.T) {
 	})
 
 	t.Run("Verify_Email_Should_Throw_If_User_Service_Throws", func(t *testing.T) {
-		GetByEmailFunc = func(email string) (*user.User, *restErrors.RestErr) {
+		GetByEmailFunc = func(email string) (*user.User, restErrors.IRestErr) {
 			newUser := new(user.User)
 			newUser.Email = "test@test.com"
 			return newUser, nil
 		}
 
-		VerifyFunc = func(userId string, token string) *restErrors.RestErr {
+		VerifyFunc = func(userId string, token string) restErrors.IRestErr {
 			return nil
 		}
 
-		VerifyEmailFunc = func(model *user.User) *restErrors.RestErr {
+		VerifyEmailFunc = func(model *user.User) restErrors.IRestErr {
 			return restErrors.NewBadRequestError("user service error")
 		}
 
@@ -814,11 +814,11 @@ func TestVerifyEmail(t *testing.T) {
 	})
 
 	t.Run("Verify_Email_Should_Throw_If_Verification_Service_Throws", func(t *testing.T) {
-		GetByEmailFunc = func(email string) (*user.User, *restErrors.RestErr) {
+		GetByEmailFunc = func(email string) (*user.User, restErrors.IRestErr) {
 			return new(user.User), nil
 		}
 
-		VerifyFunc = func(userId string, token string) *restErrors.RestErr {
+		VerifyFunc = func(userId string, token string) restErrors.IRestErr {
 			return restErrors.NewBadRequestError("verification service error")
 		}
 
@@ -846,7 +846,7 @@ func TestSignIn(t *testing.T) {
 	}
 
 	t.Run("Sing_In_Should_Pass", func(t *testing.T) {
-		SignInFunc = func(dto *user.SignInRequestDto) (*user.UserSessionResponseDto, *restErrors.RestErr) {
+		SignInFunc = func(dto *user.SignInRequestDto) (*user.UserSessionResponseDto, restErrors.IRestErr) {
 			session := new(user.UserSessionResponseDto)
 			session.Token = "token"
 			session.Authorized = true
@@ -866,7 +866,7 @@ func TestSignIn(t *testing.T) {
 	})
 
 	t.Run("Sing_In_Should_throw_Validation_Error", func(t *testing.T) {
-		SignInFunc = func(dto *user.SignInRequestDto) (*user.UserSessionResponseDto, *restErrors.RestErr) {
+		SignInFunc = func(dto *user.SignInRequestDto) (*user.UserSessionResponseDto, restErrors.IRestErr) {
 			return new(user.UserSessionResponseDto), nil
 		}
 
@@ -884,7 +884,7 @@ func TestSignIn(t *testing.T) {
 		badReqErr := restErrors.NewValidationError(fields)
 
 		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
-		assert.Equal(t, *badReqErr, result)
+		assert.Equal(t, badReqErr, result)
 	})
 
 	t.Run("Sign_In_Should_throw_Invalid_Request_Body", func(t *testing.T) {
@@ -899,11 +899,11 @@ func TestSignIn(t *testing.T) {
 		badReqErr := restErrors.NewBadRequestError("invalid request body")
 
 		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
-		assert.EqualValues(t, badReqErr.Message, result.Message)
+		assert.EqualValues(t, badReqErr.Error(), result.Message)
 	})
 
 	t.Run("Sing_In_Should_throw_if_user_service_throws", func(t *testing.T) {
-		SignInFunc = func(dto *user.SignInRequestDto) (*user.UserSessionResponseDto, *restErrors.RestErr) {
+		SignInFunc = func(dto *user.SignInRequestDto) (*user.UserSessionResponseDto, restErrors.IRestErr) {
 			return nil, restErrors.NewBadRequestError("error from service")
 		}
 
@@ -925,15 +925,15 @@ func TestSendEmailVerification(t *testing.T) {
 	invalidDto := map[string]string{"email": "test"}
 
 	t.Run("Send_Email_Verification_Should_Pass", func(t *testing.T) {
-		GetByEmailFunc = func(email string) (*user.User, *restErrors.RestErr) {
+		GetByEmailFunc = func(email string) (*user.User, restErrors.IRestErr) {
 			return new(user.User), nil
 		}
 
-		ResendFunc = func(userId string) (string, *restErrors.RestErr) {
+		ResendFunc = func(userId string) (string, restErrors.IRestErr) {
 			return "token", nil
 		}
 
-		ResendEmailVerificationFunc = func(dto *sendgrid.MailRequestDto) *restErrors.RestErr {
+		ResendEmailVerificationFunc = func(dto *sendgrid.MailRequestDto) restErrors.IRestErr {
 			return nil
 		}
 
@@ -954,7 +954,7 @@ func TestSendEmailVerification(t *testing.T) {
 	})
 
 	t.Run("Send_Email_Verification_Should_Throw_Validation_Errors", func(t *testing.T) {
-		GetByEmailFunc = func(email string) (*user.User, *restErrors.RestErr) {
+		GetByEmailFunc = func(email string) (*user.User, restErrors.IRestErr) {
 			return new(user.User), nil
 		}
 
@@ -971,7 +971,7 @@ func TestSendEmailVerification(t *testing.T) {
 		badReqErr := restErrors.NewValidationError(fields)
 
 		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
-		assert.Equal(t, *badReqErr, result)
+		assert.Equal(t, badReqErr, result)
 	})
 
 	t.Run("Send_Email_Verification_Should_Throw_Invalid_Request_Error", func(t *testing.T) {
@@ -986,11 +986,11 @@ func TestSendEmailVerification(t *testing.T) {
 		badReqErr := restErrors.NewBadRequestError("invalid request body")
 
 		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
-		assert.EqualValues(t, badReqErr.Message, result.Message)
+		assert.EqualValues(t, badReqErr.Error(), result.Message)
 	})
 
 	t.Run("Send_Email_Verification_Should_Throw_Email_Already_Verified", func(t *testing.T) {
-		GetByEmailFunc = func(email string) (*user.User, *restErrors.RestErr) {
+		GetByEmailFunc = func(email string) (*user.User, restErrors.IRestErr) {
 			newUser := new(user.User)
 			newUser.IsEmailVerified = true
 			return newUser, nil
@@ -1009,7 +1009,7 @@ func TestSendEmailVerification(t *testing.T) {
 	})
 
 	t.Run("Send_Email_Verification_Should_Throw_If_User_Service_Throws", func(t *testing.T) {
-		GetByEmailFunc = func(email string) (*user.User, *restErrors.RestErr) {
+		GetByEmailFunc = func(email string) (*user.User, restErrors.IRestErr) {
 			return nil, restErrors.NewBadRequestError("user service error")
 		}
 
@@ -1026,13 +1026,13 @@ func TestSendEmailVerification(t *testing.T) {
 	})
 
 	t.Run("Send_Email_Verification_Should_Throw_If_Verification_Service_Throws", func(t *testing.T) {
-		GetByEmailFunc = func(email string) (*user.User, *restErrors.RestErr) {
+		GetByEmailFunc = func(email string) (*user.User, restErrors.IRestErr) {
 			newUser := new(user.User)
 			newUser.Email = "test@test.com"
 			return newUser, nil
 		}
 
-		ResendFunc = func(userId string) (string, *restErrors.RestErr) {
+		ResendFunc = func(userId string) (string, restErrors.IRestErr) {
 			return "", restErrors.NewBadRequestError("verification service errors")
 		}
 
@@ -1055,13 +1055,13 @@ func TestForgetPassword(t *testing.T) {
 	invalidDto := map[string]string{"email": "test"}
 
 	t.Run("Forget_Password_Should_Pass", func(t *testing.T) {
-		GetByEmailFunc = func(email string) (*user.User, *restErrors.RestErr) {
+		GetByEmailFunc = func(email string) (*user.User, restErrors.IRestErr) {
 			return new(user.User), nil
 		}
-		ResendFunc = func(userId string) (string, *restErrors.RestErr) {
+		ResendFunc = func(userId string) (string, restErrors.IRestErr) {
 			return "token", nil
 		}
-		ForgetPasswordMailFunc = func(dto *sendgrid.MailRequestDto) *restErrors.RestErr {
+		ForgetPasswordMailFunc = func(dto *sendgrid.MailRequestDto) restErrors.IRestErr {
 			return nil
 		}
 		body, resp := newFiberCtx(validDto, ForgetPassword, map[string]interface{}{})
@@ -1096,7 +1096,7 @@ func TestForgetPassword(t *testing.T) {
 		badReqErr := restErrors.NewValidationError(fields)
 
 		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
-		assert.EqualValues(t, *badReqErr, result)
+		assert.EqualValues(t, badReqErr, result)
 	})
 
 	t.Run("Forget_Password_Should_Throw_Invalid_Request_Body", func(t *testing.T) {
@@ -1114,7 +1114,7 @@ func TestForgetPassword(t *testing.T) {
 	})
 
 	t.Run("Forget_Password_Should_Throw_If_User_Service_Throws", func(t *testing.T) {
-		GetByEmailFunc = func(email string) (*user.User, *restErrors.RestErr) {
+		GetByEmailFunc = func(email string) (*user.User, restErrors.IRestErr) {
 			return nil, restErrors.NewBadRequestError("user service errors")
 		}
 
@@ -1131,13 +1131,13 @@ func TestForgetPassword(t *testing.T) {
 	})
 
 	t.Run("Forget_Password_Should_Throw_If_Verification_Service_Throws", func(t *testing.T) {
-		GetByEmailFunc = func(email string) (*user.User, *restErrors.RestErr) {
+		GetByEmailFunc = func(email string) (*user.User, restErrors.IRestErr) {
 			newUser := new(user.User)
 			newUser.Email = "test@test.com"
 			return newUser, nil
 		}
 
-		ResendFunc = func(userId string) (string, *restErrors.RestErr) {
+		ResendFunc = func(userId string) (string, restErrors.IRestErr) {
 			return "", restErrors.NewBadRequestError("verification service errors")
 		}
 
@@ -1170,15 +1170,15 @@ func TestResetPassword(t *testing.T) {
 	}
 
 	t.Run("Reset_Password_Should_Pass", func(t *testing.T) {
-		GetByEmailFunc = func(email string) (*user.User, *restErrors.RestErr) {
+		GetByEmailFunc = func(email string) (*user.User, restErrors.IRestErr) {
 			newUser := new(user.User)
 			newUser.IsEmailVerified = true
 			return newUser, nil
 		}
-		VerifyFunc = func(userId string, token string) *restErrors.RestErr {
+		VerifyFunc = func(userId string, token string) restErrors.IRestErr {
 			return nil
 		}
-		ResetPasswordFunc = func(model *user.User, password string) *restErrors.RestErr {
+		ResetPasswordFunc = func(model *user.User, password string) restErrors.IRestErr {
 			return nil
 		}
 
@@ -1216,8 +1216,8 @@ func TestResetPassword(t *testing.T) {
 
 		badReqErr := restErrors.NewValidationError(fields)
 
-		assert.EqualValues(t, badReqErr.Status, resp.StatusCode)
-		assert.Equal(t, *badReqErr, result)
+		assert.EqualValues(t, badReqErr.StatusCode(), resp.StatusCode)
+		assert.Equal(t, badReqErr, result)
 	})
 
 	t.Run("Reset_Password_Should_Throw_Invalid_Request_Error", func(t *testing.T) {
@@ -1235,7 +1235,7 @@ func TestResetPassword(t *testing.T) {
 	})
 
 	t.Run("Reset_Password_Should_Throw_Email_Not_Verified", func(t *testing.T) {
-		GetByEmailFunc = func(email string) (*user.User, *restErrors.RestErr) {
+		GetByEmailFunc = func(email string) (*user.User, restErrors.IRestErr) {
 			newUser := new(user.User)
 			newUser.IsEmailVerified = false
 			return newUser, nil
@@ -1255,7 +1255,7 @@ func TestResetPassword(t *testing.T) {
 
 	t.Run("Reset_Password_Should_Throw_If_User_Service_throws", func(t *testing.T) {
 		t.Run("Reset_Password_No_Such_Email", func(t *testing.T) {
-			GetByEmailFunc = func(email string) (*user.User, *restErrors.RestErr) {
+			GetByEmailFunc = func(email string) (*user.User, restErrors.IRestErr) {
 				return nil, restErrors.NewBadRequestError("no such email error")
 			}
 
@@ -1271,17 +1271,17 @@ func TestResetPassword(t *testing.T) {
 			assert.EqualValues(t, "no such email error", result.Message)
 		})
 		t.Run("Reset_Password_No_Cannot_Reset_Email", func(t *testing.T) {
-			GetByEmailFunc = func(email string) (*user.User, *restErrors.RestErr) {
+			GetByEmailFunc = func(email string) (*user.User, restErrors.IRestErr) {
 				newUser := new(user.User)
 				newUser.IsEmailVerified = true
 				return newUser, nil
 			}
 
-			VerifyFunc = func(userId string, token string) *restErrors.RestErr {
+			VerifyFunc = func(userId string, token string) restErrors.IRestErr {
 				return nil
 			}
 
-			ResetPasswordFunc = func(model *user.User, password string) *restErrors.RestErr {
+			ResetPasswordFunc = func(model *user.User, password string) restErrors.IRestErr {
 				return restErrors.NewInternalServerError("can't reset password error")
 			}
 
@@ -1300,13 +1300,13 @@ func TestResetPassword(t *testing.T) {
 	})
 
 	t.Run("Reset_Password_Should_Throw_If_Verification_Service_Throws", func(t *testing.T) {
-		GetByEmailFunc = func(email string) (*user.User, *restErrors.RestErr) {
+		GetByEmailFunc = func(email string) (*user.User, restErrors.IRestErr) {
 			newUser := new(user.User)
 			newUser.IsEmailVerified = true
 			return newUser, nil
 		}
 
-		VerifyFunc = func(userId string, token string) *restErrors.RestErr {
+		VerifyFunc = func(userId string, token string) restErrors.IRestErr {
 			return restErrors.NewBadRequestError("verification service errors")
 		}
 
@@ -1341,10 +1341,10 @@ func TestChangePassword(t *testing.T) {
 	locals["user"] = *userDetails
 
 	t.Run("Change_Password_Should_Pass", func(t *testing.T) {
-		ChangePasswordFunc = func(model *user.User, dto *user.ChangePasswordRequestDto) *restErrors.RestErr {
+		ChangePasswordFunc = func(model *user.User, dto *user.ChangePasswordRequestDto) restErrors.IRestErr {
 			return nil
 		}
-		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+		GetByIdFunc = func(Id string) (*user.User, restErrors.IRestErr) {
 			return new(user.User), nil
 		}
 		body, resp := newFiberCtx(validDto, ChangePassword, locals)
@@ -1364,7 +1364,7 @@ func TestChangePassword(t *testing.T) {
 	})
 
 	t.Run("Change_Password_Should_Throw_Validation_Errors", func(t *testing.T) {
-		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+		GetByIdFunc = func(Id string) (*user.User, restErrors.IRestErr) {
 			return new(user.User), nil
 		}
 		body, resp := newFiberCtx(invalidDto, ChangePassword, locals)
@@ -1382,12 +1382,12 @@ func TestChangePassword(t *testing.T) {
 
 		badReqErr := restErrors.NewValidationError(fields)
 
-		assert.EqualValues(t, badReqErr.Status, resp.StatusCode)
-		assert.Equal(t, *badReqErr, result)
+		assert.EqualValues(t, badReqErr.StatusCode(), resp.StatusCode)
+		assert.Equal(t, badReqErr, result)
 	})
 
 	t.Run("Change_Password_Should_Throw_Invalid_Request_Error", func(t *testing.T) {
-		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+		GetByIdFunc = func(Id string) (*user.User, restErrors.IRestErr) {
 			return new(user.User), nil
 		}
 		body, resp := newFiberCtx("", ChangePassword, locals)
@@ -1403,10 +1403,10 @@ func TestChangePassword(t *testing.T) {
 	})
 
 	t.Run("Change_Password_Should_Throw_If_User_Service_Throw", func(t *testing.T) {
-		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+		GetByIdFunc = func(Id string) (*user.User, restErrors.IRestErr) {
 			return new(user.User), nil
 		}
-		ChangePasswordFunc = func(model *user.User, dto *user.ChangePasswordRequestDto) *restErrors.RestErr {
+		ChangePasswordFunc = func(model *user.User, dto *user.ChangePasswordRequestDto) restErrors.IRestErr {
 			return restErrors.NewBadRequestError("user service error")
 		}
 
@@ -1422,7 +1422,7 @@ func TestChangePassword(t *testing.T) {
 		assert.EqualValues(t, "user service error", result.Message)
 	})
 	t.Run("Change_Password_Should_Throw_If_User_Does_not_exist", func(t *testing.T) {
-		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+		GetByIdFunc = func(Id string) (*user.User, restErrors.IRestErr) {
 			return nil, restErrors.NewNotFoundError("no such user")
 		}
 
@@ -1456,16 +1456,16 @@ func TestChangeEmail(t *testing.T) {
 	locals["user"] = *userDetails
 
 	t.Run("Change_Email_Should_Pass", func(t *testing.T) {
-		ChangeEmailFunc = func(model *user.User, dto *user.ChangeEmailRequestDto) *restErrors.RestErr {
+		ChangeEmailFunc = func(model *user.User, dto *user.ChangeEmailRequestDto) restErrors.IRestErr {
 			return nil
 		}
-		ResendFunc = func(userId string) (string, *restErrors.RestErr) {
+		ResendFunc = func(userId string) (string, restErrors.IRestErr) {
 			return "token", nil
 		}
-		ResendEmailVerificationFunc = func(dto *sendgrid.MailRequestDto) *restErrors.RestErr {
+		ResendEmailVerificationFunc = func(dto *sendgrid.MailRequestDto) restErrors.IRestErr {
 			return nil
 		}
-		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+		GetByIdFunc = func(Id string) (*user.User, restErrors.IRestErr) {
 			return new(user.User), nil
 		}
 
@@ -1486,7 +1486,7 @@ func TestChangeEmail(t *testing.T) {
 	})
 
 	t.Run("Change_Email_Should_Throw_Validation_Errors", func(t *testing.T) {
-		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+		GetByIdFunc = func(Id string) (*user.User, restErrors.IRestErr) {
 			return new(user.User), nil
 		}
 		body, resp := newFiberCtx(inValidDto, ChangeEmail, locals)
@@ -1503,12 +1503,12 @@ func TestChangeEmail(t *testing.T) {
 
 		badReqErr := restErrors.NewValidationError(fields)
 
-		assert.EqualValues(t, badReqErr.Status, resp.StatusCode)
-		assert.Equal(t, *badReqErr, result)
+		assert.EqualValues(t, badReqErr.StatusCode(), resp.StatusCode)
+		assert.Equal(t, badReqErr, result)
 	})
 
 	t.Run("Change_Email_Should_Throw_Invalid_Request_Error", func(t *testing.T) {
-		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+		GetByIdFunc = func(Id string) (*user.User, restErrors.IRestErr) {
 			return new(user.User), nil
 		}
 		body, resp := newFiberCtx("", ChangeEmail, locals)
@@ -1524,10 +1524,10 @@ func TestChangeEmail(t *testing.T) {
 	})
 
 	t.Run("Change_Email_Should_Throw_If_User_Service_Throw", func(t *testing.T) {
-		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+		GetByIdFunc = func(Id string) (*user.User, restErrors.IRestErr) {
 			return new(user.User), nil
 		}
-		ChangeEmailFunc = func(model *user.User, dto *user.ChangeEmailRequestDto) *restErrors.RestErr {
+		ChangeEmailFunc = func(model *user.User, dto *user.ChangeEmailRequestDto) restErrors.IRestErr {
 			return restErrors.NewBadRequestError("change email user service error")
 		}
 
@@ -1543,13 +1543,13 @@ func TestChangeEmail(t *testing.T) {
 		assert.EqualValues(t, "change email user service error", result.Message)
 	})
 	t.Run("Change_Email_Should_Throw_If_Verification_Service_Throw", func(t *testing.T) {
-		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+		GetByIdFunc = func(Id string) (*user.User, restErrors.IRestErr) {
 			return new(user.User), nil
 		}
-		ChangeEmailFunc = func(model *user.User, dto *user.ChangeEmailRequestDto) *restErrors.RestErr {
+		ChangeEmailFunc = func(model *user.User, dto *user.ChangeEmailRequestDto) restErrors.IRestErr {
 			return nil
 		}
-		ResendFunc = func(userId string) (string, *restErrors.RestErr) {
+		ResendFunc = func(userId string) (string, restErrors.IRestErr) {
 			return "", restErrors.NewBadRequestError("verification service error")
 		}
 
@@ -1565,7 +1565,7 @@ func TestChangeEmail(t *testing.T) {
 		assert.EqualValues(t, "verification service error", result.Message)
 	})
 	t.Run("Change_Email_Should_Throw_If_User_Not_Found", func(t *testing.T) {
-		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+		GetByIdFunc = func(Id string) (*user.User, restErrors.IRestErr) {
 			return nil, restErrors.NewNotFoundError("no such user")
 		}
 
@@ -1585,7 +1585,7 @@ func TestChangeEmail(t *testing.T) {
 
 func TestWhoami(t *testing.T) {
 	t.Run("Whoami_Should_Pass", func(t *testing.T) {
-		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+		GetByIdFunc = func(Id string) (*user.User, restErrors.IRestErr) {
 			model := new(user.User)
 			model.ID = "1"
 			return model, nil
@@ -1619,10 +1619,10 @@ func TestCreateTOTP(t *testing.T) {
 	dto.Password = "123456"
 
 	t.Run("Create_TOTP_Should_Pass", func(t *testing.T) {
-		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+		GetByIdFunc = func(Id string) (*user.User, restErrors.IRestErr) {
 			return new(user.User), nil
 		}
-		CreateTOTPFunc = func(model *user.User, dto *user.CreateTOTPRequestDto) (bytes.Buffer, *restErrors.RestErr) {
+		CreateTOTPFunc = func(model *user.User, dto *user.CreateTOTPRequestDto) (bytes.Buffer, restErrors.IRestErr) {
 			return bytes.Buffer{}, nil
 		}
 
@@ -1630,7 +1630,7 @@ func TestCreateTOTP(t *testing.T) {
 		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
 	})
 	t.Run("Create_TOTP_Should_Throw_Invalid_Request_Body", func(t *testing.T) {
-		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+		GetByIdFunc = func(Id string) (*user.User, restErrors.IRestErr) {
 			return new(user.User), nil
 		}
 		_, resp := newFiberCtx("", CreateTOTP, locals)
@@ -1638,7 +1638,7 @@ func TestCreateTOTP(t *testing.T) {
 	})
 
 	t.Run("Create_TOTP_Should_Throw_Validation_Errors", func(t *testing.T) {
-		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+		GetByIdFunc = func(Id string) (*user.User, restErrors.IRestErr) {
 			return new(user.User), nil
 		}
 		invalidDto := new(user.CreateTOTPRequestDto)
@@ -1656,15 +1656,15 @@ func TestCreateTOTP(t *testing.T) {
 
 		badReqErr := restErrors.NewValidationError(fields)
 
-		assert.EqualValues(t, badReqErr.Status, resp.StatusCode)
-		assert.Equal(t, *badReqErr, result)
+		assert.EqualValues(t, badReqErr.StatusCode(), resp.StatusCode)
+		assert.Equal(t, badReqErr, result)
 	})
 
 	t.Run("Create_TOTP_Should_Throw_If_User_Service_Throws", func(t *testing.T) {
-		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+		GetByIdFunc = func(Id string) (*user.User, restErrors.IRestErr) {
 			return new(user.User), nil
 		}
-		CreateTOTPFunc = func(model *user.User, dto *user.CreateTOTPRequestDto) (bytes.Buffer, *restErrors.RestErr) {
+		CreateTOTPFunc = func(model *user.User, dto *user.CreateTOTPRequestDto) (bytes.Buffer, restErrors.IRestErr) {
 			return bytes.Buffer{}, restErrors.NewBadRequestError("user service errors")
 		}
 
@@ -1680,7 +1680,7 @@ func TestCreateTOTP(t *testing.T) {
 		assert.EqualValues(t, result.Message, result.Message)
 	})
 	t.Run("Create_TOTP_Should_Throw_If_User_Not_Found", func(t *testing.T) {
-		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+		GetByIdFunc = func(Id string) (*user.User, restErrors.IRestErr) {
 			return nil, restErrors.NewNotFoundError("no such user")
 		}
 
@@ -1710,10 +1710,10 @@ func TestEnableTwoFactorAuth(t *testing.T) {
 
 	t.Run("Enable_Two_Factor_Auth_Should_Pass", func(t *testing.T) {
 
-		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+		GetByIdFunc = func(Id string) (*user.User, restErrors.IRestErr) {
 			return new(user.User), nil
 		}
-		EnableTwoFactorAuthFunc = func(model *user.User, totp string) (*user.User, *restErrors.RestErr) {
+		EnableTwoFactorAuthFunc = func(model *user.User, totp string) (*user.User, restErrors.IRestErr) {
 			user := new(user.User)
 			user.TwoFactorEnabled = true
 			return user, nil
@@ -1732,7 +1732,7 @@ func TestEnableTwoFactorAuth(t *testing.T) {
 	})
 
 	t.Run("Enable_Two_Factor_Auth_Should_Throw_Invalid_Request_Body", func(t *testing.T) {
-		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+		GetByIdFunc = func(Id string) (*user.User, restErrors.IRestErr) {
 			return new(user.User), nil
 		}
 		body, resp := newFiberCtx("", EnableTwoFactorAuth, locals)
@@ -1748,10 +1748,10 @@ func TestEnableTwoFactorAuth(t *testing.T) {
 	})
 
 	t.Run("Enable_Two_Factor_Auth_Should_Throw_if_user_Service_Throws", func(t *testing.T) {
-		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+		GetByIdFunc = func(Id string) (*user.User, restErrors.IRestErr) {
 			return new(user.User), nil
 		}
-		EnableTwoFactorAuthFunc = func(model *user.User, totp string) (*user.User, *restErrors.RestErr) {
+		EnableTwoFactorAuthFunc = func(model *user.User, totp string) (*user.User, restErrors.IRestErr) {
 			return nil, restErrors.NewBadRequestError("user service errors")
 		}
 
@@ -1767,7 +1767,7 @@ func TestEnableTwoFactorAuth(t *testing.T) {
 		assert.EqualValues(t, "user service errors", result.Message)
 	})
 	t.Run("Enable_Two_Factor_Auth_Should_Throw_if_user_Not_Found", func(t *testing.T) {
-		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+		GetByIdFunc = func(Id string) (*user.User, restErrors.IRestErr) {
 			return nil, restErrors.NewNotFoundError("no such user")
 		}
 
@@ -1796,10 +1796,10 @@ func TestVerifyTOTP(t *testing.T) {
 	}
 
 	t.Run("Verify_TOTP_Should_Pass", func(t *testing.T) {
-		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+		GetByIdFunc = func(Id string) (*user.User, restErrors.IRestErr) {
 			return new(user.User), nil
 		}
-		VerifyTOTPFunc = func(model *user.User, totp string) (*user.UserSessionResponseDto, *restErrors.RestErr) {
+		VerifyTOTPFunc = func(model *user.User, totp string) (*user.UserSessionResponseDto, restErrors.IRestErr) {
 			return new(user.UserSessionResponseDto), nil
 		}
 
@@ -1815,7 +1815,7 @@ func TestVerifyTOTP(t *testing.T) {
 	})
 
 	t.Run("Verify_TOTP_Should_Throw_Invalid_Request_Body", func(t *testing.T) {
-		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+		GetByIdFunc = func(Id string) (*user.User, restErrors.IRestErr) {
 			return new(user.User), nil
 		}
 		body, resp := newFiberCtx("", VerifyTOTP, locals)
@@ -1831,10 +1831,10 @@ func TestVerifyTOTP(t *testing.T) {
 	})
 
 	t.Run("Verify_TOTP_Should_Throw_If_User_Service_Throws", func(t *testing.T) {
-		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+		GetByIdFunc = func(Id string) (*user.User, restErrors.IRestErr) {
 			return new(user.User), nil
 		}
-		VerifyTOTPFunc = func(model *user.User, totp string) (*user.UserSessionResponseDto, *restErrors.RestErr) {
+		VerifyTOTPFunc = func(model *user.User, totp string) (*user.UserSessionResponseDto, restErrors.IRestErr) {
 			return nil, restErrors.NewBadRequestError("user service can't verify otp")
 		}
 
@@ -1850,7 +1850,7 @@ func TestVerifyTOTP(t *testing.T) {
 		assert.EqualValues(t, "user service can't verify otp", result.Message)
 	})
 	t.Run("Verify_TOTP_Should_Throw_If_User_Not_Found", func(t *testing.T) {
-		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+		GetByIdFunc = func(Id string) (*user.User, restErrors.IRestErr) {
 			return nil, restErrors.NewNotFoundError("no such user")
 		}
 
@@ -1878,10 +1878,10 @@ func TestDisableTwoFactorAuth(t *testing.T) {
 	dto.Password = "123456"
 
 	t.Run("Disable_Two_Factor_Auth_Should_Pass", func(t *testing.T) {
-		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+		GetByIdFunc = func(Id string) (*user.User, restErrors.IRestErr) {
 			return new(user.User), nil
 		}
-		DisableTwoFactorAuthFunc = func(model *user.User, dto *user.DisableTOTPRequestDto) *restErrors.RestErr {
+		DisableTwoFactorAuthFunc = func(model *user.User, dto *user.DisableTOTPRequestDto) restErrors.IRestErr {
 			return nil
 		}
 
@@ -1900,7 +1900,7 @@ func TestDisableTwoFactorAuth(t *testing.T) {
 		assert.EqualValues(t, "2FA disabled", result["data"].Message)
 	})
 	t.Run("Disable_Two_Factor_Auth_Should_Throw_Invalid_Request_Body", func(t *testing.T) {
-		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+		GetByIdFunc = func(Id string) (*user.User, restErrors.IRestErr) {
 			return new(user.User), nil
 		}
 
@@ -1917,11 +1917,11 @@ func TestDisableTwoFactorAuth(t *testing.T) {
 	})
 
 	t.Run("Disable_Two_Factor_Auth_Should_Throw_validation_Errors", func(t *testing.T) {
-		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+		GetByIdFunc = func(Id string) (*user.User, restErrors.IRestErr) {
 			return new(user.User), nil
 		}
 
-		DisableTwoFactorAuthFunc = func(model *user.User, dto *user.DisableTOTPRequestDto) *restErrors.RestErr {
+		DisableTwoFactorAuthFunc = func(model *user.User, dto *user.DisableTOTPRequestDto) restErrors.IRestErr {
 			return nil
 		}
 		invalidDto := new(user.DisableTOTPRequestDto)
@@ -1939,16 +1939,16 @@ func TestDisableTwoFactorAuth(t *testing.T) {
 
 		badReqErr := restErrors.NewValidationError(fields)
 
-		assert.EqualValues(t, badReqErr.Status, resp.StatusCode)
-		assert.Equal(t, *badReqErr, result)
+		assert.EqualValues(t, badReqErr.StatusCode(), resp.StatusCode)
+		assert.Equal(t, badReqErr, result)
 	})
 
 	t.Run("Disable_Two_Factor_Auth_Should_Throw_If_2Fa_Already_Disable", func(t *testing.T) {
-		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+		GetByIdFunc = func(Id string) (*user.User, restErrors.IRestErr) {
 			return new(user.User), nil
 		}
 
-		DisableTwoFactorAuthFunc = func(model *user.User, dto *user.DisableTOTPRequestDto) *restErrors.RestErr {
+		DisableTwoFactorAuthFunc = func(model *user.User, dto *user.DisableTOTPRequestDto) restErrors.IRestErr {
 			return restErrors.NewBadRequestError("2fa already disabled")
 		}
 
@@ -1965,11 +1965,11 @@ func TestDisableTwoFactorAuth(t *testing.T) {
 	})
 
 	t.Run("Disable_Two_Factor_Auth_Should_Throw_If_user_not_found", func(t *testing.T) {
-		GetByIdFunc = func(Id string) (*user.User, *restErrors.RestErr) {
+		GetByIdFunc = func(Id string) (*user.User, restErrors.IRestErr) {
 			return nil, restErrors.NewNotFoundError("no such user")
 		}
 
-		DisableTwoFactorAuthFunc = func(model *user.User, dto *user.DisableTOTPRequestDto) *restErrors.RestErr {
+		DisableTwoFactorAuthFunc = func(model *user.User, dto *user.DisableTOTPRequestDto) restErrors.IRestErr {
 			return restErrors.NewBadRequestError("2fa already disabled")
 		}
 

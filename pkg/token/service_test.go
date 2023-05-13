@@ -22,7 +22,7 @@ func TestToken_CreateToken(t *testing.T) {
 		config.Environment.JwtSecretKeyExpireHoursCount = "invalid"
 		newToken, err := tokenTestingService.CreateToken("1", false, true)
 		assert.Nil(t, newToken)
-		assert.EqualValues(t, "some thing went wrong", err.Message)
+		assert.EqualValues(t, "some thing went wrong", err.Error())
 		config.Environment.JwtSecretKeyExpireHoursCount = oldConf
 
 	})
@@ -43,14 +43,14 @@ func TestToken_ExtractTokenMetadata(t *testing.T) {
 		assert.Nil(t, err)
 		accessDetails, err := tokenTestingService.ExtractTokenMetadata("Bearer " + newToken.AccessToken + "invalid")
 		assert.Nil(t, accessDetails)
-		assert.EqualValues(t, "invalid token", err.Message)
+		assert.EqualValues(t, "invalid token", err.Error())
 	})
 	t.Run("Extract_Token_Meta_Data_Should_Fail_If_Token_invalid", func(t *testing.T) {
 		newToken, err := tokenTestingService.CreateToken("1", false, true)
 		assert.Nil(t, err)
 		accessDetails, err := tokenTestingService.ExtractTokenMetadata(newToken.AccessToken + "invalid")
 		assert.Nil(t, accessDetails)
-		assert.EqualValues(t, "invalid token", err.Message)
+		assert.EqualValues(t, "invalid token", err.Error())
 	})
 
 }

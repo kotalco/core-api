@@ -29,21 +29,21 @@ User service Mocks
 */
 var (
 	UserWithTransactionFunc     func(txHandle *gorm.DB) user.IService
-	SignUpFunc                  func(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr)
-	SignInFunc                  func(dto *user.SignInRequestDto) (*user.UserSessionResponseDto, *restErrors.RestErr)
-	VerifyTOTPFunc              func(model *user.User, totp string) (*user.UserSessionResponseDto, *restErrors.RestErr)
-	GetByEmailFunc              func(email string) (*user.User, *restErrors.RestErr)
-	GetByIdFunc                 func(Id string) (*user.User, *restErrors.RestErr)
-	VerifyEmailFunc             func(model *user.User) *restErrors.RestErr
-	ResetPasswordFunc           func(model *user.User, password string) *restErrors.RestErr
-	ChangePasswordFunc          func(model *user.User, dto *user.ChangePasswordRequestDto) *restErrors.RestErr
-	ChangeEmailFunc             func(model *user.User, dto *user.ChangeEmailRequestDto) *restErrors.RestErr
-	CreateTOTPFunc              func(model *user.User, dto *user.CreateTOTPRequestDto) (bytes.Buffer, *restErrors.RestErr)
-	EnableTwoFactorAuthFunc     func(model *user.User, totp string) (*user.User, *restErrors.RestErr)
-	DisableTwoFactorAuthFunc    func(model *user.User, dto *user.DisableTOTPRequestDto) *restErrors.RestErr
-	FindWhereIdInSliceFunc      func(ids []string) ([]*user.User, *restErrors.RestErr)
-	usersCountFunc              func() (int64, *restErrors.RestErr)
-	usersSetAsPlatformAdminFunc func(model *user.User) *restErrors.RestErr
+	SignUpFunc                  func(dto *user.SignUpRequestDto) (*user.User, restErrors.IRestErr)
+	SignInFunc                  func(dto *user.SignInRequestDto) (*user.UserSessionResponseDto, restErrors.IRestErr)
+	VerifyTOTPFunc              func(model *user.User, totp string) (*user.UserSessionResponseDto, restErrors.IRestErr)
+	GetByEmailFunc              func(email string) (*user.User, restErrors.IRestErr)
+	GetByIdFunc                 func(Id string) (*user.User, restErrors.IRestErr)
+	VerifyEmailFunc             func(model *user.User) restErrors.IRestErr
+	ResetPasswordFunc           func(model *user.User, password string) restErrors.IRestErr
+	ChangePasswordFunc          func(model *user.User, dto *user.ChangePasswordRequestDto) restErrors.IRestErr
+	ChangeEmailFunc             func(model *user.User, dto *user.ChangeEmailRequestDto) restErrors.IRestErr
+	CreateTOTPFunc              func(model *user.User, dto *user.CreateTOTPRequestDto) (bytes.Buffer, restErrors.IRestErr)
+	EnableTwoFactorAuthFunc     func(model *user.User, totp string) (*user.User, restErrors.IRestErr)
+	DisableTwoFactorAuthFunc    func(model *user.User, dto *user.DisableTOTPRequestDto) restErrors.IRestErr
+	FindWhereIdInSliceFunc      func(ids []string) ([]*user.User, restErrors.IRestErr)
+	usersCountFunc              func() (int64, restErrors.IRestErr)
+	usersSetAsPlatformAdminFunc func(model *user.User) restErrors.IRestErr
 )
 
 type userServiceMock struct{}
@@ -56,61 +56,61 @@ func (uService userServiceMock) WithTransaction(txHandle *gorm.DB) user.IService
 	return uService
 }
 
-func (userServiceMock) SignUp(dto *user.SignUpRequestDto) (*user.User, *restErrors.RestErr) {
+func (userServiceMock) SignUp(dto *user.SignUpRequestDto) (*user.User, restErrors.IRestErr) {
 	return SignUpFunc(dto)
 }
 
-func (userServiceMock) SignIn(dto *user.SignInRequestDto) (*user.UserSessionResponseDto, *restErrors.RestErr) {
+func (userServiceMock) SignIn(dto *user.SignInRequestDto) (*user.UserSessionResponseDto, restErrors.IRestErr) {
 	return SignInFunc(dto)
 }
 
-func (userServiceMock) GetByEmail(email string) (*user.User, *restErrors.RestErr) {
+func (userServiceMock) GetByEmail(email string) (*user.User, restErrors.IRestErr) {
 	return GetByEmailFunc(email)
 }
 
-func (userServiceMock) GetById(Id string) (*user.User, *restErrors.RestErr) {
+func (userServiceMock) GetById(Id string) (*user.User, restErrors.IRestErr) {
 	return GetByIdFunc(Id)
 }
 
-func (userServiceMock) VerifyEmail(model *user.User) *restErrors.RestErr {
+func (userServiceMock) VerifyEmail(model *user.User) restErrors.IRestErr {
 	return VerifyEmailFunc(model)
 }
 
-func (userServiceMock) ResetPassword(model *user.User, password string) *restErrors.RestErr {
+func (userServiceMock) ResetPassword(model *user.User, password string) restErrors.IRestErr {
 	return ResetPasswordFunc(model, password)
 }
 
-func (userServiceMock) ChangePassword(model *user.User, dto *user.ChangePasswordRequestDto) *restErrors.RestErr {
+func (userServiceMock) ChangePassword(model *user.User, dto *user.ChangePasswordRequestDto) restErrors.IRestErr {
 	return ChangePasswordFunc(model, dto)
 }
 
-func (userServiceMock) ChangeEmail(model *user.User, dto *user.ChangeEmailRequestDto) *restErrors.RestErr {
+func (userServiceMock) ChangeEmail(model *user.User, dto *user.ChangeEmailRequestDto) restErrors.IRestErr {
 	return ChangeEmailFunc(model, dto)
 }
 
-func (userServiceMock) CreateTOTP(model *user.User, dto *user.CreateTOTPRequestDto) (bytes.Buffer, *restErrors.RestErr) {
+func (userServiceMock) CreateTOTP(model *user.User, dto *user.CreateTOTPRequestDto) (bytes.Buffer, restErrors.IRestErr) {
 	return CreateTOTPFunc(model, dto)
 }
 
-func (userServiceMock) EnableTwoFactorAuth(model *user.User, totp string) (*user.User, *restErrors.RestErr) {
+func (userServiceMock) EnableTwoFactorAuth(model *user.User, totp string) (*user.User, restErrors.IRestErr) {
 	return EnableTwoFactorAuthFunc(model, totp)
 }
 
-func (userServiceMock) VerifyTOTP(model *user.User, totp string) (*user.UserSessionResponseDto, *restErrors.RestErr) {
+func (userServiceMock) VerifyTOTP(model *user.User, totp string) (*user.UserSessionResponseDto, restErrors.IRestErr) {
 	return VerifyTOTPFunc(model, totp)
 }
 
-func (userServiceMock) DisableTwoFactorAuth(model *user.User, dto *user.DisableTOTPRequestDto) *restErrors.RestErr {
+func (userServiceMock) DisableTwoFactorAuth(model *user.User, dto *user.DisableTOTPRequestDto) restErrors.IRestErr {
 	return DisableTwoFactorAuthFunc(model, dto)
 }
 
-func (userServiceMock) FindWhereIdInSlice(ids []string) ([]*user.User, *restErrors.RestErr) {
+func (userServiceMock) FindWhereIdInSlice(ids []string) ([]*user.User, restErrors.IRestErr) {
 	return FindWhereIdInSliceFunc(ids)
 }
-func (uService userServiceMock) Count() (int64, *restErrors.RestErr) {
+func (uService userServiceMock) Count() (int64, restErrors.IRestErr) {
 	return usersCountFunc()
 }
-func (uService userServiceMock) SetAsPlatformAdmin(model *user.User) *restErrors.RestErr {
+func (uService userServiceMock) SetAsPlatformAdmin(model *user.User) restErrors.IRestErr {
 	return usersSetAsPlatformAdminFunc(model)
 }
 
@@ -119,16 +119,16 @@ Workspace service Mocks
 */
 var (
 	WorkspaceWithTransaction       func(txHandle *gorm.DB) workspace.IService
-	CreateWorkspaceFunc            func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr)
-	UpdateWorkspaceFunc            func(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) *restErrors.RestErr
-	GetWorkspaceByIdFunc           func(Id string) (*workspace.Workspace, *restErrors.RestErr)
-	DeleteWorkspaceFunc            func(workspace *workspace.Workspace) *restErrors.RestErr
-	GetWorkspaceByUserIdFunc       func(userId string) ([]*workspace.Workspace, *restErrors.RestErr)
-	AddWorkspaceMemberFunc         func(workspace *workspace.Workspace, memberId string, role string) *restErrors.RestErr
-	DeleteWorkspaceMemberFunc      func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr
-	CountWorkspaceByUserIdFunc     func(userId string) (int64, *restErrors.RestErr)
-	UpdateWorkspaceUserFunc        func(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) *restErrors.RestErr
-	CreateUserDefaultWorkspaceFunc func(userId string) *restErrors.RestErr
+	CreateWorkspaceFunc            func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, restErrors.IRestErr)
+	UpdateWorkspaceFunc            func(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) restErrors.IRestErr
+	GetWorkspaceByIdFunc           func(Id string) (*workspace.Workspace, restErrors.IRestErr)
+	DeleteWorkspaceFunc            func(workspace *workspace.Workspace) restErrors.IRestErr
+	GetWorkspaceByUserIdFunc       func(userId string) ([]*workspace.Workspace, restErrors.IRestErr)
+	AddWorkspaceMemberFunc         func(workspace *workspace.Workspace, memberId string, role string) restErrors.IRestErr
+	DeleteWorkspaceMemberFunc      func(workspace *workspace.Workspace, memberId string) restErrors.IRestErr
+	CountWorkspaceByUserIdFunc     func(userId string) (int64, restErrors.IRestErr)
+	UpdateWorkspaceUserFunc        func(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) restErrors.IRestErr
+	CreateUserDefaultWorkspaceFunc func(userId string) restErrors.IRestErr
 )
 
 type workspaceServiceMock struct{}
@@ -141,39 +141,39 @@ func (wService workspaceServiceMock) WithTransaction(txHandle *gorm.DB) workspac
 	return wService
 }
 
-func (workspaceServiceMock) Create(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr) {
+func (workspaceServiceMock) Create(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, restErrors.IRestErr) {
 	return CreateWorkspaceFunc(dto, userId)
 }
-func (workspaceServiceMock) Update(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) *restErrors.RestErr {
+func (workspaceServiceMock) Update(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) restErrors.IRestErr {
 	return UpdateWorkspaceFunc(dto, workspace)
 }
-func (workspaceServiceMock) GetById(workspaceId string) (*workspace.Workspace, *restErrors.RestErr) {
+func (workspaceServiceMock) GetById(workspaceId string) (*workspace.Workspace, restErrors.IRestErr) {
 	return GetWorkspaceByIdFunc(workspaceId)
 }
-func (workspaceServiceMock) Delete(workspace *workspace.Workspace) *restErrors.RestErr {
+func (workspaceServiceMock) Delete(workspace *workspace.Workspace) restErrors.IRestErr {
 	return DeleteWorkspaceFunc(workspace)
 }
 
-func (workspaceServiceMock) GetByUserId(workspaceId string) ([]*workspace.Workspace, *restErrors.RestErr) {
+func (workspaceServiceMock) GetByUserId(workspaceId string) ([]*workspace.Workspace, restErrors.IRestErr) {
 	return GetWorkspaceByUserIdFunc(workspaceId)
 }
 
-func (workspaceServiceMock) AddWorkspaceMember(workspace *workspace.Workspace, memberId string, role string) *restErrors.RestErr {
+func (workspaceServiceMock) AddWorkspaceMember(workspace *workspace.Workspace, memberId string, role string) restErrors.IRestErr {
 	return AddWorkspaceMemberFunc(workspace, memberId, role)
 }
 
-func (workspaceServiceMock) DeleteWorkspaceMember(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
+func (workspaceServiceMock) DeleteWorkspaceMember(workspace *workspace.Workspace, memberId string) restErrors.IRestErr {
 	return DeleteWorkspaceMemberFunc(workspace, memberId)
 }
 
-func (workspaceServiceMock) CountByUserId(userId string) (int64, *restErrors.RestErr) {
+func (workspaceServiceMock) CountByUserId(userId string) (int64, restErrors.IRestErr) {
 	return CountWorkspaceByUserIdFunc(userId)
 }
 
-func (workspaceServiceMock) UpdateWorkspaceUser(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) *restErrors.RestErr {
+func (workspaceServiceMock) UpdateWorkspaceUser(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) restErrors.IRestErr {
 	return UpdateWorkspaceUserFunc(workspaceUser, dto)
 }
-func (wService workspaceServiceMock) CreateUserDefaultWorkspace(userId string) *restErrors.RestErr {
+func (wService workspaceServiceMock) CreateUserDefaultWorkspace(userId string) restErrors.IRestErr {
 	return CreateUserDefaultWorkspaceFunc(userId)
 }
 
@@ -182,45 +182,45 @@ Namespace service Mocks
 */
 
 var (
-	CreateNamespaceFunc func(name string) *restErrors.RestErr
-	GetNamespaceFunc    func(name string) (*corev1.Namespace, *restErrors.RestErr)
-	DeleteNamespaceFunc func(name string) *restErrors.RestErr
+	CreateNamespaceFunc func(name string) restErrors.IRestErr
+	GetNamespaceFunc    func(name string) (*corev1.Namespace, restErrors.IRestErr)
+	DeleteNamespaceFunc func(name string) restErrors.IRestErr
 )
 
 type namespaceServiceMock struct{}
 
-func (namespaceServiceMock) Create(name string) *restErrors.RestErr {
+func (namespaceServiceMock) Create(name string) restErrors.IRestErr {
 	return CreateNamespaceFunc(name)
 }
 
-func (namespaceServiceMock) Get(name string) (*corev1.Namespace, *restErrors.RestErr) {
+func (namespaceServiceMock) Get(name string) (*corev1.Namespace, restErrors.IRestErr) {
 	return GetNamespaceFunc(name)
 }
 
-func (namespaceServiceMock) Delete(name string) *restErrors.RestErr {
+func (namespaceServiceMock) Delete(name string) restErrors.IRestErr {
 	return DeleteNamespaceFunc(name)
 }
 
 // Mail Service mocks
 var (
-	SignUpMailFunc              func(dto *sendgrid.MailRequestDto) *restErrors.RestErr
-	ResendEmailVerificationFunc func(dto *sendgrid.MailRequestDto) *restErrors.RestErr
-	ForgetPasswordMailFunc      func(dto *sendgrid.MailRequestDto) *restErrors.RestErr
-	WorkspaceInvitationFunc     func(dto *sendgrid.WorkspaceInvitationMailRequestDto) *restErrors.RestErr
+	SignUpMailFunc              func(dto *sendgrid.MailRequestDto) restErrors.IRestErr
+	ResendEmailVerificationFunc func(dto *sendgrid.MailRequestDto) restErrors.IRestErr
+	ForgetPasswordMailFunc      func(dto *sendgrid.MailRequestDto) restErrors.IRestErr
+	WorkspaceInvitationFunc     func(dto *sendgrid.WorkspaceInvitationMailRequestDto) restErrors.IRestErr
 )
 
 type mailServiceMock struct{}
 
-func (mailServiceMock) SignUp(dto *sendgrid.MailRequestDto) *restErrors.RestErr {
+func (mailServiceMock) SignUp(dto *sendgrid.MailRequestDto) restErrors.IRestErr {
 	return SignUpMailFunc(dto)
 }
-func (mailServiceMock) ResendEmailVerification(dto *sendgrid.MailRequestDto) *restErrors.RestErr {
+func (mailServiceMock) ResendEmailVerification(dto *sendgrid.MailRequestDto) restErrors.IRestErr {
 	return ResendEmailVerificationFunc(dto)
 }
-func (mailServiceMock) ForgetPassword(dto *sendgrid.MailRequestDto) *restErrors.RestErr {
+func (mailServiceMock) ForgetPassword(dto *sendgrid.MailRequestDto) restErrors.IRestErr {
 	return ForgetPasswordMailFunc(dto)
 }
-func (mailServiceMock) WorkspaceInvitation(dto *sendgrid.WorkspaceInvitationMailRequestDto) *restErrors.RestErr {
+func (mailServiceMock) WorkspaceInvitation(dto *sendgrid.WorkspaceInvitationMailRequestDto) restErrors.IRestErr {
 	return WorkspaceInvitationFunc(dto)
 }
 
@@ -277,11 +277,11 @@ func TestCreateWorkspace(t *testing.T) {
 		"name": "",
 	}
 	t.Run("create_workspace_should_pass", func(t *testing.T) {
-		CreateNamespaceFunc = func(name string) *restErrors.RestErr {
+		CreateNamespaceFunc = func(name string) restErrors.IRestErr {
 			return nil
 		}
 
-		CreateWorkspaceFunc = func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr) {
+		CreateWorkspaceFunc = func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, restErrors.IRestErr) {
 			model := new(workspace.Workspace)
 			model.ID = "1"
 			model.Name = "testName"
@@ -312,8 +312,8 @@ func TestCreateWorkspace(t *testing.T) {
 		fields["name"] = "name should be greater than 1 char and less than 100 char"
 		badReqErr := restErrors.NewValidationError(fields)
 
-		assert.EqualValues(t, badReqErr.Status, resp.StatusCode)
-		assert.Equal(t, *badReqErr, result)
+		assert.EqualValues(t, badReqErr.StatusCode(), resp.StatusCode)
+		assert.Equal(t, badReqErr, result)
 	})
 
 	t.Run("Create_workspace_Should_Throw_Invalid_Request_Error", func(t *testing.T) {
@@ -330,7 +330,7 @@ func TestCreateWorkspace(t *testing.T) {
 	})
 
 	t.Run("Create_Workspace_Should_Throw_If_workspace_Service_Throw", func(t *testing.T) {
-		CreateWorkspaceFunc = func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr) {
+		CreateWorkspaceFunc = func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, restErrors.IRestErr) {
 			return nil, restErrors.NewBadRequestError("workspace service error")
 
 		}
@@ -349,13 +349,13 @@ func TestCreateWorkspace(t *testing.T) {
 
 	t.Run("create_workspace_should_throw_if_can't_create_namespace", func(t *testing.T) {
 
-		CreateWorkspaceFunc = func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, *restErrors.RestErr) {
+		CreateWorkspaceFunc = func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, restErrors.IRestErr) {
 			model := new(workspace.Workspace)
 			model.ID = "1"
 			model.Name = "testName"
 			return model, nil
 		}
-		CreateNamespaceFunc = func(name string) *restErrors.RestErr {
+		CreateNamespaceFunc = func(name string) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("can't create namespace")
 		}
 
@@ -401,7 +401,7 @@ func TestUpdateWorkspace(t *testing.T) {
 
 		newWorkspace.WorkspaceUsers = []workspaceuser.WorkspaceUser{*newWorkspaceUser}
 
-		UpdateWorkspaceFunc = func(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) *restErrors.RestErr {
+		UpdateWorkspaceFunc = func(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) restErrors.IRestErr {
 			return nil
 		}
 
@@ -428,8 +428,8 @@ func TestUpdateWorkspace(t *testing.T) {
 		fields["name"] = "name should be greater than 1 char and less than 100 char"
 		badReqErr := restErrors.NewValidationError(fields)
 
-		assert.EqualValues(t, badReqErr.Status, resp.StatusCode)
-		assert.Equal(t, *badReqErr, result)
+		assert.EqualValues(t, badReqErr.StatusCode(), resp.StatusCode)
+		assert.Equal(t, badReqErr, result)
 	})
 
 	t.Run("Update_workspace_Should_Throw_Invalid_Request_Error", func(t *testing.T) {
@@ -454,11 +454,11 @@ func TestUpdateWorkspace(t *testing.T) {
 
 		newWorkspace.WorkspaceUsers = []workspaceuser.WorkspaceUser{*newWorkspaceUser}
 
-		GetWorkspaceByIdFunc = func(Id string) (*workspace.Workspace, *restErrors.RestErr) {
+		GetWorkspaceByIdFunc = func(Id string) (*workspace.Workspace, restErrors.IRestErr) {
 			return newWorkspace, nil
 		}
 
-		UpdateWorkspaceFunc = func(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) *restErrors.RestErr {
+		UpdateWorkspaceFunc = func(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("workspace service error")
 		}
 
@@ -490,14 +490,14 @@ func TestDeleteWorkspace(t *testing.T) {
 
 	t.Run("Delete_Workspace_should_pass", func(t *testing.T) {
 
-		CountWorkspaceByUserIdFunc = func(userId string) (int64, *restErrors.RestErr) {
+		CountWorkspaceByUserIdFunc = func(userId string) (int64, restErrors.IRestErr) {
 			return 2, nil
 		}
-		DeleteWorkspaceFunc = func(workspace *workspace.Workspace) *restErrors.RestErr {
+		DeleteWorkspaceFunc = func(workspace *workspace.Workspace) restErrors.IRestErr {
 			return nil
 		}
 
-		DeleteNamespaceFunc = func(name string) *restErrors.RestErr {
+		DeleteNamespaceFunc = func(name string) restErrors.IRestErr {
 			return nil
 		}
 
@@ -506,7 +506,7 @@ func TestDeleteWorkspace(t *testing.T) {
 	})
 
 	t.Run("Delete_Workspace_should_throw_if_user_has_only_one_workspace", func(t *testing.T) {
-		CountWorkspaceByUserIdFunc = func(userId string) (int64, *restErrors.RestErr) {
+		CountWorkspaceByUserIdFunc = func(userId string) (int64, restErrors.IRestErr) {
 			return 1, nil
 		}
 
@@ -519,7 +519,7 @@ func TestDeleteWorkspace(t *testing.T) {
 	})
 
 	t.Run("Delete_Workspace_should_throw_if_count_user_workspace_throw", func(t *testing.T) {
-		CountWorkspaceByUserIdFunc = func(userId string) (int64, *restErrors.RestErr) {
+		CountWorkspaceByUserIdFunc = func(userId string) (int64, restErrors.IRestErr) {
 			return 0, restErrors.NewInternalServerError("something went wrong")
 		}
 
@@ -532,11 +532,11 @@ func TestDeleteWorkspace(t *testing.T) {
 	})
 
 	t.Run("Delete_Workspace_should_throw_if_workspace_repo_throws", func(t *testing.T) {
-		CountWorkspaceByUserIdFunc = func(userId string) (int64, *restErrors.RestErr) {
+		CountWorkspaceByUserIdFunc = func(userId string) (int64, restErrors.IRestErr) {
 			return 2, nil
 		}
 
-		DeleteWorkspaceFunc = func(workspace *workspace.Workspace) *restErrors.RestErr {
+		DeleteWorkspaceFunc = func(workspace *workspace.Workspace) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 
@@ -552,15 +552,15 @@ func TestDeleteWorkspace(t *testing.T) {
 	})
 
 	t.Run("Delete_Workspace_should_throw_if_namespace_service_throws", func(t *testing.T) {
-		CountWorkspaceByUserIdFunc = func(userId string) (int64, *restErrors.RestErr) {
+		CountWorkspaceByUserIdFunc = func(userId string) (int64, restErrors.IRestErr) {
 			return 2, nil
 		}
 
-		DeleteWorkspaceFunc = func(workspace *workspace.Workspace) *restErrors.RestErr {
+		DeleteWorkspaceFunc = func(workspace *workspace.Workspace) restErrors.IRestErr {
 			return nil
 		}
 
-		DeleteNamespaceFunc = func(name string) *restErrors.RestErr {
+		DeleteNamespaceFunc = func(name string) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 
@@ -584,7 +584,7 @@ func TestGetWorkspaceByUserId(t *testing.T) {
 	locals["user"] = *userDetails
 
 	t.Run("Get_workspace_by_user_is_should_pass", func(t *testing.T) {
-		GetWorkspaceByUserIdFunc = func(userId string) ([]*workspace.Workspace, *restErrors.RestErr) {
+		GetWorkspaceByUserIdFunc = func(userId string) ([]*workspace.Workspace, restErrors.IRestErr) {
 			var list = make([]*workspace.Workspace, 0)
 			record := new(workspace.Workspace)
 			list = append(list, record)
@@ -602,7 +602,7 @@ func TestGetWorkspaceByUserId(t *testing.T) {
 	})
 
 	t.Run("Get_workspace_by_user_is_should_throw_if_workspace_service_throws", func(t *testing.T) {
-		GetWorkspaceByUserIdFunc = func(userId string) ([]*workspace.Workspace, *restErrors.RestErr) {
+		GetWorkspaceByUserIdFunc = func(userId string) ([]*workspace.Workspace, restErrors.IRestErr) {
 			return nil, restErrors.NewInternalServerError("something went wrong")
 		}
 		result, _ := newFiberCtx("", GetByUserId, locals)
@@ -639,15 +639,15 @@ func TestAddMemberToWorkspace(t *testing.T) {
 	}
 
 	t.Run("add_member_to_workspace_should_pass", func(t *testing.T) {
-		GetByEmailFunc = func(email string) (*user.User, *restErrors.RestErr) {
+		GetByEmailFunc = func(email string) (*user.User, restErrors.IRestErr) {
 			return new(user.User), nil
 		}
 
-		WorkspaceInvitationFunc = func(dto *sendgrid.WorkspaceInvitationMailRequestDto) *restErrors.RestErr {
+		WorkspaceInvitationFunc = func(dto *sendgrid.WorkspaceInvitationMailRequestDto) restErrors.IRestErr {
 			return nil
 		}
 
-		AddWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string, role string) *restErrors.RestErr {
+		AddWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string, role string) restErrors.IRestErr {
 			return nil
 		}
 
@@ -673,8 +673,8 @@ func TestAddMemberToWorkspace(t *testing.T) {
 		fields["role"] = "invalid role"
 		badReqErr := restErrors.NewValidationError(fields)
 
-		assert.EqualValues(t, badReqErr.Status, resp.StatusCode)
-		assert.Equal(t, *badReqErr, result)
+		assert.EqualValues(t, badReqErr.StatusCode(), resp.StatusCode)
+		assert.Equal(t, badReqErr, result)
 	})
 
 	t.Run("Update_workspace_Should_Throw_Invalid_Request_Error", func(t *testing.T) {
@@ -689,17 +689,17 @@ func TestAddMemberToWorkspace(t *testing.T) {
 	})
 
 	t.Run("add_member_to_workspace_should_throw_if_user_already_a_member_of_the_workspace", func(t *testing.T) {
-		GetByEmailFunc = func(email string) (*user.User, *restErrors.RestErr) {
+		GetByEmailFunc = func(email string) (*user.User, restErrors.IRestErr) {
 			member := new(user.User)
 			member.ID = userDetails.ID
 			return member, nil
 		}
 
-		WorkspaceInvitationFunc = func(dto *sendgrid.WorkspaceInvitationMailRequestDto) *restErrors.RestErr {
+		WorkspaceInvitationFunc = func(dto *sendgrid.WorkspaceInvitationMailRequestDto) restErrors.IRestErr {
 			return nil
 		}
 
-		AddWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string, role string) *restErrors.RestErr {
+		AddWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string, role string) restErrors.IRestErr {
 			return nil
 		}
 
@@ -714,7 +714,7 @@ func TestAddMemberToWorkspace(t *testing.T) {
 	})
 
 	t.Run("add_member_to_workspace_should_throw_if_member_does'not_exit", func(t *testing.T) {
-		GetByEmailFunc = func(email string) (*user.User, *restErrors.RestErr) {
+		GetByEmailFunc = func(email string) (*user.User, restErrors.IRestErr) {
 			return nil, restErrors.NewInternalServerError("something went wrong")
 		}
 
@@ -729,15 +729,15 @@ func TestAddMemberToWorkspace(t *testing.T) {
 		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
 	})
 	t.Run("add_member_to_workspace_should_throw_if_workspace_service_throw", func(t *testing.T) {
-		GetByEmailFunc = func(email string) (*user.User, *restErrors.RestErr) {
+		GetByEmailFunc = func(email string) (*user.User, restErrors.IRestErr) {
 			return new(user.User), nil
 		}
 
-		WorkspaceInvitationFunc = func(dto *sendgrid.WorkspaceInvitationMailRequestDto) *restErrors.RestErr {
+		WorkspaceInvitationFunc = func(dto *sendgrid.WorkspaceInvitationMailRequestDto) restErrors.IRestErr {
 			return nil
 		}
 
-		AddWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string, role string) *restErrors.RestErr {
+		AddWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string, role string) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 
@@ -772,7 +772,7 @@ func TestLeaveWorkspace(t *testing.T) {
 	locals["workspaceUser"] = *workspaceUserModelLocals
 
 	t.Run("leave_workspace_should_pass", func(t *testing.T) {
-		DeleteWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
+		DeleteWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string) restErrors.IRestErr {
 			return nil
 		}
 		result, resp := newFiberCtx("", Leave, locals)
@@ -790,7 +790,7 @@ func TestLeaveWorkspace(t *testing.T) {
 		workspaceUserModelLocalsIsAdmin.Role = roles.Admin
 		locals["workspaceUser"] = *workspaceUserModelLocalsIsAdmin
 
-		DeleteWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
+		DeleteWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string) restErrors.IRestErr {
 			return nil
 		}
 		result, resp := newFiberCtx("", Leave, locals)
@@ -807,7 +807,7 @@ func TestLeaveWorkspace(t *testing.T) {
 	})
 
 	t.Run("leave_workspace_should_throw_if_service_Throw", func(t *testing.T) {
-		DeleteWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
+		DeleteWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 		result, resp := newFiberCtx("", Leave, locals)
@@ -838,7 +838,7 @@ func TestRemoveMemberWorkspace(t *testing.T) {
 	locals["workspace"] = *workspaceModelLocals
 
 	t.Run("remove_workspace_user_should_pass", func(t *testing.T) {
-		DeleteWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
+		DeleteWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string) restErrors.IRestErr {
 			return nil
 		}
 
@@ -860,7 +860,7 @@ func TestRemoveMemberWorkspace(t *testing.T) {
 		workspaceModelLocals.WorkspaceUsers = []workspaceuser.WorkspaceUser{*workspaceUserModelLocals}
 		locals["workspace"] = *workspaceModelLocals
 
-		DeleteWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
+		DeleteWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string) restErrors.IRestErr {
 			return nil
 		}
 
@@ -888,7 +888,7 @@ func TestRemoveMemberWorkspace(t *testing.T) {
 		workspaceModelLocals.WorkspaceUsers = []workspaceuser.WorkspaceUser{*workspaceUserModelLocals}
 		locals["workspace"] = *workspaceModelLocals
 
-		DeleteWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
+		DeleteWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string) restErrors.IRestErr {
 			return nil
 		}
 
@@ -910,7 +910,7 @@ func TestRemoveMemberWorkspace(t *testing.T) {
 	})
 
 	t.Run("leave_workspace_should_throw_if_service_Throw", func(t *testing.T) {
-		DeleteWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string) *restErrors.RestErr {
+		DeleteWorkspaceMemberFunc = func(workspace *workspace.Workspace, memberId string) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 		result, resp := newFiberCtx("", RemoveMember, locals)
@@ -940,7 +940,7 @@ func TestMembers(t *testing.T) {
 	locals["workspace"] = *workspaceModelLocals
 
 	t.Run("list_workspace_members_should_pass", func(t *testing.T) {
-		FindWhereIdInSliceFunc = func(ids []string) ([]*user.User, *restErrors.RestErr) {
+		FindWhereIdInSliceFunc = func(ids []string) ([]*user.User, restErrors.IRestErr) {
 			user1 := new(user.User)
 			user1.Email = "email@test.com"
 			user1.ID = userDetails.ID
@@ -961,7 +961,7 @@ func TestMembers(t *testing.T) {
 	})
 
 	t.Run("list_workspace_members_should_throw_if_service_throw", func(t *testing.T) {
-		FindWhereIdInSliceFunc = func(ids []string) ([]*user.User, *restErrors.RestErr) {
+		FindWhereIdInSliceFunc = func(ids []string) ([]*user.User, restErrors.IRestErr) {
 			return nil, restErrors.NewInternalServerError("something went wrong")
 		}
 
@@ -1000,7 +1000,7 @@ func TestUpdateWorkspaceUser(t *testing.T) {
 	}
 
 	t.Run("update_workspace_user_should_pass", func(t *testing.T) {
-		UpdateWorkspaceUserFunc = func(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) *restErrors.RestErr {
+		UpdateWorkspaceUserFunc = func(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) restErrors.IRestErr {
 			return nil
 		}
 
@@ -1015,7 +1015,7 @@ func TestUpdateWorkspaceUser(t *testing.T) {
 	})
 
 	t.Run("update_workspace_should_throw_in_valid_body_request", func(t *testing.T) {
-		UpdateWorkspaceUserFunc = func(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) *restErrors.RestErr {
+		UpdateWorkspaceUserFunc = func(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) restErrors.IRestErr {
 			return nil
 		}
 
@@ -1032,7 +1032,7 @@ func TestUpdateWorkspaceUser(t *testing.T) {
 	})
 
 	t.Run("update_workspace_should_throw_validation_err", func(t *testing.T) {
-		UpdateWorkspaceUserFunc = func(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) *restErrors.RestErr {
+		UpdateWorkspaceUserFunc = func(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) restErrors.IRestErr {
 			return nil
 		}
 
@@ -1047,7 +1047,7 @@ func TestUpdateWorkspaceUser(t *testing.T) {
 		fields["role"] = "invalid role"
 		badReqErr := restErrors.NewValidationError(fields)
 
-		assert.EqualValues(t, badReqErr, &result)
+		assert.EqualValues(t, badReqErr, result)
 		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
 	})
 
@@ -1056,7 +1056,7 @@ func TestUpdateWorkspaceUser(t *testing.T) {
 		workspaceModelLocals.WorkspaceUsers = []workspaceuser.WorkspaceUser{*workspaceUserModelLocals}
 		locals["workspace"] = *workspaceModelLocals
 
-		UpdateWorkspaceUserFunc = func(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) *restErrors.RestErr {
+		UpdateWorkspaceUserFunc = func(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) restErrors.IRestErr {
 			return nil
 		}
 
@@ -1080,7 +1080,7 @@ func TestUpdateWorkspaceUser(t *testing.T) {
 		workspaceModelLocals.WorkspaceUsers = []workspaceuser.WorkspaceUser{*workspaceUserModelLocals}
 		locals["workspace"] = *workspaceModelLocals
 
-		UpdateWorkspaceUserFunc = func(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) *restErrors.RestErr {
+		UpdateWorkspaceUserFunc = func(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) restErrors.IRestErr {
 			return nil
 		}
 
@@ -1102,7 +1102,7 @@ func TestUpdateWorkspaceUser(t *testing.T) {
 		workspaceModelLocals.WorkspaceUsers = []workspaceuser.WorkspaceUser{*workspaceUserModelLocals}
 		locals["user"] = *userDetails
 		locals["workspace"] = *workspaceModelLocals
-		UpdateWorkspaceUserFunc = func(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) *restErrors.RestErr {
+		UpdateWorkspaceUserFunc = func(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 

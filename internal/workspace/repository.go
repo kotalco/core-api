@@ -16,18 +16,18 @@ type repository struct {
 type IRepository interface {
 	WithTransaction(txHandle *gorm.DB) IRepository
 	WithoutTransaction() IRepository
-	Create(workspace *Workspace) *restErrors.RestErr
-	GetByNameAndUserId(name string, userId string) ([]*Workspace, *restErrors.RestErr)
-	GetById(id string) (*Workspace, *restErrors.RestErr)
-	Update(workspace *Workspace) *restErrors.RestErr
-	Delete(*Workspace) *restErrors.RestErr
-	GetByUserId(userId string) ([]*Workspace, *restErrors.RestErr)
-	AddWorkspaceMember(workspace *Workspace, workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr
-	DeleteWorkspaceMember(workspace *Workspace, workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr
-	GetWorkspaceMemberByWorkspaceIdAndUserId(workspaceId string, userId string) (*workspaceuser.WorkspaceUser, *restErrors.RestErr)
-	CountByUserId(userId string) (int64, *restErrors.RestErr)
-	UpdateWorkspaceUser(workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr
-	GetByNamespace(namespace string) (*Workspace, *restErrors.RestErr)
+	Create(workspace *Workspace) restErrors.IRestErr
+	GetByNameAndUserId(name string, userId string) ([]*Workspace, restErrors.IRestErr)
+	GetById(id string) (*Workspace, restErrors.IRestErr)
+	Update(workspace *Workspace) restErrors.IRestErr
+	Delete(*Workspace) restErrors.IRestErr
+	GetByUserId(userId string) ([]*Workspace, restErrors.IRestErr)
+	AddWorkspaceMember(workspace *Workspace, workspaceUser *workspaceuser.WorkspaceUser) restErrors.IRestErr
+	DeleteWorkspaceMember(workspace *Workspace, workspaceUser *workspaceuser.WorkspaceUser) restErrors.IRestErr
+	GetWorkspaceMemberByWorkspaceIdAndUserId(workspaceId string, userId string) (*workspaceuser.WorkspaceUser, restErrors.IRestErr)
+	CountByUserId(userId string) (int64, restErrors.IRestErr)
+	UpdateWorkspaceUser(workspaceUser *workspaceuser.WorkspaceUser) restErrors.IRestErr
+	GetByNamespace(namespace string) (*Workspace, restErrors.IRestErr)
 }
 
 func NewRepository() IRepository {
@@ -46,7 +46,7 @@ func (repo *repository) WithoutTransaction() IRepository {
 }
 
 // Create creates a new workspace record with its first workspaceUser record
-func (repo *repository) Create(workspace *Workspace) *restErrors.RestErr {
+func (repo *repository) Create(workspace *Workspace) restErrors.IRestErr {
 	res := repo.db.Create(workspace)
 	if res.Error != nil {
 		go logger.Error(repo.Create, res.Error)
@@ -57,7 +57,7 @@ func (repo *repository) Create(workspace *Workspace) *restErrors.RestErr {
 }
 
 // GetByNameAndUserId used to get workspace by name to check if workspace name exits for the same owner(userId)
-func (repo *repository) GetByNameAndUserId(name string, userId string) ([]*Workspace, *restErrors.RestErr) {
+func (repo *repository) GetByNameAndUserId(name string, userId string) ([]*Workspace, restErrors.IRestErr) {
 	var workspaces []*Workspace
 	result := repo.db.Where("user_id = ? AND name = ?", userId, name).Find(&workspaces)
 	if result.Error != nil {
@@ -68,7 +68,7 @@ func (repo *repository) GetByNameAndUserId(name string, userId string) ([]*Works
 }
 
 // Update updates workspace record
-func (repo *repository) Update(workspace *Workspace) *restErrors.RestErr {
+func (repo *repository) Update(workspace *Workspace) restErrors.IRestErr {
 	res := repo.db.Save(workspace)
 	if res.Error != nil {
 		go logger.Error(repo.Update, res.Error)
@@ -79,7 +79,7 @@ func (repo *repository) Update(workspace *Workspace) *restErrors.RestErr {
 }
 
 // GetById gets workspace record and preloads workspaceUser records
-func (repo repository) GetById(Id string) (*Workspace, *restErrors.RestErr) {
+func (repo repository) GetById(Id string) (*Workspace, restErrors.IRestErr) {
 	var workspace = new(Workspace)
 	workspace.ID = Id
 
@@ -96,7 +96,7 @@ func (repo repository) GetById(Id string) (*Workspace, *restErrors.RestErr) {
 }
 
 // Delete deletes workspace record and cascades workspaceUser records with it
-func (repo repository) Delete(workspace *Workspace) *restErrors.RestErr {
+func (repo repository) Delete(workspace *Workspace) restErrors.IRestErr {
 	result := repo.db.First(workspace).Delete(workspace)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -110,7 +110,7 @@ func (repo repository) Delete(workspace *Workspace) *restErrors.RestErr {
 }
 
 // GetByUserId get workspaces where user assigned to member or owner by sub-query over workspaceUser table
-func (repo repository) GetByUserId(userId string) ([]*Workspace, *restErrors.RestErr) {
+func (repo repository) GetByUserId(userId string) ([]*Workspace, restErrors.IRestErr) {
 	var workspaces []*Workspace
 	subQuery := repo.db.Model(workspaceuser.WorkspaceUser{}).Where("user_id = ?", userId).Select("workspace_id")
 	result := repo.db.Where("id IN (?)", subQuery).Find(&workspaces)
@@ -123,7 +123,7 @@ func (repo repository) GetByUserId(userId string) ([]*Workspace, *restErrors.Res
 }
 
 // AddWorkspaceMember create workspaceUser record through association with workspace
-func (repo *repository) AddWorkspaceMember(workspace *Workspace, workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr {
+func (repo *repository) AddWorkspaceMember(workspace *Workspace, workspaceUser *workspaceuser.WorkspaceUser) restErrors.IRestErr {
 	err := repo.db.Model(workspace).Association("WorkspaceUsers").Append(workspaceUser)
 	if err != nil {
 		go logger.Error(repo.AddWorkspaceMember, err)
@@ -134,7 +134,7 @@ func (repo *repository) AddWorkspaceMember(workspace *Workspace, workspaceUser *
 }
 
 // DeleteWorkspaceMember removes existing workspaceUser record through association with workspace
-func (repo *repository) DeleteWorkspaceMember(workspace *Workspace, workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr {
+func (repo *repository) DeleteWorkspaceMember(workspace *Workspace, workspaceUser *workspaceuser.WorkspaceUser) restErrors.IRestErr {
 	err := repo.db.Model(workspace).Association("WorkspaceUsers").Delete(workspaceUser)
 	if err != nil {
 		go logger.Error(repo.DeleteWorkspaceMember, err)
@@ -150,7 +150,7 @@ func (repo *repository) DeleteWorkspaceMember(workspace *Workspace, workspaceUse
 }
 
 // GetWorkspaceMemberByWorkspaceIdAndUserId finds workspace member by workspaceId and userId
-func (repo *repository) GetWorkspaceMemberByWorkspaceIdAndUserId(workspaceId string, userId string) (*workspaceuser.WorkspaceUser, *restErrors.RestErr) {
+func (repo *repository) GetWorkspaceMemberByWorkspaceIdAndUserId(workspaceId string, userId string) (*workspaceuser.WorkspaceUser, restErrors.IRestErr) {
 	var workspaceUser = new(workspaceuser.WorkspaceUser)
 	result := repo.db.Where("user_id = ? AND workspace_id = ?", userId, workspaceId).First(workspaceUser)
 	if result.Error != nil {
@@ -164,7 +164,7 @@ func (repo *repository) GetWorkspaceMemberByWorkspaceIdAndUserId(workspaceId str
 }
 
 // CountByUserId returns user's workspaces count
-func (repo *repository) CountByUserId(userId string) (int64, *restErrors.RestErr) {
+func (repo *repository) CountByUserId(userId string) (int64, restErrors.IRestErr) {
 	var count int64
 	result := repo.db.Model(Workspace{}).Where("user_id = ?", userId).Count(&count)
 	if result.Error != nil {
@@ -175,7 +175,7 @@ func (repo *repository) CountByUserId(userId string) (int64, *restErrors.RestErr
 }
 
 // UpdateWorkspaceUser updates work space user details
-func (repo *repository) UpdateWorkspaceUser(workspaceUser *workspaceuser.WorkspaceUser) *restErrors.RestErr {
+func (repo *repository) UpdateWorkspaceUser(workspaceUser *workspaceuser.WorkspaceUser) restErrors.IRestErr {
 	res := repo.db.Save(workspaceUser)
 	if res.Error != nil {
 		go logger.Error(repo.UpdateWorkspaceUser, res.Error)
@@ -185,7 +185,7 @@ func (repo *repository) UpdateWorkspaceUser(workspaceUser *workspaceuser.Workspa
 }
 
 // GetByNamespace returns workspace by namespace
-func (repo *repository) GetByNamespace(namespace string) (*Workspace, *restErrors.RestErr) {
+func (repo *repository) GetByNamespace(namespace string) (*Workspace, restErrors.IRestErr) {
 	var workspace = new(Workspace)
 	workspace.K8sNamespace = namespace
 

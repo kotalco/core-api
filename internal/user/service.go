@@ -18,21 +18,21 @@ type service struct{}
 type IService interface {
 	WithTransaction(txHandle *gorm.DB) IService
 	WithoutTransaction() IService
-	SignUp(dto *SignUpRequestDto) (*User, *restErrors.RestErr)
-	SignIn(dto *SignInRequestDto) (*UserSessionResponseDto, *restErrors.RestErr)
-	VerifyTOTP(model *User, totp string) (*UserSessionResponseDto, *restErrors.RestErr)
-	GetByEmail(email string) (*User, *restErrors.RestErr)
-	GetById(ID string) (*User, *restErrors.RestErr)
-	VerifyEmail(model *User) *restErrors.RestErr
-	ResetPassword(model *User, password string) *restErrors.RestErr
-	ChangePassword(model *User, dto *ChangePasswordRequestDto) *restErrors.RestErr
-	ChangeEmail(model *User, dto *ChangeEmailRequestDto) *restErrors.RestErr
-	CreateTOTP(model *User, dto *CreateTOTPRequestDto) (bytes.Buffer, *restErrors.RestErr)
-	EnableTwoFactorAuth(model *User, totp string) (*User, *restErrors.RestErr)
-	DisableTwoFactorAuth(model *User, dto *DisableTOTPRequestDto) *restErrors.RestErr
-	FindWhereIdInSlice(ids []string) ([]*User, *restErrors.RestErr)
-	Count() (int64, *restErrors.RestErr)
-	SetAsPlatformAdmin(model *User) *restErrors.RestErr
+	SignUp(dto *SignUpRequestDto) (*User, restErrors.IRestErr)
+	SignIn(dto *SignInRequestDto) (*UserSessionResponseDto, restErrors.IRestErr)
+	VerifyTOTP(model *User, totp string) (*UserSessionResponseDto, restErrors.IRestErr)
+	GetByEmail(email string) (*User, restErrors.IRestErr)
+	GetById(ID string) (*User, restErrors.IRestErr)
+	VerifyEmail(model *User) restErrors.IRestErr
+	ResetPassword(model *User, password string) restErrors.IRestErr
+	ChangePassword(model *User, dto *ChangePasswordRequestDto) restErrors.IRestErr
+	ChangeEmail(model *User, dto *ChangeEmailRequestDto) restErrors.IRestErr
+	CreateTOTP(model *User, dto *CreateTOTPRequestDto) (bytes.Buffer, restErrors.IRestErr)
+	EnableTwoFactorAuth(model *User, totp string) (*User, restErrors.IRestErr)
+	DisableTwoFactorAuth(model *User, dto *DisableTOTPRequestDto) restErrors.IRestErr
+	FindWhereIdInSlice(ids []string) ([]*User, restErrors.IRestErr)
+	Count() (int64, restErrors.IRestErr)
+	SetAsPlatformAdmin(model *User) restErrors.IRestErr
 }
 
 var (
@@ -58,7 +58,7 @@ func (uService service) WithoutTransaction() IService {
 }
 
 // SignUp Creates new user
-func (service) SignUp(dto *SignUpRequestDto) (*User, *restErrors.RestErr) {
+func (service) SignUp(dto *SignUpRequestDto) (*User, restErrors.IRestErr) {
 	hashedPassword, err := hashing.Hash(dto.Password, 13)
 	if err != nil {
 		go logger.Error(service.SignUp, err)
@@ -80,7 +80,7 @@ func (service) SignUp(dto *SignUpRequestDto) (*User, *restErrors.RestErr) {
 }
 
 // SignIn Log user in and  returns jwt token
-func (service) SignIn(dto *SignInRequestDto) (*UserSessionResponseDto, *restErrors.RestErr) {
+func (service) SignIn(dto *SignInRequestDto) (*UserSessionResponseDto, restErrors.IRestErr) {
 	user, err := userRepository.GetByEmail(dto.Email)
 	if err != nil {
 		return nil, restErrors.NewUnAuthorizedError("Invalid Credentials")
@@ -120,7 +120,7 @@ func (service) SignIn(dto *SignInRequestDto) (*UserSessionResponseDto, *restErro
 }
 
 // GetByEmail find user by email
-func (service) GetByEmail(email string) (*User, *restErrors.RestErr) {
+func (service) GetByEmail(email string) (*User, restErrors.IRestErr) {
 	model, err := userRepository.GetByEmail(email)
 	if err != nil {
 		return nil, err
@@ -130,7 +130,7 @@ func (service) GetByEmail(email string) (*User, *restErrors.RestErr) {
 }
 
 // GetById get user by Id
-func (service) GetById(ID string) (*User, *restErrors.RestErr) {
+func (service) GetById(ID string) (*User, restErrors.IRestErr) {
 	model, err := userRepository.GetById(ID)
 	if err != nil {
 		return nil, err
@@ -141,7 +141,7 @@ func (service) GetById(ID string) (*User, *restErrors.RestErr) {
 
 // VerifyEmail change user isVerified to true
 // user can't sign in if this field is falsy
-func (service) VerifyEmail(model *User) *restErrors.RestErr {
+func (service) VerifyEmail(model *User) restErrors.IRestErr {
 	model.IsEmailVerified = true
 	err := userRepository.Update(model)
 	if err != nil {
@@ -151,7 +151,7 @@ func (service) VerifyEmail(model *User) *restErrors.RestErr {
 }
 
 // ResetPassword create new password for user used after user ForgetPassword
-func (service) ResetPassword(model *User, password string) *restErrors.RestErr {
+func (service) ResetPassword(model *User, password string) restErrors.IRestErr {
 	hashedPassword, error := hashing.Hash(password, 13)
 	if error != nil {
 		go logger.Error(service.ResetPassword, error)
@@ -169,7 +169,7 @@ func (service) ResetPassword(model *User, password string) *restErrors.RestErr {
 }
 
 // ChangePassword change user password  for authenticated users
-func (service) ChangePassword(model *User, dto *ChangePasswordRequestDto) *restErrors.RestErr {
+func (service) ChangePassword(model *User, dto *ChangePasswordRequestDto) restErrors.IRestErr {
 
 	invalidPassError := hashing.VerifyHash(model.Password, dto.OldPassword)
 	if invalidPassError != nil {
@@ -193,7 +193,7 @@ func (service) ChangePassword(model *User, dto *ChangePasswordRequestDto) *restE
 }
 
 // ChangeEmail change user email for authenticated users
-func (service) ChangeEmail(model *User, dto *ChangeEmailRequestDto) *restErrors.RestErr {
+func (service) ChangeEmail(model *User, dto *ChangeEmailRequestDto) restErrors.IRestErr {
 
 	invalidPassError := hashing.VerifyHash(model.Password, dto.Password)
 	if invalidPassError != nil {
@@ -213,7 +213,7 @@ func (service) ChangeEmail(model *User, dto *ChangeEmailRequestDto) *restErrors.
 
 // CreateTOTP Enables two-factor auth for users using qr-code
 // if the user requested another qr code he/she has to register the new one on the 2auth-app coz the old one became invalid
-func (service) CreateTOTP(model *User, dto *CreateTOTPRequestDto) (bytes.Buffer, *restErrors.RestErr) {
+func (service) CreateTOTP(model *User, dto *CreateTOTPRequestDto) (bytes.Buffer, restErrors.IRestErr) {
 
 	invalidPassError := hashing.VerifyHash(model.Password, dto.Password)
 	if invalidPassError != nil {
@@ -242,7 +242,7 @@ func (service) CreateTOTP(model *User, dto *CreateTOTPRequestDto) (bytes.Buffer,
 }
 
 // EnableTwoFactorAuth enables two-factor auth for the user after checking first time otp is valid
-func (service) EnableTwoFactorAuth(model *User, totp string) (*User, *restErrors.RestErr) {
+func (service) EnableTwoFactorAuth(model *User, totp string) (*User, restErrors.IRestErr) {
 	if model.TwoFactorCipher == "" {
 		return nil, restErrors.NewBadRequestError("please create and register qr code first")
 	}
@@ -267,7 +267,7 @@ func (service) EnableTwoFactorAuth(model *User, totp string) (*User, *restErrors
 }
 
 // VerifyTOTP used after SignIn if the user enabled the 2fa to create another bearer token
-func (service) VerifyTOTP(model *User, totp string) (*UserSessionResponseDto, *restErrors.RestErr) {
+func (service) VerifyTOTP(model *User, totp string) (*UserSessionResponseDto, restErrors.IRestErr) {
 	if !model.TwoFactorEnabled {
 		return nil, restErrors.NewBadRequestError("please enable your 2fa first")
 	}
@@ -297,7 +297,7 @@ func (service) VerifyTOTP(model *User, totp string) (*UserSessionResponseDto, *r
 }
 
 // DisableTwoFactorAuth disables two-factor auth for the user
-func (service) DisableTwoFactorAuth(model *User, dto *DisableTOTPRequestDto) *restErrors.RestErr {
+func (service) DisableTwoFactorAuth(model *User, dto *DisableTOTPRequestDto) restErrors.IRestErr {
 	invalidPassError := hashing.VerifyHash(model.Password, dto.Password)
 	if invalidPassError != nil {
 		return restErrors.NewBadRequestError("Invalid password")
@@ -318,17 +318,17 @@ func (service) DisableTwoFactorAuth(model *User, dto *DisableTOTPRequestDto) *re
 }
 
 // FindWhereIdInSlice returns a list of users which ids exist in the slice of ids passed as argument
-func (service) FindWhereIdInSlice(ids []string) ([]*User, *restErrors.RestErr) {
+func (service) FindWhereIdInSlice(ids []string) ([]*User, restErrors.IRestErr) {
 	return userRepository.FindWhereIdInSlice(ids)
 }
 
 // Count returns count of the users model
-func (service) Count() (int64, *restErrors.RestErr) {
+func (service) Count() (int64, restErrors.IRestErr) {
 	return userRepository.Count()
 }
 
 // SetAsPlatformAdmin set the passed user as platform admin
-func (service) SetAsPlatformAdmin(model *User) *restErrors.RestErr {
+func (service) SetAsPlatformAdmin(model *User) restErrors.IRestErr {
 	model.PlatformAdmin = true
 	return userRepository.Update(model)
 

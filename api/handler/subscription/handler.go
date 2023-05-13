@@ -26,18 +26,18 @@ func Acknowledgement(c *fiber.Ctx) error {
 	dto := new(subscription.AcknowledgementRequestDto)
 	if intErr := c.BodyParser(dto); intErr != nil {
 		badReq := restErrors.NewBadRequestError("invalid request body")
-		return c.Status(badReq.Status).JSON(badReq)
+		return c.Status(badReq.StatusCode()).JSON(badReq)
 	}
 
 	err := subscription.Validate(dto)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	err = subscriptionService.Acknowledgment(dto.ActivationKey)
 	if err != nil {
 		subscriptionAPI.Reset()
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	validSub := subscriptionAPI.IsValid()
@@ -47,7 +47,7 @@ func Acknowledgement(c *fiber.Ctx) error {
 			Message: "invalid subscription",
 			Name:    middleware.InvalidSubscriptionStatusMessage,
 		}
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	//store subscription activation key
@@ -57,7 +57,7 @@ func Acknowledgement(c *fiber.Ctx) error {
 		subscriptionAPI.Reset()
 		go logger.Warn("Acknowledgement", err)
 		intErr := restErrors.NewInternalServerError("can't save activation key")
-		return c.Status(intErr.Status).JSON(intErr)
+		return c.Status(intErr.StatusCode()).JSON(intErr)
 	}
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{Message: "subscription activated"}))

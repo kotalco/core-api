@@ -22,16 +22,16 @@ import (
 subscriptionAPI service  mocks
 */
 var (
-	subscriptionAcknowledgmentFunc   func(activationKey string) *restErrors.RestErr
-	subscriptionCurrentTimestampFunc func() (int64, *restErrors.RestErr)
+	subscriptionAcknowledgmentFunc   func(activationKey string) restErrors.IRestErr
+	subscriptionCurrentTimestampFunc func() (int64, restErrors.IRestErr)
 )
 
 type subscriptionServiceMock struct{}
 
-func (s subscriptionServiceMock) Acknowledgment(activationKey string) *restErrors.RestErr {
+func (s subscriptionServiceMock) Acknowledgment(activationKey string) restErrors.IRestErr {
 	return subscriptionAcknowledgmentFunc(activationKey)
 }
-func (s subscriptionServiceMock) CurrentTimestamp() (int64, *restErrors.RestErr) {
+func (s subscriptionServiceMock) CurrentTimestamp() (int64, restErrors.IRestErr) {
 	return subscriptionCurrentTimestampFunc()
 }
 
@@ -39,26 +39,26 @@ func (s subscriptionServiceMock) CurrentTimestamp() (int64, *restErrors.RestErr)
 setting service  mocks
 */
 var (
-	settingSettingsFunc               func() ([]*setting.Setting, *restErrors.RestErr)
-	settingConfigureDomainFunc        func(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr
+	settingSettingsFunc               func() ([]*setting.Setting, restErrors.IRestErr)
+	settingConfigureDomainFunc        func(dto *setting.ConfigureDomainRequestDto) restErrors.IRestErr
 	settingIsDomainConfiguredFunc     func() bool
-	settingConfigureRegistrationFunc  func(dto *setting.ConfigureRegistrationRequestDto) *restErrors.RestErr
+	settingConfigureRegistrationFunc  func(dto *setting.ConfigureRegistrationRequestDto) restErrors.IRestErr
 	settingIsRegistrationEnabledFunc  func() bool
-	settingConfigureActivationKeyFunc func(key string) *restErrors.RestErr
-	settingGetActivationKey           func() (string, *restErrors.RestErr)
+	settingConfigureActivationKeyFunc func(key string) restErrors.IRestErr
+	settingGetActivationKey           func() (string, restErrors.IRestErr)
 )
 
 type settingServiceMocks struct{}
 
-func (s settingServiceMocks) ConfigureActivationKey(key string) *restErrors.RestErr {
+func (s settingServiceMocks) ConfigureActivationKey(key string) restErrors.IRestErr {
 	return settingConfigureActivationKeyFunc(key)
 }
 
-func (s settingServiceMocks) GetActivationKey() (string, *restErrors.RestErr) {
+func (s settingServiceMocks) GetActivationKey() (string, restErrors.IRestErr) {
 	return settingGetActivationKey()
 }
 
-func (s settingServiceMocks) ConfigureRegistration(dto *setting.ConfigureRegistrationRequestDto) *restErrors.RestErr {
+func (s settingServiceMocks) ConfigureRegistration(dto *setting.ConfigureRegistrationRequestDto) restErrors.IRestErr {
 	return settingConfigureRegistrationFunc(dto)
 }
 
@@ -74,11 +74,11 @@ func (s settingServiceMocks) WithTransaction(txHandle *gorm.DB) setting.IService
 	return s
 }
 
-func (s settingServiceMocks) Settings() ([]*setting.Setting, *restErrors.RestErr) {
+func (s settingServiceMocks) Settings() ([]*setting.Setting, restErrors.IRestErr) {
 	return settingSettingsFunc()
 }
 
-func (s settingServiceMocks) ConfigureDomain(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr {
+func (s settingServiceMocks) ConfigureDomain(dto *setting.ConfigureDomainRequestDto) restErrors.IRestErr {
 	return settingConfigureDomainFunc(dto)
 }
 
@@ -130,7 +130,7 @@ func TestAcknowledgement(t *testing.T) {
 	}
 	var invalidDto = map[string]string{}
 	t.Run("Acknowledgement should pass", func(t *testing.T) {
-		subscriptionAcknowledgmentFunc = func(activationKey string) *restErrors.RestErr {
+		subscriptionAcknowledgmentFunc = func(activationKey string) restErrors.IRestErr {
 			return nil
 		}
 
@@ -138,7 +138,7 @@ func TestAcknowledgement(t *testing.T) {
 			return true
 		}
 
-		settingConfigureActivationKeyFunc = func(key string) *restErrors.RestErr {
+		settingConfigureActivationKeyFunc = func(key string) restErrors.IRestErr {
 			return nil
 		}
 		body, resp := newFiberCtx(validDto, Acknowledgement, map[string]interface{}{})
@@ -180,12 +180,12 @@ func TestAcknowledgement(t *testing.T) {
 		fields["activation_key"] = "invalid key"
 		badReqErr := restErrors.NewValidationError(fields)
 
-		assert.EqualValues(t, badReqErr.Status, resp.StatusCode)
-		assert.Equal(t, *badReqErr, result)
+		assert.EqualValues(t, badReqErr.StatusCode(), resp.StatusCode)
+		assert.Equal(t, badReqErr, result)
 
 	})
 	t.Run("Acknowledgement should throw if subscription acknowledgment throws", func(t *testing.T) {
-		subscriptionAcknowledgmentFunc = func(activationKey string) *restErrors.RestErr {
+		subscriptionAcknowledgmentFunc = func(activationKey string) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 
@@ -201,7 +201,7 @@ func TestAcknowledgement(t *testing.T) {
 
 	})
 	t.Run("Acknowledgement should thrwo if subscription invalid", func(t *testing.T) {
-		subscriptionAcknowledgmentFunc = func(activationKey string) *restErrors.RestErr {
+		subscriptionAcknowledgmentFunc = func(activationKey string) restErrors.IRestErr {
 			return nil
 		}
 
@@ -220,7 +220,7 @@ func TestAcknowledgement(t *testing.T) {
 
 	})
 	t.Run("Acknowledgement should throw if can't configure the activation key", func(t *testing.T) {
-		subscriptionAcknowledgmentFunc = func(activationKey string) *restErrors.RestErr {
+		subscriptionAcknowledgmentFunc = func(activationKey string) restErrors.IRestErr {
 			return nil
 		}
 
@@ -228,7 +228,7 @@ func TestAcknowledgement(t *testing.T) {
 			return true
 		}
 
-		settingConfigureActivationKeyFunc = func(key string) *restErrors.RestErr {
+		settingConfigureActivationKeyFunc = func(key string) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 		body, resp := newFiberCtx(validDto, Acknowledgement, map[string]interface{}{})

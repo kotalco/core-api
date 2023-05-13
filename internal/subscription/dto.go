@@ -36,7 +36,7 @@ type CurrentTimeStampDto struct {
 	} `json:"time"`
 }
 
-func Validate(dto interface{}) *restErrors.RestErr {
+func Validate(dto interface{}) restErrors.IRestErr {
 	newValidator := validator.New()
 	err := newValidator.Struct(dto)
 

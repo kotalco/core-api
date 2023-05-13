@@ -14,9 +14,9 @@ import (
 
 var (
 	verificationService IService
-	CreateFunc          func(verification *Verification) *restErrors.RestErr
-	GetByUserIdFunc     func(userId string) (*Verification, *restErrors.RestErr)
-	UpdateFunc          func(verification *Verification) *restErrors.RestErr
+	CreateFunc          func(verification *Verification) restErrors.IRestErr
+	GetByUserIdFunc     func(userId string) (*Verification, restErrors.IRestErr)
+	UpdateFunc          func(verification *Verification) restErrors.IRestErr
 	WithTransactionFunc func(txHandle *gorm.DB) IRepository
 
 	HashFunc       func(password string, cost int) ([]byte, error)
@@ -36,13 +36,13 @@ func (vRepository verificationRepositoryMock) WithTransaction(txHandle *gorm.DB)
 	return vRepository
 }
 
-func (verificationRepositoryMock) Create(verification *Verification) *restErrors.RestErr {
+func (verificationRepositoryMock) Create(verification *Verification) restErrors.IRestErr {
 	return CreateFunc(verification)
 }
-func (verificationRepositoryMock) GetByUserId(userId string) (*Verification, *restErrors.RestErr) {
+func (verificationRepositoryMock) GetByUserId(userId string) (*Verification, restErrors.IRestErr) {
 	return GetByUserIdFunc(userId)
 }
-func (verificationRepositoryMock) Update(verification *Verification) *restErrors.RestErr {
+func (verificationRepositoryMock) Update(verification *Verification) restErrors.IRestErr {
 	return UpdateFunc(verification)
 }
 
@@ -75,7 +75,7 @@ func TestService_Helper_Function_Before_They_Get_Mocked(t *testing.T) {
 			config.Environment.VerificationTokenLength = "invalid"
 			token, err := generateToken()
 			assert.EqualValues(t, "", token)
-			assert.EqualValues(t, "some thing went wrong", err.Message)
+			assert.EqualValues(t, "some thing went wrong", err.Error())
 			config.Environment.VerificationTokenLength = "80"
 		})
 	})
@@ -100,22 +100,22 @@ func TestService_Helper_Function_Before_They_Get_Mocked(t *testing.T) {
 			hash, err := hashToken("token")
 
 			assert.EqualValues(t, "", hash)
-			assert.EqualValues(t, err.Message, "some thing went wrong")
+			assert.EqualValues(t, err.Error(), "some thing went wrong")
 		})
 	})
 }
 
 func TestService_Create(t *testing.T) {
 	t.Run("Create_Should_Pass", func(t *testing.T) {
-		generateToken = func() (string, *restErrors.RestErr) {
+		generateToken = func() (string, restErrors.IRestErr) {
 			return "token", nil
 		}
 
-		hashToken = func(token string) (string, *restErrors.RestErr) {
+		hashToken = func(token string) (string, restErrors.IRestErr) {
 			return "hash", nil
 		}
 
-		CreateFunc = func(verification *Verification) *restErrors.RestErr {
+		CreateFunc = func(verification *Verification) restErrors.IRestErr {
 			return nil
 		}
 
@@ -125,63 +125,63 @@ func TestService_Create(t *testing.T) {
 	})
 
 	t.Run("Create_Should_Throw_if_Generate_Token_Throws", func(t *testing.T) {
-		generateToken = func() (string, *restErrors.RestErr) {
+		generateToken = func() (string, restErrors.IRestErr) {
 			return "", restErrors.NewInternalServerError("something went wrong")
 		}
 
 		result, err := verificationService.Create("1")
 
 		assert.EqualValues(t, "", result)
-		assert.EqualValues(t, "something went wrong", err.Message)
+		assert.EqualValues(t, "something went wrong", err.Error())
 	})
 
 	t.Run("Create_Should_Throw_if_Hash_Token_Throws", func(t *testing.T) {
-		generateToken = func() (string, *restErrors.RestErr) {
+		generateToken = func() (string, restErrors.IRestErr) {
 			return "", nil
 		}
 
-		hashToken = func(token string) (string, *restErrors.RestErr) {
+		hashToken = func(token string) (string, restErrors.IRestErr) {
 			return "", restErrors.NewInternalServerError("something went wrong")
 		}
 
 		result, err := verificationService.Create("1")
 
 		assert.EqualValues(t, "", result)
-		assert.EqualValues(t, "something went wrong", err.Message)
+		assert.EqualValues(t, "something went wrong", err.Error())
 	})
 
 	t.Run("Create_Should_Throw_if_Repository_Throws", func(t *testing.T) {
-		generateToken = func() (string, *restErrors.RestErr) {
+		generateToken = func() (string, restErrors.IRestErr) {
 			return "", nil
 		}
 
-		hashToken = func(token string) (string, *restErrors.RestErr) {
+		hashToken = func(token string) (string, restErrors.IRestErr) {
 			return "", nil
 		}
 
-		CreateFunc = func(verification *Verification) *restErrors.RestErr {
+		CreateFunc = func(verification *Verification) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 
 		result, err := verificationService.Create("1")
 
 		assert.EqualValues(t, "", result)
-		assert.EqualValues(t, "something went wrong", err.Message)
+		assert.EqualValues(t, "something went wrong", err.Error())
 	})
 
 	t.Run("Create_Should_Throw_If_Verification_Token_Expiry_Is_Invalid", func(t *testing.T) {
-		generateToken = func() (string, *restErrors.RestErr) {
+		generateToken = func() (string, restErrors.IRestErr) {
 			return "token", nil
 		}
 
-		hashToken = func(token string) (string, *restErrors.RestErr) {
+		hashToken = func(token string) (string, restErrors.IRestErr) {
 			return "hash", nil
 		}
 		current := config.Environment.VerificationTokenExpiryHours
 		config.Environment.VerificationTokenExpiryHours = "invalid"
 		result, err := verificationService.Create("test")
 		assert.EqualValues(t, "", result)
-		assert.EqualValues(t, "something went wrong", err.Message)
+		assert.EqualValues(t, "something went wrong", err.Error())
 		config.Environment.VerificationTokenExpiryHours = current
 	})
 
@@ -189,7 +189,7 @@ func TestService_Create(t *testing.T) {
 
 func TestService_GetByUserId(t *testing.T) {
 	t.Run("Get_Verification_By_User_Id", func(t *testing.T) {
-		GetByUserIdFunc = func(userId string) (*Verification, *restErrors.RestErr) {
+		GetByUserIdFunc = func(userId string) (*Verification, restErrors.IRestErr) {
 			return new(Verification), nil
 		}
 
@@ -200,14 +200,14 @@ func TestService_GetByUserId(t *testing.T) {
 	})
 
 	t.Run("Get_Verification_By_User_Id_Should_Throw_If_Repo_Throws", func(t *testing.T) {
-		GetByUserIdFunc = func(userId string) (*Verification, *restErrors.RestErr) {
+		GetByUserIdFunc = func(userId string) (*Verification, restErrors.IRestErr) {
 			return nil, restErrors.NewInternalServerError("")
 		}
 
 		verification, err := verificationService.GetByUserId("123")
 
 		assert.Nil(t, verification)
-		assert.EqualValues(t, "No such verification", err.Message)
+		assert.EqualValues(t, "No such verification", err.Error())
 
 	})
 }
@@ -217,7 +217,7 @@ func TestService_Verify(t *testing.T) {
 		verification := new(Verification)
 		verification.ExpiresAt = time.Now().UTC().Add(time.Duration(1) * time.Hour).Unix()
 
-		GetByUserIdFunc = func(userId string) (*Verification, *restErrors.RestErr) {
+		GetByUserIdFunc = func(userId string) (*Verification, restErrors.IRestErr) {
 			return verification, nil
 		}
 
@@ -225,7 +225,7 @@ func TestService_Verify(t *testing.T) {
 			return nil
 		}
 
-		UpdateFunc = func(verification *Verification) *restErrors.RestErr {
+		UpdateFunc = func(verification *Verification) restErrors.IRestErr {
 			return nil
 		}
 
@@ -236,43 +236,43 @@ func TestService_Verify(t *testing.T) {
 
 	})
 	t.Run("Verify_Should_Throw_If_Get_By_User_Id_Throws", func(t *testing.T) {
-		GetByUserIdFunc = func(userId string) (*Verification, *restErrors.RestErr) {
+		GetByUserIdFunc = func(userId string) (*Verification, restErrors.IRestErr) {
 			return nil, restErrors.NewInternalServerError("")
 		}
 
 		err := verificationService.Verify("1", "hash")
-		assert.EqualValues(t, "No such verification", err.Message)
+		assert.EqualValues(t, "No such verification", err.Error())
 	})
 	t.Run("Verify_Should_Throw_If_token_Expired", func(t *testing.T) {
 		verification := new(Verification)
 		verification.ExpiresAt = 0
 
-		GetByUserIdFunc = func(userId string) (*Verification, *restErrors.RestErr) {
+		GetByUserIdFunc = func(userId string) (*Verification, restErrors.IRestErr) {
 			return verification, nil
 		}
 
 		err := verificationService.Verify("1", "hash")
 
-		assert.EqualValues(t, "token expired", err.Message)
+		assert.EqualValues(t, "token expired", err.Error())
 	})
 	t.Run("Verify_Should_Throw_If_User_Already_Verified", func(t *testing.T) {
 		verification := new(Verification)
 		verification.ExpiresAt = time.Now().UTC().Add(time.Duration(1) * time.Hour).Unix()
 
 		verification.Completed = true
-		GetByUserIdFunc = func(userId string) (*Verification, *restErrors.RestErr) {
+		GetByUserIdFunc = func(userId string) (*Verification, restErrors.IRestErr) {
 			return verification, nil
 		}
 
 		err := verificationService.Verify("1", "hash")
 
-		assert.EqualValues(t, "user already verified", err.Message)
+		assert.EqualValues(t, "user already verified", err.Error())
 	})
 	t.Run("Verify_Should_Throw_If_Token_Is_Invalid", func(t *testing.T) {
 		verification := new(Verification)
 		verification.ExpiresAt = time.Now().UTC().Add(time.Duration(1) * time.Hour).Unix()
 
-		GetByUserIdFunc = func(userId string) (*Verification, *restErrors.RestErr) {
+		GetByUserIdFunc = func(userId string) (*Verification, restErrors.IRestErr) {
 			return verification, nil
 		}
 
@@ -282,13 +282,13 @@ func TestService_Verify(t *testing.T) {
 
 		err := verificationService.Verify("1", "hash")
 
-		assert.EqualValues(t, "invalid token", err.Message)
+		assert.EqualValues(t, "invalid token", err.Error())
 	})
 	t.Run("Verify_Should_Throw_If_Repo_Throws", func(t *testing.T) {
 		verification := new(Verification)
 		verification.ExpiresAt = time.Now().UTC().Add(time.Duration(1) * time.Hour).Unix()
 
-		GetByUserIdFunc = func(userId string) (*Verification, *restErrors.RestErr) {
+		GetByUserIdFunc = func(userId string) (*Verification, restErrors.IRestErr) {
 			return verification, nil
 		}
 
@@ -296,13 +296,13 @@ func TestService_Verify(t *testing.T) {
 			return nil
 		}
 
-		UpdateFunc = func(verification *Verification) *restErrors.RestErr {
+		UpdateFunc = func(verification *Verification) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 
 		err := verificationService.Verify("1", "hash")
 
-		assert.EqualValues(t, "something went wrong", err.Message)
+		assert.EqualValues(t, "something went wrong", err.Error())
 	})
 }
 
@@ -311,22 +311,22 @@ func TestService_Resend(t *testing.T) {
 
 	t.Run("Resend_Should_Pass", func(t *testing.T) {
 
-		GetByUserIdFunc = func(userId string) (*Verification, *restErrors.RestErr) {
+		GetByUserIdFunc = func(userId string) (*Verification, restErrors.IRestErr) {
 			return verification, nil
 		}
 
-		generateToken = func() (string, *restErrors.RestErr) {
+		generateToken = func() (string, restErrors.IRestErr) {
 			return "token", nil
 		}
 
-		hashToken = func(token string) (string, *restErrors.RestErr) {
+		hashToken = func(token string) (string, restErrors.IRestErr) {
 			return "hash", nil
 		}
-		expiryDate = func() (int64, *restErrors.RestErr) {
+		expiryDate = func() (int64, restErrors.IRestErr) {
 			return time.Now().UTC().Add(time.Duration(1) * time.Hour).Unix(), nil
 		}
 
-		UpdateFunc = func(verification *Verification) *restErrors.RestErr {
+		UpdateFunc = func(verification *Verification) restErrors.IRestErr {
 			return nil
 		}
 
@@ -338,21 +338,21 @@ func TestService_Resend(t *testing.T) {
 
 	t.Run("Resend_Should_Pass_And_Create_New_Verification_If_It_The_First_Time", func(t *testing.T) {
 
-		GetByUserIdFunc = func(userId string) (*Verification, *restErrors.RestErr) {
+		GetByUserIdFunc = func(userId string) (*Verification, restErrors.IRestErr) {
 			return nil, restErrors.NewNotFoundError("no such verification")
 		}
-		generateToken = func() (string, *restErrors.RestErr) {
+		generateToken = func() (string, restErrors.IRestErr) {
 			return "token", nil
 		}
 
-		hashToken = func(token string) (string, *restErrors.RestErr) {
+		hashToken = func(token string) (string, restErrors.IRestErr) {
 			return "hash", nil
 		}
-		expiryDate = func() (int64, *restErrors.RestErr) {
+		expiryDate = func() (int64, restErrors.IRestErr) {
 			return time.Now().UTC().Add(time.Duration(1) * time.Hour).Unix(), nil
 		}
 
-		CreateFunc = func(verification *Verification) *restErrors.RestErr {
+		CreateFunc = func(verification *Verification) restErrors.IRestErr {
 			return nil
 		}
 
@@ -363,99 +363,99 @@ func TestService_Resend(t *testing.T) {
 	})
 
 	t.Run("Resend_Should_Throw_If_Get_User_By_Id", func(t *testing.T) {
-		GetByUserIdFunc = func(userId string) (*Verification, *restErrors.RestErr) {
+		GetByUserIdFunc = func(userId string) (*Verification, restErrors.IRestErr) {
 			return nil, restErrors.NewInternalServerError("something went wrong")
 		}
 
 		token, err := verificationService.Resend("1")
 
 		assert.EqualValues(t, "", token)
-		assert.EqualValues(t, "something went wrong", err.Message)
+		assert.EqualValues(t, "something went wrong", err.Error())
 	})
 
 	t.Run("Resend_Should_Throw_If_Can't_Generate_Token", func(t *testing.T) {
-		GetByUserIdFunc = func(userId string) (*Verification, *restErrors.RestErr) {
+		GetByUserIdFunc = func(userId string) (*Verification, restErrors.IRestErr) {
 			return verification, nil
 		}
 
-		generateToken = func() (string, *restErrors.RestErr) {
+		generateToken = func() (string, restErrors.IRestErr) {
 			return "", restErrors.NewInternalServerError("something went wrong")
 		}
 
 		token, err := verificationService.Resend("123")
 
 		assert.EqualValues(t, "", token)
-		assert.EqualValues(t, "something went wrong", err.Message)
+		assert.EqualValues(t, "something went wrong", err.Error())
 	})
 
 	t.Run("Resend_Should_Throw_If_Can't_Hash_Token", func(t *testing.T) {
 
-		GetByUserIdFunc = func(userId string) (*Verification, *restErrors.RestErr) {
+		GetByUserIdFunc = func(userId string) (*Verification, restErrors.IRestErr) {
 			return verification, nil
 		}
 
-		generateToken = func() (string, *restErrors.RestErr) {
+		generateToken = func() (string, restErrors.IRestErr) {
 			return "token", nil
 		}
 
-		hashToken = func(token string) (string, *restErrors.RestErr) {
+		hashToken = func(token string) (string, restErrors.IRestErr) {
 			return "", restErrors.NewInternalServerError("can't hash token")
 		}
 
 		token, err := verificationService.Resend("123")
 
 		assert.EqualValues(t, "", token)
-		assert.EqualValues(t, "can't hash token", err.Message)
+		assert.EqualValues(t, "can't hash token", err.Error())
 	})
 
 	t.Run("Resend_Should_Throw_If_Can't_create_expiry_date", func(t *testing.T) {
 
-		GetByUserIdFunc = func(userId string) (*Verification, *restErrors.RestErr) {
+		GetByUserIdFunc = func(userId string) (*Verification, restErrors.IRestErr) {
 			return verification, nil
 		}
 
-		generateToken = func() (string, *restErrors.RestErr) {
+		generateToken = func() (string, restErrors.IRestErr) {
 			return "token", nil
 		}
 
-		hashToken = func(token string) (string, *restErrors.RestErr) {
+		hashToken = func(token string) (string, restErrors.IRestErr) {
 			return "", nil
 		}
-		expiryDate = func() (int64, *restErrors.RestErr) {
+		expiryDate = func() (int64, restErrors.IRestErr) {
 			return 0, restErrors.NewInternalServerError("something went wrong")
 		}
 
 		token, err := verificationService.Resend("123")
 
 		assert.EqualValues(t, "", token)
-		assert.EqualValues(t, "something went wrong", err.Message)
+		assert.EqualValues(t, "something went wrong", err.Error())
 	})
 
 	t.Run("Resend_Should_Throw_If_Repo_Throws", func(t *testing.T) {
 
-		GetByUserIdFunc = func(userId string) (*Verification, *restErrors.RestErr) {
+		GetByUserIdFunc = func(userId string) (*Verification, restErrors.IRestErr) {
 			return verification, nil
 		}
 
-		generateToken = func() (string, *restErrors.RestErr) {
+		generateToken = func() (string, restErrors.IRestErr) {
 			return "token", nil
 		}
 
-		hashToken = func(token string) (string, *restErrors.RestErr) {
+		hashToken = func(token string) (string, restErrors.IRestErr) {
 			return "hash", nil
 		}
-		expiryDate = func() (int64, *restErrors.RestErr) {
+		expiryDate = func() (int64, restErrors.IRestErr) {
 			return time.Now().UTC().Add(time.Duration(1) * time.Hour).Unix(), nil
 		}
 
-		UpdateFunc = func(verification *Verification) *restErrors.RestErr {
+		UpdateFunc = func(verification *Verification) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 
 		token, err := verificationService.Resend("")
 
 		assert.EqualValues(t, "", token)
-		assert.EqualValues(t, "something went wrong", err.Message)
+		assert.EqualValues(t, "something went wrong", err.Error())
 	})
 
 }
