@@ -5,6 +5,7 @@ import (
 	"github.com/gofiber/websocket/v2"
 	"github.com/kotalco/cloud-api/api/handler/endpoint"
 	"github.com/kotalco/cloud-api/api/handler/setting"
+	"github.com/kotalco/cloud-api/api/handler/sts"
 	"github.com/kotalco/cloud-api/api/handler/subscription"
 	"github.com/kotalco/cloud-api/api/handler/svc"
 	"github.com/kotalco/cloud-api/api/handler/user"
@@ -74,6 +75,9 @@ func MapUrl(app *fiber.App) {
 	//svc group
 	svcGroup := v1.Group("/core/services")
 	svcGroup.Get("/", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership, svc.List)
+	//svc group
+	stsGroup := v1.Group("/core/statefulset")
+	stsGroup.Get("/count", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership, sts.Count)
 
 	//endpoints group
 	endpoints := v1.Group("endpoints")
