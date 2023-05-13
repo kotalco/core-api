@@ -34,7 +34,7 @@ func TestRepository_Create(t *testing.T) {
 	t.Run("Create_Should_Throw_If_Already_Exits", func(t *testing.T) {
 		verification := createVerification(t)
 		restErr := repo.WithoutTransaction().Create(&verification)
-		assert.EqualValues(t, "verification already exits", restErr.Message)
+		assert.EqualValues(t, "verification already exits", restErr.Error())
 	})
 }
 
@@ -49,8 +49,8 @@ func TestRepository_GetByUserId(t *testing.T) {
 	t.Run("Get_User_By_Id_Should_Throw_If_Verification_With_User_Id_Does't_Exit", func(t *testing.T) {
 		verification, restErr := repo.WithoutTransaction().GetByUserId("")
 		assert.Nil(t, verification)
-		assert.EqualValues(t, fmt.Sprintf("can't find verification with userId  %s", ""), restErr.Message)
-		assert.EqualValues(t, http.StatusNotFound, restErr.Status)
+		assert.EqualValues(t, fmt.Sprintf("can't find verification with userId  %s", ""), restErr.Error())
+		assert.EqualValues(t, http.StatusNotFound, restErr.StatusCode())
 	})
 
 }

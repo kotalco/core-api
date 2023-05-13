@@ -14,7 +14,7 @@ var workspaceRepo = workspace.NewRepository()
 func WorkspaceProtected(c *fiber.Ctx) error {
 	var model *workspace.Workspace
 	var workspaceId string
-	var err *restErrors.RestErr
+	var err restErrors.IRestErr
 
 	//get workspaceId
 	if c.Request().Header.IsPost() { //if method is post verb,  workspace expected to be a body field ,or it's going to be  default
@@ -33,12 +33,12 @@ func WorkspaceProtected(c *fiber.Ctx) error {
 	if workspaceId != "" {
 		model, err = workspaceRepo.GetById(workspaceId)
 		if err != nil {
-			return c.Status(err.Status).JSON(err)
+			return c.Status(err.StatusCode()).JSON(err)
 		}
 	} else {
 		model, err = workspaceRepo.GetByNamespace("default")
 		if err != nil {
-			return c.Status(err.Status).JSON(err)
+			return c.Status(err.StatusCode()).JSON(err)
 		}
 	}
 
@@ -64,7 +64,7 @@ func ValidateWorkspaceMembership(c *fiber.Ctx) error {
 	}
 	if !validUser {
 		notFoundErr := restErrors.NewForbiddenError("you ain't a member of this workspace ")
-		return c.Status(notFoundErr.Status).JSON(notFoundErr)
+		return c.Status(notFoundErr.StatusCode()).JSON(notFoundErr)
 	}
 
 	return c.Next()

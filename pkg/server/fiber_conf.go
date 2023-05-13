@@ -27,7 +27,7 @@ var defaultErrorHandler = func(c *fiber.Ctx, err error) error {
 	go logger.Warn("PANICKING_UNHANDLED_ERROR", err)
 	internalErr := restErrors.NewInternalServerError("some thing went wrong")
 
-	return c.Status(internalErr.Status).JSON(internalErr)
+	return c.Status(internalErr.StatusCode()).JSON(internalErr)
 }
 
 func FiberLimiter() fiber.Handler {

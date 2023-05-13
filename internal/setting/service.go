@@ -12,14 +12,14 @@ type service struct{}
 type IService interface {
 	WithTransaction(txHandle *gorm.DB) IService
 	WithoutTransaction() IService
-	Settings() ([]*Setting, *restErrors.RestErr)
-	ConfigureDomain(dto *ConfigureDomainRequestDto) *restErrors.RestErr
+	Settings() ([]*Setting, restErrors.IRestErr)
+	ConfigureDomain(dto *ConfigureDomainRequestDto) restErrors.IRestErr
 	IsDomainConfigured() bool
-	ConfigureRegistration(dto *ConfigureRegistrationRequestDto) *restErrors.RestErr
+	ConfigureRegistration(dto *ConfigureRegistrationRequestDto) restErrors.IRestErr
 	IsRegistrationEnabled() bool
 	//ConfigureActivationKey create or update the current subscription activation key
-	ConfigureActivationKey(key string) *restErrors.RestErr
-	GetActivationKey() (string, *restErrors.RestErr)
+	ConfigureActivationKey(key string) restErrors.IRestErr
+	GetActivationKey() (string, restErrors.IRestErr)
 }
 
 var (
@@ -40,14 +40,14 @@ func (s service) WithoutTransaction() IService {
 	return s
 }
 
-func (s service) Settings() ([]*Setting, *restErrors.RestErr) {
+func (s service) Settings() ([]*Setting, restErrors.IRestErr) {
 	return settingRepo.Find()
 }
 
-func (s service) ConfigureDomain(dto *ConfigureDomainRequestDto) *restErrors.RestErr {
+func (s service) ConfigureDomain(dto *ConfigureDomainRequestDto) restErrors.IRestErr {
 	_, err := settingRepo.Get(DomainKey)
 	if err != nil {
-		if err.Status == http.StatusNotFound {
+		if err.StatusCode() == http.StatusNotFound {
 			//the record doesn't exist create new one
 			return settingRepo.Create(DomainKey, dto.Domain)
 		}
@@ -65,10 +65,10 @@ func (s service) IsDomainConfigured() bool {
 	return false
 }
 
-func (s service) ConfigureRegistration(dto *ConfigureRegistrationRequestDto) *restErrors.RestErr {
+func (s service) ConfigureRegistration(dto *ConfigureRegistrationRequestDto) restErrors.IRestErr {
 	_, err := settingRepo.Get(RegistrationKey)
 	if err != nil {
-		if err.Status == http.StatusNotFound {
+		if err.StatusCode() == http.StatusNotFound {
 			//the record doesn't exist create new one
 			return settingRepo.Create(RegistrationKey, strconv.FormatBool(*dto.EnableRegistration))
 		}
@@ -86,10 +86,10 @@ func (s service) IsRegistrationEnabled() bool {
 	return false
 }
 
-func (s service) ConfigureActivationKey(key string) *restErrors.RestErr {
+func (s service) ConfigureActivationKey(key string) restErrors.IRestErr {
 	_, err := settingRepo.Get(ActivationKey)
 	if err != nil {
-		if err.Status == http.StatusNotFound {
+		if err.StatusCode() == http.StatusNotFound {
 			//the record doesn't exist create new one
 			return settingRepo.Create(ActivationKey, key)
 		}
@@ -99,6 +99,6 @@ func (s service) ConfigureActivationKey(key string) *restErrors.RestErr {
 	return settingRepo.Update(ActivationKey, key)
 }
 
-func (s service) GetActivationKey() (string, *restErrors.RestErr) {
+func (s service) GetActivationKey() (string, restErrors.IRestErr) {
 	return settingRepo.Get(ActivationKey)
 }

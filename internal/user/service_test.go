@@ -15,12 +15,12 @@ import (
 var (
 	WithTransactionFunc    func(txHandle *gorm.DB) IRepository
 	userService            IService
-	CreateFunc             func(user *User) *restErrors.RestErr
-	GetByEmailFunc         func(email string) (*User, *restErrors.RestErr)
-	GetByIdFunc            func(id string) (*User, *restErrors.RestErr)
-	UpdateFunc             func(user *User) *restErrors.RestErr
-	FindWhereIdInSliceFunc func(ids []string) ([]*User, *restErrors.RestErr)
-	CountFunc              func() (int64, *restErrors.RestErr)
+	CreateFunc             func(user *User) restErrors.IRestErr
+	GetByEmailFunc         func(email string) (*User, restErrors.IRestErr)
+	GetByIdFunc            func(id string) (*User, restErrors.IRestErr)
+	UpdateFunc             func(user *User) restErrors.IRestErr
+	FindWhereIdInSliceFunc func(ids []string) ([]*User, restErrors.IRestErr)
+	CountFunc              func() (int64, restErrors.IRestErr)
 
 	EncryptFunc func(data []byte, passphrase string) (string, error)
 	DecryptFunc func(encodedCipher string, passphrase string) (string, error)
@@ -28,8 +28,8 @@ var (
 	HashFunc       func(password string, cost int) ([]byte, error)
 	VerifyHashFunc func(hashedPassword, password string) error
 
-	CreateTokenFunc          func(userId string, rememberMe bool, authorized bool) (*token.Token, *restErrors.RestErr)
-	ExtractTokenMetadataFunc func(bearToken string) (*token.AccessDetails, *restErrors.RestErr)
+	CreateTokenFunc          func(userId string, rememberMe bool, authorized bool) (*token.Token, restErrors.IRestErr)
+	ExtractTokenMetadataFunc func(bearToken string) (*token.AccessDetails, restErrors.IRestErr)
 
 	CreateQRCodeFunc func(accountName string) (bytes.Buffer, string, error)
 	CheckOtpFunc     func(userTOTPSecret string, otp string) bool
@@ -49,26 +49,26 @@ func (r userRepositoryMock) WithoutTransaction() IRepository {
 	return r
 }
 
-func (userRepositoryMock) Create(user *User) *restErrors.RestErr {
+func (userRepositoryMock) Create(user *User) restErrors.IRestErr {
 	return CreateFunc(user)
 }
 
-func (userRepositoryMock) GetByEmail(email string) (*User, *restErrors.RestErr) {
+func (userRepositoryMock) GetByEmail(email string) (*User, restErrors.IRestErr) {
 	return GetByEmailFunc(email)
 }
 
-func (userRepositoryMock) GetById(id string) (*User, *restErrors.RestErr) {
+func (userRepositoryMock) GetById(id string) (*User, restErrors.IRestErr) {
 	return GetByIdFunc(id)
 }
 
-func (userRepositoryMock) Update(user *User) *restErrors.RestErr {
+func (userRepositoryMock) Update(user *User) restErrors.IRestErr {
 	return UpdateFunc(user)
 }
 
-func (userRepositoryMock) FindWhereIdInSlice(ids []string) ([]*User, *restErrors.RestErr) {
+func (userRepositoryMock) FindWhereIdInSlice(ids []string) ([]*User, restErrors.IRestErr) {
 	return FindWhereIdInSliceFunc(ids)
 }
-func (userRepositoryMock) Count() (int64, *restErrors.RestErr) {
+func (userRepositoryMock) Count() (int64, restErrors.IRestErr) {
 	return CountFunc()
 }
 
@@ -91,11 +91,11 @@ func (hashingServiceMock) VerifyHash(hashedPassword, password string) error {
 }
 
 // token service methods
-func (tokenServiceMock) CreateToken(userId string, rememberMe bool, authorized bool) (*token.Token, *restErrors.RestErr) {
+func (tokenServiceMock) CreateToken(userId string, rememberMe bool, authorized bool) (*token.Token, restErrors.IRestErr) {
 	return CreateTokenFunc(userId, rememberMe, authorized)
 }
 
-func (tokenServiceMock) ExtractTokenMetadata(bearToken string) (*token.AccessDetails, *restErrors.RestErr) {
+func (tokenServiceMock) ExtractTokenMetadata(bearToken string) (*token.AccessDetails, restErrors.IRestErr) {
 	return ExtractTokenMetadataFunc(bearToken)
 }
 
@@ -129,7 +129,7 @@ func TestService_SignUp(t *testing.T) {
 			return []byte(""), nil
 		}
 
-		CreateFunc = func(user *User) *restErrors.RestErr {
+		CreateFunc = func(user *User) restErrors.IRestErr {
 			return nil
 		}
 
@@ -144,12 +144,12 @@ func TestService_SignUp(t *testing.T) {
 			return []byte(""), nil
 		}
 
-		CreateFunc = func(user *User) *restErrors.RestErr {
+		CreateFunc = func(user *User) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 
 		user, err := userService.SignUp(dto)
-		assert.EqualValues(t, "something went wrong", err.Message)
+		assert.EqualValues(t, "something went wrong", err.Error())
 		assert.Nil(t, user)
 	})
 
@@ -160,7 +160,7 @@ func TestService_SignUp(t *testing.T) {
 
 		user, err := userService.SignUp(dto)
 		assert.Nil(t, user)
-		assert.EqualValues(t, "something went wrong.", err.Message)
+		assert.EqualValues(t, "something went wrong.", err.Error())
 	})
 }
 
@@ -174,11 +174,11 @@ func TestService_SignIn(t *testing.T) {
 		VerifyHashFunc = func(hashedPassword, password string) error {
 			return nil
 		}
-		CreateTokenFunc = func(userId string, rememberMe bool, authorized bool) (*token.Token, *restErrors.RestErr) {
+		CreateTokenFunc = func(userId string, rememberMe bool, authorized bool) (*token.Token, restErrors.IRestErr) {
 			token := new(token.Token)
 			return token, nil
 		}
-		GetByEmailFunc = func(email string) (*User, *restErrors.RestErr) {
+		GetByEmailFunc = func(email string) (*User, restErrors.IRestErr) {
 			user := new(User)
 			user.Email = dto.Email
 			user.IsEmailVerified = true
@@ -195,7 +195,7 @@ func TestService_SignIn(t *testing.T) {
 		VerifyHashFunc = func(hashedPassword, password string) error {
 			return nil
 		}
-		GetByEmailFunc = func(email string) (*User, *restErrors.RestErr) {
+		GetByEmailFunc = func(email string) (*User, restErrors.IRestErr) {
 			user := new(User)
 			user.Email = dto.Email
 			user.IsEmailVerified = true
@@ -208,7 +208,7 @@ func TestService_SignIn(t *testing.T) {
 	})
 
 	t.Run("SingIn_Should_Throw_If_Email_Not_Verified", func(t *testing.T) {
-		GetByEmailFunc = func(email string) (*User, *restErrors.RestErr) {
+		GetByEmailFunc = func(email string) (*User, restErrors.IRestErr) {
 			user := new(User)
 			user.Email = dto.Email
 			user.IsEmailVerified = false
@@ -222,24 +222,24 @@ func TestService_SignIn(t *testing.T) {
 		session, err := userService.SignIn(dto)
 
 		assert.Nil(t, session)
-		assert.EqualValues(t, "email not verified", err.Message)
-		assert.EqualValues(t, http.StatusForbidden, err.Status)
+		assert.EqualValues(t, "email not verified", err.Error())
+		assert.EqualValues(t, http.StatusForbidden, err.StatusCode())
 	})
 
 	t.Run("SingIn_Should_Throw_If_User_Does't_Exit", func(t *testing.T) {
-		GetByEmailFunc = func(email string) (*User, *restErrors.RestErr) {
+		GetByEmailFunc = func(email string) (*User, restErrors.IRestErr) {
 			return nil, restErrors.NewUnAuthorizedError("invalid credentials")
 		}
 
 		session, err := userService.SignIn(dto)
 
 		assert.Nil(t, session)
-		assert.EqualValues(t, "Invalid Credentials", err.Message)
-		assert.EqualValues(t, http.StatusUnauthorized, err.Status)
+		assert.EqualValues(t, "Invalid Credentials", err.Error())
+		assert.EqualValues(t, http.StatusUnauthorized, err.StatusCode())
 	})
 
 	t.Run("SignIn_Should_Throw_If_Password_Does't_Match", func(t *testing.T) {
-		GetByEmailFunc = func(email string) (*User, *restErrors.RestErr) {
+		GetByEmailFunc = func(email string) (*User, restErrors.IRestErr) {
 			user := new(User)
 			user.Email = dto.Email
 			user.IsEmailVerified = true
@@ -251,18 +251,18 @@ func TestService_SignIn(t *testing.T) {
 		}
 		session, err := userService.SignIn(dto)
 		assert.Nil(t, session)
-		assert.EqualValues(t, "Invalid Credentials", err.Message)
-		assert.EqualValues(t, http.StatusUnauthorized, err.Status)
+		assert.EqualValues(t, "Invalid Credentials", err.Error())
+		assert.EqualValues(t, http.StatusUnauthorized, err.StatusCode())
 	})
 
 	t.Run("SignIn_Should_Throw_If_Can't_Create_Token", func(t *testing.T) {
 		VerifyHashFunc = func(hashedPassword, password string) error {
 			return nil
 		}
-		CreateTokenFunc = func(userId string, rememberMe bool, authorized bool) (*token.Token, *restErrors.RestErr) {
+		CreateTokenFunc = func(userId string, rememberMe bool, authorized bool) (*token.Token, restErrors.IRestErr) {
 			return nil, restErrors.NewInternalServerError("can't create token")
 		}
-		GetByEmailFunc = func(email string) (*User, *restErrors.RestErr) {
+		GetByEmailFunc = func(email string) (*User, restErrors.IRestErr) {
 			user := new(User)
 			user.Email = dto.Email
 			user.IsEmailVerified = true
@@ -271,7 +271,7 @@ func TestService_SignIn(t *testing.T) {
 		}
 		session, err := userService.SignIn(dto)
 		assert.Nil(t, session)
-		assert.EqualValues(t, "can't create token", err.Message)
+		assert.EqualValues(t, "can't create token", err.Error())
 	})
 
 }
@@ -280,7 +280,7 @@ func TestService_GetByEmail(t *testing.T) {
 	email := "test@test.com"
 
 	t.Run("Get_By_Email_Should_Pass", func(t *testing.T) {
-		GetByEmailFunc = func(email string) (*User, *restErrors.RestErr) {
+		GetByEmailFunc = func(email string) (*User, restErrors.IRestErr) {
 			user := new(User)
 			user.Email = email
 			return user, nil
@@ -293,22 +293,22 @@ func TestService_GetByEmail(t *testing.T) {
 	})
 
 	t.Run("Get_By_Email_Should_Throw_If_Does't_Exit", func(t *testing.T) {
-		GetByEmailFunc = func(email string) (*User, *restErrors.RestErr) {
+		GetByEmailFunc = func(email string) (*User, restErrors.IRestErr) {
 			return nil, restErrors.NewNotFoundError("not found")
 		}
 
 		user, err := userService.GetByEmail(email)
 
 		assert.Nil(t, user)
-		assert.EqualValues(t, http.StatusNotFound, err.Status)
-		assert.EqualValues(t, "not found", err.Message)
+		assert.EqualValues(t, http.StatusNotFound, err.StatusCode())
+		assert.EqualValues(t, "not found", err.Error())
 	})
 }
 
 func TestService_VerifyEmail(t *testing.T) {
 
 	t.Run("Verify_Email_Should_Pass", func(t *testing.T) {
-		UpdateFunc = func(user *User) *restErrors.RestErr {
+		UpdateFunc = func(user *User) restErrors.IRestErr {
 			return nil
 		}
 		user := new(User)
@@ -318,13 +318,13 @@ func TestService_VerifyEmail(t *testing.T) {
 	})
 
 	t.Run("Verify_Email_Should_Throw_If_Repo_Throws", func(t *testing.T) {
-		UpdateFunc = func(user *User) *restErrors.RestErr {
+		UpdateFunc = func(user *User) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 
 		user := new(User)
 		err := userService.VerifyEmail(user)
-		assert.EqualValues(t, "something went wrong", err.Message)
+		assert.EqualValues(t, "something went wrong", err.Error())
 	})
 
 }
@@ -335,7 +335,7 @@ func TestService_ResetPassword(t *testing.T) {
 		HashFunc = func(password string, cost int) ([]byte, error) {
 			return []byte("hash"), nil
 		}
-		UpdateFunc = func(user *User) *restErrors.RestErr {
+		UpdateFunc = func(user *User) restErrors.IRestErr {
 			return nil
 		}
 
@@ -349,26 +349,26 @@ func TestService_ResetPassword(t *testing.T) {
 			return []byte("hash"), nil
 		}
 
-		UpdateFunc = func(user *User) *restErrors.RestErr {
+		UpdateFunc = func(user *User) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 
 		err := userService.ResetPassword(user, "123456")
 
-		assert.EqualValues(t, "something went wrong", err.Message)
+		assert.EqualValues(t, "something went wrong", err.Error())
 	})
 	t.Run("Reset_Password_Should_Throw_Can't_Create_Hash", func(t *testing.T) {
 		HashFunc = func(password string, cost int) ([]byte, error) {
 			return nil, errors.New("")
 		}
 
-		UpdateFunc = func(user *User) *restErrors.RestErr {
+		UpdateFunc = func(user *User) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 
 		err := userService.ResetPassword(user, "123456")
 
-		assert.EqualValues(t, "something went wrong.", err.Message)
+		assert.EqualValues(t, "something went wrong.", err.Error())
 	})
 }
 
@@ -388,7 +388,7 @@ func TestService_ChangePassword(t *testing.T) {
 			return []byte{}, nil
 		}
 
-		UpdateFunc = func(user *User) *restErrors.RestErr {
+		UpdateFunc = func(user *User) restErrors.IRestErr {
 			return nil
 		}
 
@@ -402,8 +402,8 @@ func TestService_ChangePassword(t *testing.T) {
 		}
 
 		restErr := userService.ChangePassword(user, dto)
-		assert.EqualValues(t, "invalid old password", restErr.Message)
-		assert.EqualValues(t, http.StatusUnauthorized, restErr.Status)
+		assert.EqualValues(t, "invalid old password", restErr.Error())
+		assert.EqualValues(t, http.StatusUnauthorized, restErr.StatusCode())
 	})
 
 	t.Run("Change_Password_Should_Throw_If_Hash_Throws", func(t *testing.T) {
@@ -416,8 +416,8 @@ func TestService_ChangePassword(t *testing.T) {
 		}
 
 		restErr := userService.ChangePassword(user, dto)
-		assert.EqualValues(t, "something went wrong.", restErr.Message)
-		assert.EqualValues(t, http.StatusInternalServerError, restErr.Status)
+		assert.EqualValues(t, "something went wrong.", restErr.Error())
+		assert.EqualValues(t, http.StatusInternalServerError, restErr.StatusCode())
 	})
 
 	t.Run("Change_Password_Should_Throw_If_Repo_Throws", func(t *testing.T) {
@@ -429,12 +429,12 @@ func TestService_ChangePassword(t *testing.T) {
 			return nil
 		}
 
-		UpdateFunc = func(user *User) *restErrors.RestErr {
+		UpdateFunc = func(user *User) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 
 		restErr := userService.ChangePassword(user, dto)
-		assert.EqualValues(t, "something went wrong", restErr.Message)
+		assert.EqualValues(t, "something went wrong", restErr.Error())
 	})
 }
 
@@ -447,7 +447,7 @@ func TestService_ChangeEmail(t *testing.T) {
 			return nil
 		}
 
-		UpdateFunc = func(user *User) *restErrors.RestErr {
+		UpdateFunc = func(user *User) restErrors.IRestErr {
 			return nil
 		}
 
@@ -461,8 +461,8 @@ func TestService_ChangeEmail(t *testing.T) {
 		}
 
 		err := userService.ChangeEmail(user, dto)
-		assert.EqualValues(t, "invalid password", err.Message)
-		assert.EqualValues(t, http.StatusBadRequest, err.Status)
+		assert.EqualValues(t, "invalid password", err.Error())
+		assert.EqualValues(t, http.StatusBadRequest, err.StatusCode())
 	})
 
 	t.Run("Change_Email_Should_Throws_If_Repo_Throws", func(t *testing.T) {
@@ -470,11 +470,11 @@ func TestService_ChangeEmail(t *testing.T) {
 			return nil
 		}
 
-		UpdateFunc = func(user *User) *restErrors.RestErr {
+		UpdateFunc = func(user *User) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 		err := userService.ChangeEmail(user, dto)
-		assert.EqualValues(t, "something went wrong", err.Message)
+		assert.EqualValues(t, "something went wrong", err.Error())
 	})
 }
 
@@ -490,7 +490,7 @@ func TestService_CreateTOTP(t *testing.T) {
 			return bytes.Buffer{}, "", nil
 		}
 
-		UpdateFunc = func(user *User) *restErrors.RestErr {
+		UpdateFunc = func(user *User) restErrors.IRestErr {
 			return nil
 		}
 
@@ -512,8 +512,8 @@ func TestService_CreateTOTP(t *testing.T) {
 		}
 		user := new(User)
 		_, err := userService.CreateTOTP(user, dto)
-		assert.EqualValues(t, "Invalid password", err.Message)
-		assert.EqualValues(t, http.StatusBadRequest, err.Status)
+		assert.EqualValues(t, "Invalid password", err.Error())
+		assert.EqualValues(t, http.StatusBadRequest, err.StatusCode())
 
 	})
 
@@ -527,7 +527,7 @@ func TestService_CreateTOTP(t *testing.T) {
 		}
 		user := new(User)
 		_, err := userService.CreateTOTP(user, dto)
-		assert.EqualValues(t, "something went wrong", err.Message)
+		assert.EqualValues(t, "something went wrong", err.Error())
 	})
 
 	t.Run("Create_TOTP_Should_Throw_If_Encryption_service_Throws", func(t *testing.T) {
@@ -544,7 +544,7 @@ func TestService_CreateTOTP(t *testing.T) {
 		}
 		user := new(User)
 		_, err := userService.CreateTOTP(user, dto)
-		assert.EqualValues(t, "something went wrong", err.Message)
+		assert.EqualValues(t, "something went wrong", err.Error())
 	})
 
 	t.Run("Create_TOTP_Should_Throw_If_Repo_Throws", func(t *testing.T) {
@@ -560,7 +560,7 @@ func TestService_CreateTOTP(t *testing.T) {
 			return "", nil
 		}
 
-		UpdateFunc = func(user *User) *restErrors.RestErr {
+		UpdateFunc = func(user *User) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 
@@ -569,7 +569,7 @@ func TestService_CreateTOTP(t *testing.T) {
 		buffer, err := userService.CreateTOTP(user, dto)
 
 		assert.EqualValues(t, bytes.Buffer{}, buffer)
-		assert.EqualValues(t, "something went wrong", err.Message)
+		assert.EqualValues(t, "something went wrong", err.Error())
 	})
 }
 
@@ -581,7 +581,7 @@ func TestService_EnableTwoFactorAuth(t *testing.T) {
 		CheckOtpFunc = func(userTOTPSecret string, otp string) bool {
 			return true
 		}
-		UpdateFunc = func(user *User) *restErrors.RestErr {
+		UpdateFunc = func(user *User) restErrors.IRestErr {
 			return nil
 		}
 		user := new(User)
@@ -597,7 +597,7 @@ func TestService_EnableTwoFactorAuth(t *testing.T) {
 		result, err := userService.EnableTwoFactorAuth(user, "123")
 
 		assert.Nil(t, result)
-		assert.EqualValues(t, "please create and register qr code first", err.Message)
+		assert.EqualValues(t, "please create and register qr code first", err.Error())
 	})
 
 	t.Run("Enable_Two_Factor_Auth_Should_Throw_If_can't_Decrypt", func(t *testing.T) {
@@ -609,7 +609,7 @@ func TestService_EnableTwoFactorAuth(t *testing.T) {
 		result, err := userService.EnableTwoFactorAuth(user, "123")
 
 		assert.Nil(t, result)
-		assert.EqualValues(t, "something went wrong", err.Message)
+		assert.EqualValues(t, "something went wrong", err.Error())
 	})
 
 	t.Run("Enable_Two_Factor_Auth_Should_Throw_If_Check_Otp_Return_False", func(t *testing.T) {
@@ -624,7 +624,7 @@ func TestService_EnableTwoFactorAuth(t *testing.T) {
 		user.TwoFactorCipher = "test"
 		result, err := userService.EnableTwoFactorAuth(user, "123")
 		assert.Nil(t, result)
-		assert.EqualValues(t, "invalid totp code", err.Message)
+		assert.EqualValues(t, "invalid totp code", err.Error())
 	})
 
 	t.Run("Enable_Two_Factor_Auth_Should_Throw_if_Repo_throws", func(t *testing.T) {
@@ -634,7 +634,7 @@ func TestService_EnableTwoFactorAuth(t *testing.T) {
 		CheckOtpFunc = func(userTOTPSecret string, otp string) bool {
 			return true
 		}
-		UpdateFunc = func(user *User) *restErrors.RestErr {
+		UpdateFunc = func(user *User) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 		user := new(User)
@@ -642,7 +642,7 @@ func TestService_EnableTwoFactorAuth(t *testing.T) {
 		result, err := userService.EnableTwoFactorAuth(user, "123")
 
 		assert.Nil(t, result)
-		assert.EqualValues(t, "something went wrong", err.Message)
+		assert.EqualValues(t, "something went wrong", err.Error())
 	})
 
 }
@@ -656,7 +656,7 @@ func TestService_VerifyTOTP(t *testing.T) {
 		CheckOtpFunc = func(userTOTPSecret string, otp string) bool {
 			return true
 		}
-		CreateTokenFunc = func(userId string, rememberMe bool, authorized bool) (*token.Token, *restErrors.RestErr) {
+		CreateTokenFunc = func(userId string, rememberMe bool, authorized bool) (*token.Token, restErrors.IRestErr) {
 			return new(token.Token), nil
 		}
 
@@ -674,7 +674,7 @@ func TestService_VerifyTOTP(t *testing.T) {
 		session, err := userService.VerifyTOTP(user, "123")
 
 		assert.Nil(t, session)
-		assert.NotNil(t, "please enable your 2fa first", err.Message)
+		assert.NotNil(t, "please enable your 2fa first", err.Error())
 	})
 
 	t.Run("Verify_TOTP_Should_Throw_If_Decrypt_throws", func(t *testing.T) {
@@ -686,7 +686,7 @@ func TestService_VerifyTOTP(t *testing.T) {
 		session, err := userService.VerifyTOTP(user, "123")
 
 		assert.Nil(t, session)
-		assert.NotNil(t, "something went wrong", err.Message)
+		assert.NotNil(t, "something went wrong", err.Error())
 
 	})
 
@@ -703,7 +703,7 @@ func TestService_VerifyTOTP(t *testing.T) {
 		session, err := userService.VerifyTOTP(user, "123")
 
 		assert.Nil(t, session)
-		assert.NotNil(t, "invalid totp code", err.Message)
+		assert.NotNil(t, "invalid totp code", err.Error())
 	})
 
 	t.Run("Verify_TOTP_Should_Throw_If_Create_Token_Throws", func(t *testing.T) {
@@ -713,7 +713,7 @@ func TestService_VerifyTOTP(t *testing.T) {
 		CheckOtpFunc = func(userTOTPSecret string, otp string) bool {
 			return true
 		}
-		CreateTokenFunc = func(userId string, rememberMe bool, authorized bool) (*token.Token, *restErrors.RestErr) {
+		CreateTokenFunc = func(userId string, rememberMe bool, authorized bool) (*token.Token, restErrors.IRestErr) {
 			return nil, restErrors.NewInternalServerError("can't create token")
 		}
 
@@ -722,7 +722,7 @@ func TestService_VerifyTOTP(t *testing.T) {
 		session, err := userService.VerifyTOTP(user, "123")
 
 		assert.Nil(t, session)
-		assert.EqualValues(t, "can't create token", err.Message)
+		assert.EqualValues(t, "can't create token", err.Error())
 	})
 
 }
@@ -735,7 +735,7 @@ func TestService_DisableTwoFactorAuth(t *testing.T) {
 			return nil
 		}
 
-		UpdateFunc = func(user *User) *restErrors.RestErr {
+		UpdateFunc = func(user *User) restErrors.IRestErr {
 			return nil
 		}
 
@@ -755,15 +755,15 @@ func TestService_DisableTwoFactorAuth(t *testing.T) {
 		user.TwoFactorEnabled = true
 		err := userService.DisableTwoFactorAuth(user, dto)
 
-		assert.EqualValues(t, "Invalid password", err.Message)
-		assert.EqualValues(t, http.StatusBadRequest, err.Status)
+		assert.EqualValues(t, "Invalid password", err.Error())
+		assert.EqualValues(t, http.StatusBadRequest, err.StatusCode())
 	})
 	t.Run("Disable_Tfa_Should_Throw_If_Already_Disabled", func(t *testing.T) {
 		VerifyHashFunc = func(hashedPassword, password string) error {
 			return nil
 		}
 
-		UpdateFunc = func(user *User) *restErrors.RestErr {
+		UpdateFunc = func(user *User) restErrors.IRestErr {
 			return nil
 		}
 
@@ -771,7 +771,7 @@ func TestService_DisableTwoFactorAuth(t *testing.T) {
 		user.TwoFactorEnabled = false
 		err := userService.DisableTwoFactorAuth(user, dto)
 
-		assert.EqualValues(t, "2fa already disabled", err.Message)
+		assert.EqualValues(t, "2fa already disabled", err.Error())
 	})
 
 	t.Run("Disable_Tfa_Should_Throw_If_Repo_Throws", func(t *testing.T) {
@@ -779,7 +779,7 @@ func TestService_DisableTwoFactorAuth(t *testing.T) {
 			return nil
 		}
 
-		UpdateFunc = func(user *User) *restErrors.RestErr {
+		UpdateFunc = func(user *User) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 
@@ -787,13 +787,13 @@ func TestService_DisableTwoFactorAuth(t *testing.T) {
 		user.TwoFactorEnabled = true
 		err := userService.DisableTwoFactorAuth(user, dto)
 
-		assert.EqualValues(t, "something went wrong", err.Message)
+		assert.EqualValues(t, "something went wrong", err.Error())
 	})
 }
 
 func TestService_FindWhereIdInSlice(t *testing.T) {
 	t.Run("find_users_where_id_in_slice_should_pass", func(t *testing.T) {
-		FindWhereIdInSliceFunc = func(ids []string) ([]*User, *restErrors.RestErr) {
+		FindWhereIdInSliceFunc = func(ids []string) ([]*User, restErrors.IRestErr) {
 			return []*User{new(User), new(User)}, nil
 		}
 		list, err := userService.FindWhereIdInSlice([]string{})
@@ -804,7 +804,7 @@ func TestService_FindWhereIdInSlice(t *testing.T) {
 
 func TestService_Count(t *testing.T) {
 	t.Run("count should pass", func(t *testing.T) {
-		CountFunc = func() (int64, *restErrors.RestErr) {
+		CountFunc = func() (int64, restErrors.IRestErr) {
 			return 1, nil
 		}
 		count, err := userService.Count()
@@ -813,12 +813,12 @@ func TestService_Count(t *testing.T) {
 	})
 
 	t.Run("count should throw if repo throws", func(t *testing.T) {
-		CountFunc = func() (int64, *restErrors.RestErr) {
+		CountFunc = func() (int64, restErrors.IRestErr) {
 			return 0, restErrors.NewInternalServerError("something went wrong")
 		}
 		count, err := userService.Count()
 		assert.EqualValues(t, 0, count)
-		assert.EqualValues(t, "something went wrong", err.Message)
+		assert.EqualValues(t, "something went wrong", err.Error())
 	})
 }
 
@@ -826,7 +826,7 @@ func TestService_SetAsPlatformAdmin(t *testing.T) {
 	user := new(User)
 
 	t.Run("Set as platform admin should pass", func(t *testing.T) {
-		UpdateFunc = func(user *User) *restErrors.RestErr {
+		UpdateFunc = func(user *User) restErrors.IRestErr {
 			return nil
 		}
 
@@ -836,11 +836,11 @@ func TestService_SetAsPlatformAdmin(t *testing.T) {
 	})
 
 	t.Run("Change_Password_Should_Throw_If_Repo_Throws", func(t *testing.T) {
-		UpdateFunc = func(user *User) *restErrors.RestErr {
+		UpdateFunc = func(user *User) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 
 		restErr := userService.SetAsPlatformAdmin(user)
-		assert.EqualValues(t, "something went wrong", restErr.Message)
+		assert.EqualValues(t, "something went wrong", restErr.Error())
 	})
 }

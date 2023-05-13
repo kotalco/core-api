@@ -23,24 +23,24 @@ import (
 endpoint service mocks
 */
 var (
-	endpointServiceCreateFunc func(dto *endpoint.CreateEndpointDto, svc *corev1.Service) *restErrors.RestErr
-	endpointServiceListFunc   func(namespace string) ([]*endpoint.EndpointMetaDto, *restErrors.RestErr)
-	endpointServiceGetFunc    func(name string, namespace string) (*endpoint.EndpointDto, *restErrors.RestErr)
-	endpointServiceDeleteFunc func(name string, namespace string) *restErrors.RestErr
+	endpointServiceCreateFunc func(dto *endpoint.CreateEndpointDto, svc *corev1.Service) restErrors.IRestErr
+	endpointServiceListFunc   func(namespace string) ([]*endpoint.EndpointMetaDto, restErrors.IRestErr)
+	endpointServiceGetFunc    func(name string, namespace string) (*endpoint.EndpointDto, restErrors.IRestErr)
+	endpointServiceDeleteFunc func(name string, namespace string) restErrors.IRestErr
 )
 
 type endpointServiceMock struct{}
 
-func (e endpointServiceMock) Create(dto *endpoint.CreateEndpointDto, svc *corev1.Service) *restErrors.RestErr {
+func (e endpointServiceMock) Create(dto *endpoint.CreateEndpointDto, svc *corev1.Service) restErrors.IRestErr {
 	return endpointServiceCreateFunc(dto, svc)
 }
-func (e endpointServiceMock) List(namespace string) ([]*endpoint.EndpointMetaDto, *restErrors.RestErr) {
+func (e endpointServiceMock) List(namespace string) ([]*endpoint.EndpointMetaDto, restErrors.IRestErr) {
 	return endpointServiceListFunc(namespace)
 }
-func (e endpointServiceMock) Get(name string, namespace string) (*endpoint.EndpointDto, *restErrors.RestErr) {
+func (e endpointServiceMock) Get(name string, namespace string) (*endpoint.EndpointDto, restErrors.IRestErr) {
 	return endpointServiceGetFunc(name, namespace)
 }
-func (e endpointServiceMock) Delete(name string, namespace string) *restErrors.RestErr {
+func (e endpointServiceMock) Delete(name string, namespace string) restErrors.IRestErr {
 	return endpointServiceDeleteFunc(name, namespace)
 }
 
@@ -49,42 +49,42 @@ svc service mock
 */
 
 var (
-	svcServiceListFunc func(namespace string) (*corev1.ServiceList, *restErrors.RestErr)
-	svcServiceGetFunc  func(name string, namespace string) (*corev1.Service, *restErrors.RestErr)
+	svcServiceListFunc func(namespace string) (*corev1.ServiceList, restErrors.IRestErr)
+	svcServiceGetFunc  func(name string, namespace string) (*corev1.Service, restErrors.IRestErr)
 )
 
 type svcServiceMock struct{}
 
-func (s svcServiceMock) List(namespace string) (*corev1.ServiceList, *restErrors.RestErr) {
+func (s svcServiceMock) List(namespace string) (*corev1.ServiceList, restErrors.IRestErr) {
 	return svcServiceListFunc(namespace)
 }
 
-func (s svcServiceMock) Get(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {
+func (s svcServiceMock) Get(name string, namespace string) (*corev1.Service, restErrors.IRestErr) {
 	return svcServiceGetFunc(name, namespace)
 }
 
 var (
 	settingWithTransaction            func(txHandle *gorm.DB) setting.IService
-	settingSettingsFunc               func() ([]*setting.Setting, *restErrors.RestErr)
-	settingConfigureDomainFunc        func(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr
+	settingSettingsFunc               func() ([]*setting.Setting, restErrors.IRestErr)
+	settingConfigureDomainFunc        func(dto *setting.ConfigureDomainRequestDto) restErrors.IRestErr
 	settingIsDomainConfiguredFunc     func() bool
-	settingConfigureRegistrationFunc  func(dto *setting.ConfigureRegistrationRequestDto) *restErrors.RestErr
+	settingConfigureRegistrationFunc  func(dto *setting.ConfigureRegistrationRequestDto) restErrors.IRestErr
 	settingIsRegistrationEnabledFunc  func() bool
-	settingConfigureActivationKeyFunc func(key string) *restErrors.RestErr
-	settingGetActivationKeyFunc       func() (string, *restErrors.RestErr)
+	settingConfigureActivationKeyFunc func(key string) restErrors.IRestErr
+	settingGetActivationKeyFunc       func() (string, restErrors.IRestErr)
 )
 
 type settingServiceMock struct{}
 
-func (s settingServiceMock) ConfigureActivationKey(key string) *restErrors.RestErr {
+func (s settingServiceMock) ConfigureActivationKey(key string) restErrors.IRestErr {
 	return settingConfigureActivationKeyFunc(key)
 }
 
-func (s settingServiceMock) GetActivationKey() (string, *restErrors.RestErr) {
+func (s settingServiceMock) GetActivationKey() (string, restErrors.IRestErr) {
 	return settingGetActivationKeyFunc()
 }
 
-func (s settingServiceMock) ConfigureRegistration(dto *setting.ConfigureRegistrationRequestDto) *restErrors.RestErr {
+func (s settingServiceMock) ConfigureRegistration(dto *setting.ConfigureRegistrationRequestDto) restErrors.IRestErr {
 	return settingConfigureRegistrationFunc(dto)
 }
 
@@ -100,11 +100,11 @@ func (s settingServiceMock) WithTransaction(txHandle *gorm.DB) setting.IService 
 	return s
 }
 
-func (s settingServiceMock) Settings() ([]*setting.Setting, *restErrors.RestErr) {
+func (s settingServiceMock) Settings() ([]*setting.Setting, restErrors.IRestErr) {
 	return settingSettingsFunc()
 }
 
-func (s settingServiceMock) ConfigureDomain(dto *setting.ConfigureDomainRequestDto) *restErrors.RestErr {
+func (s settingServiceMock) ConfigureDomain(dto *setting.ConfigureDomainRequestDto) restErrors.IRestErr {
 	return settingConfigureDomainFunc(dto)
 }
 
@@ -168,10 +168,10 @@ func TestCreate(t *testing.T) {
 		settingIsDomainConfiguredFunc = func() bool {
 			return true
 		}
-		svcServiceGetFunc = func(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {
+		svcServiceGetFunc = func(name string, namespace string) (*corev1.Service, restErrors.IRestErr) {
 			return &corev1.Service{Spec: corev1.ServiceSpec{Ports: []corev1.ServicePort{{}}}}, nil
 		}
-		endpointServiceCreateFunc = func(dto *endpoint.CreateEndpointDto, svc *corev1.Service) *restErrors.RestErr {
+		endpointServiceCreateFunc = func(dto *endpoint.CreateEndpointDto, svc *corev1.Service) restErrors.IRestErr {
 			return nil
 		}
 		availableProtocol = func(protocol string) bool {
@@ -205,7 +205,7 @@ func TestCreate(t *testing.T) {
 		fields["service_name"] = "invalid service_name"
 		badReqErr := restErrors.NewValidationError(fields)
 
-		assert.Equal(t, *badReqErr, result)
+		assert.Equal(t, badReqErr, result)
 		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
 	})
 	t.Run("create endpoint should throw if the user didn't configure the domain based url", func(t *testing.T) {
@@ -226,7 +226,7 @@ func TestCreate(t *testing.T) {
 		settingIsDomainConfiguredFunc = func() bool {
 			return true
 		}
-		svcServiceGetFunc = func(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {
+		svcServiceGetFunc = func(name string, namespace string) (*corev1.Service, restErrors.IRestErr) {
 			return nil, restErrors.NewNotFoundError("no such record")
 		}
 
@@ -243,10 +243,10 @@ func TestCreate(t *testing.T) {
 		settingIsDomainConfiguredFunc = func() bool {
 			return true
 		}
-		svcServiceGetFunc = func(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {
+		svcServiceGetFunc = func(name string, namespace string) (*corev1.Service, restErrors.IRestErr) {
 			return &corev1.Service{Spec: corev1.ServiceSpec{Ports: []corev1.ServicePort{{}}}}, nil
 		}
-		endpointServiceCreateFunc = func(dto *endpoint.CreateEndpointDto, svc *corev1.Service) *restErrors.RestErr {
+		endpointServiceCreateFunc = func(dto *endpoint.CreateEndpointDto, svc *corev1.Service) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 		availableProtocol = func(protocol string) bool {
@@ -264,7 +264,7 @@ func TestCreate(t *testing.T) {
 		settingIsDomainConfiguredFunc = func() bool {
 			return true
 		}
-		svcServiceGetFunc = func(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {
+		svcServiceGetFunc = func(name string, namespace string) (*corev1.Service, restErrors.IRestErr) {
 			return &corev1.Service{Spec: corev1.ServiceSpec{Ports: []corev1.ServicePort{{}}}}, nil
 		}
 		availableProtocol = func(protocol string) bool {
@@ -287,7 +287,7 @@ func TestList(t *testing.T) {
 	locals["workspace"] = *workspaceModel
 
 	t.Run("list endpoints should pass", func(t *testing.T) {
-		endpointServiceListFunc = func(namespace string) ([]*endpoint.EndpointMetaDto, *restErrors.RestErr) {
+		endpointServiceListFunc = func(namespace string) ([]*endpoint.EndpointMetaDto, restErrors.IRestErr) {
 			return []*endpoint.EndpointMetaDto{{}}, nil
 		}
 
@@ -301,7 +301,7 @@ func TestList(t *testing.T) {
 	})
 
 	t.Run("list endpoint should throw if endpointServiceList throws", func(t *testing.T) {
-		endpointServiceListFunc = func(namespace string) ([]*endpoint.EndpointMetaDto, *restErrors.RestErr) {
+		endpointServiceListFunc = func(namespace string) ([]*endpoint.EndpointMetaDto, restErrors.IRestErr) {
 			return nil, restErrors.NewInternalServerError("something went wrong")
 		}
 
@@ -321,7 +321,7 @@ func TestGet(t *testing.T) {
 	locals["workspace"] = *workspaceModel
 
 	t.Run("get endpoint should pass", func(t *testing.T) {
-		endpointServiceGetFunc = func(name string, namespace string) (*endpoint.EndpointDto, *restErrors.RestErr) {
+		endpointServiceGetFunc = func(name string, namespace string) (*endpoint.EndpointDto, restErrors.IRestErr) {
 			return &endpoint.EndpointDto{}, nil
 		}
 		body, resp := newFiberCtx("", Get, locals)
@@ -334,7 +334,7 @@ func TestGet(t *testing.T) {
 	})
 
 	t.Run("get endpoint should throw if can't ger endpoint from service", func(t *testing.T) {
-		endpointServiceGetFunc = func(name string, namespace string) (*endpoint.EndpointDto, *restErrors.RestErr) {
+		endpointServiceGetFunc = func(name string, namespace string) (*endpoint.EndpointDto, restErrors.IRestErr) {
 			return nil, restErrors.NewNotFoundError("no such record")
 		}
 		body, resp := newFiberCtx("", Get, locals)
@@ -353,7 +353,7 @@ func TestDelete(t *testing.T) {
 	locals["workspace"] = *workspaceModel
 
 	t.Run("delete endpoint should pass", func(t *testing.T) {
-		endpointServiceDeleteFunc = func(name string, namespace string) *restErrors.RestErr {
+		endpointServiceDeleteFunc = func(name string, namespace string) restErrors.IRestErr {
 			return nil
 		}
 		body, resp := newFiberCtx("", Delete, locals)
@@ -366,7 +366,7 @@ func TestDelete(t *testing.T) {
 	})
 
 	t.Run("delete endpoint should throw if can't delete endpoint from service", func(t *testing.T) {
-		endpointServiceDeleteFunc = func(name string, namespace string) *restErrors.RestErr {
+		endpointServiceDeleteFunc = func(name string, namespace string) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 		body, resp := newFiberCtx("", Delete, locals)

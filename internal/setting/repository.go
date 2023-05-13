@@ -17,10 +17,10 @@ type repository struct {
 type IRepository interface {
 	WithTransaction(txHandle *gorm.DB) IRepository
 	WithoutTransaction() IRepository
-	Get(key string) (string, *restErrors.RestErr)
-	Create(key string, value string) *restErrors.RestErr
-	Update(key string, value string) *restErrors.RestErr
-	Find() ([]*Setting, *restErrors.RestErr)
+	Get(key string) (string, restErrors.IRestErr)
+	Create(key string, value string) restErrors.IRestErr
+	Update(key string, value string) restErrors.IRestErr
+	Find() ([]*Setting, restErrors.IRestErr)
 }
 
 func NewRepository() IRepository {
@@ -38,7 +38,7 @@ func (r repository) WithoutTransaction() IRepository {
 	return r
 }
 
-func (r repository) Get(key string) (string, *restErrors.RestErr) {
+func (r repository) Get(key string) (string, restErrors.IRestErr) {
 	var record = new(Setting)
 
 	result := r.db.Where("key = ?", key).First(record)
@@ -49,7 +49,7 @@ func (r repository) Get(key string) (string, *restErrors.RestErr) {
 	return record.Value, nil
 }
 
-func (r repository) Create(key string, value string) *restErrors.RestErr {
+func (r repository) Create(key string, value string) restErrors.IRestErr {
 	var record = &Setting{
 		Key:   key,
 		Value: value,
@@ -73,7 +73,7 @@ func (r repository) Create(key string, value string) *restErrors.RestErr {
 	return nil
 }
 
-func (r repository) Update(key string, value string) *restErrors.RestErr {
+func (r repository) Update(key string, value string) restErrors.IRestErr {
 	result := r.db.Model(Setting{}).Where("key = ?", key).Update("value", value)
 	if result.Error != nil {
 		go logger.Error(r.Update, result.Error)
@@ -82,7 +82,7 @@ func (r repository) Update(key string, value string) *restErrors.RestErr {
 	return nil
 }
 
-func (r repository) Find() ([]*Setting, *restErrors.RestErr) {
+func (r repository) Find() ([]*Setting, restErrors.IRestErr) {
 	var setting []*Setting
 
 	result := r.db.Find(&setting)

@@ -12,7 +12,7 @@ var statefulSetService = statefulset.NewService()
 func Count(c *fiber.Ctx) error {
 	list, err := statefulSetService.List(c.Locals("namespace").(string))
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	result := map[string]uint{}

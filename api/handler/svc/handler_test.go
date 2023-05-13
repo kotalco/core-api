@@ -17,17 +17,17 @@ import (
 )
 
 var (
-	k8svcListFunc func(namespace string) (*corev1.ServiceList, *restErrors.RestErr)
-	k8svcGetFunc  func(name string, namespace string) (*corev1.Service, *restErrors.RestErr)
+	k8svcListFunc func(namespace string) (*corev1.ServiceList, restErrors.IRestErr)
+	k8svcGetFunc  func(name string, namespace string) (*corev1.Service, restErrors.IRestErr)
 )
 
 type k8sServiceMock struct{}
 
-func (k *k8sServiceMock) List(namespace string) (*corev1.ServiceList, *restErrors.RestErr) {
+func (k *k8sServiceMock) List(namespace string) (*corev1.ServiceList, restErrors.IRestErr) {
 	return k8svcListFunc(namespace)
 }
 
-func (k *k8sServiceMock) Get(name string, namespace string) (*corev1.Service, *restErrors.RestErr) {
+func (k *k8sServiceMock) Get(name string, namespace string) (*corev1.Service, restErrors.IRestErr) {
 	return k8svcGetFunc(name, namespace)
 }
 
@@ -72,7 +72,7 @@ func TestList(t *testing.T) {
 	locals["workspace"] = *workspaceModel
 
 	t.Run("list services should pass", func(t *testing.T) {
-		k8svcListFunc = func(namespace string) (*corev1.ServiceList, *restErrors.RestErr) {
+		k8svcListFunc = func(namespace string) (*corev1.ServiceList, restErrors.IRestErr) {
 			return &corev1.ServiceList{
 				Items: []corev1.Service{
 					{
@@ -96,7 +96,7 @@ func TestList(t *testing.T) {
 
 	})
 	t.Run("list services should return empty list if there is no service with valid protocols", func(t *testing.T) {
-		k8svcListFunc = func(namespace string) (*corev1.ServiceList, *restErrors.RestErr) {
+		k8svcListFunc = func(namespace string) (*corev1.ServiceList, restErrors.IRestErr) {
 			return &corev1.ServiceList{
 				Items: []corev1.Service{
 					{
@@ -119,7 +119,7 @@ func TestList(t *testing.T) {
 
 	})
 	t.Run("list services should throw if service.list throws", func(t *testing.T) {
-		k8svcListFunc = func(namespace string) (*corev1.ServiceList, *restErrors.RestErr) {
+		k8svcListFunc = func(namespace string) (*corev1.ServiceList, restErrors.IRestErr) {
 			return nil, restErrors.NewInternalServerError("something went wrong")
 
 		}

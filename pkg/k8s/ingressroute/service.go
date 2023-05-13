@@ -21,22 +21,22 @@ type ingressroute struct{}
 // IIngressRoute has methods to work with ingressroutes resources.
 type IIngressRoute interface {
 	// Create takes the representation of a ingressRoute and creates it returns ingress-route object or error if any
-	Create(dto *IngressRouteDto) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr)
+	Create(dto *IngressRouteDto) (*traefikv1alpha1.IngressRoute, restErrors.IRestErr)
 	//List takes label and field selectors, and returns the list of Middlewares that match those selectors.
-	List(namesapce string) (*traefikv1alpha1.IngressRouteList, *restErrors.RestErr)
+	List(namesapce string) (*traefikv1alpha1.IngressRouteList, restErrors.IRestErr)
 	// Get takes name and namespace of the ingressRoute, and returns the corresponding ingressRoute object, and an error if there is any.
-	Get(name string, namespace string) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr)
+	Get(name string, namespace string) (*traefikv1alpha1.IngressRoute, restErrors.IRestErr)
 	// Delete takes name  and namespace of the ingressRoute, check if it exists and delete it if found. Returns an error if one occurs.
-	Delete(name string, namespace string) *restErrors.RestErr
+	Delete(name string, namespace string) restErrors.IRestErr
 	//Update takes IngressRoute and updates it, return an error if any
-	Update(record *traefikv1alpha1.IngressRoute) *restErrors.RestErr
+	Update(record *traefikv1alpha1.IngressRoute) restErrors.IRestErr
 }
 
 func NewIngressRoutesService() IIngressRoute {
 	return &ingressroute{}
 }
 
-func (i *ingressroute) Create(dto *IngressRouteDto) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr) {
+func (i *ingressroute) Create(dto *IngressRouteDto) (*traefikv1alpha1.IngressRoute, restErrors.IRestErr) {
 	domainBaseUrl, restErr := setting.GetDomainBaseUrl()
 	if restErr != nil {
 		return nil, restErr
@@ -92,7 +92,7 @@ func (i *ingressroute) Create(dto *IngressRouteDto) (*traefikv1alpha1.IngressRou
 	return record, nil
 }
 
-func (i *ingressroute) List(namespace string) (*traefikv1alpha1.IngressRouteList, *restErrors.RestErr) {
+func (i *ingressroute) List(namespace string) (*traefikv1alpha1.IngressRouteList, restErrors.IRestErr) {
 	records := &traefikv1alpha1.IngressRouteList{}
 	err := k8s.K8sClient.List(context.Background(), records, &client.ListOptions{Namespace: namespace}, &client.MatchingLabels{"app.kubernetes.io/created-by": "kotal-api"})
 	if err != nil {
@@ -101,7 +101,7 @@ func (i *ingressroute) List(namespace string) (*traefikv1alpha1.IngressRouteList
 	return records, nil
 }
 
-func (i *ingressroute) Get(name string, namespace string) (*traefikv1alpha1.IngressRoute, *restErrors.RestErr) {
+func (i *ingressroute) Get(name string, namespace string) (*traefikv1alpha1.IngressRoute, restErrors.IRestErr) {
 	var record traefikv1alpha1.IngressRoute
 	key := types.NamespacedName{
 		Namespace: namespace,
@@ -119,7 +119,7 @@ func (i *ingressroute) Get(name string, namespace string) (*traefikv1alpha1.Ingr
 	return &record, nil
 }
 
-func (i *ingressroute) Delete(name string, namespace string) *restErrors.RestErr {
+func (i *ingressroute) Delete(name string, namespace string) restErrors.IRestErr {
 	record, err := i.Get(name, namespace)
 	if err != nil {
 		return err
@@ -134,7 +134,7 @@ func (i *ingressroute) Delete(name string, namespace string) *restErrors.RestErr
 	return nil
 }
 
-func (i *ingressroute) Update(record *traefikv1alpha1.IngressRoute) *restErrors.RestErr {
+func (i *ingressroute) Update(record *traefikv1alpha1.IngressRoute) restErrors.IRestErr {
 	intErr := k8s.K8sClient.Update(context.Background(), record)
 	if intErr != nil {
 		go logger.Error(i.Update, intErr)

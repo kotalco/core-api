@@ -16,8 +16,8 @@ import (
 type token struct{}
 
 type IToken interface {
-	CreateToken(userId string, rememberMe bool, authorized bool) (*Token, *restErrors.RestErr)
-	ExtractTokenMetadata(bearToken string) (*AccessDetails, *restErrors.RestErr)
+	CreateToken(userId string, rememberMe bool, authorized bool) (*Token, restErrors.IRestErr)
+	ExtractTokenMetadata(bearToken string) (*AccessDetails, restErrors.IRestErr)
 }
 
 func NewToken() IToken {
@@ -25,7 +25,7 @@ func NewToken() IToken {
 	return newToken
 }
 
-func (token) CreateToken(userId string, rememberMe bool, authorized bool) (*Token, *restErrors.RestErr) {
+func (token) CreateToken(userId string, rememberMe bool, authorized bool) (*Token, restErrors.IRestErr) {
 	var tokenExpires int
 	var convErr error
 	tokenExpires, convErr = strconv.Atoi(config.Environment.JwtSecretKeyExpireHoursCount)
@@ -57,7 +57,7 @@ func (token) CreateToken(userId string, rememberMe bool, authorized bool) (*Toke
 	return t, nil
 }
 
-func (token) ExtractTokenMetadata(bearToken string) (*AccessDetails, *restErrors.RestErr) {
+func (token) ExtractTokenMetadata(bearToken string) (*AccessDetails, restErrors.IRestErr) {
 	token, err := verifyToken(bearToken)
 	if err != nil {
 		return nil, err
@@ -77,7 +77,7 @@ func (token) ExtractTokenMetadata(bearToken string) (*AccessDetails, *restErrors
 	return nil, err
 }
 
-func verifyToken(bearToken string) (*jwt.Token, *restErrors.RestErr) {
+func verifyToken(bearToken string) (*jwt.Token, restErrors.IRestErr) {
 	tokenString := extractToken(bearToken)
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		//Make sure that the token_generator method conform to "SigningMethodHMAC"

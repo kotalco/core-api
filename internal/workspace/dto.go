@@ -43,7 +43,7 @@ func (dto *WorkspaceResponseDto) Marshall(model *Workspace) *WorkspaceResponseDt
 }
 
 // Validate validates workspace requests fields
-func Validate(dto interface{}) *restErrors.RestErr {
+func Validate(dto interface{}) restErrors.IRestErr {
 	newValidator := validator.New()
 	err := newValidator.RegisterValidation("roles", func(fl validator.FieldLevel) bool {
 		return roles.New().Exist(fl.Field().String())

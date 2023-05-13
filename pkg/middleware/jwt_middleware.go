@@ -17,15 +17,15 @@ func JWTProtected(c *fiber.Ctx) error {
 
 	accessDetails, err := tokenService.ExtractTokenMetadata(BearerToken)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 	user, err := userRepository.GetById(accessDetails.UserId)
 	if err != nil {
-		if err.Status == http.StatusNotFound {
+		if err.StatusCode() == http.StatusNotFound {
 			unAuthErr := restErrors.NewUnAuthorizedError("no such user")
-			return c.Status(unAuthErr.Status).JSON(unAuthErr)
+			return c.Status(unAuthErr.StatusCode()).JSON(unAuthErr)
 		}
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 	userDetails := new(token.UserDetails)
 	userDetails.ID = user.ID

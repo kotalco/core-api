@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/kotalco/cloud-api/pkg/k8s"
-	restError "github.com/kotalco/community-api/pkg/errors"
+	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/logger"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -13,8 +13,8 @@ import (
 )
 
 type ISecret interface {
-	Create(dto *CreateSecretDto) *restError.RestErr
-	Get(name string, namespace string) (*corev1.Secret, *restError.RestErr)
+	Create(dto *CreateSecretDto) restErrors.IRestErr
+	Get(name string, namespace string) (*corev1.Secret, restErrors.IRestErr)
 }
 
 type secret struct {
@@ -24,7 +24,7 @@ func NewService() ISecret {
 	return &secret{}
 }
 
-func (s *secret) Create(dto *CreateSecretDto) *restError.RestErr {
+func (s *secret) Create(dto *CreateSecretDto) restErrors.IRestErr {
 	t := true
 	secret := &corev1.Secret{
 		Type: dto.Type,
@@ -39,15 +39,15 @@ func (s *secret) Create(dto *CreateSecretDto) *restError.RestErr {
 
 	if err := k8s.K8sClient.Create(context.Background(), secret); err != nil {
 		if apiErrors.IsAlreadyExists(err) {
-			return restError.NewBadRequestError(fmt.Sprintf("secret by name %s already exist", dto.Name))
+			return restErrors.NewBadRequestError(fmt.Sprintf("secret by name %s already exist", dto.Name))
 		}
 		go logger.Error(s.Create, err)
-		return restError.NewInternalServerError("error creating secret")
+		return restErrors.NewInternalServerError("error creating secret")
 	}
 	return nil
 }
 
-func (s *secret) Get(name string, namespace string) (*corev1.Secret, *restError.RestErr) {
+func (s *secret) Get(name string, namespace string) (*corev1.Secret, restErrors.IRestErr) {
 	record := &corev1.Secret{}
 	key := types.NamespacedName{
 		Namespace: namespace,
@@ -56,10 +56,10 @@ func (s *secret) Get(name string, namespace string) (*corev1.Secret, *restError.
 	err := k8s.K8sClient.Get(context.Background(), key, record)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
-			return nil, restError.NewNotFoundError(fmt.Sprintf("can't find secret %s", name))
+			return nil, restErrors.NewNotFoundError(fmt.Sprintf("can't find secret %s", name))
 		}
 		go logger.Error(s.Get, err)
-		return nil, restError.NewInternalServerError(err.Error())
+		return nil, restErrors.NewInternalServerError(err.Error())
 	}
 	return record, nil
 }

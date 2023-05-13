@@ -30,25 +30,25 @@ func Create(c *fiber.Ctx) error {
 	dto := new(workspace.CreateWorkspaceRequestDto)
 	if err := c.BodyParser(dto); err != nil {
 		badReq := restErrors.NewBadRequestError("invalid request body")
-		return c.Status(badReq.Status).JSON(badReq)
+		return c.Status(badReq.StatusCode()).JSON(badReq)
 	}
 
 	err := workspace.Validate(dto)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	txHandle := sqlclient.Begin()
 	model, err := workspaceService.WithTransaction(txHandle).Create(dto, userId)
 	if err != nil {
 		sqlclient.Rollback(txHandle)
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	err = namespaceService.Create(model.K8sNamespace)
 	if err != nil {
 		sqlclient.Rollback(txHandle)
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	sqlclient.Commit(txHandle)
@@ -67,19 +67,19 @@ func Update(c *fiber.Ctx) error {
 
 	if err := c.BodyParser(dto); err != nil {
 		badReq := restErrors.NewBadRequestError("invalid request body")
-		return c.Status(badReq.Status).JSON(badReq)
+		return c.Status(badReq.StatusCode()).JSON(badReq)
 	}
 
 	err := workspace.Validate(dto)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	txHandle := sqlclient.Begin()
 	err = workspaceService.WithTransaction(txHandle).Update(dto, &model)
 	if err != nil {
 		sqlclient.Rollback(txHandle)
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 	sqlclient.Commit(txHandle)
 
@@ -93,24 +93,24 @@ func Delete(c *fiber.Ctx) error {
 
 	count, err := workspaceService.WithoutTransaction().CountByUserId(userId)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 	if count == 1 {
 		badReq := restErrors.NewBadRequestError("request declined, you should have at least 1 workspace!")
-		return c.Status(badReq.Status).JSON(badReq)
+		return c.Status(badReq.StatusCode()).JSON(badReq)
 	}
 
 	txHandle := sqlclient.Begin()
 	err = workspaceService.WithTransaction(txHandle).Delete(&model)
 	if err != nil {
 		sqlclient.Rollback(txHandle)
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	err = namespaceService.Delete(model.K8sNamespace)
-	if err != nil && err.Status != http.StatusNotFound {
+	if err != nil && err.StatusCode() != http.StatusNotFound {
 		sqlclient.Rollback(txHandle)
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	sqlclient.Commit(txHandle)
@@ -124,7 +124,7 @@ func GetByUserId(c *fiber.Ctx) error {
 
 	list, err := workspaceService.WithoutTransaction().GetByUserId(userId)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 	var marshalled = make([]workspace.WorkspaceResponseDto, 0)
 	for _, v := range list {
@@ -151,17 +151,17 @@ func AddMember(c *fiber.Ctx) error {
 	dto := new(workspace.AddWorkspaceMemberDto)
 	if err := c.BodyParser(dto); err != nil {
 		badReq := restErrors.NewBadRequestError("invalid request body")
-		return c.Status(badReq.Status).JSON(badReq)
+		return c.Status(badReq.StatusCode()).JSON(badReq)
 	}
 
 	err := workspace.Validate(dto)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	member, err := userService.WithoutTransaction().GetByEmail(dto.Email)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	model := c.Locals("workspace").(workspace.Workspace)
@@ -169,7 +169,7 @@ func AddMember(c *fiber.Ctx) error {
 	for _, v := range model.WorkspaceUsers {
 		if v.UserId == member.ID {
 			conflictErr := restErrors.NewConflictError("User is already a member of the workspace")
-			return c.Status(conflictErr.Status).JSON(conflictErr)
+			return c.Status(conflictErr.StatusCode()).JSON(conflictErr)
 		}
 	}
 
@@ -177,7 +177,7 @@ func AddMember(c *fiber.Ctx) error {
 	err = workspaceService.WithTransaction(txHandle).AddWorkspaceMember(&model, member.ID, dto.Role)
 	if err != nil {
 		sqlclient.Rollback(txHandle)
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	sqlclient.Commit(txHandle)
@@ -210,7 +210,7 @@ func Leave(c *fiber.Ctx) error {
 
 		if !canLeave {
 			err := restErrors.NewForbiddenError("user with admin role can leave workspace only if it has another admin")
-			return c.Status(err.Status).JSON(err)
+			return c.Status(err.StatusCode()).JSON(err)
 		}
 	}
 
@@ -218,7 +218,7 @@ func Leave(c *fiber.Ctx) error {
 	err := workspaceService.WithTransaction(txHandle).DeleteWorkspaceMember(&model, userId)
 	if err != nil {
 		sqlclient.Rollback(txHandle)
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	sqlclient.Commit(txHandle)
@@ -236,7 +236,7 @@ func RemoveMember(c *fiber.Ctx) error {
 
 	if memberId == userId {
 		badReq := restErrors.NewBadRequestError("you can't remove your self, try to leave workspace instead!")
-		return c.Status(badReq.Status).JSON(badReq)
+		return c.Status(badReq.StatusCode()).JSON(badReq)
 	}
 
 	exist := false //check if the to-be-delete user exists in the workspace
@@ -248,14 +248,14 @@ func RemoveMember(c *fiber.Ctx) error {
 	}
 	if !exist {
 		notFoundErr := restErrors.NewNotFoundError("user isn't a member of the workspace")
-		return c.Status(notFoundErr.Status).JSON(notFoundErr)
+		return c.Status(notFoundErr.StatusCode()).JSON(notFoundErr)
 	}
 
 	txHandle := sqlclient.Begin()
 	err := workspaceService.WithTransaction(txHandle).DeleteWorkspaceMember(&model, memberId)
 	if err != nil {
 		sqlclient.Rollback(txHandle)
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	sqlclient.Commit(txHandle)
@@ -275,7 +275,7 @@ func Members(c *fiber.Ctx) error {
 
 	workspaceMembersList, err := userService.WithoutTransaction().FindWhereIdInSlice(userIds)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	result := make([]user.PublicUserResponseDto, len(workspaceMembersList))
@@ -299,11 +299,11 @@ func UpdateWorkspaceUser(c *fiber.Ctx) error {
 	dto := new(workspace.UpdateWorkspaceUserRequestDto)
 	if err := c.BodyParser(dto); err != nil {
 		badReq := restErrors.NewBadRequestError("invalid request body")
-		return c.Status(badReq.Status).JSON(badReq)
+		return c.Status(badReq.StatusCode()).JSON(badReq)
 	}
 	err := workspace.Validate(dto)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	model := c.Locals("workspace").(workspace.Workspace)
@@ -322,13 +322,13 @@ func UpdateWorkspaceUser(c *fiber.Ctx) error {
 	}
 	if !exist {
 		notFoundErr := restErrors.NewNotFoundError("user isn't a member of the workspace")
-		return c.Status(notFoundErr.Status).JSON(notFoundErr)
+		return c.Status(notFoundErr.StatusCode()).JSON(notFoundErr)
 	}
 
 	if dto.Role != "" { //update workspace-user record role
 		if workspaceUser.UserId == userId {
 			badReq := restErrors.NewBadRequestError("users can't change their own workspace role!")
-			return c.Status(badReq.Status).JSON(badReq)
+			return c.Status(badReq.StatusCode()).JSON(badReq)
 		}
 
 	}
@@ -337,7 +337,7 @@ func UpdateWorkspaceUser(c *fiber.Ctx) error {
 	err = workspaceService.WithTransaction(txHandle).UpdateWorkspaceUser(workspaceUser, dto)
 	if err != nil {
 		sqlclient.Rollback(txHandle)
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	sqlclient.Commit(txHandle)
@@ -353,11 +353,11 @@ func ValidateWorkspaceExist(c *fiber.Ctx) error {
 
 	model, err := workspaceService.WithoutTransaction().GetById(workspaceId)
 	if err != nil {
-		if err.Status == http.StatusNotFound {
+		if err.StatusCode() == http.StatusNotFound {
 			notFoundErr := restErrors.NewNotFoundError("no such record")
-			return c.Status(notFoundErr.Status).JSON(notFoundErr)
+			return c.Status(notFoundErr.StatusCode()).JSON(notFoundErr)
 		}
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	c.Locals("workspace", *model)
