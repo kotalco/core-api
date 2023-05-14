@@ -100,3 +100,17 @@ func Delete(c *fiber.Ctx) error {
 	}
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{Message: "Endpoint Deleted"}))
 }
+
+func Count(c *fiber.Ctx) error {
+	workspaceModel := c.Locals("workspace").(workspace.Workspace)
+
+	count, err := endpointService.Count(workspaceModel.K8sNamespace)
+	if err != nil {
+		return c.Status(err.StatusCode()).JSON(err)
+	}
+
+	c.Set("Access-Control-Expose-Headers", "X-Total-Count")
+	c.Set("X-Total-Count", fmt.Sprintf("%d", count))
+
+	return c.SendStatus(http.StatusOK)
+}
