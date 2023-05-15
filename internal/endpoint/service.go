@@ -35,6 +35,7 @@ type IService interface {
 	List(namespace string) ([]*EndpointMetaDto, restErrors.IRestErr)
 	Get(name string, namespace string) (*EndpointDto, restErrors.IRestErr)
 	Delete(name string, namespace string) restErrors.IRestErr
+	Count(namespace string) (int, restErrors.IRestErr)
 }
 
 func NewService() IService {
@@ -196,4 +197,12 @@ func (s *service) Get(name string, namespace string) (*EndpointDto, restErrors.I
 
 func (s *service) Delete(name string, namespace string) restErrors.IRestErr {
 	return ingressRoutesService.Delete(name, namespace)
+}
+
+func (s *service) Count(namespace string) (count int, err restErrors.IRestErr) {
+	records, err := ingressRoutesService.List(namespace)
+	if err != nil {
+		return 0, err
+	}
+	return len(records.Items), err
 }

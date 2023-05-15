@@ -27,6 +27,7 @@ var (
 	endpointServiceListFunc   func(namespace string) ([]*endpoint.EndpointMetaDto, restErrors.IRestErr)
 	endpointServiceGetFunc    func(name string, namespace string) (*endpoint.EndpointDto, restErrors.IRestErr)
 	endpointServiceDeleteFunc func(name string, namespace string) restErrors.IRestErr
+	endpointServiceCountFunc  func(namespace string) (int, restErrors.IRestErr)
 )
 
 type endpointServiceMock struct{}
@@ -42,6 +43,9 @@ func (e endpointServiceMock) Get(name string, namespace string) (*endpoint.Endpo
 }
 func (e endpointServiceMock) Delete(name string, namespace string) restErrors.IRestErr {
 	return endpointServiceDeleteFunc(name, namespace)
+}
+func (e endpointServiceMock) Count(namespace string) (int, restErrors.IRestErr) {
+	return endpointServiceCountFunc(namespace)
 }
 
 /*
