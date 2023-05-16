@@ -19,17 +19,17 @@ import (
 subscriptionAPI service  mocks
 */
 var (
-	subscriptionAPIAcknowledgmentFunc   func(activationKey string, clusterID string) ([]byte, *restErrors.RestErr)
-	subscriptionAPICurrentTimeStampFunc func() ([]byte, *restErrors.RestErr)
+	subscriptionAPIAcknowledgmentFunc   func(activationKey string, clusterID string) ([]byte, restErrors.IRestErr)
+	subscriptionAPICurrentTimeStampFunc func() ([]byte, restErrors.IRestErr)
 	subscriptionService                 IService
 )
 
 type subscriptionApiServiceMock struct{}
 
-func (s subscriptionApiServiceMock) Acknowledgment(activationKey string, clusterID string) ([]byte, *restErrors.RestErr) {
+func (s subscriptionApiServiceMock) Acknowledgment(activationKey string, clusterID string) ([]byte, restErrors.IRestErr) {
 	return subscriptionAPIAcknowledgmentFunc(activationKey, clusterID)
 }
-func (s subscriptionApiServiceMock) CurrentTimeStamp() ([]byte, *restErrors.RestErr) {
+func (s subscriptionApiServiceMock) CurrentTimeStamp() ([]byte, restErrors.IRestErr) {
 	return subscriptionAPICurrentTimeStampFunc()
 }
 
@@ -81,22 +81,22 @@ Namespace service Mocks
 */
 
 var (
-	namespaceCreateNamespaceFunc func(name string) *restErrors.RestErr
-	namespaceGetNamespaceFunc    func(name string) (*corev1.Namespace, *restErrors.RestErr)
-	namespaceDeleteNamespaceFunc func(name string) *restErrors.RestErr
+	namespaceCreateNamespaceFunc func(name string) restErrors.IRestErr
+	namespaceGetNamespaceFunc    func(name string) (*corev1.Namespace, restErrors.IRestErr)
+	namespaceDeleteNamespaceFunc func(name string) restErrors.IRestErr
 )
 
 type namespaceServiceMock struct{}
 
-func (namespaceServiceMock) Create(name string) *restErrors.RestErr {
+func (namespaceServiceMock) Create(name string) restErrors.IRestErr {
 	return namespaceCreateNamespaceFunc(name)
 }
 
-func (namespaceServiceMock) Get(name string) (*corev1.Namespace, *restErrors.RestErr) {
+func (namespaceServiceMock) Get(name string) (*corev1.Namespace, restErrors.IRestErr) {
 	return namespaceGetNamespaceFunc(name)
 }
 
-func (namespaceServiceMock) Delete(name string) *restErrors.RestErr {
+func (namespaceServiceMock) Delete(name string) restErrors.IRestErr {
 	return namespaceDeleteNamespaceFunc(name)
 }
 
@@ -113,10 +113,10 @@ func TestMain(m *testing.M) {
 
 func TestService_Acknowledgment(t *testing.T) {
 	t.Run("test service acknowledgment should pass", func(t *testing.T) {
-		namespaceGetNamespaceFunc = func(name string) (*corev1.Namespace, *restErrors.RestErr) {
+		namespaceGetNamespaceFunc = func(name string) (*corev1.Namespace, restErrors.IRestErr) {
 			return &corev1.Namespace{}, nil
 		}
-		subscriptionAPIAcknowledgmentFunc = func(activationKey string, clusterID string) ([]byte, *restErrors.RestErr) {
+		subscriptionAPIAcknowledgmentFunc = func(activationKey string, clusterID string) ([]byte, restErrors.IRestErr) {
 			responseBody, _ := json.Marshal(map[string]LicenseAcknowledgmentDto{"data": {Subscription: SubscriptionDto{}}})
 			return responseBody, nil
 		}
@@ -131,7 +131,7 @@ func TestService_Acknowledgment(t *testing.T) {
 			return true
 		}
 
-		subscriptionAPICurrentTimeStampFunc = func() ([]byte, *restErrors.RestErr) {
+		subscriptionAPICurrentTimeStampFunc = func() ([]byte, restErrors.IRestErr) {
 			requestBody := map[string]CurrentTimeStampDto{
 				"data": {
 					Signature: base64.StdEncoding.EncodeToString([]byte("1234")),
@@ -151,28 +151,28 @@ func TestService_Acknowledgment(t *testing.T) {
 	})
 
 	t.Run("test service acknowledgment should throw if can't get cluster id", func(t *testing.T) {
-		namespaceGetNamespaceFunc = func(name string) (*corev1.Namespace, *restErrors.RestErr) {
+		namespaceGetNamespaceFunc = func(name string) (*corev1.Namespace, restErrors.IRestErr) {
 			return nil, restErrors.NewInternalServerError("something went wrong")
 		}
 		err := subscriptionService.Acknowledgment("")
-		assert.EqualValues(t, "can't get cluster details", err.Message)
+		assert.EqualValues(t, "can't get cluster details", err.Error())
 	})
 	t.Run("test service acknowledgment should throw if can't get acknowledgment from subscription api", func(t *testing.T) {
-		namespaceGetNamespaceFunc = func(name string) (*corev1.Namespace, *restErrors.RestErr) {
+		namespaceGetNamespaceFunc = func(name string) (*corev1.Namespace, restErrors.IRestErr) {
 			return &corev1.Namespace{}, nil
 		}
-		subscriptionAPIAcknowledgmentFunc = func(activationKey string, clusterID string) ([]byte, *restErrors.RestErr) {
+		subscriptionAPIAcknowledgmentFunc = func(activationKey string, clusterID string) ([]byte, restErrors.IRestErr) {
 			return nil, restErrors.NewInternalServerError("something went wrong")
 		}
 
 		err := subscriptionService.Acknowledgment("key")
-		assert.EqualValues(t, http.StatusInternalServerError, err.Status)
+		assert.EqualValues(t, http.StatusInternalServerError, err.StatusCode())
 	})
 	t.Run("test service acknowledgment should throw if can't decode public key", func(t *testing.T) {
-		namespaceGetNamespaceFunc = func(name string) (*corev1.Namespace, *restErrors.RestErr) {
+		namespaceGetNamespaceFunc = func(name string) (*corev1.Namespace, restErrors.IRestErr) {
 			return &corev1.Namespace{}, nil
 		}
-		subscriptionAPIAcknowledgmentFunc = func(activationKey string, clusterID string) ([]byte, *restErrors.RestErr) {
+		subscriptionAPIAcknowledgmentFunc = func(activationKey string, clusterID string) ([]byte, restErrors.IRestErr) {
 			responseBody, _ := json.Marshal(map[string]LicenseAcknowledgmentDto{"data": {Subscription: SubscriptionDto{}}})
 			return responseBody, nil
 		}
@@ -181,13 +181,13 @@ func TestService_Acknowledgment(t *testing.T) {
 		}
 
 		err := subscriptionService.Acknowledgment("key")
-		assert.EqualValues(t, "can't activate subscription", err.Message)
+		assert.EqualValues(t, "can't activate subscription", err.Error())
 	})
 	t.Run("test service acknowledgment should throw if can't verify signature", func(t *testing.T) {
-		namespaceGetNamespaceFunc = func(name string) (*corev1.Namespace, *restErrors.RestErr) {
+		namespaceGetNamespaceFunc = func(name string) (*corev1.Namespace, restErrors.IRestErr) {
 			return &corev1.Namespace{}, nil
 		}
-		subscriptionAPIAcknowledgmentFunc = func(activationKey string, clusterID string) ([]byte, *restErrors.RestErr) {
+		subscriptionAPIAcknowledgmentFunc = func(activationKey string, clusterID string) ([]byte, restErrors.IRestErr) {
 			responseBody, _ := json.Marshal(map[string]LicenseAcknowledgmentDto{"data": {Subscription: SubscriptionDto{}}})
 			return responseBody, nil
 		}
@@ -200,13 +200,13 @@ func TestService_Acknowledgment(t *testing.T) {
 		}
 
 		err := subscriptionService.Acknowledgment("key")
-		assert.EqualValues(t, "can't activate subscription", err.Message)
+		assert.EqualValues(t, "can't activate subscription", err.Error())
 	})
 	t.Run("test service acknowledgment should throw if subscription is invalid", func(t *testing.T) {
-		namespaceGetNamespaceFunc = func(name string) (*corev1.Namespace, *restErrors.RestErr) {
+		namespaceGetNamespaceFunc = func(name string) (*corev1.Namespace, restErrors.IRestErr) {
 			return &corev1.Namespace{}, nil
 		}
-		subscriptionAPIAcknowledgmentFunc = func(activationKey string, clusterID string) ([]byte, *restErrors.RestErr) {
+		subscriptionAPIAcknowledgmentFunc = func(activationKey string, clusterID string) ([]byte, restErrors.IRestErr) {
 			responseBody, _ := json.Marshal(map[string]LicenseAcknowledgmentDto{"data": {Subscription: SubscriptionDto{}}})
 			return responseBody, nil
 		}
@@ -219,7 +219,7 @@ func TestService_Acknowledgment(t *testing.T) {
 		}
 
 		err := subscriptionService.Acknowledgment("key")
-		assert.EqualValues(t, "can't activate subscription", err.Message)
+		assert.EqualValues(t, "can't activate subscription", err.Error())
 	})
 
 }
@@ -227,7 +227,7 @@ func TestService_Acknowledgment(t *testing.T) {
 func TestService_CurrentTimestamp(t *testing.T) {
 	t.Run("current timestamp should pass", func(t *testing.T) {
 		currentTime := time.Now().Unix()
-		subscriptionAPICurrentTimeStampFunc = func() ([]byte, *restErrors.RestErr) {
+		subscriptionAPICurrentTimeStampFunc = func() ([]byte, restErrors.IRestErr) {
 			requestBody := map[string]CurrentTimeStampDto{
 				"data": {
 					Signature: base64.StdEncoding.EncodeToString([]byte("1234")),
@@ -254,18 +254,18 @@ func TestService_CurrentTimestamp(t *testing.T) {
 		assert.EqualValues(t, currentTime, time)
 	})
 	t.Run("current timestamp should throw if subscriptionApi.currentTimeStamp throws", func(t *testing.T) {
-		subscriptionAPICurrentTimeStampFunc = func() ([]byte, *restErrors.RestErr) {
+		subscriptionAPICurrentTimeStampFunc = func() ([]byte, restErrors.IRestErr) {
 			return nil, restErrors.NewInternalServerError("something went wrong")
 		}
 
 		time, err := subscriptionService.CurrentTimestamp()
-		assert.EqualValues(t, http.StatusInternalServerError, err.Status)
+		assert.EqualValues(t, http.StatusInternalServerError, err.StatusCode())
 		assert.EqualValues(t, 0, time)
 	})
 
 	t.Run("current timestamp should throw if can't decode public", func(t *testing.T) {
 		currentTime := time.Now().Unix()
-		subscriptionAPICurrentTimeStampFunc = func() ([]byte, *restErrors.RestErr) {
+		subscriptionAPICurrentTimeStampFunc = func() ([]byte, restErrors.IRestErr) {
 			requestBody := map[string]CurrentTimeStampDto{
 				"data": {
 					Signature: base64.StdEncoding.EncodeToString([]byte("1234")),
@@ -284,12 +284,12 @@ func TestService_CurrentTimestamp(t *testing.T) {
 		}
 
 		time, err := subscriptionService.CurrentTimestamp()
-		assert.EqualValues(t, http.StatusInternalServerError, err.Status)
+		assert.EqualValues(t, http.StatusInternalServerError, err.StatusCode())
 		assert.EqualValues(t, 0, time)
 	})
 	t.Run("current timestamp should throw if  verify signature throws internal", func(t *testing.T) {
 		currentTime := time.Now().Unix()
-		subscriptionAPICurrentTimeStampFunc = func() ([]byte, *restErrors.RestErr) {
+		subscriptionAPICurrentTimeStampFunc = func() ([]byte, restErrors.IRestErr) {
 			requestBody := map[string]CurrentTimeStampDto{
 				"data": {
 					Signature: base64.StdEncoding.EncodeToString([]byte("1234")),
@@ -312,12 +312,12 @@ func TestService_CurrentTimestamp(t *testing.T) {
 		}
 
 		time, err := subscriptionService.CurrentTimestamp()
-		assert.EqualValues(t, http.StatusInternalServerError, err.Status)
+		assert.EqualValues(t, http.StatusInternalServerError, err.StatusCode())
 		assert.EqualValues(t, 0, time)
 	})
 	t.Run("current timestamp should throw if can't verify signature ", func(t *testing.T) {
 		currentTime := time.Now().Unix()
-		subscriptionAPICurrentTimeStampFunc = func() ([]byte, *restErrors.RestErr) {
+		subscriptionAPICurrentTimeStampFunc = func() ([]byte, restErrors.IRestErr) {
 			requestBody := map[string]CurrentTimeStampDto{
 				"data": {
 					Signature: base64.StdEncoding.EncodeToString([]byte("1234")),
@@ -340,7 +340,7 @@ func TestService_CurrentTimestamp(t *testing.T) {
 		}
 
 		time, err := subscriptionService.CurrentTimestamp()
-		assert.EqualValues(t, http.StatusInternalServerError, err.Status)
+		assert.EqualValues(t, http.StatusInternalServerError, err.StatusCode())
 		assert.EqualValues(t, 0, time)
 	})
 

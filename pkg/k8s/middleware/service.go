@@ -12,7 +12,7 @@ import (
 )
 
 type IK8Middleware interface {
-	Create(dto *CreateMiddlewareDto) *restErrors.RestErr
+	Create(dto *CreateMiddlewareDto) restErrors.IRestErr
 }
 
 type k8Middleware struct{}
@@ -21,7 +21,7 @@ func NewK8Middleware() IK8Middleware {
 	return &k8Middleware{}
 }
 
-func (m *k8Middleware) Create(dto *CreateMiddlewareDto) *restErrors.RestErr {
+func (m *k8Middleware) Create(dto *CreateMiddlewareDto) restErrors.IRestErr {
 	newMiddleware := &traefikv1alpha1.Middleware{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            dto.Name,

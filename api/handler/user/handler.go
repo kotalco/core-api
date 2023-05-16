@@ -31,17 +31,17 @@ func SignUp(c *fiber.Ctx) error {
 	dto := new(user.SignUpRequestDto)
 	if err := c.BodyParser(dto); err != nil {
 		badReq := restErrors.NewBadRequestError("invalid request body")
-		return c.Status(badReq.Status).JSON(badReq)
+		return c.Status(badReq.StatusCode()).JSON(badReq)
 	}
 
 	restErr := user.Validate(dto)
 	if restErr != nil {
-		return c.Status(restErr.Status).JSON(restErr)
+		return c.Status(restErr.StatusCode()).JSON(restErr)
 	}
 
 	if !settingService.WithoutTransaction().IsRegistrationEnabled() {
 		err := restErrors.NewForbiddenError("Registration disabled")
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	txRead := sqlclient.Begin(&sql.TxOptions{
@@ -51,7 +51,7 @@ func SignUp(c *fiber.Ctx) error {
 	usersCount, restErr := userService.WithTransaction(txRead).Count()
 	if restErr != nil {
 		sqlclient.Rollback(txRead)
-		return c.Status(restErr.Status).JSON(restErr)
+		return c.Status(restErr.StatusCode()).JSON(restErr)
 	}
 	sqlclient.Commit(txRead)
 
@@ -59,31 +59,31 @@ func SignUp(c *fiber.Ctx) error {
 	model, restErr := userService.WithTransaction(txHandle).SignUp(dto)
 	if restErr != nil {
 		sqlclient.Rollback(txHandle)
-		return c.Status(restErr.Status).JSON(restErr)
+		return c.Status(restErr.StatusCode()).JSON(restErr)
 	}
 
 	token, restErr := verificationService.WithTransaction(txHandle).Create(model.ID)
 	if restErr != nil {
 		sqlclient.Rollback(txHandle)
-		return c.Status(restErr.Status).JSON(restErr)
+		return c.Status(restErr.StatusCode()).JSON(restErr)
 	}
 
 	if reflect.ValueOf(usersCount).IsZero() { //check if this user is first user in the cluster=>verify email address
 		restErr = verificationService.WithTransaction(txHandle).Verify(model.ID, token)
 		if restErr != nil {
 			sqlclient.Rollback(txHandle)
-			return c.Status(restErr.Status).JSON(restErr)
+			return c.Status(restErr.StatusCode()).JSON(restErr)
 		}
 		restErr = userService.WithTransaction(txHandle).VerifyEmail(model)
 		if restErr != nil {
 			sqlclient.Rollback(txHandle)
-			return c.Status(restErr.Status).JSON(restErr)
+			return c.Status(restErr.StatusCode()).JSON(restErr)
 		}
 		//set as platform admin
 		restErr = userService.WithTransaction(txHandle).SetAsPlatformAdmin(model)
 		if restErr != nil {
 			sqlclient.Rollback(txHandle)
-			return c.Status(restErr.Status).JSON(restErr)
+			return c.Status(restErr.StatusCode()).JSON(restErr)
 		}
 		// set registration to false
 		enableRegistration := false
@@ -92,7 +92,7 @@ func SignUp(c *fiber.Ctx) error {
 		})
 		if restErr != nil {
 			sqlclient.Rollback(txHandle)
-			return c.Status(restErr.Status).JSON(restErr)
+			return c.Status(restErr.StatusCode()).JSON(restErr)
 		}
 	}
 
@@ -101,7 +101,7 @@ func SignUp(c *fiber.Ctx) error {
 	restErr = workspaceService.WithTransaction(txHandle).CreateUserDefaultWorkspace(model.ID)
 	if restErr != nil {
 		sqlclient.Rollback(txHandle)
-		return c.Status(restErr.Status).JSON(restErr)
+		return c.Status(restErr.StatusCode()).JSON(restErr)
 	}
 
 	sqlclient.Commit(txHandle)
@@ -126,17 +126,17 @@ func SignIn(c *fiber.Ctx) error {
 	dto := new(user.SignInRequestDto)
 	if err := c.BodyParser(dto); err != nil {
 		badReq := restErrors.NewBadRequestError("invalid request body")
-		return c.Status(badReq.Status).JSON(badReq)
+		return c.Status(badReq.StatusCode()).JSON(badReq)
 	}
 
 	restErr := user.Validate(dto)
 	if restErr != nil {
-		return c.Status(restErr.Status).JSON(restErr)
+		return c.Status(restErr.StatusCode()).JSON(restErr)
 	}
 
 	session, restErr := userService.WithoutTransaction().SignIn(dto)
 	if restErr != nil {
-		return c.Status(restErr.Status).JSON(restErr)
+		return c.Status(restErr.StatusCode()).JSON(restErr)
 	}
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(session))
@@ -149,27 +149,27 @@ func SendEmailVerification(c *fiber.Ctx) error {
 	dto := new(user.SendEmailVerificationRequestDto)
 	if err := c.BodyParser(dto); err != nil {
 		badReq := restErrors.NewBadRequestError("invalid request body")
-		return c.Status(badReq.Status).JSON(badReq)
+		return c.Status(badReq.StatusCode()).JSON(badReq)
 	}
 
 	err := user.Validate(dto)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	userModel, err := userService.WithoutTransaction().GetByEmail(dto.Email)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	if userModel.IsEmailVerified {
 		badReq := restErrors.NewBadRequestError("email already verified")
-		return c.Status(badReq.Status).JSON(badReq)
+		return c.Status(badReq.StatusCode()).JSON(badReq)
 	}
 
 	token, err := verificationService.WithoutTransaction().Resend(userModel.ID)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	mailRequest := new(sendgrid.MailRequestDto)
@@ -193,35 +193,35 @@ func VerifyEmail(c *fiber.Ctx) error {
 	dto := new(user.EmailVerificationRequestDto)
 	if err := c.BodyParser(dto); err != nil {
 		badReq := restErrors.NewBadRequestError("invalid request body")
-		return c.Status(badReq.Status).JSON(badReq)
+		return c.Status(badReq.StatusCode()).JSON(badReq)
 	}
 
 	err := user.Validate(dto)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	userModel, err := userService.WithoutTransaction().GetByEmail(dto.Email)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	if userModel.IsEmailVerified {
 		badReq := restErrors.NewBadRequestError("email already verified")
-		return c.Status(badReq.Status).JSON(badReq)
+		return c.Status(badReq.StatusCode()).JSON(badReq)
 	}
 
 	txHandle := sqlclient.Begin()
 	err = verificationService.WithTransaction(txHandle).Verify(userModel.ID, dto.Token)
 	if err != nil {
 		sqlclient.Rollback(txHandle)
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	err = userService.WithTransaction(txHandle).VerifyEmail(userModel)
 	if err != nil {
 		sqlclient.Rollback(txHandle)
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	sqlclient.Commit(txHandle)
@@ -240,22 +240,22 @@ func ForgetPassword(c *fiber.Ctx) error {
 	dto := new(user.SendEmailVerificationRequestDto)
 	if err := c.BodyParser(dto); err != nil {
 		badReq := restErrors.NewBadRequestError("invalid request body")
-		return c.Status(badReq.Status).JSON(badReq)
+		return c.Status(badReq.StatusCode()).JSON(badReq)
 	}
 
 	err := user.Validate(dto)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	userModel, err := userService.WithoutTransaction().GetByEmail(dto.Email)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	token, err := verificationService.WithoutTransaction().Resend(userModel.ID)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	mailRequest := new(sendgrid.MailRequestDto)
@@ -278,17 +278,17 @@ func ResetPassword(c *fiber.Ctx) error {
 	dto := new(user.ResetPasswordRequestDto)
 	if err := c.BodyParser(dto); err != nil {
 		badReq := restErrors.NewBadRequestError("invalid request body")
-		return c.Status(badReq.Status).JSON(badReq)
+		return c.Status(badReq.StatusCode()).JSON(badReq)
 	}
 
 	err := user.Validate(dto)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	userModel, err := userService.WithoutTransaction().GetByEmail(dto.Email)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	if !userModel.IsEmailVerified {
@@ -306,12 +306,12 @@ func ResetPassword(c *fiber.Ctx) error {
 	err = verificationService.WithTransaction(txHandle).Verify(userModel.ID, dto.Token)
 	if err != nil {
 		sqlclient.Rollback(txHandle)
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 	err = userService.WithTransaction(txHandle).ResetPassword(userModel, dto.Password)
 	if err != nil {
 		sqlclient.Rollback(txHandle)
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	sqlclient.Commit(txHandle)
@@ -331,23 +331,23 @@ func ChangePassword(c *fiber.Ctx) error {
 	userId := c.Locals("user").(token.UserDetails).ID
 	userDetails, err := userService.WithoutTransaction().GetById(userId)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	dto := new(user.ChangePasswordRequestDto)
 	if err := c.BodyParser(dto); err != nil {
 		badReq := restErrors.NewBadRequestError("invalid request body")
-		return c.Status(badReq.Status).JSON(badReq)
+		return c.Status(badReq.StatusCode()).JSON(badReq)
 	}
 
 	err = user.Validate(dto)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	err = userService.WithoutTransaction().ChangePassword(userDetails, dto)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	//todo remove all user logins from redis authorization cache
@@ -365,18 +365,18 @@ func ChangeEmail(c *fiber.Ctx) error {
 	userId := c.Locals("user").(token.UserDetails).ID
 	userDetails, err := userService.WithoutTransaction().GetById(userId)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	dto := new(user.ChangeEmailRequestDto)
 	if err := c.BodyParser(dto); err != nil {
 		badReq := restErrors.NewBadRequestError("invalid request body")
-		return c.Status(badReq.Status).JSON(badReq)
+		return c.Status(badReq.StatusCode()).JSON(badReq)
 	}
 
 	err = user.Validate(dto)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	txHandle := sqlclient.Begin()
@@ -384,13 +384,13 @@ func ChangeEmail(c *fiber.Ctx) error {
 	err = userService.WithTransaction(txHandle).ChangeEmail(userDetails, dto)
 	if err != nil {
 		sqlclient.Rollback(txHandle)
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	token, err := verificationService.WithTransaction(txHandle).Resend(userDetails.ID)
 	if err != nil {
 		sqlclient.Rollback(txHandle)
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	sqlclient.Commit(txHandle)
@@ -413,7 +413,7 @@ func Whoami(c *fiber.Ctx) error {
 	userId := c.Locals("user").(token.UserDetails).ID
 	userDetails, err := userService.WithoutTransaction().GetById(userId)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(new(user.UserResponseDto).Marshall(userDetails)))
@@ -425,24 +425,24 @@ func CreateTOTP(c *fiber.Ctx) error {
 	userId := c.Locals("user").(token.UserDetails).ID
 	userDetails, err := userService.WithoutTransaction().GetById(userId)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	dto := new(user.CreateTOTPRequestDto)
 
 	if err := c.BodyParser(dto); err != nil {
 		badReq := restErrors.NewBadRequestError("invalid request body")
-		return c.Status(badReq.Status).JSON(badReq)
+		return c.Status(badReq.StatusCode()).JSON(badReq)
 	}
 
 	err = user.Validate(dto)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	qr, err := userService.WithoutTransaction().CreateTOTP(userDetails, dto)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	c.Set("Content-Type", "image/png")
@@ -451,7 +451,7 @@ func CreateTOTP(c *fiber.Ctx) error {
 		go logger.Error(CreateTOTP, err)
 		internalErr := restErrors.NewInternalServerError("some thing went wrong")
 
-		return c.Status(internalErr.Status).JSON(internalErr)
+		return c.Status(internalErr.StatusCode()).JSON(internalErr)
 	}
 	return nil
 }
@@ -462,18 +462,18 @@ func EnableTwoFactorAuth(c *fiber.Ctx) error {
 	userId := c.Locals("user").(token.UserDetails).ID
 	userDetails, err := userService.WithoutTransaction().GetById(userId)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	dto := new(user.TOTPRequestDto)
 	if err := c.BodyParser(dto); err != nil {
 		badReq := restErrors.NewBadRequestError("invalid request body")
-		return c.Status(badReq.Status).JSON(badReq)
+		return c.Status(badReq.StatusCode()).JSON(badReq)
 	}
 
 	model, err := userService.WithoutTransaction().EnableTwoFactorAuth(userDetails, dto.TOTP)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(new(user.UserResponseDto).Marshall(model)))
@@ -485,18 +485,18 @@ func VerifyTOTP(c *fiber.Ctx) error {
 	userId := c.Locals("user").(token.UserDetails).ID
 	userDetails, err := userService.WithoutTransaction().GetById(userId)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	dto := new(user.TOTPRequestDto)
 	if err := c.BodyParser(dto); err != nil {
 		badReq := restErrors.NewBadRequestError("invalid request body")
-		return c.Status(badReq.Status).JSON(badReq)
+		return c.Status(badReq.StatusCode()).JSON(badReq)
 	}
 
 	session, err := userService.WithoutTransaction().VerifyTOTP(userDetails, dto.TOTP)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(session))
@@ -506,24 +506,24 @@ func DisableTwoFactorAuth(c *fiber.Ctx) error {
 	userId := c.Locals("user").(token.UserDetails).ID
 	userDetails, err := userService.WithoutTransaction().GetById(userId)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	dto := new(user.DisableTOTPRequestDto)
 
 	if err := c.BodyParser(dto); err != nil {
 		badReq := restErrors.NewBadRequestError("invalid request body")
-		return c.Status(badReq.Status).JSON(badReq)
+		return c.Status(badReq.StatusCode()).JSON(badReq)
 	}
 
 	err = user.Validate(dto)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	err = userService.WithoutTransaction().DisableTwoFactorAuth(userDetails, dto)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	resp := struct {

@@ -30,7 +30,7 @@ type IPAddressResponseDto struct {
 	IPAddress string `json:"ip_address"`
 }
 
-func Validate(dto interface{}) *restErrors.RestErr {
+func Validate(dto interface{}) restErrors.IRestErr {
 	newValidator := validator.New()
 	err := newValidator.Struct(dto)
 
@@ -64,7 +64,7 @@ func (dto SettingResponseDto) Marshall(model *Setting) SettingResponseDto {
 
 // GetDomainBaseUrl get the app baseurl and error if any
 // If the user configured his/her domain, if not it gets the traefik external ip
-func GetDomainBaseUrl() (string, *restErrors.RestErr) {
+func GetDomainBaseUrl() (string, restErrors.IRestErr) {
 	repo := NewRepository()
 	url, _ := repo.Get(DomainKey)
 	if url != "" {

@@ -17,9 +17,9 @@ type repository struct {
 type IRepository interface {
 	WithTransaction(txHandle *gorm.DB) IRepository
 	WithoutTransaction() IRepository
-	Create(verification *Verification) *restErrors.RestErr
-	GetByUserId(userId string) (*Verification, *restErrors.RestErr)
-	Update(verification *Verification) *restErrors.RestErr
+	Create(verification *Verification) restErrors.IRestErr
+	GetByUserId(userId string) (*Verification, restErrors.IRestErr)
+	Update(verification *Verification) restErrors.IRestErr
 }
 
 func NewRepository() IRepository {
@@ -36,7 +36,7 @@ func (r repository) WithoutTransaction() IRepository {
 	return r
 }
 
-func (r repository) Create(verification *Verification) *restErrors.RestErr {
+func (r repository) Create(verification *Verification) restErrors.IRestErr {
 	res := r.db.Create(verification)
 	if res.Error != nil {
 		duplicateEmail, _ := regexp.Match("duplicate key", []byte(res.Error.Error()))
@@ -50,7 +50,7 @@ func (r repository) Create(verification *Verification) *restErrors.RestErr {
 	return nil
 }
 
-func (r repository) GetByUserId(userId string) (*Verification, *restErrors.RestErr) {
+func (r repository) GetByUserId(userId string) (*Verification, restErrors.IRestErr) {
 	var verification = new(Verification)
 
 	result := r.db.Where("user_id = ?", userId).First(verification)
@@ -61,7 +61,7 @@ func (r repository) GetByUserId(userId string) (*Verification, *restErrors.RestE
 	return verification, nil
 }
 
-func (r repository) Update(verification *Verification) *restErrors.RestErr {
+func (r repository) Update(verification *Verification) restErrors.IRestErr {
 	resp := r.db.Save(verification)
 	if resp.Error != nil {
 		go logger.Error(repository.Update, resp.Error)

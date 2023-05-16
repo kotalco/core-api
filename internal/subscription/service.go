@@ -29,23 +29,23 @@ type IService interface {
 	//calls the subscription_api to get the user license details and signature (which have been created with ecc using the system acc private key)
 	//the system uses its public key to validate the integrity of the subscription details, to the signature
 	//activate the user according to his subscription plan
-	Acknowledgment(activationKey string) *restErrors.RestErr
+	Acknowledgment(activationKey string) restErrors.IRestErr
 	//CurrentTimestamp returns the current timestamp
 	//by calling the subscription platform and validating the signature of this timestamp using ecc
-	CurrentTimestamp() (int64, *restErrors.RestErr)
+	CurrentTimestamp() (int64, restErrors.IRestErr)
 }
 
 func NewService() IService {
 	return &service{}
 }
 
-func (subService *service) Acknowledgment(activationKey string) *restErrors.RestErr {
+func (subService *service) Acknowledgment(activationKey string) restErrors.IRestErr {
 	//get clusterID in the form of kube-system namespaceID
 	//since the cluster has no ID we alias the clusterId with kube-system namespace ID coz its immutable and unique
 	ns, err := namespaceService.Get(KUBE_SYSTEM_NAMESPACE)
 	if err != nil {
 		subscriptionAPI.Reset()
-		err.Message = "can't get cluster details"
+		err = restErrors.NewBadRequestError("can't get cluster details")
 		return err
 	}
 
@@ -121,7 +121,7 @@ func (subService *service) Acknowledgment(activationKey string) *restErrors.Rest
 	return nil
 }
 
-func (subService *service) CurrentTimestamp() (int64, *restErrors.RestErr) {
+func (subService *service) CurrentTimestamp() (int64, restErrors.IRestErr) {
 	responseData, err := subscriptionAPIService.CurrentTimeStamp()
 	if err != nil {
 		return 0, err

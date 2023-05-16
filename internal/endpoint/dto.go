@@ -42,7 +42,7 @@ type BasicAuthDto struct {
 	Password string `json:"password"`
 }
 
-func Validate(dto interface{}) *restErrors.RestErr {
+func Validate(dto interface{}) restErrors.IRestErr {
 	newValidator := validate.New()
 	err := newValidator.RegisterValidation("regexp", func(fl validate.FieldLevel) bool {
 		re := regexp.MustCompile("^([a-z]|[0-9])([a-z]|[0-9]|-)+([a-z]|[0-9])$")

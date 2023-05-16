@@ -37,8 +37,8 @@ func TestRepository_Create(t *testing.T) {
 		user.ID = uuid.New().String()
 		restErr := repo.Create(&user)
 
-		assert.EqualValues(t, "email already exits", restErr.Message)
-		assert.EqualValues(t, http.StatusConflict, restErr.Status)
+		assert.EqualValues(t, "email already exits", restErr.Error())
+		assert.EqualValues(t, http.StatusConflict, restErr.StatusCode())
 
 		cleanUp(user)
 	})
@@ -59,8 +59,8 @@ func TestRepository_GetByEmail(t *testing.T) {
 	t.Run("Get_By_Email_Should_Throw_If_User_With_This_Email_Doesnt'_Exit", func(t *testing.T) {
 		result, restErr := repo.GetByEmail("test")
 		assert.Nil(t, result)
-		assert.EqualValues(t, "can't find user with email  test", restErr.Message)
-		assert.EqualValues(t, http.StatusNotFound, restErr.Status)
+		assert.EqualValues(t, "can't find user with email  test", restErr.Error())
+		assert.EqualValues(t, http.StatusNotFound, restErr.StatusCode())
 	})
 }
 
@@ -80,7 +80,7 @@ func TestRepository_GetById(t *testing.T) {
 		result, restErr := repo.GetById("")
 
 		assert.Nil(t, result)
-		assert.EqualValues(t, "no such user", restErr.Message)
+		assert.EqualValues(t, "no such user", restErr.Error())
 	})
 }
 

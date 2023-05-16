@@ -20,7 +20,7 @@ func List(c *fiber.Ctx) error {
 
 	svcList, err := svcService.List(workspaceModel.K8sNamespace)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	responseDto := make([]k8svc.SvcDto, 0)

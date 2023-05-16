@@ -9,11 +9,11 @@ func TFAProtected(c *fiber.Ctx) error {
 	BearerToken := c.Get("Authorization", c.Query("authorization"))
 	accessDetails, err := tokenService.ExtractTokenMetadata(BearerToken)
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 	if !accessDetails.Authorized {
 		unAuthErr := restErrors.NewUnAuthorizedError("2factor auth required")
-		return c.Status(unAuthErr.Status).JSON(unAuthErr)
+		return c.Status(unAuthErr.StatusCode()).JSON(unAuthErr)
 	}
 	c.Next()
 	return nil

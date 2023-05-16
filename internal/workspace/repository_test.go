@@ -35,7 +35,7 @@ func TestRepository_Create(t *testing.T) {
 	t.Run("Create_Should_Throw_If_something_went_wrong_like_primary_id_duplication", func(t *testing.T) {
 		workspace := createWorkspace(t)
 		restErr := repo.Create(&workspace)
-		assert.EqualValues(t, "can't create workspace", restErr.Message)
+		assert.EqualValues(t, "can't create workspace", restErr.Error())
 		cleanUp(workspace)
 	})
 }
@@ -78,7 +78,7 @@ func TestRepository_GetById(t *testing.T) {
 	t.Run("Get_Workspace_By_Name_Should_Throw_if_Record_Not_Found", func(t *testing.T) {
 		resp, err := repo.GetById("invalidName")
 		assert.Nil(t, resp)
-		assert.EqualValues(t, http.StatusNotFound, err.Status)
+		assert.EqualValues(t, http.StatusNotFound, err.StatusCode())
 	})
 }
 
@@ -96,7 +96,7 @@ func TestRepository_Delete(t *testing.T) {
 		workspace := new(Workspace)
 		workspace.ID = "invalid"
 		err := repo.Delete(workspace)
-		assert.EqualValues(t, http.StatusNotFound, err.Status)
+		assert.EqualValues(t, http.StatusNotFound, err.StatusCode())
 	})
 }
 

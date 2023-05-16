@@ -31,17 +31,18 @@ type IService interface {
 	//-creating a middleware that get used by the ingressRoute to remove prefixes from the path before forwarding the request
 	//-creating an ingressRoute (Traefik HTTP router) which uses the previous middleware
 	//-return error if any
-	Create(dto *CreateEndpointDto, svc *corev1.Service) *restErrors.RestErr
-	List(namespace string) ([]*EndpointMetaDto, *restErrors.RestErr)
-	Get(name string, namespace string) (*EndpointDto, *restErrors.RestErr)
-	Delete(name string, namespace string) *restErrors.RestErr
+	Create(dto *CreateEndpointDto, svc *corev1.Service) restErrors.IRestErr
+	List(namespace string) ([]*EndpointMetaDto, restErrors.IRestErr)
+	Get(name string, namespace string) (*EndpointDto, restErrors.IRestErr)
+	Delete(name string, namespace string) restErrors.IRestErr
+	Count(namespace string) (int, restErrors.IRestErr)
 }
 
 func NewService() IService {
 	return &service{}
 }
 
-func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) *restErrors.RestErr {
+func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) restErrors.IRestErr {
 	ingressRoutePorts := make([]ingressroute.IngressRoutePortDto, 0)
 	middlewarePrefixes := make([]string, 0)
 	stripePrefixMiddlewareName := fmt.Sprintf("%s-strip-prefix", dto.Name)
@@ -167,7 +168,7 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) *restError
 	return nil
 }
 
-func (s *service) List(namespace string) ([]*EndpointMetaDto, *restErrors.RestErr) {
+func (s *service) List(namespace string) ([]*EndpointMetaDto, restErrors.IRestErr) {
 	records, err := ingressRoutesService.List(namespace)
 	if err != nil {
 		return nil, err
@@ -181,7 +182,7 @@ func (s *service) List(namespace string) ([]*EndpointMetaDto, *restErrors.RestEr
 	return marshalledDto, nil
 }
 
-func (s *service) Get(name string, namespace string) (*EndpointDto, *restErrors.RestErr) {
+func (s *service) Get(name string, namespace string) (*EndpointDto, restErrors.IRestErr) {
 	record, err := ingressRoutesService.Get(name, namespace)
 	if err != nil {
 		return nil, err
@@ -194,6 +195,14 @@ func (s *service) Get(name string, namespace string) (*EndpointDto, *restErrors.
 	return new(EndpointDto).Marshall(record, v1Secret), nil
 }
 
-func (s *service) Delete(name string, namespace string) *restErrors.RestErr {
+func (s *service) Delete(name string, namespace string) restErrors.IRestErr {
 	return ingressRoutesService.Delete(name, namespace)
+}
+
+func (s *service) Count(namespace string) (count int, err restErrors.IRestErr) {
+	records, err := ingressRoutesService.List(namespace)
+	if err != nil {
+		return 0, err
+	}
+	return len(records.Items), err
 }

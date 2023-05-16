@@ -16,9 +16,9 @@ import (
 type namespace struct{}
 
 type INamespace interface {
-	Create(name string) *restErrors.RestErr
-	Get(name string) (*corev1.Namespace, *restErrors.RestErr)
-	Delete(name string) *restErrors.RestErr
+	Create(name string) restErrors.IRestErr
+	Get(name string) (*corev1.Namespace, restErrors.IRestErr)
+	Delete(name string) restErrors.IRestErr
 }
 
 // NewNamespaceService returns new instance of the namespace service
@@ -28,7 +28,7 @@ func NewNamespaceService() INamespace {
 }
 
 // Create creates new namespace from a given name using the clientSet from community-api microservice
-func (service *namespace) Create(name string) *restErrors.RestErr {
+func (service *namespace) Create(name string) restErrors.IRestErr {
 	ns := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   name,
@@ -49,7 +49,7 @@ func (service *namespace) Create(name string) *restErrors.RestErr {
 }
 
 // Get returns a namespace if exits
-func (service *namespace) Get(name string) (*corev1.Namespace, *restErrors.RestErr) {
+func (service *namespace) Get(name string) (*corev1.Namespace, restErrors.IRestErr) {
 	ns := corev1.Namespace{}
 
 	key := types.NamespacedName{}
@@ -68,7 +68,7 @@ func (service *namespace) Get(name string) (*corev1.Namespace, *restErrors.RestE
 }
 
 // Delete deletes a namespace if exits
-func (service *namespace) Delete(name string) *restErrors.RestErr {
+func (service *namespace) Delete(name string) restErrors.IRestErr {
 	ns := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,

@@ -16,10 +16,10 @@ import (
 type service struct{}
 
 type IService interface {
-	SignUp(dto *MailRequestDto) *restErrors.RestErr
-	ResendEmailVerification(dto *MailRequestDto) *restErrors.RestErr
-	ForgetPassword(dto *MailRequestDto) *restErrors.RestErr
-	WorkspaceInvitation(dto *WorkspaceInvitationMailRequestDto) *restErrors.RestErr
+	SignUp(dto *MailRequestDto) restErrors.IRestErr
+	ResendEmailVerification(dto *MailRequestDto) restErrors.IRestErr
+	ForgetPassword(dto *MailRequestDto) restErrors.IRestErr
+	WorkspaceInvitation(dto *WorkspaceInvitationMailRequestDto) restErrors.IRestErr
 }
 
 var (
@@ -40,7 +40,7 @@ func NewService() IService {
 	return newService
 }
 
-func (service) SignUp(dto *MailRequestDto) *restErrors.RestErr {
+func (service) SignUp(dto *MailRequestDto) restErrors.IRestErr {
 	from := mail.NewEmail(fromName, fromEmail)
 	subject := "Confirm Your Email"
 	to := mail.NewEmail(greeting, dto.Email)
@@ -66,7 +66,7 @@ func (service) SignUp(dto *MailRequestDto) *restErrors.RestErr {
 	return nil
 }
 
-func (service) ResendEmailVerification(dto *MailRequestDto) *restErrors.RestErr {
+func (service) ResendEmailVerification(dto *MailRequestDto) restErrors.IRestErr {
 	domainBaseUrl, restErr := setting.GetDomainBaseUrl()
 	if restErr != nil {
 		return restErr
@@ -92,7 +92,7 @@ func (service) ResendEmailVerification(dto *MailRequestDto) *restErrors.RestErr 
 	return nil
 }
 
-func (service) ForgetPassword(dto *MailRequestDto) *restErrors.RestErr {
+func (service) ForgetPassword(dto *MailRequestDto) restErrors.IRestErr {
 	domainBaseUrl, restErr := setting.GetDomainBaseUrl()
 	if restErr != nil {
 		return restErr
@@ -118,7 +118,7 @@ func (service) ForgetPassword(dto *MailRequestDto) *restErrors.RestErr {
 	return nil
 }
 
-func (service) WorkspaceInvitation(dto *WorkspaceInvitationMailRequestDto) *restErrors.RestErr {
+func (service) WorkspaceInvitation(dto *WorkspaceInvitationMailRequestDto) restErrors.IRestErr {
 	domainBaseUrl, restErr := setting.GetDomainBaseUrl()
 	if restErr != nil {
 		return restErr

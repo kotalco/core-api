@@ -53,7 +53,7 @@ func IsSubscription(c *fiber.Ctx) error {
 		//run subscription validity check coz the elapsed time exceeded check time
 		err := subscriptionService.Acknowledgment(activationKey)
 		if err != nil {
-			return c.Status(err.Status).JSON(err)
+			return c.Status(err.StatusCode()).JSON(err)
 		}
 	}
 
@@ -76,7 +76,7 @@ func NodesLimitProtected(c *fiber.Ctx) error {
 	//validate nodes limit
 	limit, err := statefulSetService.Count()
 	if err != nil {
-		return c.Status(err.Status).JSON(err)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
 	if limit >= subscriptionAPI.SubscriptionDetails.NodesLimit {
 		err := restErrors.RestErr{

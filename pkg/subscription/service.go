@@ -19,8 +19,8 @@ const (
 )
 
 type ISubscriptionService interface {
-	Acknowledgment(activationKey string, clusterID string) ([]byte, *restErrors.RestErr)
-	CurrentTimeStamp() ([]byte, *restErrors.RestErr)
+	Acknowledgment(activationKey string, clusterID string) ([]byte, restErrors.IRestErr)
+	CurrentTimeStamp() ([]byte, restErrors.IRestErr)
 }
 
 type subscriptionService struct{}
@@ -29,7 +29,7 @@ func NewSubscriptionService() ISubscriptionService {
 	return &subscriptionService{}
 }
 
-func (subApi *subscriptionService) Acknowledgment(activationKey string, clusterID string) ([]byte, *restErrors.RestErr) {
+func (subApi *subscriptionService) Acknowledgment(activationKey string, clusterID string) ([]byte, restErrors.IRestErr) {
 	requestBody := map[string]string{"activation_key": activationKey, "cluster_id": clusterID}
 	jsonBody, err := json.Marshal(requestBody)
 	if err != nil {
@@ -72,7 +72,7 @@ func (subApi *subscriptionService) Acknowledgment(activationKey string, clusterI
 	return responseData, nil
 }
 
-func (subApi *subscriptionService) CurrentTimeStamp() ([]byte, *restErrors.RestErr) {
+func (subApi *subscriptionService) CurrentTimeStamp() ([]byte, restErrors.IRestErr) {
 
 	req, err := http.NewRequest(http.MethodGet, config.Environment.SubscriptionAPIBaseURL+CURRENT_TIMESTAMP, nil)
 	if err != nil {
