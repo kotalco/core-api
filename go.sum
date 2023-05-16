@@ -202,6 +202,8 @@ github.com/kotalco/community-api v0.1.1-0.20230414180410-fa57342e2e41 h1:WJljyDM
 github.com/kotalco/community-api v0.1.1-0.20230414180410-fa57342e2e41/go.mod h1:WHUE6wZoxXb6m3txGhK9howfQnL+buBMhmQeyZRZ7rg=
 github.com/kotalco/community-api v0.1.1-0.20230427201546-4ed687825c85 h1:E1sJpEzSFj4D6l6MVALvI3mSlaWspZUwEGDcRCSDnUo=
 github.com/kotalco/community-api v0.1.1-0.20230427201546-4ed687825c85/go.mod h1:WHUE6wZoxXb6m3txGhK9howfQnL+buBMhmQeyZRZ7rg=
+github.com/kotalco/community-api v0.1.1-0.20230516050013-89b0d96e91a5 h1:wGD4ZeEUkAEMlwk67uxeE6NEP2+Moh4fHvJB4Ve5/v4=
+github.com/kotalco/community-api v0.1.1-0.20230516050013-89b0d96e91a5/go.mod h1:WHUE6wZoxXb6m3txGhK9howfQnL+buBMhmQeyZRZ7rg=
 github.com/kotalco/kotal v0.1.0 h1:KjjE5nfIt883fXyOqHh9gF6aN4F4jHXGvXCrjCQGoEU=
 github.com/kotalco/kotal v0.1.0/go.mod h1:fUDA69YfT7m+Tlu+ISRLtnG6J9StRK9Zr/cP4X33qQI=
 github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=
