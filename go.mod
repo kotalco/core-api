@@ -9,7 +9,7 @@ require (
 	github.com/gofiber/websocket/v2 v2.1.2
 	github.com/google/uuid v1.3.0
 	github.com/jackc/pgconn v1.13.0
-	github.com/kotalco/community-api v0.1.1-0.20230516050013-89b0d96e91a5
+	github.com/kotalco/community-api v0.1.1-0.20230518203035-7f517540727b
 	github.com/pquerna/otp v1.4.0
 	github.com/sendgrid/sendgrid-go v3.12.0+incompatible
 	github.com/stretchr/testify v1.8.1
@@ -50,7 +50,7 @@ require (
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/kotalco/kotal v0.1.0 // indirect
+	github.com/kotalco/kotal v0.1.1-0.20230514162448-fbcd8ae2ec31 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
@@ -76,9 +76,9 @@ require (
 	github.com/valyala/fasthttp v1.43.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	golang.org/x/mod v0.7.0 // indirect
-	golang.org/x/net v0.4.0 // indirect
-	golang.org/x/sys v0.3.0 // indirect
-	golang.org/x/text v0.5.0 // indirect
+	golang.org/x/net v0.5.0 // indirect
+	golang.org/x/sys v0.4.0 // indirect
+	golang.org/x/text v0.6.0 // indirect
 	golang.org/x/tools v0.4.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
@@ -113,7 +113,7 @@ require (
 	go.uber.org/multierr v1.9.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/oauth2 v0.3.0 // indirect
-	golang.org/x/term v0.3.0 // indirect
+	golang.org/x/term v0.4.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	k8s.io/apiextensions-apiserver v0.26.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20221207184640-f3cff1453715 // indirect
