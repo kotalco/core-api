@@ -11,6 +11,7 @@ import (
 	"github.com/kotalco/cloud-api/api/handler/user"
 	"github.com/kotalco/cloud-api/api/handler/workspace"
 	"github.com/kotalco/cloud-api/pkg/middleware"
+	"github.com/kotalco/community-api/api/handlers/aptos"
 	"github.com/kotalco/community-api/api/handlers/bitcoin"
 	"github.com/kotalco/community-api/api/handlers/chainlink"
 	"github.com/kotalco/community-api/api/handlers/core/secret"
@@ -259,5 +260,17 @@ func mapDeploymentUrl(v1 fiber.Router) {
 	stacksNodesGroup.Get("/:name/metrics", middleware.IsReader, websocket.New(shared.Metrics))
 	stacksNodesGroup.Put("/:name", middleware.IsWriter, stacks.ValidateNodeExist, stacks.Update)
 	stacksNodesGroup.Delete("/:name", middleware.IsAdmin, stacks.ValidateNodeExist, stacks.Delete)
+
+	aptosGroup := v1.Group("aptos", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership)
+	aptosNodesGroup := aptosGroup.Group("nodes")
+	aptosNodesGroup.Post("/", middleware.IsWriter, middleware.NodesLimitProtected, aptos.Create)
+	aptosNodesGroup.Head("/", middleware.IsReader, aptos.Count)
+	aptosNodesGroup.Get("/", middleware.IsReader, aptos.List)
+	aptosNodesGroup.Get("/:name", middleware.IsReader, aptos.ValidateNodeExist, aptos.Get)
+	aptosNodesGroup.Get("/:name/logs", middleware.IsReader, websocket.New(shared.Logger))
+	aptosNodesGroup.Get("/:name/status", middleware.IsReader, websocket.New(shared.Status))
+	aptosNodesGroup.Get("/:name/metrics", middleware.IsReader, websocket.New(shared.Metrics))
+	aptosNodesGroup.Put("/:name", middleware.IsWriter, aptos.ValidateNodeExist, aptos.Update)
+	aptosNodesGroup.Delete("/:name", middleware.IsAdmin, aptos.ValidateNodeExist, aptos.Delete)
 
 }
