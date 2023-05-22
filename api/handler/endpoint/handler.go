@@ -73,7 +73,7 @@ func List(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 	c.Set("Access-Control-Expose-Headers", "X-Total-Count")
-	c.Set("X-Total-Count", fmt.Sprintf("%d", &list))
+	c.Set("X-Total-Count", fmt.Sprintf("%d", len(list)))
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(list))
 }
