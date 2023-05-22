@@ -270,6 +270,7 @@ func mapDeploymentUrl(v1 fiber.Router) {
 	aptosNodesGroup.Get("/:name/logs", middleware.IsReader, websocket.New(shared.Logger))
 	aptosNodesGroup.Get("/:name/status", middleware.IsReader, websocket.New(shared.Status))
 	aptosNodesGroup.Get("/:name/metrics", middleware.IsReader, websocket.New(shared.Metrics))
+	aptosNodesGroup.Get("/:name/stats", middleware.IsReader, websocket.New(aptos.Stats))
 	aptosNodesGroup.Put("/:name", middleware.IsWriter, aptos.ValidateNodeExist, aptos.Update)
 	aptosNodesGroup.Delete("/:name", middleware.IsAdmin, aptos.ValidateNodeExist, aptos.Delete)
 
