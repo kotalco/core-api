@@ -7,6 +7,8 @@ type (
 )
 
 const (
+	aptos     protocol = "aptos"
+	bitcoin   protocol = "bitcoin"
 	chainlink protocol = "chainlink"
 	ethereum  protocol = "ethereum"
 	ethereum2 protocol = "ethereum2"
@@ -14,6 +16,7 @@ const (
 	ipfs      protocol = "ipfs"
 	near      protocol = "near"
 	polkadot  protocol = "polkadot"
+	stacks    protocol = "stacks"
 )
 
 const (
@@ -34,6 +37,19 @@ const (
 )
 
 var examples = map[protocol]map[kind]map[port]string{
+	aptos: {
+		node: {
+			rest: `# get Aptos ledger info
+curl ${route}/v1/`,
+		},
+	},
+	bitcoin: {
+		node: {
+			rpc: `# get the height of the chain
+PASSWORD=2bbf1fdeff5f5c2dbae910a7a43776ab1d829446d7bd911c4812f7eb47f224aa
+curl -u kotal:$PASSWORD -d '{"id": 1, "method": "getblockcount", "params": []}' ${route}`,
+		},
+	},
 	ipfs: {
 		peer: {
 			api:     `curl -X POST ${route}/api/v0/swarm/peers`,
@@ -95,6 +111,11 @@ chainlink --remote-node-url $NODE_ENDPOINT keys eth list
 	filecoin: {
 		node: {
 			api: `curl -X POST -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","id":1,"method":"Filecoin.ChainHead","params":[]}' ${route}`,
+		},
+	},
+	stacks: {
+		node: {
+			rpc: "curl ${route}/v2/info",
 		},
 	},
 }

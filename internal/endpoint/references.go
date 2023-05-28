@@ -1,6 +1,19 @@
 package endpoint
 
 var references = map[protocol]map[kind]map[port][]string{
+	aptos: {
+		node: {
+			rest: {"https://aptos.dev/nodes/aptos-api-spec/"},
+		},
+	},
+	bitcoin: {
+		node: {
+			rpc: {
+				"https://developer.bitcoin.org/reference/rpc/",
+				"https://bitcoincore.org/en/doc/",
+			},
+		},
+	},
 	ipfs: {
 		peer: {
 			api: {
@@ -81,6 +94,13 @@ var references = map[protocol]map[kind]map[port][]string{
 		node: {
 			api: {
 				"https://docs.filecoin.io/developers/reference/json-rpc/introduction/",
+			},
+		},
+	},
+	stacks: {
+		node: {
+			rpc: {
+				"https://docs.stacks.co/docs/stacks-academy/stacks-blockchain-api",
 			},
 		},
 	},
