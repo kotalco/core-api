@@ -39,7 +39,7 @@ const (
 var examples = map[protocol]map[kind]map[port]string{
 	aptos: {
 		node: {
-			rest: `# get Aptos ledger info
+			api: `# get Aptos ledger info
 curl ${route}/v1/`,
 		},
 	},

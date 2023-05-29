@@ -3,7 +3,7 @@ package endpoint
 var references = map[protocol]map[kind]map[port][]string{
 	aptos: {
 		node: {
-			rest: {"https://aptos.dev/nodes/aptos-api-spec/"},
+			api: {"https://aptos.dev/nodes/aptos-api-spec/"},
 		},
 	},
 	bitcoin: {
