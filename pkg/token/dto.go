@@ -15,5 +15,6 @@ type AccessDetails struct {
 
 // UserDetails Dto used to get needed user details
 type UserDetails struct {
-	ID string
+	ID            string
+	PlatformAdmin bool
 }
