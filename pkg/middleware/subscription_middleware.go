@@ -2,8 +2,8 @@ package middleware
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/kotalco/cloud-api/internal/setting"
-	"github.com/kotalco/cloud-api/internal/subscription"
+	"github.com/kotalco/cloud-api/core/setting"
+	"github.com/kotalco/cloud-api/core/subscription"
 	"github.com/kotalco/cloud-api/pkg/k8s/statefulset"
 	subscriptionAPI "github.com/kotalco/cloud-api/pkg/subscription"
 	restErrors "github.com/kotalco/community-api/pkg/errors"

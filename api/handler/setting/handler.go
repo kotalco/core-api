@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"github.com/kotalco/cloud-api/internal/setting"
+	"github.com/kotalco/cloud-api/core/setting"
 	"github.com/kotalco/cloud-api/pkg/k8s/ingressroute"
 	k8svc "github.com/kotalco/cloud-api/pkg/k8s/svc"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"

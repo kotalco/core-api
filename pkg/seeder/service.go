@@ -1,7 +1,7 @@
 package seeder
 
 import (
-	"github.com/kotalco/cloud-api/internal/setting"
+	"github.com/kotalco/cloud-api/core/setting"
 	"github.com/kotalco/cloud-api/pkg/security"
 	"github.com/kotalco/community-api/pkg/logger"
 	"gorm.io/gorm"

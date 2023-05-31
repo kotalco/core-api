@@ -3,7 +3,7 @@ package seeder
 import (
 	"errors"
 	"github.com/jackc/pgconn"
-	"github.com/kotalco/cloud-api/internal/setting"
+	"github.com/kotalco/cloud-api/core/setting"
 	"gorm.io/gorm"
 )
 

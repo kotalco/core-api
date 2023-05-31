@@ -1,11 +1,11 @@
 package migration
 
 import (
-	"github.com/kotalco/cloud-api/internal/setting"
-	"github.com/kotalco/cloud-api/internal/user"
-	"github.com/kotalco/cloud-api/internal/verification"
-	"github.com/kotalco/cloud-api/internal/workspace"
-	"github.com/kotalco/cloud-api/internal/workspaceuser"
+	"github.com/kotalco/cloud-api/core/setting"
+	"github.com/kotalco/cloud-api/core/user"
+	"github.com/kotalco/cloud-api/core/verification"
+	"github.com/kotalco/cloud-api/core/workspace"
+	"github.com/kotalco/cloud-api/core/workspaceuser"
 	"github.com/kotalco/community-api/pkg/logger"
 	"gorm.io/gorm"
 )

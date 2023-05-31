@@ -1,6 +1,6 @@
 package workspace
 
-import "github.com/kotalco/cloud-api/internal/workspaceuser"
+import "github.com/kotalco/cloud-api/core/workspaceuser"
 
 type Workspace struct {
 	ID             string
