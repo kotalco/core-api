@@ -11,6 +11,7 @@ import (
 	"github.com/kotalco/cloud-api/pkg/token"
 	"gorm.io/gorm"
 	"io/ioutil"
+	corev1 "k8s.io/api/core/v1"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -180,17 +181,16 @@ func (mailServiceMock) WorkspaceInvitation(dto *sendgrid.WorkspaceInvitationMail
 Workspace service Mocks
 */
 var (
-	WorkspaceWithTransaction       func(txHandle *gorm.DB) workspace.IService
-	CreateWorkspaceFunc            func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, restErrors.IRestErr)
-	UpdateWorkspaceFunc            func(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) restErrors.IRestErr
-	DeleteWorkspace                func(workspace *workspace.Workspace) restErrors.IRestErr
-	GetWorkspaceByIdFunc           func(Id string) (*workspace.Workspace, restErrors.IRestErr)
-	GetWorkspacesByUserIdFunc      func(userId string) ([]*workspace.Workspace, restErrors.IRestErr)
-	addWorkspaceMemberFunc         func(workspace *workspace.Workspace, memberId string, role string) restErrors.IRestErr
-	DeleteWorkspaceMemberFunc      func(workspace *workspace.Workspace, memberId string) restErrors.IRestErr
-	CountByUserIdFunc              func(userId string) (int64, restErrors.IRestErr)
-	UpdateWorkspaceUserFunc        func(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) restErrors.IRestErr
-	CreateUserDefaultWorkspaceFunc func(userId string) restErrors.IRestErr
+	WorkspaceWithTransaction  func(txHandle *gorm.DB) workspace.IService
+	CreateWorkspaceFunc       func(dto *workspace.CreateWorkspaceRequestDto, userId string, k8NamespaceName string) (*workspace.Workspace, restErrors.IRestErr)
+	UpdateWorkspaceFunc       func(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) restErrors.IRestErr
+	DeleteWorkspace           func(workspace *workspace.Workspace) restErrors.IRestErr
+	GetWorkspaceByIdFunc      func(Id string) (*workspace.Workspace, restErrors.IRestErr)
+	GetWorkspacesByUserIdFunc func(userId string) ([]*workspace.Workspace, restErrors.IRestErr)
+	addWorkspaceMemberFunc    func(workspace *workspace.Workspace, memberId string, role string) restErrors.IRestErr
+	DeleteWorkspaceMemberFunc func(workspace *workspace.Workspace, memberId string) restErrors.IRestErr
+	CountByUserIdFunc         func(userId string) (int64, restErrors.IRestErr)
+	UpdateWorkspaceUserFunc   func(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) restErrors.IRestErr
 )
 
 type workspaceServiceMock struct{}
@@ -203,8 +203,8 @@ func (wService workspaceServiceMock) WithTransaction(txHandle *gorm.DB) workspac
 	return wService
 }
 
-func (workspaceServiceMock) Create(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, restErrors.IRestErr) {
-	return CreateWorkspaceFunc(dto, userId)
+func (workspaceServiceMock) Create(dto *workspace.CreateWorkspaceRequestDto, userId string, k8NamespaceName string) (*workspace.Workspace, restErrors.IRestErr) {
+	return CreateWorkspaceFunc(dto, userId, k8NamespaceName)
 }
 
 func (workspaceServiceMock) Update(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) restErrors.IRestErr {
@@ -235,9 +235,6 @@ func (workspaceServiceMock) CountByUserId(userId string) (int64, restErrors.IRes
 }
 func (workspaceServiceMock) UpdateWorkspaceUser(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) restErrors.IRestErr {
 	return UpdateWorkspaceUserFunc(workspaceUser, dto)
-}
-func (wService workspaceServiceMock) CreateUserDefaultWorkspace(userId string) restErrors.IRestErr {
-	return CreateUserDefaultWorkspaceFunc(userId)
 }
 
 /*
@@ -291,12 +288,37 @@ func (s settingServiceMocks) IsDomainConfigured() bool {
 	return settingIsDomainConfiguredFunc()
 }
 
+/*
+Namespace service Mocks
+*/
+
+var (
+	namespaceCreateNamespaceFunc func(name string) restErrors.IRestErr
+	namespaceGetNamespaceFunc    func(name string) (*corev1.Namespace, restErrors.IRestErr)
+	namespaceDeleteNamespaceFunc func(name string) restErrors.IRestErr
+)
+
+type namespaceServiceMock struct{}
+
+func (namespaceServiceMock) Create(name string) restErrors.IRestErr {
+	return namespaceCreateNamespaceFunc(name)
+}
+
+func (namespaceServiceMock) Get(name string) (*corev1.Namespace, restErrors.IRestErr) {
+	return namespaceGetNamespaceFunc(name)
+}
+
+func (namespaceServiceMock) Delete(name string) restErrors.IRestErr {
+	return namespaceDeleteNamespaceFunc(name)
+}
+
 func TestMain(m *testing.M) {
 	userService = &userServiceMock{}
 	verificationService = &verificationServiceMock{}
 	mailService = &mailServiceMock{}
 	workspaceService = &workspaceServiceMock{}
 	settingService = &settingServiceMocks{}
+	namespaceService = &namespaceServiceMock{}
 
 	sqlclient.OpenDBConnection()
 
@@ -362,11 +384,14 @@ func TestSignUp(t *testing.T) {
 			return 1, nil
 		}
 
-		CreateUserDefaultWorkspaceFunc = func(userId string) restErrors.IRestErr {
+		SignUpMailFunc = func(dto *sendgrid.MailRequestDto) restErrors.IRestErr {
 			return nil
 		}
 
-		SignUpMailFunc = func(dto *sendgrid.MailRequestDto) restErrors.IRestErr {
+		CreateWorkspaceFunc = func(dto *workspace.CreateWorkspaceRequestDto, userId string, k8NamespaceName string) (*workspace.Workspace, restErrors.IRestErr) {
+			return new(workspace.Workspace), nil
+		}
+		namespaceCreateNamespaceFunc = func(name string) restErrors.IRestErr {
 			return nil
 		}
 
@@ -380,38 +405,6 @@ func TestSignUp(t *testing.T) {
 
 		assert.EqualValues(t, http.StatusCreated, resp.StatusCode)
 		assert.EqualValues(t, "test@test.com", result["data"].Email)
-	})
-	t.Run("sign up should throw if can't create user default workspace", func(t *testing.T) {
-		settingIsRegistrationEnabledFunc = func() bool {
-			return true
-		}
-		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, restErrors.IRestErr) {
-			newUser := new(user.User)
-			newUser.Email = "test@test.com"
-			return newUser, nil
-		}
-
-		CreateFunc = func(userId string) (string, restErrors.IRestErr) {
-			return "JWT-token", nil
-		}
-		usersCountFunc = func() (int64, restErrors.IRestErr) {
-			return 1, nil
-		}
-
-		CreateUserDefaultWorkspaceFunc = func(userId string) restErrors.IRestErr {
-			return restErrors.NewInternalServerError("something went wrong")
-		}
-
-		body, resp := newFiberCtx(validDto, SignUp, map[string]interface{}{})
-
-		var result restErrors.RestErr
-		err := json.Unmarshal(body, &result)
-		if err != nil {
-			panic(err.Error())
-		}
-
-		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
-		assert.EqualValues(t, "something went wrong", result.Message)
 	})
 
 	t.Run("Sign_Up_Should_Throw_Validation_Errors", func(t *testing.T) {
@@ -468,6 +461,9 @@ func TestSignUp(t *testing.T) {
 	t.Run("Sing_Up_Should_Throw_if_Service_Throws", func(t *testing.T) {
 		settingIsRegistrationEnabledFunc = func() bool {
 			return true
+		}
+		usersCountFunc = func() (int64, restErrors.IRestErr) {
+			return 1, nil
 		}
 		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, restErrors.IRestErr) {
 			return nil, restErrors.NewBadRequestError("user service errors")
@@ -662,6 +658,9 @@ func TestSignUp(t *testing.T) {
 		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, restErrors.IRestErr) {
 			return new(user.User), nil
 		}
+		usersCountFunc = func() (int64, restErrors.IRestErr) {
+			return 1, nil
+		}
 
 		CreateFunc = func(userId string) (string, restErrors.IRestErr) {
 			return "", restErrors.NewBadRequestError("create user service errors")
@@ -677,6 +676,77 @@ func TestSignUp(t *testing.T) {
 
 		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
 		assert.EqualValues(t, result.Message, "create user service errors")
+	})
+	t.Run("sign up should throw if can't create user default workspace", func(t *testing.T) {
+		settingIsRegistrationEnabledFunc = func() bool {
+			return true
+		}
+		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, restErrors.IRestErr) {
+			newUser := new(user.User)
+			newUser.Email = "test@test.com"
+			return newUser, nil
+		}
+
+		CreateFunc = func(userId string) (string, restErrors.IRestErr) {
+			return "JWT-token", nil
+		}
+		usersCountFunc = func() (int64, restErrors.IRestErr) {
+			return 1, nil
+		}
+		CreateWorkspaceFunc = func(dto *workspace.CreateWorkspaceRequestDto, userId string, k8NamespaceName string) (*workspace.Workspace, restErrors.IRestErr) {
+			return nil, restErrors.NewInternalServerError("something went wrong")
+		}
+
+		body, resp := newFiberCtx(validDto, SignUp, map[string]interface{}{})
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
+		assert.EqualValues(t, "something went wrong", result.Message)
+	})
+
+	t.Run("Sign_Up_Should_throw_if_can't_create_user_default_name_space", func(t *testing.T) {
+		settingIsRegistrationEnabledFunc = func() bool {
+			return true
+		}
+		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, restErrors.IRestErr) {
+			newUser := new(user.User)
+			newUser.Email = "test@test.com"
+			return newUser, nil
+		}
+
+		CreateFunc = func(userId string) (string, restErrors.IRestErr) {
+			return "JWT-token", nil
+		}
+		usersCountFunc = func() (int64, restErrors.IRestErr) {
+			return 1, nil
+		}
+
+		SignUpMailFunc = func(dto *sendgrid.MailRequestDto) restErrors.IRestErr {
+			return nil
+		}
+
+		CreateWorkspaceFunc = func(dto *workspace.CreateWorkspaceRequestDto, userId string, k8NamespaceName string) (*workspace.Workspace, restErrors.IRestErr) {
+			return new(workspace.Workspace), nil
+		}
+		namespaceCreateNamespaceFunc = func(name string) restErrors.IRestErr {
+			return restErrors.NewInternalServerError("something went wrong")
+		}
+
+		body, resp := newFiberCtx(validDto, SignUp, map[string]interface{}{})
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
+		assert.EqualValues(t, "something went wrong", result.Message)
 	})
 
 }

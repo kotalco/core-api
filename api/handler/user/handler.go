@@ -3,10 +3,12 @@ package user
 import (
 	"database/sql"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"github.com/kotalco/cloud-api/core/setting"
 	"github.com/kotalco/cloud-api/core/user"
 	"github.com/kotalco/cloud-api/core/verification"
 	"github.com/kotalco/cloud-api/core/workspace"
+	"github.com/kotalco/cloud-api/pkg/k8s"
 	"github.com/kotalco/cloud-api/pkg/sendgrid"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
 	"github.com/kotalco/cloud-api/pkg/token"
@@ -24,6 +26,7 @@ var (
 	verificationService = verification.NewService()
 	workspaceService    = workspace.NewService()
 	settingService      = setting.NewService()
+	namespaceService    = k8s.NewNamespaceService()
 )
 
 // SignUp validate dto , create user , send verification token, create the default namespace and create the default workspace
@@ -68,6 +71,8 @@ func SignUp(c *fiber.Ctx) error {
 		return c.Status(restErr.StatusCode()).JSON(restErr)
 	}
 
+	var defaultWorkspaceName = workspace.DefaultWorkspaceName
+	var defaultNamespaceName = uuid.NewString()
 	if reflect.ValueOf(usersCount).IsZero() { //check if this user is first user in the cluster=>verify email address
 		restErr = verificationService.WithTransaction(txHandle).Verify(model.ID, token)
 		if restErr != nil {
@@ -94,14 +99,24 @@ func SignUp(c *fiber.Ctx) error {
 			sqlclient.Rollback(txHandle)
 			return c.Status(restErr.StatusCode()).JSON(restErr)
 		}
+		//since this is the first user in the cluster, it's default workspace should be bound with the default namespace
+		defaultNamespaceName = "default"
 	}
 
-	//Create Workspace
-	//Don't Roll back created user , but try to create the default workspace later  if not exits when user creates its first node
-	restErr = workspaceService.WithTransaction(txHandle).CreateUserDefaultWorkspace(model.ID)
+	//create the user default workspace
+	_, restErr = workspaceService.WithTransaction(txHandle).Create(&workspace.CreateWorkspaceRequestDto{Name: defaultWorkspaceName}, model.ID, defaultNamespaceName)
 	if restErr != nil {
 		sqlclient.Rollback(txHandle)
 		return c.Status(restErr.StatusCode()).JSON(restErr)
+	}
+	//create the user default namespace
+	//we shouldn't try to create the default namespace "default" it's always there
+	if defaultNamespaceName != "default" {
+		restErr = namespaceService.Create(defaultNamespaceName)
+		if restErr != nil {
+			sqlclient.Rollback(txHandle)
+			return c.Status(restErr.StatusCode()).JSON(restErr)
+		}
 	}
 
 	sqlclient.Commit(txHandle)

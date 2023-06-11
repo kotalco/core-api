@@ -118,17 +118,16 @@ func (uService userServiceMock) SetAsPlatformAdmin(model *user.User) restErrors.
 Workspace service Mocks
 */
 var (
-	WorkspaceWithTransaction       func(txHandle *gorm.DB) workspace.IService
-	CreateWorkspaceFunc            func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, restErrors.IRestErr)
-	UpdateWorkspaceFunc            func(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) restErrors.IRestErr
-	GetWorkspaceByIdFunc           func(Id string) (*workspace.Workspace, restErrors.IRestErr)
-	DeleteWorkspaceFunc            func(workspace *workspace.Workspace) restErrors.IRestErr
-	GetWorkspaceByUserIdFunc       func(userId string) ([]*workspace.Workspace, restErrors.IRestErr)
-	AddWorkspaceMemberFunc         func(workspace *workspace.Workspace, memberId string, role string) restErrors.IRestErr
-	DeleteWorkspaceMemberFunc      func(workspace *workspace.Workspace, memberId string) restErrors.IRestErr
-	CountWorkspaceByUserIdFunc     func(userId string) (int64, restErrors.IRestErr)
-	UpdateWorkspaceUserFunc        func(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) restErrors.IRestErr
-	CreateUserDefaultWorkspaceFunc func(userId string) restErrors.IRestErr
+	WorkspaceWithTransaction   func(txHandle *gorm.DB) workspace.IService
+	CreateWorkspaceFunc        func(dto *workspace.CreateWorkspaceRequestDto, userId string, k8NamespaceName string) (*workspace.Workspace, restErrors.IRestErr)
+	UpdateWorkspaceFunc        func(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) restErrors.IRestErr
+	GetWorkspaceByIdFunc       func(Id string) (*workspace.Workspace, restErrors.IRestErr)
+	DeleteWorkspaceFunc        func(workspace *workspace.Workspace) restErrors.IRestErr
+	GetWorkspaceByUserIdFunc   func(userId string) ([]*workspace.Workspace, restErrors.IRestErr)
+	AddWorkspaceMemberFunc     func(workspace *workspace.Workspace, memberId string, role string) restErrors.IRestErr
+	DeleteWorkspaceMemberFunc  func(workspace *workspace.Workspace, memberId string) restErrors.IRestErr
+	CountWorkspaceByUserIdFunc func(userId string) (int64, restErrors.IRestErr)
+	UpdateWorkspaceUserFunc    func(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) restErrors.IRestErr
 )
 
 type workspaceServiceMock struct{}
@@ -141,8 +140,8 @@ func (wService workspaceServiceMock) WithTransaction(txHandle *gorm.DB) workspac
 	return wService
 }
 
-func (workspaceServiceMock) Create(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, restErrors.IRestErr) {
-	return CreateWorkspaceFunc(dto, userId)
+func (workspaceServiceMock) Create(dto *workspace.CreateWorkspaceRequestDto, userId string, k8NamespaceName string) (*workspace.Workspace, restErrors.IRestErr) {
+	return CreateWorkspaceFunc(dto, userId, k8NamespaceName)
 }
 func (workspaceServiceMock) Update(dto *workspace.UpdateWorkspaceRequestDto, workspace *workspace.Workspace) restErrors.IRestErr {
 	return UpdateWorkspaceFunc(dto, workspace)
@@ -172,9 +171,6 @@ func (workspaceServiceMock) CountByUserId(userId string) (int64, restErrors.IRes
 
 func (workspaceServiceMock) UpdateWorkspaceUser(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) restErrors.IRestErr {
 	return UpdateWorkspaceUserFunc(workspaceUser, dto)
-}
-func (wService workspaceServiceMock) CreateUserDefaultWorkspace(userId string) restErrors.IRestErr {
-	return CreateUserDefaultWorkspaceFunc(userId)
 }
 
 /*
@@ -281,7 +277,7 @@ func TestCreateWorkspace(t *testing.T) {
 			return nil
 		}
 
-		CreateWorkspaceFunc = func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, restErrors.IRestErr) {
+		CreateWorkspaceFunc = func(dto *workspace.CreateWorkspaceRequestDto, userId string, k8NamespaceName string) (*workspace.Workspace, restErrors.IRestErr) {
 			model := new(workspace.Workspace)
 			model.ID = "1"
 			model.Name = "testName"
@@ -330,7 +326,7 @@ func TestCreateWorkspace(t *testing.T) {
 	})
 
 	t.Run("Create_Workspace_Should_Throw_If_workspace_Service_Throw", func(t *testing.T) {
-		CreateWorkspaceFunc = func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, restErrors.IRestErr) {
+		CreateWorkspaceFunc = func(dto *workspace.CreateWorkspaceRequestDto, userId string, k8NamespaceName string) (*workspace.Workspace, restErrors.IRestErr) {
 			return nil, restErrors.NewBadRequestError("workspace service error")
 
 		}
@@ -349,7 +345,7 @@ func TestCreateWorkspace(t *testing.T) {
 
 	t.Run("create_workspace_should_throw_if_can't_create_namespace", func(t *testing.T) {
 
-		CreateWorkspaceFunc = func(dto *workspace.CreateWorkspaceRequestDto, userId string) (*workspace.Workspace, restErrors.IRestErr) {
+		CreateWorkspaceFunc = func(dto *workspace.CreateWorkspaceRequestDto, userId string, k8NamespaceName string) (*workspace.Workspace, restErrors.IRestErr) {
 			model := new(workspace.Workspace)
 			model.ID = "1"
 			model.Name = "testName"
