@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/kotalco/cloud-api/internal/setting"
-	"github.com/kotalco/cloud-api/internal/workspace"
-	"github.com/kotalco/cloud-api/internal/workspaceuser"
+	"github.com/kotalco/cloud-api/core/setting"
+	"github.com/kotalco/cloud-api/core/workspace"
+	"github.com/kotalco/cloud-api/core/workspaceuser"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
 	"github.com/kotalco/cloud-api/pkg/token"
 	"gorm.io/gorm"
@@ -22,8 +22,8 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
-	"github.com/kotalco/cloud-api/internal/user"
-	"github.com/kotalco/cloud-api/internal/verification"
+	"github.com/kotalco/cloud-api/core/user"
+	"github.com/kotalco/cloud-api/core/verification"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 )
 

@@ -3,7 +3,7 @@ package ingressroute
 import (
 	"context"
 	"fmt"
-	"github.com/kotalco/cloud-api/internal/setting"
+	"github.com/kotalco/cloud-api/core/setting"
 
 	"github.com/kotalco/cloud-api/pkg/k8s"
 	restErrors "github.com/kotalco/community-api/pkg/errors"

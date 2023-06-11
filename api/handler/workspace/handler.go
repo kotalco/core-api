@@ -2,9 +2,9 @@ package workspace
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/kotalco/cloud-api/internal/user"
-	"github.com/kotalco/cloud-api/internal/workspace"
-	"github.com/kotalco/cloud-api/internal/workspaceuser"
+	"github.com/kotalco/cloud-api/core/user"
+	"github.com/kotalco/cloud-api/core/workspace"
+	"github.com/kotalco/cloud-api/core/workspaceuser"
 	"github.com/kotalco/cloud-api/pkg/k8s"
 	"github.com/kotalco/cloud-api/pkg/roles"
 	"github.com/kotalco/cloud-api/pkg/sendgrid"

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
-	"github.com/kotalco/cloud-api/internal/setting"
+	"github.com/kotalco/cloud-api/core/setting"
 	"github.com/kotalco/cloud-api/pkg/k8s/ingressroute"
 	"github.com/kotalco/cloud-api/pkg/k8s/middleware"
 	"github.com/kotalco/cloud-api/pkg/token"

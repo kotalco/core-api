@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/kotalco/cloud-api/internal/workspaceuser"
+	"github.com/kotalco/cloud-api/core/workspaceuser"
 	"github.com/kotalco/cloud-api/pkg/roles"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 )

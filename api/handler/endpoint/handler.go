@@ -3,9 +3,9 @@ package endpoint
 import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
-	"github.com/kotalco/cloud-api/internal/endpoint"
-	"github.com/kotalco/cloud-api/internal/setting"
-	"github.com/kotalco/cloud-api/internal/workspace"
+	"github.com/kotalco/cloud-api/core/endpoint"
+	"github.com/kotalco/cloud-api/core/setting"
+	"github.com/kotalco/cloud-api/core/workspace"
 	k8svc "github.com/kotalco/cloud-api/pkg/k8s/svc"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/shared"

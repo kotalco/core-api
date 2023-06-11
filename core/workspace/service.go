@@ -2,7 +2,7 @@ package workspace
 
 import (
 	"github.com/google/uuid"
-	"github.com/kotalco/cloud-api/internal/workspaceuser"
+	"github.com/kotalco/cloud-api/core/workspaceuser"
 	"github.com/kotalco/cloud-api/pkg/k8s"
 	"github.com/kotalco/cloud-api/pkg/roles"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
