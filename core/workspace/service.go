@@ -3,7 +3,6 @@ package workspace
 import (
 	"github.com/google/uuid"
 	"github.com/kotalco/cloud-api/core/workspaceuser"
-	"github.com/kotalco/cloud-api/pkg/k8s"
 	"github.com/kotalco/cloud-api/pkg/roles"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
@@ -27,11 +26,11 @@ type IService interface {
 	DeleteWorkspaceMember(workspace *Workspace, memberId string) restErrors.IRestErr
 	CountByUserId(userId string) (int64, restErrors.IRestErr)
 	UpdateWorkspaceUser(workspaceUser *workspaceuser.WorkspaceUser, dto *UpdateWorkspaceUserRequestDto) restErrors.IRestErr
+	GetByNamespace(namespace string) (*Workspace, restErrors.IRestErr)
 }
 
 var (
-	workspaceRepo    = NewRepository()
-	namespaceService = k8s.NewNamespaceService()
+	workspaceRepo = NewRepository()
 )
 
 func NewService() IService {
@@ -155,4 +154,8 @@ func (service) CountByUserId(userId string) (int64, restErrors.IRestErr) {
 func (service) UpdateWorkspaceUser(workspaceUser *workspaceuser.WorkspaceUser, dto *UpdateWorkspaceUserRequestDto) restErrors.IRestErr {
 	workspaceUser.Role = dto.Role
 	return workspaceRepo.UpdateWorkspaceUser(workspaceUser)
+}
+
+func (service) GetByNamespace(namespace string) (*Workspace, restErrors.IRestErr) {
+	return workspaceRepo.GetByNamespace(namespace)
 }

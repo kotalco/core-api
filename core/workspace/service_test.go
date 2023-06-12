@@ -7,35 +7,10 @@ import (
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
-	corev1 "k8s.io/api/core/v1"
 	"net/http"
 	"os"
 	"testing"
 )
-
-/*
-Namespace service Mocks
-*/
-
-var (
-	namespaceCreateNamespaceFunc func(name string) restErrors.IRestErr
-	namespaceGetNamespaceFunc    func(name string) (*corev1.Namespace, restErrors.IRestErr)
-	namespaceDeleteNamespaceFunc func(name string) restErrors.IRestErr
-)
-
-type namespaceServiceMock struct{}
-
-func (namespaceServiceMock) Create(name string) restErrors.IRestErr {
-	return namespaceCreateNamespaceFunc(name)
-}
-
-func (namespaceServiceMock) Get(name string) (*corev1.Namespace, restErrors.IRestErr) {
-	return namespaceGetNamespaceFunc(name)
-}
-
-func (namespaceServiceMock) Delete(name string) restErrors.IRestErr {
-	return namespaceDeleteNamespaceFunc(name)
-}
 
 /*
 Workspace repo Mocks
@@ -112,7 +87,6 @@ func (workspaceRepositoryMock) GetByNamespace(namespace string) (*Workspace, res
 
 func TestMain(m *testing.M) {
 	workspaceRepo = &workspaceRepositoryMock{}
-	namespaceService = &namespaceServiceMock{}
 	workspaceTestService = NewService()
 	code := m.Run()
 	os.Exit(code)
