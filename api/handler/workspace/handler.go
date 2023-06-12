@@ -2,6 +2,7 @@ package workspace
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"github.com/kotalco/cloud-api/core/user"
 	"github.com/kotalco/cloud-api/core/workspace"
 	"github.com/kotalco/cloud-api/core/workspaceuser"
@@ -39,7 +40,7 @@ func Create(c *fiber.Ctx) error {
 	}
 
 	txHandle := sqlclient.Begin()
-	model, err := workspaceService.WithTransaction(txHandle).Create(dto, userId)
+	model, err := workspaceService.WithTransaction(txHandle).Create(dto, userId, uuid.NewString())
 	if err != nil {
 		sqlclient.Rollback(txHandle)
 		return c.Status(err.StatusCode()).JSON(err)

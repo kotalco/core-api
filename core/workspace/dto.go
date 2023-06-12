@@ -7,6 +7,8 @@ import (
 	"github.com/kotalco/community-api/pkg/logger"
 )
 
+const DefaultWorkspaceName = "default"
+
 type CreateWorkspaceRequestDto struct {
 	Name string `json:"name"  validate:"required,gte=1,lte=100"`
 }
