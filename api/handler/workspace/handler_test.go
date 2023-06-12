@@ -128,6 +128,7 @@ var (
 	DeleteWorkspaceMemberFunc  func(workspace *workspace.Workspace, memberId string) restErrors.IRestErr
 	CountWorkspaceByUserIdFunc func(userId string) (int64, restErrors.IRestErr)
 	UpdateWorkspaceUserFunc    func(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) restErrors.IRestErr
+	GetWorkspaceByNamespace    func(namespace string) (*workspace.Workspace, restErrors.IRestErr)
 )
 
 type workspaceServiceMock struct{}
@@ -171,6 +172,10 @@ func (workspaceServiceMock) CountByUserId(userId string) (int64, restErrors.IRes
 
 func (workspaceServiceMock) UpdateWorkspaceUser(workspaceUser *workspaceuser.WorkspaceUser, dto *workspace.UpdateWorkspaceUserRequestDto) restErrors.IRestErr {
 	return UpdateWorkspaceUserFunc(workspaceUser, dto)
+}
+
+func (workspaceServiceMock) GetByNamespace(namespace string) (*workspace.Workspace, restErrors.IRestErr) {
+	return GetWorkspaceByNamespace(namespace)
 }
 
 /*
