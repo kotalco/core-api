@@ -15,6 +15,7 @@ import (
 type ISVC interface {
 	List(namespace string) (*corev1.ServiceList, restErrors.IRestErr)
 	Get(name string, namespace string) (*corev1.Service, restErrors.IRestErr)
+	Create(obj *corev1.Service) restErrors.IRestErr
 }
 
 type svc struct {
@@ -49,4 +50,15 @@ func (s *svc) Get(name string, namespace string) (*corev1.Service, restErrors.IR
 		return nil, restErrors.NewInternalServerError(err.Error())
 	}
 	return record, nil
+}
+func (s *svc) Create(obj *corev1.Service) restErrors.IRestErr {
+	err := k8s.K8sClient.Create(context.Background(), obj)
+	if err != nil {
+		if errors.IsConflict(err) {
+			return restErrors.NewNotFoundError(fmt.Sprintf("service %s already exist", obj.Name))
+		}
+		go logger.Error(s.Get, err)
+		return restErrors.NewInternalServerError(err.Error())
+	}
+	return nil
 }

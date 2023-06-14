@@ -53,8 +53,9 @@ svc service mock
 */
 
 var (
-	svcServiceListFunc func(namespace string) (*corev1.ServiceList, restErrors.IRestErr)
-	svcServiceGetFunc  func(name string, namespace string) (*corev1.Service, restErrors.IRestErr)
+	svcServiceListFunc   func(namespace string) (*corev1.ServiceList, restErrors.IRestErr)
+	svcServiceGetFunc    func(name string, namespace string) (*corev1.Service, restErrors.IRestErr)
+	svcServiceCreateFunc func(obj *corev1.Service) restErrors.IRestErr
 )
 
 type svcServiceMock struct{}
@@ -65,6 +66,10 @@ func (s svcServiceMock) List(namespace string) (*corev1.ServiceList, restErrors.
 
 func (s svcServiceMock) Get(name string, namespace string) (*corev1.Service, restErrors.IRestErr) {
 	return svcServiceGetFunc(name, namespace)
+}
+
+func (s svcServiceMock) Create(obj *corev1.Service) restErrors.IRestErr {
+	return svcServiceCreateFunc(obj)
 }
 
 var (

@@ -17,8 +17,9 @@ import (
 )
 
 var (
-	k8svcListFunc func(namespace string) (*corev1.ServiceList, restErrors.IRestErr)
-	k8svcGetFunc  func(name string, namespace string) (*corev1.Service, restErrors.IRestErr)
+	k8svcListFunc        func(namespace string) (*corev1.ServiceList, restErrors.IRestErr)
+	k8svcGetFunc         func(name string, namespace string) (*corev1.Service, restErrors.IRestErr)
+	svcServiceCreateFunc func(obj *corev1.Service) restErrors.IRestErr
 )
 
 type k8sServiceMock struct{}
@@ -29,6 +30,9 @@ func (k *k8sServiceMock) List(namespace string) (*corev1.ServiceList, restErrors
 
 func (k *k8sServiceMock) Get(name string, namespace string) (*corev1.Service, restErrors.IRestErr) {
 	return k8svcGetFunc(name, namespace)
+}
+func (s *k8sServiceMock) Create(obj *corev1.Service) restErrors.IRestErr {
+	return svcServiceCreateFunc(obj)
 }
 
 func newFiberCtx(dto interface{}, method func(c *fiber.Ctx) error, locals map[string]interface{}) ([]byte, *http.Response) {
