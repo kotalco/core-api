@@ -81,7 +81,7 @@ jobs:
 
       - name: Testing and Update Kotal-Helm-Chart in DO with Cloud-api new image
         run: |
-          helm upgrade kotal kotal-helm-chart/charts/kotal --install --wait --namespace=kotal --create-namespace --set "api.tag=${SHORT_SHA}" --set "staging=true" --set=app.name=kotal --reuse-values --atomic
+          helm upgrade kotal kotal-helm-chart/charts/kotal --install --wait --namespace=kotal --create-namespace --set-string "api.tag=${SHORT_SHA}" --set "staging=true" --set=app.name=kotal --reuse-values --atomic
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -98,4 +98,4 @@ jobs:
 
       - name: Testing and Update Kotal-Helm-Chart in EKS with Cloud-api new image
         run: |
-          helm upgrade kotal kotal-helm-chart/charts/kotal --install --wait --namespace=kotal --create-namespace --set "api.tag=${SHORT_SHA}" --set "staging=true" --set=app.name=kotal --reuse-values --atomic
+          helm upgrade kotal kotal-helm-chart/charts/kotal --install --wait --namespace=kotal --create-namespace --set-string "api.tag=${SHORT_SHA}" --set "staging=true" --set=app.name=kotal --reuse-values --atomic
