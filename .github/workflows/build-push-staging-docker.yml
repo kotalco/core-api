@@ -2,7 +2,7 @@ name: Build-Push-staging-cloud-api
 
 on:
   push:
-    branches: [eks-test]
+    branches: [master]
   pull_request:
     branches: [master]
 
