@@ -7,10 +7,12 @@ import (
 	"github.com/kotalco/cloud-api/core/endpoint"
 	"github.com/kotalco/cloud-api/core/setting"
 	"github.com/kotalco/cloud-api/core/workspace"
+	"github.com/kotalco/cloud-api/pkg/k8s/secret"
 	"github.com/kotalco/cloud-api/pkg/token"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/shared"
 	"github.com/stretchr/testify/assert"
+	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"gorm.io/gorm"
 	"io/ioutil"
 	corev1 "k8s.io/api/core/v1"
@@ -26,8 +28,8 @@ endpoint service mocks
 */
 var (
 	endpointServiceCreateFunc func(dto *endpoint.CreateEndpointDto, svc *corev1.Service) restErrors.IRestErr
-	endpointServiceListFunc   func(opts ...client.ListOption) ([]*endpoint.EndpointMetaDto, restErrors.IRestErr)
-	endpointServiceGetFunc    func(name string, namespace string) (*endpoint.EndpointDto, restErrors.IRestErr)
+	endpointServiceListFunc   func(opts ...client.ListOption) (*v1alpha1.IngressRouteList, restErrors.IRestErr)
+	endpointServiceGetFunc    func(name string, namespace string) (*v1alpha1.IngressRoute, restErrors.IRestErr)
 	endpointServiceDeleteFunc func(name string, namespace string) restErrors.IRestErr
 	endpointServiceCountFunc  func(opts ...client.ListOption) (int, restErrors.IRestErr)
 )
@@ -37,10 +39,10 @@ type endpointServiceMock struct{}
 func (e endpointServiceMock) Create(dto *endpoint.CreateEndpointDto, svc *corev1.Service) restErrors.IRestErr {
 	return endpointServiceCreateFunc(dto, svc)
 }
-func (e endpointServiceMock) List(opts ...client.ListOption) ([]*endpoint.EndpointMetaDto, restErrors.IRestErr) {
+func (e endpointServiceMock) List(opts ...client.ListOption) (*v1alpha1.IngressRouteList, restErrors.IRestErr) {
 	return endpointServiceListFunc(opts...)
 }
-func (e endpointServiceMock) Get(name string, namespace string) (*endpoint.EndpointDto, restErrors.IRestErr) {
+func (e endpointServiceMock) Get(name string, namespace string) (*v1alpha1.IngressRoute, restErrors.IRestErr) {
 	return endpointServiceGetFunc(name, namespace)
 }
 func (e endpointServiceMock) Delete(name string, namespace string) restErrors.IRestErr {
@@ -123,6 +125,20 @@ func (s settingServiceMock) IsDomainConfigured() bool {
 	return settingIsDomainConfiguredFunc()
 }
 
+type secretServiceMock struct{}
+
+var (
+	secretCreateFunc func(dto *secret.CreateSecretDto) restErrors.IRestErr
+	secretGetFunc    func(name string, namespace string) (*corev1.Secret, restErrors.IRestErr)
+)
+
+func (s secretServiceMock) Create(dto *secret.CreateSecretDto) restErrors.IRestErr {
+	return secretCreateFunc(dto)
+}
+func (s secretServiceMock) Get(name string, namespace string) (*corev1.Secret, restErrors.IRestErr) {
+	return secretGetFunc(name, namespace)
+}
+
 func newFiberCtx(dto interface{}, method func(c *fiber.Ctx) error, locals map[string]interface{}) ([]byte, *http.Response) {
 	app := fiber.New()
 	app.Post("/test/", func(c *fiber.Ctx) error {
@@ -156,6 +172,7 @@ func TestMain(m *testing.M) {
 	endpointService = &endpointServiceMock{}
 	svcService = &svcServiceMock{}
 	settingService = &settingServiceMock{}
+	secretService = &secretServiceMock{}
 	code := m.Run()
 
 	os.Exit(code)
@@ -301,8 +318,8 @@ func TestList(t *testing.T) {
 	locals["workspace"] = *workspaceModel
 
 	t.Run("list endpoints should pass", func(t *testing.T) {
-		endpointServiceListFunc = func(opts ...client.ListOption) ([]*endpoint.EndpointMetaDto, restErrors.IRestErr) {
-			return []*endpoint.EndpointMetaDto{{}}, nil
+		endpointServiceListFunc = func(opts ...client.ListOption) (*v1alpha1.IngressRouteList, restErrors.IRestErr) {
+			return &v1alpha1.IngressRouteList{}, nil
 		}
 
 		body, resp := newFiberCtx("", List, locals)
@@ -315,7 +332,7 @@ func TestList(t *testing.T) {
 	})
 
 	t.Run("list endpoint should throw if endpointServiceList throws", func(t *testing.T) {
-		endpointServiceListFunc = func(opts ...client.ListOption) ([]*endpoint.EndpointMetaDto, restErrors.IRestErr) {
+		endpointServiceListFunc = func(opts ...client.ListOption) (*v1alpha1.IngressRouteList, restErrors.IRestErr) {
 			return nil, restErrors.NewInternalServerError("something went wrong")
 		}
 
@@ -335,8 +352,11 @@ func TestGet(t *testing.T) {
 	locals["workspace"] = *workspaceModel
 
 	t.Run("get endpoint should pass", func(t *testing.T) {
-		endpointServiceGetFunc = func(name string, namespace string) (*endpoint.EndpointDto, restErrors.IRestErr) {
-			return &endpoint.EndpointDto{}, nil
+		endpointServiceGetFunc = func(name string, namespace string) (*v1alpha1.IngressRoute, restErrors.IRestErr) {
+			return &v1alpha1.IngressRoute{}, nil
+		}
+		secretGetFunc = func(name string, namespace string) (*corev1.Secret, restErrors.IRestErr) {
+			return &corev1.Secret{}, nil
 		}
 		body, resp := newFiberCtx("", Get, locals)
 		var result map[string]endpoint.EndpointDto
@@ -348,7 +368,7 @@ func TestGet(t *testing.T) {
 	})
 
 	t.Run("get endpoint should throw if can't ger endpoint from service", func(t *testing.T) {
-		endpointServiceGetFunc = func(name string, namespace string) (*endpoint.EndpointDto, restErrors.IRestErr) {
+		endpointServiceGetFunc = func(name string, namespace string) (*v1alpha1.IngressRoute, restErrors.IRestErr) {
 			return nil, restErrors.NewNotFoundError("no such record")
 		}
 		body, resp := newFiberCtx("", Get, locals)
@@ -357,6 +377,22 @@ func TestGet(t *testing.T) {
 		assert.Nil(t, err)
 		assert.EqualValues(t, http.StatusNotFound, resp.StatusCode)
 		assert.NotNil(t, "no such record", result.Message)
+	})
+
+	t.Run("get endpoint shouldnot throw if get secret fails coz it means this endpoint has no secret", func(t *testing.T) {
+		endpointServiceGetFunc = func(name string, namespace string) (*v1alpha1.IngressRoute, restErrors.IRestErr) {
+			return &v1alpha1.IngressRoute{}, nil
+		}
+		secretGetFunc = func(name string, namespace string) (*corev1.Secret, restErrors.IRestErr) {
+			return nil, restErrors.NewNotFoundError("no such record")
+		}
+		body, resp := newFiberCtx("", Get, locals)
+		var result map[string]endpoint.EndpointDto
+		err := json.Unmarshal(body, &result)
+		assert.Nil(t, err)
+		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
+		assert.NotNil(t, result["data"])
+
 	})
 
 }

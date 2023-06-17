@@ -6,6 +6,7 @@ import (
 	"github.com/kotalco/cloud-api/core/endpoint"
 	"github.com/kotalco/cloud-api/core/setting"
 	"github.com/kotalco/cloud-api/core/workspace"
+	"github.com/kotalco/cloud-api/pkg/k8s/secret"
 	k8svc "github.com/kotalco/cloud-api/pkg/k8s/svc"
 	"github.com/kotalco/cloud-api/pkg/token"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
@@ -19,6 +20,7 @@ var (
 	svcService        = k8svc.NewService()
 	availableProtocol = k8svc.AvailableProtocol
 	settingService    = setting.NewService()
+	secretService     = secret.NewService()
 )
 
 // Create accept  endpoint.CreateEndpointDto , creates the endpoint and returns success or err if any
@@ -76,10 +78,16 @@ func List(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
-	c.Set("Access-Control-Expose-Headers", "X-Total-Count")
-	c.Set("X-Total-Count", fmt.Sprintf("%d", len(list)))
 
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(list))
+	marshalledDto := make([]*endpoint.EndpointMetaDto, 0)
+	for _, item := range list.Items {
+		marshalledDto = append(marshalledDto, new(endpoint.EndpointMetaDto).Marshall(&item))
+	}
+
+	c.Set("Access-Control-Expose-Headers", "X-Total-Count")
+	c.Set("X-Total-Count", fmt.Sprintf("%d", len(marshalledDto)))
+
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(marshalledDto))
 }
 
 // Get accept namespace and name , returns a record of type ingressroute.Ingressroute or err if any
@@ -92,7 +100,12 @@ func Get(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(record))
+	//get secret
+	secretName := fmt.Sprintf("%s-secret", record.Name)
+	v1Secret, _ := secretService.Get(secretName, workspaceModel.K8sNamespace)
+	endpointDto := new(endpoint.EndpointDto).Marshall(record, v1Secret)
+
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(endpointDto))
 }
 
 // Delete accept namespace and the name of the ingress-route ,deletes it , returns success message or err if any
