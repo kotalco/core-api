@@ -2,6 +2,7 @@ package endpoint
 
 import (
 	"fmt"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strings"
 
 	"github.com/google/uuid"
@@ -32,10 +33,10 @@ type IService interface {
 	//-creating an ingressRoute (Traefik HTTP router) which uses the previous middleware
 	//-return error if any
 	Create(dto *CreateEndpointDto, svc *corev1.Service) restErrors.IRestErr
-	List(namespace string) ([]*EndpointMetaDto, restErrors.IRestErr)
+	List(opt ...client.ListOption) ([]*EndpointMetaDto, restErrors.IRestErr)
 	Get(name string, namespace string) (*EndpointDto, restErrors.IRestErr)
 	Delete(name string, namespace string) restErrors.IRestErr
-	Count(namespace string) (int, restErrors.IRestErr)
+	Count(opt ...client.ListOption) (int, restErrors.IRestErr)
 }
 
 func NewService() IService {
@@ -85,6 +86,7 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) restErrors
 			return refs
 		}(),
 		OwnersRef: svc.OwnerReferences,
+		UserId:    dto.UserId,
 	})
 	if err != nil {
 		return err
@@ -168,8 +170,8 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) restErrors
 	return nil
 }
 
-func (s *service) List(namespace string) ([]*EndpointMetaDto, restErrors.IRestErr) {
-	records, err := ingressRoutesService.List(namespace)
+func (s *service) List(opt ...client.ListOption) ([]*EndpointMetaDto, restErrors.IRestErr) {
+	records, err := ingressRoutesService.List(opt...)
 	if err != nil {
 		return nil, err
 	}
@@ -199,8 +201,8 @@ func (s *service) Delete(name string, namespace string) restErrors.IRestErr {
 	return ingressRoutesService.Delete(name, namespace)
 }
 
-func (s *service) Count(namespace string) (count int, err restErrors.IRestErr) {
-	records, err := ingressRoutesService.List(namespace)
+func (s *service) Count(opt ...client.ListOption) (count int, err restErrors.IRestErr) {
+	records, err := ingressRoutesService.List(opt...)
 	if err != nil {
 		return 0, err
 	}

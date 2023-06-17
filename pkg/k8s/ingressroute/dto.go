@@ -19,6 +19,7 @@ type IngressRouteDto struct {
 	Ports           []IngressRoutePortDto // the corresponding ports of the targeted service
 	Middlewares     []IngressRouteMiddlewareRefDto
 	OwnersRef       []metav1.OwnerReference
+	UserId          string
 }
 
 type IngressRouteMiddlewareRefDto struct {

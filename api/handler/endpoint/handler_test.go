@@ -7,6 +7,7 @@ import (
 	"github.com/kotalco/cloud-api/core/endpoint"
 	"github.com/kotalco/cloud-api/core/setting"
 	"github.com/kotalco/cloud-api/core/workspace"
+	"github.com/kotalco/cloud-api/pkg/token"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/shared"
 	"github.com/stretchr/testify/assert"
@@ -16,6 +17,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"testing"
 )
 
@@ -24,10 +26,10 @@ endpoint service mocks
 */
 var (
 	endpointServiceCreateFunc func(dto *endpoint.CreateEndpointDto, svc *corev1.Service) restErrors.IRestErr
-	endpointServiceListFunc   func(namespace string) ([]*endpoint.EndpointMetaDto, restErrors.IRestErr)
+	endpointServiceListFunc   func(opts ...client.ListOption) ([]*endpoint.EndpointMetaDto, restErrors.IRestErr)
 	endpointServiceGetFunc    func(name string, namespace string) (*endpoint.EndpointDto, restErrors.IRestErr)
 	endpointServiceDeleteFunc func(name string, namespace string) restErrors.IRestErr
-	endpointServiceCountFunc  func(namespace string) (int, restErrors.IRestErr)
+	endpointServiceCountFunc  func(opts ...client.ListOption) (int, restErrors.IRestErr)
 )
 
 type endpointServiceMock struct{}
@@ -35,8 +37,8 @@ type endpointServiceMock struct{}
 func (e endpointServiceMock) Create(dto *endpoint.CreateEndpointDto, svc *corev1.Service) restErrors.IRestErr {
 	return endpointServiceCreateFunc(dto, svc)
 }
-func (e endpointServiceMock) List(namespace string) ([]*endpoint.EndpointMetaDto, restErrors.IRestErr) {
-	return endpointServiceListFunc(namespace)
+func (e endpointServiceMock) List(opts ...client.ListOption) ([]*endpoint.EndpointMetaDto, restErrors.IRestErr) {
+	return endpointServiceListFunc(opts...)
 }
 func (e endpointServiceMock) Get(name string, namespace string) (*endpoint.EndpointDto, restErrors.IRestErr) {
 	return endpointServiceGetFunc(name, namespace)
@@ -44,8 +46,8 @@ func (e endpointServiceMock) Get(name string, namespace string) (*endpoint.Endpo
 func (e endpointServiceMock) Delete(name string, namespace string) restErrors.IRestErr {
 	return endpointServiceDeleteFunc(name, namespace)
 }
-func (e endpointServiceMock) Count(namespace string) (int, restErrors.IRestErr) {
-	return endpointServiceCountFunc(namespace)
+func (e endpointServiceMock) Count(opts ...client.ListOption) (int, restErrors.IRestErr) {
+	return endpointServiceCountFunc(opts...)
 }
 
 /*
@@ -163,6 +165,9 @@ func TestCreate(t *testing.T) {
 	workspaceModel := new(workspace.Workspace)
 	var locals = map[string]interface{}{}
 	locals["workspace"] = *workspaceModel
+	userDetails := new(token.UserDetails)
+	userDetails.ID = "test@test.com"
+	locals["user"] = *userDetails
 
 	var validDto = map[string]string{
 		"name":         "name",
@@ -296,7 +301,7 @@ func TestList(t *testing.T) {
 	locals["workspace"] = *workspaceModel
 
 	t.Run("list endpoints should pass", func(t *testing.T) {
-		endpointServiceListFunc = func(namespace string) ([]*endpoint.EndpointMetaDto, restErrors.IRestErr) {
+		endpointServiceListFunc = func(opts ...client.ListOption) ([]*endpoint.EndpointMetaDto, restErrors.IRestErr) {
 			return []*endpoint.EndpointMetaDto{{}}, nil
 		}
 
@@ -310,7 +315,7 @@ func TestList(t *testing.T) {
 	})
 
 	t.Run("list endpoint should throw if endpointServiceList throws", func(t *testing.T) {
-		endpointServiceListFunc = func(namespace string) ([]*endpoint.EndpointMetaDto, restErrors.IRestErr) {
+		endpointServiceListFunc = func(opts ...client.ListOption) ([]*endpoint.EndpointMetaDto, restErrors.IRestErr) {
 			return nil, restErrors.NewInternalServerError("something went wrong")
 		}
 

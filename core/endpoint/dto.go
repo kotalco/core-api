@@ -16,6 +16,7 @@ type CreateEndpointDto struct {
 	Name         string `json:"name" validate:"regexp,lt=64"`
 	ServiceName  string `json:"service_name" validate:"required"`
 	UseBasicAuth bool   `json:"use_basic_auth"`
+	UserId       string
 }
 
 type EndpointMetaDto struct {

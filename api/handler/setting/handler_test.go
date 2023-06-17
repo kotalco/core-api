@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"testing"
 )
 
@@ -95,7 +96,7 @@ func (s *k8sServiceMock) Create(obj *corev1.Service) restErrors.IRestErr {
 
 var (
 	ingressRouteCreateFunc func(dto *ingressroute.IngressRouteDto) (*traefikv1alpha1.IngressRoute, restErrors.IRestErr)
-	ingressRouteListFunc   func(namesapce string) (*traefikv1alpha1.IngressRouteList, restErrors.IRestErr)
+	ingressRouteListFunc   func(opts ...client.ListOption) (*traefikv1alpha1.IngressRouteList, restErrors.IRestErr)
 	ingressRouteGetFunc    func(name string, namespace string) (*traefikv1alpha1.IngressRoute, restErrors.IRestErr)
 	ingressRouteDeleteFunc func(name string, namespace string) restErrors.IRestErr
 	ingressRouteUpdateFunc func(record *traefikv1alpha1.IngressRoute) restErrors.IRestErr
@@ -107,8 +108,8 @@ func (i ingressRouteServiceMock) Create(dto *ingressroute.IngressRouteDto) (*tra
 	return ingressRouteCreateFunc(dto)
 }
 
-func (i ingressRouteServiceMock) List(namesapce string) (*traefikv1alpha1.IngressRouteList, restErrors.IRestErr) {
-	return ingressRouteListFunc(namesapce)
+func (i ingressRouteServiceMock) List(opts ...client.ListOption) (*traefikv1alpha1.IngressRouteList, restErrors.IRestErr) {
+	return ingressRouteListFunc(opts...)
 }
 
 func (i ingressRouteServiceMock) Get(name string, namespace string) (*traefikv1alpha1.IngressRoute, restErrors.IRestErr) {

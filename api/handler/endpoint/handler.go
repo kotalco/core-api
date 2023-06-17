@@ -7,9 +7,11 @@ import (
 	"github.com/kotalco/cloud-api/core/setting"
 	"github.com/kotalco/cloud-api/core/workspace"
 	k8svc "github.com/kotalco/cloud-api/pkg/k8s/svc"
+	"github.com/kotalco/cloud-api/pkg/token"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/shared"
 	"net/http"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var (
@@ -22,6 +24,7 @@ var (
 // Create accept  endpoint.CreateEndpointDto , creates the endpoint and returns success or err if any
 func Create(c *fiber.Ctx) error {
 	workspaceModel := c.Locals("workspace").(workspace.Workspace)
+	userId := c.Locals("user").(token.UserDetails).ID
 	dto := new(endpoint.CreateEndpointDto)
 	if intErr := c.BodyParser(dto); intErr != nil {
 		badReq := restErrors.NewBadRequestError("invalid request body")
@@ -56,6 +59,7 @@ func Create(c *fiber.Ctx) error {
 		return c.Status(badReq.StatusCode()).JSON(badReq)
 	}
 
+	dto.UserId = userId
 	err = endpointService.Create(dto, corev1Svc)
 	if err != nil {
 		return c.Status(err.StatusCode()).JSON(err)
@@ -68,7 +72,7 @@ func Create(c *fiber.Ctx) error {
 // List accept namespace , returns a list of ingressroute.Ingressroute  or err if any
 func List(c *fiber.Ctx) error {
 	workspaceModel := c.Locals("workspace").(workspace.Workspace)
-	list, err := endpointService.List(workspaceModel.K8sNamespace)
+	list, err := endpointService.List(&client.ListOptions{Namespace: workspaceModel.K8sNamespace}, &client.MatchingLabels{"app.kubernetes.io/created-by": "kotal-api"})
 	if err != nil {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
@@ -106,7 +110,7 @@ func Delete(c *fiber.Ctx) error {
 func Count(c *fiber.Ctx) error {
 	workspaceModel := c.Locals("workspace").(workspace.Workspace)
 
-	count, err := endpointService.Count(workspaceModel.K8sNamespace)
+	count, err := endpointService.Count(&client.ListOptions{Namespace: workspaceModel.K8sNamespace}, &client.MatchingLabels{"app.kubernetes.io/created-by": "kotal-api"})
 	if err != nil {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
