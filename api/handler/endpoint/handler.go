@@ -6,7 +6,9 @@ import (
 	"github.com/kotalco/cloud-api/core/endpoint"
 	"github.com/kotalco/cloud-api/core/setting"
 	"github.com/kotalco/cloud-api/core/workspace"
+	"github.com/kotalco/cloud-api/pkg/k8s/secret"
 	k8svc "github.com/kotalco/cloud-api/pkg/k8s/svc"
+	"github.com/kotalco/cloud-api/pkg/token"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/shared"
 	"net/http"
@@ -17,11 +19,13 @@ var (
 	svcService        = k8svc.NewService()
 	availableProtocol = k8svc.AvailableProtocol
 	settingService    = setting.NewService()
+	secretService     = secret.NewService()
 )
 
 // Create accept  endpoint.CreateEndpointDto , creates the endpoint and returns success or err if any
 func Create(c *fiber.Ctx) error {
 	workspaceModel := c.Locals("workspace").(workspace.Workspace)
+	userId := c.Locals("user").(token.UserDetails).ID
 	dto := new(endpoint.CreateEndpointDto)
 	if intErr := c.BodyParser(dto); intErr != nil {
 		badReq := restErrors.NewBadRequestError("invalid request body")
@@ -56,6 +60,7 @@ func Create(c *fiber.Ctx) error {
 		return c.Status(badReq.StatusCode()).JSON(badReq)
 	}
 
+	dto.UserId = userId
 	err = endpointService.Create(dto, corev1Svc)
 	if err != nil {
 		return c.Status(err.StatusCode()).JSON(err)
@@ -68,14 +73,20 @@ func Create(c *fiber.Ctx) error {
 // List accept namespace , returns a list of ingressroute.Ingressroute  or err if any
 func List(c *fiber.Ctx) error {
 	workspaceModel := c.Locals("workspace").(workspace.Workspace)
-	list, err := endpointService.List(workspaceModel.K8sNamespace)
+	list, err := endpointService.List(workspaceModel.K8sNamespace, map[string]string{"app.kubernetes.io/created-by": "kotal-api"})
 	if err != nil {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
-	c.Set("Access-Control-Expose-Headers", "X-Total-Count")
-	c.Set("X-Total-Count", fmt.Sprintf("%d", len(list)))
 
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(list))
+	marshalledDto := make([]*endpoint.EndpointMetaDto, 0)
+	for _, item := range list.Items {
+		marshalledDto = append(marshalledDto, new(endpoint.EndpointMetaDto).Marshall(&item))
+	}
+
+	c.Set("Access-Control-Expose-Headers", "X-Total-Count")
+	c.Set("X-Total-Count", fmt.Sprintf("%d", len(marshalledDto)))
+
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(marshalledDto))
 }
 
 // Get accept namespace and name , returns a record of type ingressroute.Ingressroute or err if any
@@ -88,7 +99,12 @@ func Get(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(record))
+	//get secret
+	secretName := fmt.Sprintf("%s-secret", record.Name)
+	v1Secret, _ := secretService.Get(secretName, workspaceModel.K8sNamespace)
+	endpointDto := new(endpoint.EndpointDto).Marshall(record, v1Secret)
+
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(endpointDto))
 }
 
 // Delete accept namespace and the name of the ingress-route ,deletes it , returns success message or err if any
@@ -106,7 +122,7 @@ func Delete(c *fiber.Ctx) error {
 func Count(c *fiber.Ctx) error {
 	workspaceModel := c.Locals("workspace").(workspace.Workspace)
 
-	count, err := endpointService.Count(workspaceModel.K8sNamespace)
+	count, err := endpointService.Count(workspaceModel.K8sNamespace, map[string]string{"app.kubernetes.io/created-by": "kotal-api"})
 	if err != nil {
 		return c.Status(err.StatusCode()).JSON(err)
 	}

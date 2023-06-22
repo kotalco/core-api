@@ -32,10 +32,10 @@ type IService interface {
 	//-creating an ingressRoute (Traefik HTTP router) which uses the previous middleware
 	//-return error if any
 	Create(dto *CreateEndpointDto, svc *corev1.Service) restErrors.IRestErr
-	List(namespace string) ([]*EndpointMetaDto, restErrors.IRestErr)
-	Get(name string, namespace string) (*EndpointDto, restErrors.IRestErr)
+	List(ns string, labels map[string]string) (*v1alpha1.IngressRouteList, restErrors.IRestErr)
+	Get(name string, namespace string) (*v1alpha1.IngressRoute, restErrors.IRestErr)
 	Delete(name string, namespace string) restErrors.IRestErr
-	Count(namespace string) (int, restErrors.IRestErr)
+	Count(ns string, labels map[string]string) (int, restErrors.IRestErr)
 }
 
 func NewService() IService {
@@ -85,6 +85,7 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) restErrors
 			return refs
 		}(),
 		OwnersRef: svc.OwnerReferences,
+		UserId:    dto.UserId,
 	})
 	if err != nil {
 		return err
@@ -168,39 +169,20 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) restErrors
 	return nil
 }
 
-func (s *service) List(namespace string) ([]*EndpointMetaDto, restErrors.IRestErr) {
-	records, err := ingressRoutesService.List(namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	marshalledDto := make([]*EndpointMetaDto, 0)
-	for _, item := range records.Items {
-		marshalledDto = append(marshalledDto, new(EndpointMetaDto).Marshall(&item))
-	}
-
-	return marshalledDto, nil
+func (s *service) List(ns string, labels map[string]string) (*v1alpha1.IngressRouteList, restErrors.IRestErr) {
+	return ingressRoutesService.List(ns, labels)
 }
 
-func (s *service) Get(name string, namespace string) (*EndpointDto, restErrors.IRestErr) {
-	record, err := ingressRoutesService.Get(name, namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	//get secret
-	secretName := fmt.Sprintf("%s-secret", record.Name)
-	v1Secret, _ := secretService.Get(secretName, namespace)
-
-	return new(EndpointDto).Marshall(record, v1Secret), nil
+func (s *service) Get(name string, namespace string) (*v1alpha1.IngressRoute, restErrors.IRestErr) {
+	return ingressRoutesService.Get(name, namespace)
 }
 
 func (s *service) Delete(name string, namespace string) restErrors.IRestErr {
 	return ingressRoutesService.Delete(name, namespace)
 }
 
-func (s *service) Count(namespace string) (count int, err restErrors.IRestErr) {
-	records, err := ingressRoutesService.List(namespace)
+func (s *service) Count(ns string, labels map[string]string) (count int, err restErrors.IRestErr) {
+	records, err := ingressRoutesService.List(ns, labels)
 	if err != nil {
 		return 0, err
 	}

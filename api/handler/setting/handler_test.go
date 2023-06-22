@@ -75,8 +75,9 @@ func (s settingServiceMocks) IsDomainConfigured() bool {
 }
 
 var (
-	k8svcListFunc func(namespace string) (*corev1.ServiceList, restErrors.IRestErr)
-	k8svcGetFunc  func(name string, namespace string) (*corev1.Service, restErrors.IRestErr)
+	k8svcListFunc        func(namespace string) (*corev1.ServiceList, restErrors.IRestErr)
+	k8svcGetFunc         func(name string, namespace string) (*corev1.Service, restErrors.IRestErr)
+	svcServiceCreateFunc func(obj *corev1.Service) restErrors.IRestErr
 )
 
 type k8sServiceMock struct{}
@@ -88,10 +89,13 @@ func (k *k8sServiceMock) List(namespace string) (*corev1.ServiceList, restErrors
 func (k *k8sServiceMock) Get(name string, namespace string) (*corev1.Service, restErrors.IRestErr) {
 	return k8svcGetFunc(name, namespace)
 }
+func (s *k8sServiceMock) Create(obj *corev1.Service) restErrors.IRestErr {
+	return svcServiceCreateFunc(obj)
+}
 
 var (
 	ingressRouteCreateFunc func(dto *ingressroute.IngressRouteDto) (*traefikv1alpha1.IngressRoute, restErrors.IRestErr)
-	ingressRouteListFunc   func(namesapce string) (*traefikv1alpha1.IngressRouteList, restErrors.IRestErr)
+	ingressRouteListFunc   func(ns string, labels map[string]string) (*traefikv1alpha1.IngressRouteList, restErrors.IRestErr)
 	ingressRouteGetFunc    func(name string, namespace string) (*traefikv1alpha1.IngressRoute, restErrors.IRestErr)
 	ingressRouteDeleteFunc func(name string, namespace string) restErrors.IRestErr
 	ingressRouteUpdateFunc func(record *traefikv1alpha1.IngressRoute) restErrors.IRestErr
@@ -103,8 +107,8 @@ func (i ingressRouteServiceMock) Create(dto *ingressroute.IngressRouteDto) (*tra
 	return ingressRouteCreateFunc(dto)
 }
 
-func (i ingressRouteServiceMock) List(namesapce string) (*traefikv1alpha1.IngressRouteList, restErrors.IRestErr) {
-	return ingressRouteListFunc(namesapce)
+func (i ingressRouteServiceMock) List(ns string, labels map[string]string) (*traefikv1alpha1.IngressRouteList, restErrors.IRestErr) {
+	return ingressRouteListFunc(ns, labels)
 }
 
 func (i ingressRouteServiceMock) Get(name string, namespace string) (*traefikv1alpha1.IngressRoute, restErrors.IRestErr) {
