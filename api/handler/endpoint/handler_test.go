@@ -19,7 +19,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"testing"
 )
 
@@ -28,10 +27,10 @@ endpoint service mocks
 */
 var (
 	endpointServiceCreateFunc func(dto *endpoint.CreateEndpointDto, svc *corev1.Service) restErrors.IRestErr
-	endpointServiceListFunc   func(opts ...client.ListOption) (*v1alpha1.IngressRouteList, restErrors.IRestErr)
+	endpointServiceListFunc   func(ns string, labels map[string]string) (*v1alpha1.IngressRouteList, restErrors.IRestErr)
 	endpointServiceGetFunc    func(name string, namespace string) (*v1alpha1.IngressRoute, restErrors.IRestErr)
 	endpointServiceDeleteFunc func(name string, namespace string) restErrors.IRestErr
-	endpointServiceCountFunc  func(opts ...client.ListOption) (int, restErrors.IRestErr)
+	endpointServiceCountFunc  func(ns string, labels map[string]string) (int, restErrors.IRestErr)
 )
 
 type endpointServiceMock struct{}
@@ -39,8 +38,8 @@ type endpointServiceMock struct{}
 func (e endpointServiceMock) Create(dto *endpoint.CreateEndpointDto, svc *corev1.Service) restErrors.IRestErr {
 	return endpointServiceCreateFunc(dto, svc)
 }
-func (e endpointServiceMock) List(opts ...client.ListOption) (*v1alpha1.IngressRouteList, restErrors.IRestErr) {
-	return endpointServiceListFunc(opts...)
+func (e endpointServiceMock) List(ns string, labels map[string]string) (*v1alpha1.IngressRouteList, restErrors.IRestErr) {
+	return endpointServiceListFunc(ns, labels)
 }
 func (e endpointServiceMock) Get(name string, namespace string) (*v1alpha1.IngressRoute, restErrors.IRestErr) {
 	return endpointServiceGetFunc(name, namespace)
@@ -48,8 +47,8 @@ func (e endpointServiceMock) Get(name string, namespace string) (*v1alpha1.Ingre
 func (e endpointServiceMock) Delete(name string, namespace string) restErrors.IRestErr {
 	return endpointServiceDeleteFunc(name, namespace)
 }
-func (e endpointServiceMock) Count(opts ...client.ListOption) (int, restErrors.IRestErr) {
-	return endpointServiceCountFunc(opts...)
+func (e endpointServiceMock) Count(ns string, labels map[string]string) (int, restErrors.IRestErr) {
+	return endpointServiceCountFunc(ns, labels)
 }
 
 /*
@@ -318,7 +317,7 @@ func TestList(t *testing.T) {
 	locals["workspace"] = *workspaceModel
 
 	t.Run("list endpoints should pass", func(t *testing.T) {
-		endpointServiceListFunc = func(opts ...client.ListOption) (*v1alpha1.IngressRouteList, restErrors.IRestErr) {
+		endpointServiceListFunc = func(ns string, labels map[string]string) (*v1alpha1.IngressRouteList, restErrors.IRestErr) {
 			return &v1alpha1.IngressRouteList{}, nil
 		}
 
@@ -332,7 +331,7 @@ func TestList(t *testing.T) {
 	})
 
 	t.Run("list endpoint should throw if endpointServiceList throws", func(t *testing.T) {
-		endpointServiceListFunc = func(opts ...client.ListOption) (*v1alpha1.IngressRouteList, restErrors.IRestErr) {
+		endpointServiceListFunc = func(ns string, labels map[string]string) (*v1alpha1.IngressRouteList, restErrors.IRestErr) {
 			return nil, restErrors.NewInternalServerError("something went wrong")
 		}
 

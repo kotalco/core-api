@@ -11,14 +11,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
 	"os"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"testing"
 )
 
 var (
 	endpointService        IService
 	ingressRouteCreateFunc func(dto *ingressroute.IngressRouteDto) (*traefikv1alpha1.IngressRoute, restErrors.IRestErr)
-	ingressRouteListFunc   func(opts ...client.ListOption) (*traefikv1alpha1.IngressRouteList, restErrors.IRestErr)
+	ingressRouteListFunc   func(ns string, labels map[string]string) (*traefikv1alpha1.IngressRouteList, restErrors.IRestErr)
 	ingressRouteGetFunc    func(name string, namespace string) (*traefikv1alpha1.IngressRoute, restErrors.IRestErr)
 	ingressRouteDeleteFunc func(name string, namespace string) restErrors.IRestErr
 	ingressRouteUpdateFunc func(record *traefikv1alpha1.IngressRoute) restErrors.IRestErr
@@ -30,8 +29,8 @@ func (i ingressRouteServiceMock) Create(dto *ingressroute.IngressRouteDto) (*tra
 	return ingressRouteCreateFunc(dto)
 }
 
-func (i ingressRouteServiceMock) List(opts ...client.ListOption) (*traefikv1alpha1.IngressRouteList, restErrors.IRestErr) {
-	return ingressRouteListFunc(opts...)
+func (i ingressRouteServiceMock) List(ns string, labels map[string]string) (*traefikv1alpha1.IngressRouteList, restErrors.IRestErr) {
+	return ingressRouteListFunc(ns, labels)
 }
 
 func (i ingressRouteServiceMock) Get(name string, namespace string) (*traefikv1alpha1.IngressRoute, restErrors.IRestErr) {
@@ -189,7 +188,7 @@ func TestService_Create(t *testing.T) {
 
 func TestService_List(t *testing.T) {
 	t.Run("list endpoints should pass", func(t *testing.T) {
-		ingressRouteListFunc = func(opts ...client.ListOption) (*traefikv1alpha1.IngressRouteList, restErrors.IRestErr) {
+		ingressRouteListFunc = func(ns string, labels map[string]string) (*traefikv1alpha1.IngressRouteList, restErrors.IRestErr) {
 			return &traefikv1alpha1.IngressRouteList{
 				TypeMeta: metav1.TypeMeta{},
 				ListMeta: metav1.ListMeta{},
@@ -206,17 +205,17 @@ func TestService_List(t *testing.T) {
 			return &corev1.Secret{}, nil
 		}
 
-		list, err := endpointService.List(&client.ListOptions{Namespace: "namespace"}, &client.MatchingLabels{"app.kubernetes.io/created-by": "kotal-api"})
+		list, err := endpointService.List("namespace", map[string]string{"app.kubernetes.io/created-by": "kotal-api"})
 
 		assert.Nil(t, err)
 		assert.NotNil(t, list)
 	})
 
 	t.Run("list endpoint should throw if ingressroutesService.list throws", func(t *testing.T) {
-		ingressRouteListFunc = func(opts ...client.ListOption) (*traefikv1alpha1.IngressRouteList, restErrors.IRestErr) {
+		ingressRouteListFunc = func(ns string, labels map[string]string) (*traefikv1alpha1.IngressRouteList, restErrors.IRestErr) {
 			return nil, restErrors.NewInternalServerError("something went wrong")
 		}
-		list, err := endpointService.List(&client.ListOptions{Namespace: "namespace"})
+		list, err := endpointService.List("namespace", map[string]string{})
 		assert.Nil(t, list)
 		assert.EqualValues(t, http.StatusInternalServerError, err.StatusCode())
 		assert.EqualValues(t, "something went wrong", err.Error())

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/kotalco/cloud-api/core/setting"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kotalco/cloud-api/pkg/k8s"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
@@ -13,7 +14,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type ingressroute struct{}
@@ -23,7 +23,7 @@ type IIngressRoute interface {
 	// Create takes the representation of a ingressRoute and creates it returns ingress-route object or error if any
 	Create(dto *IngressRouteDto) (*traefikv1alpha1.IngressRoute, restErrors.IRestErr)
 	//List takes label and field selectors, and returns the list of Middlewares that match those selectors.
-	List(opts ...client.ListOption) (*traefikv1alpha1.IngressRouteList, restErrors.IRestErr)
+	List(ns string, labels map[string]string) (*traefikv1alpha1.IngressRouteList, restErrors.IRestErr)
 	// Get takes name and namespace of the ingressRoute, and returns the corresponding ingressRoute object, and an error if there is any.
 	Get(name string, namespace string) (*traefikv1alpha1.IngressRoute, restErrors.IRestErr)
 	// Delete takes name  and namespace of the ingressRoute, check if it exists and delete it if found. Returns an error if one occurs.
@@ -92,9 +92,11 @@ func (i *ingressroute) Create(dto *IngressRouteDto) (*traefikv1alpha1.IngressRou
 	return record, nil
 }
 
-func (i *ingressroute) List(opts ...client.ListOption) (*traefikv1alpha1.IngressRouteList, restErrors.IRestErr) {
+func (i *ingressroute) List(ns string, labels map[string]string) (*traefikv1alpha1.IngressRouteList, restErrors.IRestErr) {
 	records := &traefikv1alpha1.IngressRouteList{}
-	err := k8s.K8sClient.List(context.Background(), records, opts...)
+	var matchingLabels = client.MatchingLabels{}
+	matchingLabels = labels
+	err := k8s.K8sClient.List(context.Background(), records, &client.ListOptions{Namespace: ns}, &matchingLabels)
 	if err != nil {
 		go logger.Error(i.List, err)
 	}

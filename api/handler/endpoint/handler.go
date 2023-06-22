@@ -12,7 +12,6 @@ import (
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/shared"
 	"net/http"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var (
@@ -74,7 +73,7 @@ func Create(c *fiber.Ctx) error {
 // List accept namespace , returns a list of ingressroute.Ingressroute  or err if any
 func List(c *fiber.Ctx) error {
 	workspaceModel := c.Locals("workspace").(workspace.Workspace)
-	list, err := endpointService.List(&client.ListOptions{Namespace: workspaceModel.K8sNamespace}, &client.MatchingLabels{"app.kubernetes.io/created-by": "kotal-api"})
+	list, err := endpointService.List(workspaceModel.K8sNamespace, map[string]string{"app.kubernetes.io/created-by": "kotal-api"})
 	if err != nil {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
@@ -123,7 +122,7 @@ func Delete(c *fiber.Ctx) error {
 func Count(c *fiber.Ctx) error {
 	workspaceModel := c.Locals("workspace").(workspace.Workspace)
 
-	count, err := endpointService.Count(&client.ListOptions{Namespace: workspaceModel.K8sNamespace}, &client.MatchingLabels{"app.kubernetes.io/created-by": "kotal-api"})
+	count, err := endpointService.Count(workspaceModel.K8sNamespace, map[string]string{"app.kubernetes.io/created-by": "kotal-api"})
 	if err != nil {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
