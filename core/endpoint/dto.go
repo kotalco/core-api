@@ -22,6 +22,7 @@ type CreateEndpointDto struct {
 type EndpointMetaDto struct {
 	Name      string `json:"name"`
 	Protocol  string `json:"protocol"`
+	Network   string `json:"network"`
 	CreatedAt string `json:"created_at"`
 }
 
@@ -78,6 +79,7 @@ func Validate(dto interface{}) restErrors.IRestErr {
 func (endpoint *EndpointMetaDto) Marshall(dtoIngressRoute *traefikv1alpha1.IngressRoute) *EndpointMetaDto {
 	endpoint.Name = dtoIngressRoute.Name
 	endpoint.Protocol = dtoIngressRoute.Labels["kotal.io/protocol"]
+	endpoint.Network = dtoIngressRoute.Labels["kotal.io/network"]
 	endpoint.CreatedAt = dtoIngressRoute.CreationTimestamp.UTC().Format(shared.JavascriptISOString)
 	return endpoint
 }
@@ -86,6 +88,7 @@ func (endpoint *EndpointDto) Marshall(dtoIngressRoute *traefikv1alpha1.IngressRo
 	endpoint.Name = dtoIngressRoute.Name
 	endpoint.Routes = make([]*RouteDto, 0)
 	endpoint.Protocol = dtoIngressRoute.Labels["kotal.io/protocol"]
+	endpoint.Network = dtoIngressRoute.Labels["kotal.io/network"]
 	endpoint.CreatedAt = dtoIngressRoute.CreationTimestamp.UTC().Format(shared.JavascriptISOString)
 	for _, route := range dtoIngressRoute.Spec.Routes {
 		str := strings.ReplaceAll(route.Match, "Host(`", "")

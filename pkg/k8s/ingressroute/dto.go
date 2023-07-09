@@ -14,6 +14,7 @@ type IngressRouteDto struct {
 	Namespace       string                // is the namespace the user wishes to create the ingress-route in
 	ServiceName     string                // is the name of the service created by kotal operator
 	ServiceProtocol string                // is the protocol of which responsible for creating this service
+	ServiceNetwork  string                // is the network of which responsible for creating this service
 	ServiceKind     string                // is the kind of service created by kotal operator
 	ServiceID       string                // id of the service created by kotal operator
 	Ports           []IngressRoutePortDto // the corresponding ports of the targeted service

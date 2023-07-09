@@ -68,6 +68,7 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) restErrors
 		ServiceName:     svc.Name,
 		ServiceKind:     kind,
 		ServiceProtocol: svc.Labels["kotal.io/protocol"],
+		ServiceNetwork:  svc.Labels["kotal.io/network"],
 		ServiceID:       string(svc.UID),
 		Ports:           ingressRoutePorts,
 		Middlewares: func() []ingressroute.IngressRouteMiddlewareRefDto {
