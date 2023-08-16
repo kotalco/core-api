@@ -18,6 +18,12 @@ func Logs(c *fiber.Ctx) error {
 		go logger.Error("ENDPOINT_ACTIVITY_HANDLER_LOGS", err)
 		return c.SendStatus(badReq.StatusCode())
 	}
+
+	err := endpointactivity.Validate(dto)
+	if err != nil {
+		return c.Status(err.StatusCode()).JSON(err)
+	}
+
 	record, err := activityService.GetByEndpointId(dto.RequestId)
 	if err != nil {
 		if err.StatusCode() == http.StatusNotFound {

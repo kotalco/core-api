@@ -16,7 +16,7 @@ type IRepository interface {
 	WithTransaction(txHandle *gorm.DB) IRepository
 	WithoutTransaction() IRepository
 	GetByEndpointId(endpointId string) (*Activity, restErrors.IRestErr)
-	increment(activity *Activity) restErrors.IRestErr
+	Update(activity *Activity) restErrors.IRestErr
 }
 
 func NewRepository() IRepository {
@@ -45,10 +45,10 @@ func (r repository) GetByEndpointId(endpointId string) (*Activity, restErrors.IR
 	return activity, nil
 }
 
-func (r repository) increment(activity *Activity) restErrors.IRestErr {
+func (r repository) Update(activity *Activity) restErrors.IRestErr {
 	res := r.db.Save(activity)
 	if res.Error != nil {
-		go logger.Error(r.increment, res.Error)
+		go logger.Error(r.Update, res.Error)
 		return restErrors.NewInternalServerError("something went wrong")
 	}
 	return nil

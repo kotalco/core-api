@@ -36,5 +36,5 @@ func (s service) GetByEndpointId(endpointId string) (*Activity, restErrors.IRest
 
 func (s service) Increment(activity *Activity) restErrors.IRestErr {
 	activity.Counter++
-	return activityRepository.increment(activity)
+	return activityRepository.Update(activity)
 }
