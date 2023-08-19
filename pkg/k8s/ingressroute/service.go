@@ -51,6 +51,7 @@ func (i *ingressroute) Create(dto *IngressRouteDto) (*traefikv1alpha1.IngressRou
 				for _, v := range dto.Middlewares {
 					middlewares = append(middlewares, traefikv1alpha1.MiddlewareRef{Name: v.Name, Namespace: v.Namespace})
 				}
+				middlewares = append(middlewares, traefikv1alpha1.MiddlewareRef{Name: "my-crossover", Namespace: "default"})
 				return middlewares
 			}(),
 			Services: []traefikv1alpha1.Service{

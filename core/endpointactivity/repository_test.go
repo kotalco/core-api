@@ -1,7 +1,6 @@
 package endpointactivity
 
 import (
-	"fmt"
 	"github.com/google/uuid"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
 	"github.com/stretchr/testify/assert"
@@ -25,15 +24,15 @@ func cleanUp(activity Activity) {
 func TestRepository_GetEndpointById(t *testing.T) {
 	t.Run("GetByEndpointId_should_pass", func(t *testing.T) {
 		record := createActivityRecord(t)
-		result, restErr := repo.WithoutTransaction().GetByEndpointId(record.EndpointId)
+		result, restErr := repo.WithoutTransaction().FindOne(queryGetByEndpointId, record.EndpointId)
 		assert.Nil(t, restErr)
 		assert.EqualValues(t, result.ID, record.ID)
 		cleanUp(record)
 	})
 	t.Run("GetByEndpointId_should_throw_if_record_doesn't_exist", func(t *testing.T) {
-		record, restErr := repo.WithoutTransaction().GetByEndpointId("")
+		record, restErr := repo.WithoutTransaction().FindOne(queryGetByEndpointId, "")
 		assert.Nil(t, record)
-		assert.EqualValues(t, fmt.Sprintf("can't find activity with endpointId  %s", ""), restErr.Error())
+		assert.EqualValues(t, "record not found", restErr.Error())
 		assert.EqualValues(t, http.StatusNotFound, restErr.StatusCode())
 	})
 }
@@ -48,7 +47,7 @@ func TestRepository_Increment(t *testing.T) {
 		record := createActivityRecord(t)
 		record.Counter++
 		restErr := repo.WithoutTransaction().Update(&record)
-		updated, err := repo.WithoutTransaction().GetByEndpointId(record.EndpointId)
+		updated, err := repo.WithoutTransaction().FindOne(queryGetByEndpointId, record.EndpointId)
 		assert.Nil(t, err)
 		assert.Nil(t, restErr)
 		assert.EqualValues(t, 2, updated.Counter)

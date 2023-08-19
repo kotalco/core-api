@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/kotalco/cloud-api/core/endpoint"
+	"github.com/kotalco/cloud-api/core/endpointactivity"
 	"github.com/kotalco/cloud-api/core/setting"
 	"github.com/kotalco/cloud-api/core/workspace"
 	"github.com/kotalco/cloud-api/pkg/k8s/secret"
 	k8svc "github.com/kotalco/cloud-api/pkg/k8s/svc"
 	"github.com/kotalco/cloud-api/pkg/token"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
+	"github.com/kotalco/community-api/pkg/logger"
 	"github.com/kotalco/community-api/pkg/shared"
 	"net/http"
 )
@@ -20,6 +22,7 @@ var (
 	availableProtocol = k8svc.AvailableProtocol
 	settingService    = setting.NewService()
 	secretService     = secret.NewService()
+	activityService   = endpointactivity.NewService()
 )
 
 // Create accept  endpoint.CreateEndpointDto , creates the endpoint and returns success or err if any
@@ -103,6 +106,16 @@ func Get(c *fiber.Ctx) error {
 	secretName := fmt.Sprintf("%s-secret", record.Name)
 	v1Secret, _ := secretService.Get(secretName, workspaceModel.K8sNamespace)
 	endpointDto := new(endpoint.EndpointDto).Marshall(record, v1Secret)
+
+	//get endpoint activity
+	for _, i := range endpointDto.Routes {
+		activityRecord, err := activityService.GetByEndpointId(i.EndpointId)
+		if err != nil {
+			go logger.Info("GET_ENDPOINT", fmt.Sprintf("cant find endpoint activity for endpoint:  %s", i.Name))
+		} else {
+			i.Hits = activityRecord.Counter
+		}
+	}
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(endpointDto))
 }

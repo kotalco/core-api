@@ -13,7 +13,7 @@ var (
 	activityService        IService
 	WithTransactionFunc    func(txHandle *gorm.DB) IRepository
 	WithoutTransactionFunc func() IRepository
-	GetByEndpointIdFunc    func(endpointId string) (*Activity, restErrors.IRestErr)
+	FindOneFunc            func(query interface{}, conditions ...interface{}) (*Activity, restErrors.IRestErr)
 	UpdateFunc             func(activity *Activity) restErrors.IRestErr
 )
 
@@ -26,8 +26,8 @@ func (r activityRepoMock) WithoutTransaction() IRepository {
 	return r
 }
 
-func (r activityRepoMock) GetByEndpointId(endpointId string) (*Activity, restErrors.IRestErr) {
-	return GetByEndpointIdFunc(endpointId)
+func (r activityRepoMock) FindOne(query interface{}, conditions ...interface{}) (*Activity, restErrors.IRestErr) {
+	return FindOneFunc(query, conditions)
 }
 func (r activityRepoMock) Update(activity *Activity) restErrors.IRestErr {
 	return UpdateFunc(activity)
@@ -43,7 +43,7 @@ func TestMain(m *testing.M) {
 func TestService_Get_by_Endpoint_Id(t *testing.T) {
 	t.Run("Get_activity_by_endpoint_id_should_pass", func(t *testing.T) {
 
-		GetByEndpointIdFunc = func(endpointId string) (*Activity, restErrors.IRestErr) {
+		FindOneFunc = func(query interface{}, conditions ...interface{}) (*Activity, restErrors.IRestErr) {
 			return &Activity{
 				ID:         uuid.NewString(),
 				EndpointId: "123",
@@ -56,7 +56,7 @@ func TestService_Get_by_Endpoint_Id(t *testing.T) {
 		assert.NotNil(t, record)
 	})
 	t.Run("Get_activity_by_endpoint_should_throw_if_service_throws", func(t *testing.T) {
-		GetByEndpointIdFunc = func(endpointId string) (*Activity, restErrors.IRestErr) {
+		FindOneFunc = func(query interface{}, conditions ...interface{}) (*Activity, restErrors.IRestErr) {
 			return nil, restErrors.NewNotFoundError("no such record")
 		}
 

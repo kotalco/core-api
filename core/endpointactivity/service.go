@@ -31,7 +31,11 @@ func (s service) WithoutTransaction() IService {
 }
 
 func (s service) GetByEndpointId(endpointId string) (*Activity, restErrors.IRestErr) {
-	return activityRepository.GetByEndpointId(endpointId)
+	model, err := activityRepository.FindOne(queryGetByEndpointId, endpointId)
+	if err != nil {
+		return nil, err
+	}
+	return model, nil
 }
 
 func (s service) Increment(activity *Activity) restErrors.IRestErr {
