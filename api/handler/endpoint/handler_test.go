@@ -492,7 +492,7 @@ func TestWriteStats(t *testing.T) {
 		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
 	})
 
-	t.Run("Logs_should_throw_validation_error", func(t *testing.T) {
+	t.Run("WriteStats_should_throw_validation_error", func(t *testing.T) {
 		_, resp := newFiberCtx(invalidDto, WriteStats, map[string]interface{}{})
 		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
 

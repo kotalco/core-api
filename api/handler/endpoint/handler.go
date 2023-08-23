@@ -151,7 +151,7 @@ func WriteStats(c *fiber.Ctx) error {
 	dto := new(endpointactivity.EndpointActivityDto)
 	if err := c.BodyParser(dto); err != nil {
 		badReq := restErrors.NewBadRequestError("invalid request body")
-		go logger.Error("ENDPOINT_ACTIVITY_HANDLER_LOGS", err)
+		go logger.Error("ENDPOINT_ACTIVITY_HANDLER_WRITE_STATS", err)
 		return c.SendStatus(badReq.StatusCode())
 	}
 
@@ -172,7 +172,7 @@ func WriteStats(c *fiber.Ctx) error {
 
 	err = activityService.Increment(record)
 	if err != nil {
-		go logger.Error("ENDPOINT_ACTIVITY_HANDLER_LOGS", err)
+		go logger.Error("ENDPOINT_ACTIVITY_HANDLER_WRITE_STATS", err)
 		return c.SendStatus(err.StatusCode())
 	}
 	return c.SendStatus(http.StatusOK)
