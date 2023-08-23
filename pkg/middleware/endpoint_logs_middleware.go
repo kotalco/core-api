@@ -8,7 +8,7 @@ import (
 
 func EndpointLogsAPIKeyProtected(c *fiber.Ctx) error {
 	headers := c.GetReqHeaders()
-	apiKey := headers["Api-Key"]
+	apiKey := headers["X-Api-Key"]
 	if apiKey != config.Environment.EndpointLogsAPIKey {
 		return c.SendStatus(http.StatusUnauthorized)
 	}

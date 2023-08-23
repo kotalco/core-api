@@ -4,7 +4,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/websocket/v2"
 	"github.com/kotalco/cloud-api/api/handler/endpoint"
-	"github.com/kotalco/cloud-api/api/handler/endpointactivity"
 	"github.com/kotalco/cloud-api/api/handler/setting"
 	"github.com/kotalco/cloud-api/api/handler/sts"
 	"github.com/kotalco/cloud-api/api/handler/subscription"
@@ -88,7 +87,7 @@ func MapUrl(app *fiber.App) {
 	endpoints.Get("/", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership, middleware.IsReader, endpoint.List)
 	endpoints.Get("/:name", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership, middleware.IsReader, endpoint.Get)
 	endpoints.Delete("/:name", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership, middleware.IsAdmin, endpoint.Delete)
-	endpoints.Post("/logs", middleware.EndpointLogsAPIKeyProtected, endpointactivity.Logs)
+	endpoints.Post("/stats", middleware.EndpointLogsAPIKeyProtected, endpoint.WriteStats)
 
 	//settings group
 	settingGroup := v1.Group("settings")
