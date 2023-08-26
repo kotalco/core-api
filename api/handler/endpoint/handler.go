@@ -3,13 +3,16 @@ package endpoint
 import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"github.com/kotalco/cloud-api/core/endpoint"
+	"github.com/kotalco/cloud-api/core/endpointactivity"
 	"github.com/kotalco/cloud-api/core/setting"
 	"github.com/kotalco/cloud-api/core/workspace"
 	"github.com/kotalco/cloud-api/pkg/k8s/secret"
 	k8svc "github.com/kotalco/cloud-api/pkg/k8s/svc"
 	"github.com/kotalco/cloud-api/pkg/token"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
+	"github.com/kotalco/community-api/pkg/logger"
 	"github.com/kotalco/community-api/pkg/shared"
 	"net/http"
 )
@@ -20,6 +23,7 @@ var (
 	availableProtocol = k8svc.AvailableProtocol
 	settingService    = setting.NewService()
 	secretService     = secret.NewService()
+	activityService   = endpointactivity.NewService()
 )
 
 // Create accept  endpoint.CreateEndpointDto , creates the endpoint and returns success or err if any
@@ -104,6 +108,16 @@ func Get(c *fiber.Ctx) error {
 	v1Secret, _ := secretService.Get(secretName, workspaceModel.K8sNamespace)
 	endpointDto := new(endpoint.EndpointDto).Marshall(record, v1Secret)
 
+	//get endpoint activity
+	for _, i := range endpointDto.Routes {
+		activityRecord, err := activityService.GetByEndpointId(i.EndpointId)
+		if err != nil {
+			go logger.Info("GET_ENDPOINT", fmt.Sprintf("cant find endpoint activity for endpoint:  %s", i.Name))
+		} else {
+			i.Hits = activityRecord.Counter
+		}
+	}
+
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(endpointDto))
 }
 
@@ -130,5 +144,36 @@ func Count(c *fiber.Ctx) error {
 	c.Set("Access-Control-Expose-Headers", "X-Total-Count")
 	c.Set("X-Total-Count", fmt.Sprintf("%d", count))
 
+	return c.SendStatus(http.StatusOK)
+}
+
+func WriteStats(c *fiber.Ctx) error {
+	dto := new(endpointactivity.EndpointActivityDto)
+	if err := c.BodyParser(dto); err != nil {
+		badReq := restErrors.NewBadRequestError("invalid request body")
+		go logger.Error("ENDPOINT_ACTIVITY_HANDLER_WRITE_STATS", err)
+		return c.SendStatus(badReq.StatusCode())
+	}
+
+	err := endpointactivity.Validate(dto)
+	if err != nil {
+		return c.Status(err.StatusCode()).JSON(err)
+	}
+
+	record, err := activityService.GetByEndpointId(dto.RequestId)
+	if err != nil {
+		if err.StatusCode() == http.StatusNotFound {
+			record = new(endpointactivity.Activity)
+			record.ID = uuid.NewString()
+			record.EndpointId = dto.RequestId
+			record.Counter = 0
+		}
+	}
+
+	err = activityService.Increment(record)
+	if err != nil {
+		go logger.Error("ENDPOINT_ACTIVITY_HANDLER_WRITE_STATS", err)
+		return c.SendStatus(err.StatusCode())
+	}
 	return c.SendStatus(http.StatusOK)
 }

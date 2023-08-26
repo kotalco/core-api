@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/gofiber/fiber/v2"
 	"github.com/kotalco/cloud-api/core/endpoint"
+	"github.com/kotalco/cloud-api/core/endpointactivity"
 	"github.com/kotalco/cloud-api/core/setting"
 	"github.com/kotalco/cloud-api/core/workspace"
 	"github.com/kotalco/cloud-api/pkg/k8s/secret"
@@ -138,6 +139,28 @@ func (s secretServiceMock) Get(name string, namespace string) (*corev1.Secret, r
 	return secretGetFunc(name, namespace)
 }
 
+var (
+	GetByEndpointIdFunc func(endpointId string) (*endpointactivity.Activity, restErrors.IRestErr)
+	IncrementFunc       func(activity *endpointactivity.Activity) restErrors.IRestErr
+)
+
+type activityServiceMock struct{}
+
+func (s activityServiceMock) WithoutTransaction() endpointactivity.IService {
+	return s
+}
+
+func (s activityServiceMock) WithTransaction(txHandle *gorm.DB) endpointactivity.IService {
+	return s
+}
+func (s activityServiceMock) GetByEndpointId(endpointId string) (*endpointactivity.Activity, restErrors.IRestErr) {
+	return GetByEndpointIdFunc(endpointId)
+}
+
+func (s activityServiceMock) Increment(activity *endpointactivity.Activity) restErrors.IRestErr {
+	return IncrementFunc(activity)
+}
+
 func newFiberCtx(dto interface{}, method func(c *fiber.Ctx) error, locals map[string]interface{}) ([]byte, *http.Response) {
 	app := fiber.New()
 	app.Post("/test/", func(c *fiber.Ctx) error {
@@ -172,6 +195,7 @@ func TestMain(m *testing.M) {
 	svcService = &svcServiceMock{}
 	settingService = &settingServiceMock{}
 	secretService = &secretServiceMock{}
+	activityService = &activityServiceMock{}
 	code := m.Run()
 
 	os.Exit(code)
@@ -424,6 +448,66 @@ func TestDelete(t *testing.T) {
 		assert.Nil(t, err)
 		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
 		assert.NotNil(t, "something went wrong", result.Message)
+	})
+
+}
+
+func TestWriteStats(t *testing.T) {
+	var validDto = map[string]string{
+		"request_id": "12345678",
+	}
+	var invalidDto = map[string]string{}
+
+	t.Run("WriteStats_should_pass", func(t *testing.T) {
+		GetByEndpointIdFunc = func(endpointId string) (*endpointactivity.Activity, restErrors.IRestErr) {
+			return &endpointactivity.Activity{}, nil
+		}
+		IncrementFunc = func(activity *endpointactivity.Activity) restErrors.IRestErr {
+			return nil
+		}
+		_, resp := newFiberCtx(validDto, WriteStats, map[string]interface{}{})
+
+		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
+	})
+	t.Run("WriteStats_should_pass_and_create_new_endpoint_activity_if_it_doesn't_exist", func(t *testing.T) {
+		GetByEndpointIdFunc = func(endpointId string) (*endpointactivity.Activity, restErrors.IRestErr) {
+			return nil, restErrors.NewNotFoundError("no such record")
+		}
+		IncrementFunc = func(activity *endpointactivity.Activity) restErrors.IRestErr {
+			return nil
+		}
+		_, resp := newFiberCtx(validDto, WriteStats, map[string]interface{}{})
+
+		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
+	})
+	t.Run("WriteStats_should_throw_bad_request_err", func(t *testing.T) {
+		GetByEndpointIdFunc = func(endpointId string) (*endpointactivity.Activity, restErrors.IRestErr) {
+			return &endpointactivity.Activity{}, nil
+		}
+		IncrementFunc = func(activity *endpointactivity.Activity) restErrors.IRestErr {
+			return nil
+		}
+		_, resp := newFiberCtx("", WriteStats, map[string]interface{}{})
+
+		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
+	})
+
+	t.Run("WriteStats_should_throw_validation_error", func(t *testing.T) {
+		_, resp := newFiberCtx(invalidDto, WriteStats, map[string]interface{}{})
+		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
+
+	})
+
+	t.Run("WriteStats_should_throw_if_can't_increment_endpoint_counter", func(t *testing.T) {
+		GetByEndpointIdFunc = func(endpointId string) (*endpointactivity.Activity, restErrors.IRestErr) {
+			return &endpointactivity.Activity{}, nil
+		}
+		IncrementFunc = func(activity *endpointactivity.Activity) restErrors.IRestErr {
+			return restErrors.NewInternalServerError("something went wrong")
+		}
+
+		_, resp := newFiberCtx(validDto, WriteStats, map[string]interface{}{})
+		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
 	})
 
 }

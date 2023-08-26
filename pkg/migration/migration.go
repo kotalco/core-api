@@ -1,6 +1,7 @@
 package migration
 
 import (
+	"github.com/kotalco/cloud-api/core/endpointactivity"
 	"github.com/kotalco/cloud-api/core/setting"
 	"github.com/kotalco/cloud-api/core/user"
 	"github.com/kotalco/cloud-api/core/verification"
@@ -25,6 +26,7 @@ type IMigration interface {
 	CreateWorkspaceTable() error
 	CreateWorkspaceUserTable() error
 	CreateSettingTable() error
+	CreateEndpointActivityTable() error
 }
 
 func NewMigration(dbClient *gorm.DB) IMigration {
@@ -78,6 +80,15 @@ func (m migration) CreateSettingTable() error {
 	if !exits {
 		go logger.Info(m.CreateSettingTable, "CreateSettingTable")
 		return m.dbClient.AutoMigrate(setting.Setting{})
+	}
+	return nil
+}
+
+func (m migration) CreateEndpointActivityTable() error {
+	exits := m.dbClient.Migrator().HasTable(endpointactivity.Activity{})
+	if !exits {
+		go logger.Info(m.CreateEndpointActivityTable, "CreateEndpointActivityTable")
+		return m.dbClient.AutoMigrate(endpointactivity.Activity{})
 	}
 	return nil
 }

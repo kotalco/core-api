@@ -37,6 +37,8 @@ type RouteDto struct {
 	Route      string   `json:"route"`
 	Example    string   `json:"example"`
 	References []string `json:"references"`
+	EndpointId string   `json:"-"`
+	Hits       int64    `json:"hits"`
 }
 
 type BasicAuthDto struct {
@@ -118,8 +120,21 @@ func (endpoint *EndpointDto) Marshall(dtoIngressRoute *traefikv1alpha1.IngressRo
 			Route:      str,
 			Example:    routeExample,
 			References: routeRefs,
+			EndpointId: getEndpointId(str),
 		})
 	}
 
 	return endpoint
+}
+
+func getEndpointId(path string) string {
+	// Compile the regular expression
+	re := regexp.MustCompile("([0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{12})")
+	// Find the first match of the pattern in the URL Path
+	match := re.FindStringSubmatch(path)
+
+	if len(match) == 0 {
+		return ""
+	}
+	return match[0]
 }
