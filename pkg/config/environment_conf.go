@@ -39,7 +39,9 @@ var (
 		RatelimiterPerMinute                   string
 		SubscriptionAPIBaseURL                 string
 		ECCPublicKey                           string
-		EndpointLogsAPIKey                     string
+		CrossOverAPIKey                        string
+		CrossOverPattern                       string
+		CrossOverRemoteAddress                 string
 	}{
 		ServerPort:                             getenv("CLOUD_API_SERVER_PORT", "6000"),
 		Environment:                            getenv("ENVIRONMENT", "development"),
@@ -64,7 +66,9 @@ var (
 		RatelimiterPerMinute:                   getenv("RATE_LIMITER_PER_MINUTE", "100"),
 		SubscriptionAPIBaseURL:                 getenv("SUBSCRIPTION_API_BASE_URL", "http://localhost:8081"),
 		ECCPublicKey:                           os.Getenv("ECC_PUBLIC_KEY"),
-		EndpointLogsAPIKey:                     os.Getenv("ENDPOINT_LOGS_API_KEY"),
+		CrossOverAPIKey:                        os.Getenv("CROSSOVER_API_KEY"),
+		CrossOverPattern:                       os.Getenv("CROSSOVER_PATTERN"),
+		CrossOverRemoteAddress:                 os.Getenv("CROSSOVER_REMOTE_ADDRESS"),
 	}
 )
 

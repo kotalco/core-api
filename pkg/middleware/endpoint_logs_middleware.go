@@ -6,10 +6,10 @@ import (
 	"net/http"
 )
 
-func EndpointLogsAPIKeyProtected(c *fiber.Ctx) error {
+func CrossoverAPIKeyProtected(c *fiber.Ctx) error {
 	headers := c.GetReqHeaders()
 	apiKey := headers["X-Api-Key"]
-	if apiKey != config.Environment.EndpointLogsAPIKey {
+	if apiKey != config.Environment.CrossOverAPIKey {
 		return c.SendStatus(http.StatusUnauthorized)
 	}
 	return c.Next()

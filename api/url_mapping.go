@@ -80,6 +80,8 @@ func MapUrl(app *fiber.App) {
 	stsGroup := v1.Group("/core/statefulset")
 	stsGroup.Get("/count", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership, sts.Count)
 
+	// Set config for CSRF middleware
+
 	//endpoints group
 	endpoints := v1.Group("endpoints")
 	endpoints.Post("/", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership, middleware.IsWriter, endpoint.Create)
@@ -87,7 +89,7 @@ func MapUrl(app *fiber.App) {
 	endpoints.Get("/", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership, middleware.IsReader, endpoint.List)
 	endpoints.Get("/:name", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership, middleware.IsReader, endpoint.Get)
 	endpoints.Delete("/:name", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership, middleware.IsAdmin, endpoint.Delete)
-	endpoints.Post("/stats", middleware.EndpointLogsAPIKeyProtected, endpoint.WriteStats)
+	endpoints.Post("/stats", middleware.CrossoverAPIKeyProtected, endpoint.WriteStats)
 
 	//settings group
 	settingGroup := v1.Group("settings")
