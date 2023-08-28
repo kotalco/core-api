@@ -48,10 +48,14 @@ type k8MiddlewareServiceMock struct{}
 
 var (
 	k8middlewareCreateFunc func(dto *middleware.CreateMiddlewareDto) restErrors.IRestErr
+	k8middlewareGetFunc    func(name string, namespace string) (*traefikv1alpha1.Middleware, restErrors.IRestErr)
 )
 
 func (k k8MiddlewareServiceMock) Create(dto *middleware.CreateMiddlewareDto) restErrors.IRestErr {
 	return k8middlewareCreateFunc(dto)
+}
+func (k k8MiddlewareServiceMock) Get(name string, namespace string) (*traefikv1alpha1.Middleware, restErrors.IRestErr) {
+	return k8middlewareGetFunc(name, namespace)
 }
 
 type secretServiceMock struct{}
@@ -90,10 +94,15 @@ func TestService_Create(t *testing.T) {
 			return nil
 		}
 
+		k8middlewareGetFunc = func(name string, namespace string) (*traefikv1alpha1.Middleware, restErrors.IRestErr) {
+			return new(traefikv1alpha1.Middleware), nil
+		}
+
 		createDto := &CreateEndpointDto{}
 		svc := &corev1.Service{Spec: corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{{}},
 		}}
+
 		err := endpointService.Create(createDto, svc)
 		assert.Nil(t, err)
 	})
@@ -184,6 +193,65 @@ func TestService_Create(t *testing.T) {
 		err := endpointService.Create(createDto, svc)
 		assert.EqualValues(t, "something went wrong", err.Error())
 	})
+	t.Run("create endpoint should throw if can't find crossover middleware and it throws error rather than notfound", func(t *testing.T) {
+		ingressRouteCreateFunc = func(dto *ingressroute.IngressRouteDto) (*traefikv1alpha1.IngressRoute, restErrors.IRestErr) {
+			return &traefikv1alpha1.IngressRoute{
+				TypeMeta:   metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{},
+				Spec:       traefikv1alpha1.IngressRouteSpec{},
+			}, nil
+		}
+		k8middlewareCreateFunc = func(dto *middleware.CreateMiddlewareDto) restErrors.IRestErr {
+			return nil
+		}
+
+		createDto := &CreateEndpointDto{}
+		svc := &corev1.Service{Spec: corev1.ServiceSpec{
+			Ports: []corev1.ServicePort{{}},
+		}}
+
+		k8middlewareGetFunc = func(name string, namespace string) (*traefikv1alpha1.Middleware, restErrors.IRestErr) {
+			return nil, restErrors.NewInternalServerError("can't find crossover internal err")
+		}
+
+		ingressRouteDeleteFunc = func(name string, namespace string) restErrors.IRestErr {
+			return nil
+		}
+
+		err := endpointService.Create(createDto, svc)
+		assert.EqualValues(t, "can't find crossover internal err", err.Error())
+	})
+	t.Run("create endpoint should throw if can't find crossover middleware and can't create new one", func(t *testing.T) {
+		ingressRouteCreateFunc = func(dto *ingressroute.IngressRouteDto) (*traefikv1alpha1.IngressRoute, restErrors.IRestErr) {
+			return &traefikv1alpha1.IngressRoute{
+				TypeMeta:   metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{},
+				Spec:       traefikv1alpha1.IngressRouteSpec{},
+			}, nil
+		}
+		k8middlewareCreateFunc = func(dto *middleware.CreateMiddlewareDto) restErrors.IRestErr {
+			return nil
+		}
+
+		createDto := &CreateEndpointDto{}
+		svc := &corev1.Service{Spec: corev1.ServiceSpec{
+			Ports: []corev1.ServicePort{{}},
+		}}
+
+		k8middlewareGetFunc = func(name string, namespace string) (*traefikv1alpha1.Middleware, restErrors.IRestErr) {
+			return nil, restErrors.NewNotFoundError("no such record")
+		}
+
+		k8middlewareCreateFunc = func(dto *middleware.CreateMiddlewareDto) restErrors.IRestErr {
+			return restErrors.NewInternalServerError("can't create middleware")
+		}
+		ingressRouteDeleteFunc = func(name string, namespace string) restErrors.IRestErr {
+			return nil
+		}
+		err := endpointService.Create(createDto, svc)
+		assert.EqualValues(t, "can't create middleware", err.Error())
+	})
+
 }
 
 func TestService_List(t *testing.T) {
