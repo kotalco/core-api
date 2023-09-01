@@ -3,7 +3,6 @@ package endpoint
 import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
 	"github.com/kotalco/cloud-api/core/endpoint"
 	"github.com/kotalco/cloud-api/core/endpointactivity"
 	"github.com/kotalco/cloud-api/core/setting"
@@ -108,16 +107,6 @@ func Get(c *fiber.Ctx) error {
 	v1Secret, _ := secretService.Get(secretName, workspaceModel.K8sNamespace)
 	endpointDto := new(endpoint.EndpointDto).Marshall(record, v1Secret)
 
-	//get endpoint activity
-	for _, i := range endpointDto.Routes {
-		activityRecord, err := activityService.GetByEndpointId(i.EndpointId)
-		if err != nil {
-			go logger.Info("GET_ENDPOINT", fmt.Sprintf("cant find endpoint activity for endpoint:  %s", i.Name))
-		} else {
-			i.Hits = activityRecord.Counter
-		}
-	}
-
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(endpointDto))
 }
 
@@ -160,17 +149,7 @@ func WriteStats(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	record, err := activityService.GetByEndpointId(dto.RequestId)
-	if err != nil {
-		if err.StatusCode() == http.StatusNotFound {
-			record = new(endpointactivity.Activity)
-			record.ID = uuid.NewString()
-			record.EndpointId = dto.RequestId
-			record.Counter = 0
-		}
-	}
-
-	err = activityService.Increment(record)
+	err = activityService.Create(dto.RequestId)
 	if err != nil {
 		go logger.Error("ENDPOINT_ACTIVITY_HANDLER_WRITE_STATS", err)
 		return c.SendStatus(err.StatusCode())

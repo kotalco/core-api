@@ -1,7 +1,7 @@
 package endpointactivity
 
 type Activity struct {
-	ID         string
-	EndpointId string `gorm:"uniqueIndex"`
-	Counter    int64
+	ID         string `gorm:"uniqueIndex"`
+	EndpointId string
+	Timestamp  int64
 }
