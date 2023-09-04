@@ -1,8 +1,10 @@
 package endpointactivity
 
 import (
+	"github.com/google/uuid"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"gorm.io/gorm"
+	"time"
 )
 
 type service struct{}
@@ -10,8 +12,7 @@ type service struct{}
 type IService interface {
 	WithTransaction(txHandle *gorm.DB) IService
 	WithoutTransaction() IService
-	GetByEndpointId(endpointId string) (*Activity, restErrors.IRestErr)
-	Increment(activity *Activity) restErrors.IRestErr
+	Create(endpointId string) restErrors.IRestErr
 }
 
 var activityRepository = NewRepository()
@@ -30,15 +31,10 @@ func (s service) WithoutTransaction() IService {
 	return s
 }
 
-func (s service) GetByEndpointId(endpointId string) (*Activity, restErrors.IRestErr) {
-	model, err := activityRepository.FindOne(queryGetByEndpointId, endpointId)
-	if err != nil {
-		return nil, err
-	}
-	return model, nil
-}
-
-func (s service) Increment(activity *Activity) restErrors.IRestErr {
-	activity.Counter++
-	return activityRepository.Update(activity)
+func (s service) Create(endpointId string) restErrors.IRestErr {
+	record := new(Activity)
+	record.ID = uuid.NewString()
+	record.EndpointId = endpointId
+	record.Timestamp = time.Now().Unix()
+	return activityRepository.Create(record)
 }

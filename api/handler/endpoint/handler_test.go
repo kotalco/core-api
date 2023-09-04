@@ -140,8 +140,7 @@ func (s secretServiceMock) Get(name string, namespace string) (*corev1.Secret, r
 }
 
 var (
-	GetByEndpointIdFunc func(endpointId string) (*endpointactivity.Activity, restErrors.IRestErr)
-	IncrementFunc       func(activity *endpointactivity.Activity) restErrors.IRestErr
+	activityCreateFunc func(endpointId string) restErrors.IRestErr
 )
 
 type activityServiceMock struct{}
@@ -153,12 +152,8 @@ func (s activityServiceMock) WithoutTransaction() endpointactivity.IService {
 func (s activityServiceMock) WithTransaction(txHandle *gorm.DB) endpointactivity.IService {
 	return s
 }
-func (s activityServiceMock) GetByEndpointId(endpointId string) (*endpointactivity.Activity, restErrors.IRestErr) {
-	return GetByEndpointIdFunc(endpointId)
-}
-
-func (s activityServiceMock) Increment(activity *endpointactivity.Activity) restErrors.IRestErr {
-	return IncrementFunc(activity)
+func (s activityServiceMock) Create(endpointId string) restErrors.IRestErr {
+	return activityCreateFunc(endpointId)
 }
 
 func newFiberCtx(dto interface{}, method func(c *fiber.Ctx) error, locals map[string]interface{}) ([]byte, *http.Response) {
@@ -459,21 +454,7 @@ func TestWriteStats(t *testing.T) {
 	var invalidDto = map[string]string{}
 
 	t.Run("WriteStats_should_pass", func(t *testing.T) {
-		GetByEndpointIdFunc = func(endpointId string) (*endpointactivity.Activity, restErrors.IRestErr) {
-			return &endpointactivity.Activity{}, nil
-		}
-		IncrementFunc = func(activity *endpointactivity.Activity) restErrors.IRestErr {
-			return nil
-		}
-		_, resp := newFiberCtx(validDto, WriteStats, map[string]interface{}{})
-
-		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
-	})
-	t.Run("WriteStats_should_pass_and_create_new_endpoint_activity_if_it_doesn't_exist", func(t *testing.T) {
-		GetByEndpointIdFunc = func(endpointId string) (*endpointactivity.Activity, restErrors.IRestErr) {
-			return nil, restErrors.NewNotFoundError("no such record")
-		}
-		IncrementFunc = func(activity *endpointactivity.Activity) restErrors.IRestErr {
+		activityCreateFunc = func(endpointId string) restErrors.IRestErr {
 			return nil
 		}
 		_, resp := newFiberCtx(validDto, WriteStats, map[string]interface{}{})
@@ -481,10 +462,7 @@ func TestWriteStats(t *testing.T) {
 		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
 	})
 	t.Run("WriteStats_should_throw_bad_request_err", func(t *testing.T) {
-		GetByEndpointIdFunc = func(endpointId string) (*endpointactivity.Activity, restErrors.IRestErr) {
-			return &endpointactivity.Activity{}, nil
-		}
-		IncrementFunc = func(activity *endpointactivity.Activity) restErrors.IRestErr {
+		activityCreateFunc = func(endpointId string) restErrors.IRestErr {
 			return nil
 		}
 		_, resp := newFiberCtx("", WriteStats, map[string]interface{}{})
@@ -498,11 +476,8 @@ func TestWriteStats(t *testing.T) {
 
 	})
 
-	t.Run("WriteStats_should_throw_if_can't_increment_endpoint_counter", func(t *testing.T) {
-		GetByEndpointIdFunc = func(endpointId string) (*endpointactivity.Activity, restErrors.IRestErr) {
-			return &endpointactivity.Activity{}, nil
-		}
-		IncrementFunc = func(activity *endpointactivity.Activity) restErrors.IRestErr {
+	t.Run("WriteStats_should_throw_if_can't_create_endpoint_activity", func(t *testing.T) {
+		activityCreateFunc = func(endpointId string) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 

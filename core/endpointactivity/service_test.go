@@ -13,8 +13,7 @@ var (
 	activityService        IService
 	WithTransactionFunc    func(txHandle *gorm.DB) IRepository
 	WithoutTransactionFunc func() IRepository
-	FindOneFunc            func(query interface{}, conditions ...interface{}) (*Activity, restErrors.IRestErr)
-	UpdateFunc             func(activity *Activity) restErrors.IRestErr
+	CreateFunc             func(activity *Activity) restErrors.IRestErr
 )
 
 type activityRepoMock struct{}
@@ -26,11 +25,8 @@ func (r activityRepoMock) WithoutTransaction() IRepository {
 	return r
 }
 
-func (r activityRepoMock) FindOne(query interface{}, conditions ...interface{}) (*Activity, restErrors.IRestErr) {
-	return FindOneFunc(query, conditions)
-}
-func (r activityRepoMock) Update(activity *Activity) restErrors.IRestErr {
-	return UpdateFunc(activity)
+func (r activityRepoMock) Create(activity *Activity) restErrors.IRestErr {
+	return CreateFunc(activity)
 }
 
 func TestMain(m *testing.M) {
@@ -40,48 +36,22 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func TestService_Get_by_Endpoint_Id(t *testing.T) {
-	t.Run("Get_activity_by_endpoint_id_should_pass", func(t *testing.T) {
-
-		FindOneFunc = func(query interface{}, conditions ...interface{}) (*Activity, restErrors.IRestErr) {
-			return &Activity{
-				ID:         uuid.NewString(),
-				EndpointId: "123",
-				Counter:    1,
-			}, nil
-		}
-
-		record, err := activityService.GetByEndpointId("123")
-		assert.Nil(t, err)
-		assert.NotNil(t, record)
-	})
-	t.Run("Get_activity_by_endpoint_should_throw_if_service_throws", func(t *testing.T) {
-		FindOneFunc = func(query interface{}, conditions ...interface{}) (*Activity, restErrors.IRestErr) {
-			return nil, restErrors.NewNotFoundError("no such record")
-		}
-
-		record, err := activityService.GetByEndpointId("123")
-		assert.Nil(t, record)
-		assert.EqualValues(t, "no such record", err.Error())
-	})
-}
-
-func TestService_Increment(t *testing.T) {
-	t.Run("increment_should_pass", func(t *testing.T) {
-		UpdateFunc = func(activity *Activity) restErrors.IRestErr {
+func TestService_Create(t *testing.T) {
+	t.Run("create_should_pass", func(t *testing.T) {
+		CreateFunc = func(activity *Activity) restErrors.IRestErr {
 			return nil
 		}
 
-		restErr := activityService.Increment(new(Activity))
+		restErr := activityService.Create(uuid.NewString())
 		assert.Nil(t, restErr)
 	})
 
-	t.Run("increment_should_throw_if_repos_throws", func(t *testing.T) {
-		UpdateFunc = func(activity *Activity) restErrors.IRestErr {
+	t.Run("create_should_throw_if_repos_throws", func(t *testing.T) {
+		CreateFunc = func(activity *Activity) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 
-		restErr := activityService.Increment(new(Activity))
+		restErr := activityService.Create(uuid.NewString())
 		assert.EqualValues(t, "something went wrong", restErr.Error())
 	})
 }
