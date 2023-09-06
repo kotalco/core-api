@@ -88,6 +88,7 @@ func MapUrl(app *fiber.App) {
 	endpoints.Get("/:name", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership, middleware.IsReader, endpoint.Get)
 	endpoints.Delete("/:name", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership, middleware.IsAdmin, endpoint.Delete)
 	endpoints.Post("/stats", middleware.CrossoverAPIKeyProtected, endpoint.WriteStats)
+	endpoints.Get("/:name/stats", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership, middleware.IsReader, endpoint.ReadStats)
 
 	//settings group
 	settingGroup := v1.Group("settings")

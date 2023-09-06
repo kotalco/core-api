@@ -140,7 +140,8 @@ func (s secretServiceMock) Get(name string, namespace string) (*corev1.Secret, r
 }
 
 var (
-	activityCreateFunc func(endpointId string) restErrors.IRestErr
+	activityCreateFunc      func(endpointId string) restErrors.IRestErr
+	activityMonthlyActivity func(endpointId string) (*int, restErrors.IRestErr)
 )
 
 type activityServiceMock struct{}
@@ -154,6 +155,9 @@ func (s activityServiceMock) WithTransaction(txHandle *gorm.DB) endpointactivity
 }
 func (s activityServiceMock) Create(endpointId string) restErrors.IRestErr {
 	return activityCreateFunc(endpointId)
+}
+func (s activityServiceMock) MonthlyActivity(endpointId string) (*int, restErrors.IRestErr) {
+	return activityMonthlyActivity(endpointId)
 }
 
 func newFiberCtx(dto interface{}, method func(c *fiber.Ctx) error, locals map[string]interface{}) ([]byte, *http.Response) {
@@ -483,6 +487,43 @@ func TestWriteStats(t *testing.T) {
 
 		_, resp := newFiberCtx(validDto, WriteStats, map[string]interface{}{})
 		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
+	})
+
+}
+func TestReadStats(t *testing.T) {
+	workspaceModel := new(workspace.Workspace)
+	var locals = map[string]interface{}{}
+	locals["workspace"] = *workspaceModel
+
+	t.Run("read endpoint stats should pass", func(t *testing.T) {
+		endpointServiceGetFunc = func(name string, namespace string) (*v1alpha1.IngressRoute, restErrors.IRestErr) {
+			return &v1alpha1.IngressRoute{}, nil
+		}
+
+		activityMonthlyActivity = func(endpointId string) (*int, restErrors.IRestErr) {
+			counter := 1
+			return &counter, nil
+		}
+
+		body, resp := newFiberCtx("", ReadStats, locals)
+		var result map[string]endpointactivity.ActivityDto
+		err := json.Unmarshal(body, &result)
+		assert.Nil(t, err)
+		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
+		assert.NotNil(t, result["data"])
+
+	})
+
+	t.Run("read endpoint stats should throw if can't get endpoint from service", func(t *testing.T) {
+		endpointServiceGetFunc = func(name string, namespace string) (*v1alpha1.IngressRoute, restErrors.IRestErr) {
+			return nil, restErrors.NewNotFoundError("no such record")
+		}
+		body, resp := newFiberCtx("", ReadStats, locals)
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		assert.Nil(t, err)
+		assert.EqualValues(t, http.StatusNotFound, resp.StatusCode)
+		assert.NotNil(t, "no such record", result.Message)
 	})
 
 }
