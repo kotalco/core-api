@@ -165,15 +165,19 @@ func ReadStats(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
-	dto := new(endpointactivity.ActivityDto).Marshall(record)
 
-	for _, v := range dto.Routes {
-		monthlyCount, err := activityService.MonthlyActivity(v.EndpointId)
-		if err != nil {
-			go logger.Error("ENDPOINT_ACTIVITY_HANDLER_READ_STATS", err)
-			return c.Status(err.StatusCode()).JSON(err)
+	dto := map[string]endpointactivity.ActivityAggregations{}
+	for _, v := range record.Spec.Routes {
+		portName := v.Services[0].Port.StrVal
+		if k8svc.AvailableProtocol(portName) {
+			monthlyCount, err := activityService.MonthlyActivity(endpointactivity.GetEndpointId(v.Match))
+			if err != nil {
+				go logger.Error("ENDPOINT_ACTIVITY_HANDLER_READ_STATS", err)
+				return c.Status(err.StatusCode()).JSON(err)
+			}
+			dto[portName] = endpointactivity.ActivityAggregations{MonthlyHits: *monthlyCount}
 		}
-		v.Hits = *monthlyCount
+
 	}
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(dto))

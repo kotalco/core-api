@@ -3,20 +3,11 @@ package endpointactivity
 import (
 	"github.com/go-playground/validator/v10"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
-	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"regexp"
 )
 
-type ActivityDto struct {
-	Name     string      `json:"name"`
-	Protocol string      `json:"protocol"`
-	Routes   []*RouteDto `json:"routes"`
-}
-
-type RouteDto struct {
-	Name       string `json:"name"`
-	EndpointId string `json:"-"`
-	Hits       int    `json:"hits"`
+type ActivityAggregations struct {
+	MonthlyHits int `json:"monthly_hits"`
 }
 
 type CreateEndpointActivityDto struct {
@@ -44,21 +35,7 @@ func Validate(dto interface{}) restErrors.IRestErr {
 	return nil
 }
 
-func (dto *ActivityDto) Marshall(dtoIngressRoute *traefikv1alpha1.IngressRoute) *ActivityDto {
-	dto.Name = dtoIngressRoute.Name
-	dto.Routes = make([]*RouteDto, 0)
-	dto.Protocol = dtoIngressRoute.Labels["kotal.io/protocol"]
-	for _, route := range dtoIngressRoute.Spec.Routes {
-
-		dto.Routes = append(dto.Routes, &RouteDto{
-			Name:       route.Services[0].Port.StrVal,
-			EndpointId: getEndpointId(route.Match),
-		})
-	}
-	return dto
-}
-
-func getEndpointId(path string) string {
+func GetEndpointId(path string) string {
 	// Compile the regular expression
 	re := regexp.MustCompile("([0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{12})")
 	// Find the first match of the pattern in the URL Path

@@ -506,7 +506,7 @@ func TestReadStats(t *testing.T) {
 		}
 
 		body, resp := newFiberCtx("", ReadStats, locals)
-		var result map[string]endpointactivity.ActivityDto
+		var result map[string]endpointactivity.ActivityAggregations
 		err := json.Unmarshal(body, &result)
 		assert.Nil(t, err)
 		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
