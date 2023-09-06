@@ -13,6 +13,7 @@ type IService interface {
 	WithTransaction(txHandle *gorm.DB) IService
 	WithoutTransaction() IService
 	Create(endpointId string) restErrors.IRestErr
+	MonthlyActivity(endpointId string) (*int, restErrors.IRestErr)
 }
 
 var activityRepository = NewRepository()
@@ -37,4 +38,13 @@ func (s service) Create(endpointId string) restErrors.IRestErr {
 	record.EndpointId = endpointId
 	record.Timestamp = time.Now().Unix()
 	return activityRepository.Create(record)
+}
+
+func (s service) MonthlyActivity(endpointId string) (*int, restErrors.IRestErr) {
+	list, err := activityRepository.FindMany(queryGetMonthlyActivity, endpointId)
+	if err != nil {
+		return nil, err
+	}
+	monthlyCount := len(list)
+	return &monthlyCount, nil
 }

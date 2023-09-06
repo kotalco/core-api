@@ -34,6 +34,25 @@ func TestRepository_Create(t *testing.T) {
 	})
 }
 
+func TestRepository_FindMany(t *testing.T) {
+	t.Run("find many should pass", func(t *testing.T) {
+		record := createActivityRecord(t)
+		list, err := repo.WithoutTransaction().FindMany(queryGetMonthlyActivity, record.EndpointId)
+		assert.Nil(t, err)
+		assert.EqualValues(t, 1, len(list))
+		cleanUp(record)
+	})
+	t.Run("find many should return empty list if endpointId don't match", func(t *testing.T) {
+		list, err := repo.WithoutTransaction().FindMany(queryGetMonthlyActivity, "")
+		assert.Nil(t, err)
+		assert.EqualValues(t, 0, len(list))
+	})
+	t.Run("find many should throw if db throws", func(t *testing.T) {
+		_, err := repo.WithoutTransaction().FindMany("", "")
+		assert.EqualValues(t, "something went wrong", err.Error())
+	})
+}
+
 func createActivityRecord(t *testing.T) Activity {
 	record := new(Activity)
 	record.ID = uuid.NewString()

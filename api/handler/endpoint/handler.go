@@ -137,7 +137,7 @@ func Count(c *fiber.Ctx) error {
 }
 
 func WriteStats(c *fiber.Ctx) error {
-	dto := new(endpointactivity.EndpointActivityDto)
+	dto := new(endpointactivity.CreateEndpointActivityDto)
 	if err := c.BodyParser(dto); err != nil {
 		badReq := restErrors.NewBadRequestError("invalid request body")
 		go logger.Error("ENDPOINT_ACTIVITY_HANDLER_WRITE_STATS", err)
@@ -155,4 +155,30 @@ func WriteStats(c *fiber.Ctx) error {
 		return c.SendStatus(err.StatusCode())
 	}
 	return c.SendStatus(http.StatusOK)
+}
+
+func ReadStats(c *fiber.Ctx) error {
+	workspaceModel := c.Locals("workspace").(workspace.Workspace)
+	endpointName := c.Params("name")
+
+	record, err := endpointService.Get(endpointName, workspaceModel.K8sNamespace)
+	if err != nil {
+		return c.Status(err.StatusCode()).JSON(err)
+	}
+
+	dto := map[string]endpointactivity.ActivityAggregations{}
+	for _, v := range record.Spec.Routes {
+		portName := v.Services[0].Port.StrVal
+		if k8svc.AvailableProtocol(portName) {
+			monthlyCount, err := activityService.MonthlyActivity(endpointactivity.GetEndpointId(v.Match))
+			if err != nil {
+				go logger.Error("ENDPOINT_ACTIVITY_HANDLER_READ_STATS", err)
+				return c.Status(err.StatusCode()).JSON(err)
+			}
+			dto[portName] = endpointactivity.ActivityAggregations{MonthlyHits: *monthlyCount}
+		}
+
+	}
+
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(dto))
 }

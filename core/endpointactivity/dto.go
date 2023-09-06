@@ -3,9 +3,14 @@ package endpointactivity
 import (
 	"github.com/go-playground/validator/v10"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
+	"regexp"
 )
 
-type EndpointActivityDto struct {
+type ActivityAggregations struct {
+	MonthlyHits int `json:"monthly_hits"`
+}
+
+type CreateEndpointActivityDto struct {
 	RequestId string `json:"request_id" validate:"required"`
 }
 
@@ -28,4 +33,16 @@ func Validate(dto interface{}) restErrors.IRestErr {
 	}
 
 	return nil
+}
+
+func GetEndpointId(path string) string {
+	// Compile the regular expression
+	re := regexp.MustCompile("([0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{12})")
+	// Find the first match of the pattern in the URL Path
+	match := re.FindStringSubmatch(path)
+
+	if len(match) == 0 {
+		return ""
+	}
+	return match[0]
 }
