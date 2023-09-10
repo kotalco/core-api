@@ -2,6 +2,7 @@ package user
 
 import (
 	"bytes"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/kotalco/cloud-api/pkg/config"
@@ -66,7 +67,7 @@ func (service) SignUp(dto *SignUpRequestDto) (*User, restErrors.IRestErr) {
 	}
 
 	user := new(User)
-	user.ID = uuid.New().String()
+	user.ID = strings.Replace(uuid.New().String(), "-", "", -1)
 	user.Email = dto.Email
 	user.IsEmailVerified = false
 	user.Password = string(hashedPassword)
