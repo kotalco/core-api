@@ -61,7 +61,7 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) restErrors
 	for _, v := range svc.Spec.Ports {
 		if k8svc.AvailableProtocol(v.Name) {
 			ingressRoutePortDto := ingressroute.IngressRoutePortDto{
-				ID:   fmt.Sprintf("%s%s", security.GenerateRandomString(endpointPortIdLength), dto.UserId),
+				ID:   fmt.Sprintf("%s%s", strings.ToLower(security.GenerateRandomString(endpointPortIdLength)), strings.Replace(dto.UserId, "-", "", -1)),
 				Name: v.Name,
 			}
 			ingressRoutePorts = append(ingressRoutePorts, ingressRoutePortDto)                          //create ingressRoute ports
