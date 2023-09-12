@@ -6,7 +6,7 @@ import (
 	"unsafe"
 )
 
-const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789"
 const (
 	letterIdxBits = 6
 	letterIdxMask = 1<<letterIdxBits - 1
