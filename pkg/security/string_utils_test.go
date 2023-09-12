@@ -4,8 +4,6 @@ import "testing"
 
 func TestGenerateUniqueID(t *testing.T) {
 	numIDs := 1
-	//numIDs := 10000000
-
 	ids := make(map[string]bool)
 
 	for i := 0; i < numIDs; i++ {
