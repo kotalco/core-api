@@ -2,7 +2,11 @@ name: Build-Push-staging-cloud-api
 
 on:
   push:
-    branches: [master]
+    branches:
+      - master
+      - fix/ci-staging
+    tags:
+      - "v*"
   pull_request:
     branches: [master]
 
@@ -21,7 +25,6 @@ jobs:
           images: |
             docker.io/kotalco/cloud-api
           tags: |
-            type=ref,event=tag
             type=sha,prefix=,suffix=,format=short
           flavor: |
             latest=true
