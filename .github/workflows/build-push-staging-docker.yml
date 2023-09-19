@@ -2,9 +2,7 @@ name: Build-Push-staging-cloud-api
 
 on:
   push:
-    branches:
-      - master
-      - fix/ci-staging
+    branches: [master]
     tags:
       - "v*"
   pull_request:
