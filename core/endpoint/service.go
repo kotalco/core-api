@@ -133,6 +133,7 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) restErrors
 		dErr := ingressRoutesService.Delete(dto.Name, svc.Namespace)
 		if dErr != nil {
 			go logger.Error(s.Create, dErr)
+			return dErr
 		}
 		return err
 	}
@@ -159,6 +160,7 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) restErrors
 			dErr := ingressRoutesService.Delete(dto.Name, svc.Namespace)
 			if dErr != nil {
 				go logger.Error(s.Create, dErr)
+				return dErr
 			}
 			return err
 		}
