@@ -6,7 +6,6 @@ import (
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/logger"
 	"gorm.io/gorm"
-	"net/http"
 	"regexp"
 )
 
@@ -57,14 +56,9 @@ func (r repository) Create(key string, value string) restErrors.IRestErr {
 
 	res := r.db.Create(record)
 	if res.Error != nil {
-		duplicateEmail, _ := regexp.Match("duplicate key", []byte(res.Error.Error()))
-		if duplicateEmail {
-			//todo create conflict error in error pkg
-			return &restErrors.RestErr{
-				Message: "key already exists",
-				Status:  http.StatusConflict,
-				Name:    "Conflict",
-			}
+		duplicateKey, _ := regexp.Match("duplicate key", []byte(res.Error.Error()))
+		if duplicateKey {
+			return restErrors.NewConflictError("key already exists")
 		}
 		go logger.Error(repository.Create, res.Error)
 		return restErrors.NewInternalServerError("can't create config")

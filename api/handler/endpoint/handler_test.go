@@ -17,6 +17,7 @@ import (
 	"gorm.io/gorm"
 	"io/ioutil"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -341,7 +342,7 @@ func TestList(t *testing.T) {
 
 	t.Run("list endpoints should pass", func(t *testing.T) {
 		endpointServiceListFunc = func(ns string, labels map[string]string) (*v1alpha1.IngressRouteList, restErrors.IRestErr) {
-			return &v1alpha1.IngressRouteList{}, nil
+			return &v1alpha1.IngressRouteList{Items: []v1alpha1.IngressRoute{{}}}, nil
 		}
 
 		body, resp := newFiberCtx("", List, locals)
@@ -451,6 +452,29 @@ func TestDelete(t *testing.T) {
 
 }
 
+func TestCount(t *testing.T) {
+	workspaceModel := new(workspace.Workspace)
+	var locals = map[string]interface{}{}
+	locals["workspace"] = *workspaceModel
+
+	t.Run("count endpoints should pass", func(t *testing.T) {
+		endpointServiceCountFunc = func(ns string, labels map[string]string) (int, restErrors.IRestErr) {
+			return 1, nil
+		}
+		_, resp := newFiberCtx("", Count, locals)
+		assert.EqualValues(t, resp.Header.Get("X-Total-Count"), "1")
+		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
+	})
+
+	t.Run("count endpoint should throw if service throws", func(t *testing.T) {
+		endpointServiceCountFunc = func(ns string, labels map[string]string) (int, restErrors.IRestErr) {
+			return 0, restErrors.NewInternalServerError("something went wrong")
+		}
+		_, resp := newFiberCtx("", Count, locals)
+		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
+	})
+}
+
 func TestWriteStats(t *testing.T) {
 	var validDto = map[string]string{
 		"request_id": "12345678",
@@ -490,6 +514,7 @@ func TestWriteStats(t *testing.T) {
 	})
 
 }
+
 func TestReadStats(t *testing.T) {
 	workspaceModel := new(workspace.Workspace)
 	var locals = map[string]interface{}{}
@@ -497,7 +522,14 @@ func TestReadStats(t *testing.T) {
 
 	t.Run("read endpoint stats should pass", func(t *testing.T) {
 		endpointServiceGetFunc = func(name string, namespace string) (*v1alpha1.IngressRoute, restErrors.IRestErr) {
-			return &v1alpha1.IngressRoute{}, nil
+			return &v1alpha1.IngressRoute{Spec: v1alpha1.IngressRouteSpec{Routes: []v1alpha1.Route{
+				{
+					Match: "",
+					Services: []v1alpha1.Service{{LoadBalancerSpec: v1alpha1.LoadBalancerSpec{
+						Port: intstr.IntOrString{StrVal: "api"},
+					}}},
+				},
+			}}}, nil
 		}
 
 		activityMonthlyActivity = func(endpointId string) (*int, restErrors.IRestErr) {
@@ -516,6 +548,28 @@ func TestReadStats(t *testing.T) {
 
 	t.Run("read endpoint stats should throw if can't get endpoint from service", func(t *testing.T) {
 		endpointServiceGetFunc = func(name string, namespace string) (*v1alpha1.IngressRoute, restErrors.IRestErr) {
+			return nil, restErrors.NewNotFoundError("no such record")
+		}
+		body, resp := newFiberCtx("", ReadStats, locals)
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		assert.Nil(t, err)
+		assert.EqualValues(t, http.StatusNotFound, resp.StatusCode)
+		assert.NotNil(t, "no such record", result.Message)
+	})
+
+	t.Run("read endpoint stats should throw if can't get the endpoint activity", func(t *testing.T) {
+		endpointServiceGetFunc = func(name string, namespace string) (*v1alpha1.IngressRoute, restErrors.IRestErr) {
+			return &v1alpha1.IngressRoute{Spec: v1alpha1.IngressRouteSpec{Routes: []v1alpha1.Route{
+				{
+					Match: "",
+					Services: []v1alpha1.Service{{LoadBalancerSpec: v1alpha1.LoadBalancerSpec{
+						Port: intstr.IntOrString{StrVal: "api"},
+					}}},
+				},
+			}}}, nil
+		}
+		activityMonthlyActivity = func(endpointId string) (*int, restErrors.IRestErr) {
 			return nil, restErrors.NewNotFoundError("no such record")
 		}
 		body, resp := newFiberCtx("", ReadStats, locals)

@@ -103,6 +103,7 @@ func TestService_ConfigureDomain(t *testing.T) {
 		err := settingService.ConfigureDomain(&ConfigureDomainRequestDto{})
 		assert.EqualValues(t, "something went wrong", err.Error())
 	})
+
 }
 
 func TestService_IsDomainConfigured(t *testing.T) {
@@ -161,17 +162,16 @@ func TestService_IsRegistrationEnabled(t *testing.T) {
 		settingGetFunc = func(key string) (string, restErrors.IRestErr) {
 			return "true", nil
 		}
-		assert.True(t, settingService.IsDomainConfigured())
+		assert.True(t, settingService.IsRegistrationEnabled())
 	})
 
 	t.Run("is domain configured should return false", func(t *testing.T) {
 		settingGetFunc = func(key string) (string, restErrors.IRestErr) {
 			return "", restErrors.NewInternalServerError("something went wrong")
 		}
-		assert.False(t, settingService.IsDomainConfigured())
+		assert.False(t, settingService.IsRegistrationEnabled())
 	})
 }
-
 func TestService_ConfigureActivationKey(t *testing.T) {
 	t.Run("configure activation key should pass with and create new record", func(t *testing.T) {
 		settingGetFunc = func(key string) (string, restErrors.IRestErr) {
@@ -205,7 +205,6 @@ func TestService_ConfigureActivationKey(t *testing.T) {
 		assert.EqualValues(t, "something went wrong", err.Error())
 	})
 }
-
 func TestService_GetActivationKey(t *testing.T) {
 	t.Run("get activation key  should pass", func(t *testing.T) {
 		settingGetFunc = func(key string) (string, restErrors.IRestErr) {

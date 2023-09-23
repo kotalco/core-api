@@ -100,7 +100,7 @@ func TestService_Create(t *testing.T) {
 
 		createDto := &CreateEndpointDto{}
 		svc := &corev1.Service{Spec: corev1.ServiceSpec{
-			Ports: []corev1.ServicePort{{}},
+			Ports: []corev1.ServicePort{{Name: "api"}},
 		}}
 
 		err := endpointService.Create(createDto, svc)
@@ -159,6 +159,65 @@ func TestService_Create(t *testing.T) {
 		err := endpointService.Create(createDto, svc)
 		assert.EqualValues(t, "can't create secret", err.Error())
 	})
+	t.Run("create endpoint should throw if can't create secret with basic auth and delete ingressRoute failed", func(t *testing.T) {
+		ingressRouteCreateFunc = func(dto *ingressroute.IngressRouteDto) (*traefikv1alpha1.IngressRoute, restErrors.IRestErr) {
+			return &traefikv1alpha1.IngressRoute{
+				TypeMeta:   metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{},
+				Spec:       traefikv1alpha1.IngressRouteSpec{},
+			}, nil
+		}
+		k8middlewareCreateFunc = func(dto *middleware.CreateMiddlewareDto) restErrors.IRestErr {
+			return nil
+		}
+
+		createDto := &CreateEndpointDto{
+			UseBasicAuth: true,
+		}
+		svc := &corev1.Service{Spec: corev1.ServiceSpec{
+			Ports: []corev1.ServicePort{{}},
+		}}
+
+		secretCreateFunc = func(dto *secret.CreateSecretDto) restErrors.IRestErr {
+			return restErrors.NewInternalServerError("can't create secret")
+		}
+		ingressRouteDeleteFunc = func(name string, namespace string) restErrors.IRestErr {
+			return restErrors.NewInternalServerError("can't delete ingress route")
+		}
+		err := endpointService.Create(createDto, svc)
+		assert.EqualValues(t, "can't delete ingress route", err.Error())
+	})
+	t.Run("create endpoint should throw if can't can't roll back after creating failed", func(t *testing.T) {
+		ingressRouteCreateFunc = func(dto *ingressroute.IngressRouteDto) (*traefikv1alpha1.IngressRoute, restErrors.IRestErr) {
+			return &traefikv1alpha1.IngressRoute{
+				TypeMeta:   metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{},
+				Spec:       traefikv1alpha1.IngressRouteSpec{},
+			}, nil
+		}
+		k8middlewareCreateFunc = func(dto *middleware.CreateMiddlewareDto) restErrors.IRestErr {
+			return nil
+		}
+
+		secretCreateFunc = func(dto *secret.CreateSecretDto) restErrors.IRestErr {
+			return nil
+		}
+		k8middlewareCreateFunc = func(dto *middleware.CreateMiddlewareDto) restErrors.IRestErr {
+			return restErrors.NewInternalServerError("can't create basic auth middleware")
+		}
+		ingressRouteDeleteFunc = func(name string, namespace string) restErrors.IRestErr {
+			return nil
+		}
+
+		createDto := &CreateEndpointDto{UseBasicAuth: true}
+		svc := &corev1.Service{Spec: corev1.ServiceSpec{
+			Ports: []corev1.ServicePort{{Name: "api"}},
+		}}
+
+		err := endpointService.Create(createDto, svc)
+		assert.EqualValues(t, "can't create basic auth middleware", err.Error())
+	})
+
 	t.Run("create endpoint should throw if ingressRoute.create throws", func(t *testing.T) {
 		ingressRouteCreateFunc = func(dto *ingressroute.IngressRouteDto) (*traefikv1alpha1.IngressRoute, restErrors.IRestErr) {
 			return nil, restErrors.NewInternalServerError("something went wrong")
@@ -192,6 +251,30 @@ func TestService_Create(t *testing.T) {
 		}}
 		err := endpointService.Create(createDto, svc)
 		assert.EqualValues(t, "something went wrong", err.Error())
+	})
+	t.Run("create endpoint should throw if can't create prefix middleware and delete fails", func(t *testing.T) {
+		ingressRouteCreateFunc = func(dto *ingressroute.IngressRouteDto) (*traefikv1alpha1.IngressRoute, restErrors.IRestErr) {
+			return &traefikv1alpha1.IngressRoute{
+				TypeMeta:   metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{},
+				Spec:       traefikv1alpha1.IngressRouteSpec{},
+			}, nil
+		}
+		ingressRouteDeleteFunc = func(name string, namespace string) restErrors.IRestErr {
+			return nil
+		}
+		k8middlewareCreateFunc = func(dto *middleware.CreateMiddlewareDto) restErrors.IRestErr {
+			return restErrors.NewInternalServerError("something went wrong")
+		}
+		ingressRouteDeleteFunc = func(name string, namespace string) restErrors.IRestErr {
+			return restErrors.NewInternalServerError("can't delete ingress route")
+		}
+		createDto := &CreateEndpointDto{}
+		svc := &corev1.Service{Spec: corev1.ServiceSpec{
+			Ports: []corev1.ServicePort{{}},
+		}}
+		err := endpointService.Create(createDto, svc)
+		assert.EqualValues(t, "can't delete ingress route", err.Error())
 	})
 	t.Run("create endpoint should throw if can't find crossover middleware and it throws error rather than notfound", func(t *testing.T) {
 		ingressRouteCreateFunc = func(dto *ingressroute.IngressRouteDto) (*traefikv1alpha1.IngressRoute, restErrors.IRestErr) {
@@ -338,6 +421,26 @@ func TestService_Delete(t *testing.T) {
 		}
 		err := endpointService.Delete("name", "namespace")
 		assert.EqualValues(t, http.StatusInternalServerError, err.StatusCode())
+		assert.EqualValues(t, "something went wrong", err.Error())
+	})
+}
+
+func TestService_Count(t *testing.T) {
+	t.Run("count endpoints should pass", func(t *testing.T) {
+		ingressRouteListFunc = func(ns string, labels map[string]string) (*traefikv1alpha1.IngressRouteList, restErrors.IRestErr) {
+			return &traefikv1alpha1.IngressRouteList{Items: []traefikv1alpha1.IngressRoute{{}}}, nil
+		}
+		count, err := endpointService.Count("default", map[string]string{})
+		assert.Nil(t, err)
+		assert.EqualValues(t, 1, count)
+	})
+
+	t.Run("count endpoint should throw ingressRouteService throws", func(t *testing.T) {
+		ingressRouteListFunc = func(ns string, labels map[string]string) (*traefikv1alpha1.IngressRouteList, restErrors.IRestErr) {
+			return nil, restErrors.NewInternalServerError("something went wrong")
+		}
+		count, err := endpointService.Count("default", map[string]string{})
+		assert.EqualValues(t, 0, count)
 		assert.EqualValues(t, "something went wrong", err.Error())
 	})
 }
