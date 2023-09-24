@@ -37,7 +37,8 @@ func Validate(dto interface{}) restErrors.IRestErr {
 
 func GetEndpointId(path string) string {
 	// Compile the regular expression
-	re := regexp.MustCompile("([0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{12})")
+
+	re := regexp.MustCompile("([a-z0-9]{42})")
 	// Find the first match of the pattern in the URL Path
 	match := re.FindStringSubmatch(path)
 
