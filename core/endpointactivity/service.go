@@ -2,8 +2,10 @@ package endpointactivity
 
 import (
 	"github.com/google/uuid"
+	"github.com/kotalco/cloud-api/pkg/config"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"gorm.io/gorm"
+	"strconv"
 	"time"
 )
 
@@ -33,9 +35,18 @@ func (s service) WithoutTransaction() IService {
 }
 
 func (s service) Create(endpointId string) restErrors.IRestErr {
+	endpointPortIdLength, err := strconv.Atoi(config.Environment.EndpointPortIdLength)
+	if err != nil {
+		return restErrors.NewInternalServerError(err.Error())
+	}
 	record := new(Activity)
 	record.ID = uuid.NewString()
 	record.EndpointId = endpointId
+	parsedUUID, err := uuid.Parse(endpointId[endpointPortIdLength:])
+	if err != nil {
+		return restErrors.NewInternalServerError(err.Error())
+	}
+	record.UserId = parsedUUID.String()
 	record.Timestamp = time.Now().Unix()
 	return activityRepository.Create(record)
 }
