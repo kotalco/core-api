@@ -69,17 +69,17 @@ func TestService_Create(t *testing.T) {
 
 func TestService_MonthlyActivity(t *testing.T) {
 	t.Run("monthly activity should pass", func(t *testing.T) {
-		FindManyFunc = func(query interface{}, conditions ...interface{}) ([]*Activity, restErrors.IRestErr) {
-			return []*Activity{{}}, nil
+		CountFunc = func(query interface{}, conditions ...interface{}) (int64, restErrors.IRestErr) {
+			return 1, nil
 		}
-		list, err := activityService.MonthlyActivity("123")
+		count, err := activityService.MonthlyActivity("123")
 		assert.Nil(t, err)
-		assert.EqualValues(t, 1, *list)
+		assert.EqualValues(t, 1, count)
 	})
 
 	t.Run(" monthly activity should throw if repo throws", func(t *testing.T) {
-		FindManyFunc = func(query interface{}, conditions ...interface{}) ([]*Activity, restErrors.IRestErr) {
-			return []*Activity{}, restErrors.NewInternalServerError("something went wrong")
+		CountFunc = func(query interface{}, conditions ...interface{}) (int64, restErrors.IRestErr) {
+			return 0, restErrors.NewInternalServerError("something went wrong")
 		}
 		_, err := activityService.MonthlyActivity("123")
 
