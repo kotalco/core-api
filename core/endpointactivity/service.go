@@ -16,6 +16,7 @@ type IService interface {
 	WithoutTransaction() IService
 	Create(endpointId string) restErrors.IRestErr
 	MonthlyActivity(endpointId string) (*int, restErrors.IRestErr)
+	CountUserActivity(userId string, startDate int, endDate int) (int64, restErrors.IRestErr)
 }
 
 var activityRepository = NewRepository()
@@ -58,4 +59,12 @@ func (s service) MonthlyActivity(endpointId string) (*int, restErrors.IRestErr) 
 	}
 	monthlyCount := len(list)
 	return &monthlyCount, nil
+}
+
+func (s service) CountUserActivity(userId string, startDate int, endDate int) (int64, restErrors.IRestErr) {
+	count, err := activityRepository.Count(queryCountUserActivityWithinSpecificPeriod, userId, startDate, endDate)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }

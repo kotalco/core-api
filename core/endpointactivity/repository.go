@@ -8,7 +8,8 @@ import (
 )
 
 var (
-	queryGetMonthlyActivity = "date_trunc('month', (timestamp 'epoch' + timestamp * interval '1 second')) = date_trunc('month', current_date) AND endpoint_id = ?"
+	queryGetMonthlyActivity                    = "date_trunc('month', (timestamp 'epoch' + timestamp * interval '1 second')) = date_trunc('month', current_date) AND endpoint_id = ?"
+	queryCountUserActivityWithinSpecificPeriod = "user_id = ? AND timestamp >= ? AND timestamp <= ?"
 )
 
 type repository struct {
@@ -20,6 +21,7 @@ type IRepository interface {
 	WithoutTransaction() IRepository
 	Create(activity *Activity) restErrors.IRestErr
 	FindMany(query interface{}, conditions ...interface{}) ([]*Activity, restErrors.IRestErr)
+	Count(query interface{}, conditions ...interface{}) (int64, restErrors.IRestErr)
 }
 
 func NewRepository() IRepository {
@@ -48,10 +50,20 @@ func (r repository) Create(activity *Activity) restErrors.IRestErr {
 
 func (r repository) FindMany(query interface{}, conditions ...interface{}) ([]*Activity, restErrors.IRestErr) {
 	var records []*Activity
-	result := r.db.Where(query, conditions).Find(&records)
+	result := r.db.Where(query, conditions...).Find(&records)
 	if result.Error != nil {
 		go logger.Error(repository.FindMany, result.Error)
 		return nil, restErrors.NewInternalServerError("something went wrong")
 	}
 	return records, nil
+}
+
+func (r repository) Count(query interface{}, conditions ...interface{}) (int64, restErrors.IRestErr) {
+	var count int64
+	result := r.db.Table("activities").Where(query, conditions...).Count(&count)
+	if result.Error != nil {
+		go logger.Error(repository.Count, result.Error)
+		return 0, restErrors.NewInternalServerError("something went wrong")
+	}
+	return count, nil
 }
