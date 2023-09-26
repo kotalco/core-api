@@ -2,8 +2,10 @@ package endpointactivity
 
 import (
 	"github.com/google/uuid"
+	"github.com/kotalco/cloud-api/pkg/config"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"gorm.io/gorm"
+	"strconv"
 	"time"
 )
 
@@ -14,6 +16,7 @@ type IService interface {
 	WithoutTransaction() IService
 	Create(endpointId string) restErrors.IRestErr
 	MonthlyActivity(endpointId string) (*int, restErrors.IRestErr)
+	CountUserActivity(userId string, startDate int, endDate int) (int64, restErrors.IRestErr)
 }
 
 var activityRepository = NewRepository()
@@ -33,9 +36,18 @@ func (s service) WithoutTransaction() IService {
 }
 
 func (s service) Create(endpointId string) restErrors.IRestErr {
+	endpointPortIdLength, err := strconv.Atoi(config.Environment.EndpointPortIdLength)
+	if err != nil {
+		return restErrors.NewInternalServerError(err.Error())
+	}
 	record := new(Activity)
 	record.ID = uuid.NewString()
 	record.EndpointId = endpointId
+	parsedUUID, err := uuid.Parse(endpointId[endpointPortIdLength:])
+	if err != nil {
+		return restErrors.NewInternalServerError(err.Error())
+	}
+	record.UserId = parsedUUID.String()
 	record.Timestamp = time.Now().Unix()
 	return activityRepository.Create(record)
 }
@@ -47,4 +59,12 @@ func (s service) MonthlyActivity(endpointId string) (*int, restErrors.IRestErr) 
 	}
 	monthlyCount := len(list)
 	return &monthlyCount, nil
+}
+
+func (s service) CountUserActivity(userId string, startDate int, endDate int) (int64, restErrors.IRestErr) {
+	count, err := activityRepository.Count(queryCountUserActivityWithinSpecificPeriod, userId, startDate, endDate)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }

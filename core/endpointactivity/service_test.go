@@ -1,11 +1,14 @@
 package endpointactivity
 
 import (
+	"fmt"
 	"github.com/google/uuid"
+	"github.com/kotalco/cloud-api/pkg/security"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -15,6 +18,7 @@ var (
 	WithoutTransactionFunc func() IRepository
 	CreateFunc             func(activity *Activity) restErrors.IRestErr
 	FindManyFunc           func(query interface{}, conditions ...interface{}) ([]*Activity, restErrors.IRestErr)
+	CountFunc              func(query interface{}, conditions ...interface{}) (int64, restErrors.IRestErr)
 )
 
 type activityRepoMock struct{}
@@ -33,6 +37,9 @@ func (r activityRepoMock) Create(activity *Activity) restErrors.IRestErr {
 func (r activityRepoMock) FindMany(query interface{}, conditions ...interface{}) ([]*Activity, restErrors.IRestErr) {
 	return FindManyFunc(query, conditions)
 }
+func (r activityRepoMock) Count(query interface{}, conditions ...interface{}) (int64, restErrors.IRestErr) {
+	return CountFunc(query, conditions)
+}
 func TestMain(m *testing.M) {
 	activityRepository = &activityRepoMock{}
 	activityService = NewService()
@@ -46,7 +53,7 @@ func TestService_Create(t *testing.T) {
 			return nil
 		}
 
-		restErr := activityService.Create(uuid.NewString())
+		restErr := activityService.Create(fmt.Sprintf("%s%s", strings.ToLower(security.GenerateRandomString(10)), strings.Replace(uuid.NewString(), "-", "", -1)))
 		assert.Nil(t, restErr)
 	})
 
@@ -55,7 +62,7 @@ func TestService_Create(t *testing.T) {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 
-		restErr := activityService.Create(uuid.NewString())
+		restErr := activityService.Create(fmt.Sprintf("%s%s", strings.ToLower(security.GenerateRandomString(10)), strings.Replace(uuid.NewString(), "-", "", -1)))
 		assert.EqualValues(t, "something went wrong", restErr.Error())
 	})
 }

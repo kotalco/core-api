@@ -6,6 +6,7 @@ import (
 	"github.com/kotalco/cloud-api/pkg/config"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/kotalco/cloud-api/pkg/k8s/ingressroute"
@@ -25,7 +26,6 @@ import (
 const (
 	crossoverMiddlewareName      = "kotal-crossover"
 	crossoverMiddlewareNamespace = "kotal"
-	endpointPortIdLength         = 10
 )
 
 var (
@@ -57,7 +57,10 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) restErrors
 	middlewarePrefixes := make([]string, 0)
 	stripePrefixMiddlewareName := fmt.Sprintf("%s-strip-prefix", dto.Name)
 	basicAuthMiddlewareName := fmt.Sprintf("%s-basic-auth", dto.Name)
-
+	endpointPortIdLength, intErr := strconv.Atoi(config.Environment.EndpointPortIdLength)
+	if intErr != nil {
+		return restErrors.NewInternalServerError(intErr.Error())
+	}
 	for _, v := range svc.Spec.Ports {
 		if k8svc.AvailableProtocol(v.Name) {
 			ingressRoutePortDto := ingressroute.IngressRoutePortDto{
