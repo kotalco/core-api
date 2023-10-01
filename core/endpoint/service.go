@@ -194,9 +194,10 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) restErrors
 	if err != nil {
 		if err.StatusCode() == http.StatusNotFound {
 			jsonBytes, intErr := json.Marshal(map[string]interface{}{
-				"APIKey":        config.Environment.CrossOverAPIKey,
-				"Pattern":       config.Environment.CrossOverPattern,
-				"RemoteAddress": config.Environment.CrossOverRemoteAddress,
+				"APIKey":                config.Environment.CrossOverAPIKey,
+				"RequestIdPattern":      config.Environment.CrossOverRequestIDPattern,
+				"RateLimitStoreURL":     config.Environment.CrossOverRateLimitStoreURL,
+				"RateLimitPlanLimitURL": config.Environment.CrossOverRateLimitPlanURL,
 			})
 			if intErr != nil {
 				go logger.Error(s.Create, intErr)

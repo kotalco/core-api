@@ -40,8 +40,9 @@ var (
 		SubscriptionAPIBaseURL                 string
 		ECCPublicKey                           string
 		CrossOverAPIKey                        string
-		CrossOverPattern                       string
-		CrossOverRemoteAddress                 string
+		CrossOverRequestIDPattern              string
+		CrossOverRateLimitStoreURL             string
+		CrossOverRateLimitPlanURL              string
 		EndpointPortIdLength                   string
 	}{
 		ServerPort:                             getenv("CLOUD_API_SERVER_PORT", "6000"),
@@ -68,8 +69,9 @@ var (
 		SubscriptionAPIBaseURL:                 getenv("SUBSCRIPTION_API_BASE_URL", "http://localhost:8081"),
 		ECCPublicKey:                           os.Getenv("ECC_PUBLIC_KEY"),
 		CrossOverAPIKey:                        os.Getenv("CROSSOVER_API_KEY"),
-		CrossOverPattern:                       os.Getenv("CROSSOVER_PATTERN"),
-		CrossOverRemoteAddress:                 os.Getenv("CROSSOVER_REMOTE_ADDRESS"),
+		CrossOverRequestIDPattern:              os.Getenv("CROSSOVER_REQUEST_ID_PATTERN"),
+		CrossOverRateLimitStoreURL:             os.Getenv("CROSSOVER_RATE_LIMIT_STORE_URL"),
+		CrossOverRateLimitPlanURL:              os.Getenv("CROSSOVER_RATE_LIMIT_PLAN_URL"),
 		EndpointPortIdLength:                   getenv("ENDPOINT_PORT_ID_LENGTH", "10"),
 	}
 )
