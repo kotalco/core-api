@@ -8,8 +8,7 @@ import (
 )
 
 var (
-	queryGetMonthlyActivity                    = "date_trunc('month', (timestamp 'epoch' + timestamp * interval '1 second')) = date_trunc('month', current_date) AND endpoint_id = ?"
-	queryCountUserActivityWithinSpecificPeriod = "user_id = ? AND timestamp >= ? AND timestamp <= ?"
+	queryGetMonthlyActivity = "date_trunc('month', (timestamp 'epoch' + timestamp * interval '1 second')) = date_trunc('month', current_date) AND endpoint_id = ?"
 )
 
 type repository struct {

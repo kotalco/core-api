@@ -141,16 +141,11 @@ func (s secretServiceMock) Get(name string, namespace string) (*corev1.Secret, r
 }
 
 var (
-	activityCreateFunc        func(endpointId string) restErrors.IRestErr
-	activityMonthlyActivity   func(endpointId string) (*int, restErrors.IRestErr)
-	activityCountUserActivity func(userId string, startDate int, endDate int) (int64, restErrors.IRestErr)
+	activityCreateFunc      func(endpointId string) restErrors.IRestErr
+	activityMonthlyActivity func(endpointId string) (int64, restErrors.IRestErr)
 )
 
 type activityServiceMock struct{}
-
-func (s activityServiceMock) CountUserActivity(userId string, startDate int, endDate int) (int64, restErrors.IRestErr) {
-	return activityCountUserActivity(userId, startDate, endDate)
-}
 
 func (s activityServiceMock) WithoutTransaction() endpointactivity.IService {
 	return s
@@ -162,7 +157,7 @@ func (s activityServiceMock) WithTransaction(txHandle *gorm.DB) endpointactivity
 func (s activityServiceMock) Create(endpointId string) restErrors.IRestErr {
 	return activityCreateFunc(endpointId)
 }
-func (s activityServiceMock) MonthlyActivity(endpointId string) (*int, restErrors.IRestErr) {
+func (s activityServiceMock) MonthlyActivity(endpointId string) (int64, restErrors.IRestErr) {
 	return activityMonthlyActivity(endpointId)
 }
 
@@ -537,9 +532,9 @@ func TestReadStats(t *testing.T) {
 			}}}, nil
 		}
 
-		activityMonthlyActivity = func(endpointId string) (*int, restErrors.IRestErr) {
-			counter := 1
-			return &counter, nil
+		activityMonthlyActivity = func(endpointId string) (int64, restErrors.IRestErr) {
+			var counter int64 = 1
+			return counter, nil
 		}
 
 		body, resp := newFiberCtx("", ReadStats, locals)
@@ -574,8 +569,8 @@ func TestReadStats(t *testing.T) {
 				},
 			}}}, nil
 		}
-		activityMonthlyActivity = func(endpointId string) (*int, restErrors.IRestErr) {
-			return nil, restErrors.NewNotFoundError("no such record")
+		activityMonthlyActivity = func(endpointId string) (int64, restErrors.IRestErr) {
+			return 0, restErrors.NewNotFoundError("no such record")
 		}
 		body, resp := newFiberCtx("", ReadStats, locals)
 		var result restErrors.RestErr
