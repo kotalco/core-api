@@ -16,6 +16,7 @@ type IService interface {
 	WithoutTransaction() IService
 	Create(endpointId string) restErrors.IRestErr
 	MonthlyActivity(endpointId string) (int64, restErrors.IRestErr)
+	UserMinuteActivity(userId string) (int64, restErrors.IRestErr)
 }
 
 var activityRepository = NewRepository()
@@ -53,6 +54,13 @@ func (s service) Create(endpointId string) restErrors.IRestErr {
 
 func (s service) MonthlyActivity(endpointId string) (int64, restErrors.IRestErr) {
 	count, err := activityRepository.Count(queryGetMonthlyActivity, endpointId)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+func (s service) UserMinuteActivity(userId string) (int64, restErrors.IRestErr) {
+	count, err := activityRepository.Count(queryGetUserMinuteActivity, userId)
 	if err != nil {
 		return 0, err
 	}

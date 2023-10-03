@@ -141,11 +141,16 @@ func (s secretServiceMock) Get(name string, namespace string) (*corev1.Secret, r
 }
 
 var (
-	activityCreateFunc      func(endpointId string) restErrors.IRestErr
-	activityMonthlyActivity func(endpointId string) (int64, restErrors.IRestErr)
+	activityCreateFunc             func(endpointId string) restErrors.IRestErr
+	activityMonthlyActivity        func(endpointId string) (int64, restErrors.IRestErr)
+	activityUserMinuteActivityFunc func(userId string) (int64, restErrors.IRestErr)
 )
 
 type activityServiceMock struct{}
+
+func (s activityServiceMock) UserMinuteActivity(userId string) (int64, restErrors.IRestErr) {
+	return activityUserMinuteActivityFunc(userId)
+}
 
 func (s activityServiceMock) WithoutTransaction() endpointactivity.IService {
 	return s
