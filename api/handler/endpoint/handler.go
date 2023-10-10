@@ -14,7 +14,6 @@ import (
 	"github.com/kotalco/community-api/pkg/logger"
 	"github.com/kotalco/community-api/pkg/shared"
 	"net/http"
-	"strconv"
 )
 
 var (
@@ -176,43 +175,10 @@ func ReadStats(c *fiber.Ctx) error {
 				go logger.Error("ENDPOINT_ACTIVITY_HANDLER_READ_STATS", err)
 				return c.Status(err.StatusCode()).JSON(err)
 			}
-			dto[portName] = endpointactivity.ActivityAggregations{MonthlyHits: *monthlyCount}
+			dto[portName] = endpointactivity.ActivityAggregations{MonthlyHits: monthlyCount}
 		}
 
 	}
 
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(dto))
-}
-
-func UserStatsCount(c *fiber.Ctx) error {
-	userId := c.Params("userId")
-	var restErr restErrors.IRestErr
-	var stringStartDate = c.Query("startDate")
-	var stringEndDate = c.Query("endDate")
-
-	if stringStartDate == "" {
-		restErr = restErrors.NewBadRequestError("invalid startDate")
-		return c.Status(restErr.StatusCode()).JSON(restErr)
-	}
-	if stringEndDate == "" {
-		restErr = restErrors.NewBadRequestError("invalid endDate")
-		return c.Status(restErr.StatusCode()).JSON(restErr)
-	}
-
-	startDate, err := strconv.Atoi(stringStartDate)
-	if err != nil {
-		intErr := restErrors.NewInternalServerError(err.Error())
-		return c.Status(intErr.StatusCode()).JSON(intErr)
-	}
-	endDate, err := strconv.Atoi(stringEndDate)
-	if err != nil {
-		intErr := restErrors.NewInternalServerError(err.Error())
-		return c.Status(intErr.StatusCode()).JSON(intErr)
-	}
-
-	count, restErr := activityService.CountUserActivity(userId, startDate, endDate)
-	if restErr != nil {
-		return c.Status(restErr.StatusCode()).JSON(restErr)
-	}
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(map[string]int64{"count": count}))
 }

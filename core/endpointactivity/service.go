@@ -15,8 +15,8 @@ type IService interface {
 	WithTransaction(txHandle *gorm.DB) IService
 	WithoutTransaction() IService
 	Create(endpointId string) restErrors.IRestErr
-	MonthlyActivity(endpointId string) (*int, restErrors.IRestErr)
-	CountUserActivity(userId string, startDate int, endDate int) (int64, restErrors.IRestErr)
+	MonthlyActivity(endpointId string) (int64, restErrors.IRestErr)
+	UserMinuteActivity(userId string) (int64, restErrors.IRestErr)
 }
 
 var activityRepository = NewRepository()
@@ -52,17 +52,15 @@ func (s service) Create(endpointId string) restErrors.IRestErr {
 	return activityRepository.Create(record)
 }
 
-func (s service) MonthlyActivity(endpointId string) (*int, restErrors.IRestErr) {
-	list, err := activityRepository.FindMany(queryGetMonthlyActivity, endpointId)
+func (s service) MonthlyActivity(endpointId string) (int64, restErrors.IRestErr) {
+	count, err := activityRepository.Count(queryGetMonthlyActivity, endpointId)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
-	monthlyCount := len(list)
-	return &monthlyCount, nil
+	return count, nil
 }
-
-func (s service) CountUserActivity(userId string, startDate int, endDate int) (int64, restErrors.IRestErr) {
-	count, err := activityRepository.Count(queryCountUserActivityWithinSpecificPeriod, userId, startDate, endDate)
+func (s service) UserMinuteActivity(userId string) (int64, restErrors.IRestErr) {
+	count, err := activityRepository.Count(queryGetUserMinuteActivity, userId)
 	if err != nil {
 		return 0, err
 	}

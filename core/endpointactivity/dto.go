@@ -7,7 +7,7 @@ import (
 )
 
 type ActivityAggregations struct {
-	MonthlyHits int `json:"monthly_hits"`
+	MonthlyHits int64 `json:"monthly_hits"`
 }
 
 type CreateEndpointActivityDto struct {
