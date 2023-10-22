@@ -17,7 +17,7 @@ type service struct{}
 type IService interface {
 	WithTransaction(txHandle *gorm.DB) IService
 	WithoutTransaction() IService
-	SignUp(dto *SignUpRequestDto) (*User, restErrors.IRestErr)
+	SignUp(email string, password string, isCustomer bool) (*User, restErrors.IRestErr)
 	SignIn(dto *SignInRequestDto) (*UserSessionResponseDto, restErrors.IRestErr)
 	VerifyTOTP(model *User, totp string) (*UserSessionResponseDto, restErrors.IRestErr)
 	GetByEmail(email string) (*User, restErrors.IRestErr)
@@ -57,8 +57,8 @@ func (uService service) WithoutTransaction() IService {
 }
 
 // SignUp Creates new user
-func (service) SignUp(dto *SignUpRequestDto) (*User, restErrors.IRestErr) {
-	hashedPassword, err := hashing.Hash(dto.Password, 13)
+func (service) SignUp(email string, password string, isCustomer bool) (*User, restErrors.IRestErr) {
+	hashedPassword, err := hashing.Hash(password, 13)
 	if err != nil {
 		go logger.Error(service.SignUp, err)
 		return nil, restErrors.NewInternalServerError("something went wrong.")
@@ -66,9 +66,10 @@ func (service) SignUp(dto *SignUpRequestDto) (*User, restErrors.IRestErr) {
 
 	user := new(User)
 	user.ID = uuid.NewString()
-	user.Email = dto.Email
+	user.Email = email
 	user.IsEmailVerified = false
 	user.Password = string(hashedPassword)
+	user.IsCustomer = isCustomer
 
 	restErr := userRepository.Create(user)
 	if restErr != nil {

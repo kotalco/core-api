@@ -121,8 +121,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestService_SignUp(t *testing.T) {
-	dto := new(SignUpRequestDto)
-	dto.Password = "123456"
+	email := "test@kotal.co"
+	password := "123456"
+	isCustomer := false
 
 	t.Run("Sign_Up_Should_Pass", func(t *testing.T) {
 		HashFunc = func(password string, cost int) ([]byte, error) {
@@ -133,10 +134,10 @@ func TestService_SignUp(t *testing.T) {
 			return nil
 		}
 
-		user, err := userService.SignUp(dto)
+		user, err := userService.SignUp(email, password, isCustomer)
 
 		assert.Nil(t, err)
-		assert.EqualValues(t, dto.Email, user.Email)
+		assert.EqualValues(t, email, user.Email)
 	})
 
 	t.Run("Sign_Up_Should_Throw_If_Repo_Throws", func(t *testing.T) {
@@ -148,7 +149,7 @@ func TestService_SignUp(t *testing.T) {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 
-		user, err := userService.SignUp(dto)
+		user, err := userService.SignUp(email, password, isCustomer)
 		assert.EqualValues(t, "something went wrong", err.Error())
 		assert.Nil(t, user)
 	})
@@ -158,7 +159,7 @@ func TestService_SignUp(t *testing.T) {
 			return nil, errors.New("")
 		}
 
-		user, err := userService.SignUp(dto)
+		user, err := userService.SignUp(email, password, isCustomer)
 		assert.Nil(t, user)
 		assert.EqualValues(t, "something went wrong.", err.Error())
 	})

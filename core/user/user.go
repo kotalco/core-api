@@ -8,4 +8,5 @@ type User struct {
 	TwoFactorCipher  string
 	TwoFactorEnabled bool
 	PlatformAdmin    bool `gorm:"default:false"`
+	IsCustomer       bool `gorm:"default:false"`
 }

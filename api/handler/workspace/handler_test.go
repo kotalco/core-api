@@ -29,7 +29,7 @@ User service Mocks
 */
 var (
 	UserWithTransactionFunc     func(txHandle *gorm.DB) user.IService
-	SignUpFunc                  func(dto *user.SignUpRequestDto) (*user.User, restErrors.IRestErr)
+	SignUpFunc                  func(email string, password string, isCustomer bool) (*user.User, restErrors.IRestErr)
 	SignInFunc                  func(dto *user.SignInRequestDto) (*user.UserSessionResponseDto, restErrors.IRestErr)
 	VerifyTOTPFunc              func(model *user.User, totp string) (*user.UserSessionResponseDto, restErrors.IRestErr)
 	GetByEmailFunc              func(email string) (*user.User, restErrors.IRestErr)
@@ -56,8 +56,8 @@ func (uService userServiceMock) WithTransaction(txHandle *gorm.DB) user.IService
 	return uService
 }
 
-func (userServiceMock) SignUp(dto *user.SignUpRequestDto) (*user.User, restErrors.IRestErr) {
-	return SignUpFunc(dto)
+func (userServiceMock) SignUp(email string, password string, isCustomer bool) (*user.User, restErrors.IRestErr) {
+	return SignUpFunc(email, password, isCustomer)
 }
 
 func (userServiceMock) SignIn(dto *user.SignInRequestDto) (*user.UserSessionResponseDto, restErrors.IRestErr) {

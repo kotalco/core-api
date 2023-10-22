@@ -59,7 +59,7 @@ func SignUp(c *fiber.Ctx) error {
 	sqlclient.Commit(txRead)
 
 	txHandle := sqlclient.Begin()
-	model, restErr := userService.WithTransaction(txHandle).SignUp(dto)
+	model, restErr := userService.WithTransaction(txHandle).SignUp(dto.Email, dto.Password, false)
 	if restErr != nil {
 		sqlclient.Rollback(txHandle)
 		return c.Status(restErr.StatusCode()).JSON(restErr)
