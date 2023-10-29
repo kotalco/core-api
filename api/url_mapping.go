@@ -95,7 +95,8 @@ func MapUrl(app *fiber.App) {
 	settingGroup.Get("/", middleware.JWTProtected, middleware.TFAProtected, setting.Settings)
 	settingGroup.Post("/domain", middleware.JWTProtected, middleware.TFAProtected, setting.ConfigureDomain)
 	settingGroup.Post("/registration", middleware.JWTProtected, middleware.TFAProtected, setting.ConfigureRegistration)
-	settingGroup.Get("/ip-address", middleware.JWTProtected, middleware.TFAProtected, setting.IPAddress)
+	//todo change the route /ip-address to /network-identifiers
+	settingGroup.Get("/ip-address", middleware.JWTProtected, middleware.TFAProtected, setting.NetworkIdentifiers)
 	mapDeploymentUrl(v1)
 }
 

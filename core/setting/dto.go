@@ -26,8 +26,9 @@ type SettingResponseDto struct {
 	Value string `json:"value"`
 }
 
-type IPAddressResponseDto struct {
+type NetworkIdentifierResponseDto struct {
 	IPAddress string `json:"ip_address"`
+	HostName  string `json:"host_name"`
 }
 
 func Validate(dto interface{}) restErrors.IRestErr {
