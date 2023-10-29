@@ -89,7 +89,7 @@ func (k *k8sServiceMock) List(namespace string) (*corev1.ServiceList, restErrors
 func (k *k8sServiceMock) Get(name string, namespace string) (*corev1.Service, restErrors.IRestErr) {
 	return k8svcGetFunc(name, namespace)
 }
-func (s *k8sServiceMock) Create(obj *corev1.Service) restErrors.IRestErr {
+func (k *k8sServiceMock) Create(obj *corev1.Service) restErrors.IRestErr {
 	return svcServiceCreateFunc(obj)
 }
 
@@ -528,4 +528,21 @@ func TestIPAddress(t *testing.T) {
 		assert.EqualValues(t, "can't get ip address, still provisioning!", result.Message)
 	})
 
+}
+
+func TestVerifyDomainHots(t *testing.T) {
+	t.Run("verify should throw err with non matching ip address", func(t *testing.T) {
+		domain := "example.com"
+		ipAddress := "192.168.0.1"
+		err := verifyDomainHost(domain, ipAddress)
+		assert.EqualValues(t, "Domain DNS records hasn't been updated with an A record that maps example.com to 192.168.0.1.", err.Error())
+	})
+	t.Run("verify should throw err with invalid domain", func(t *testing.T) {
+		domain := "nonexistentdomain123.com"
+		ipAddress := "127.0.0.1"
+		err := verifyDomainHost(domain, ipAddress)
+		assert.NotNil(t, err, "Expected an error")
+		assert.Equal(t, "lookup nonexistentdomain123.com: no such host", err.Error(), "Unexpected error message")
+
+	})
 }

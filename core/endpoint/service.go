@@ -1,10 +1,14 @@
 package endpoint
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/kotalco/cloud-api/pkg/config"
+	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"net/http"
+	"strconv"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/kotalco/cloud-api/pkg/k8s/ingressroute"
 	"github.com/kotalco/cloud-api/pkg/k8s/middleware"
 	"github.com/kotalco/cloud-api/pkg/k8s/secret"
@@ -16,6 +20,12 @@ import (
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+// The crossover middleware is a plugin used to store statistics for each endpoint, utilizing the endpointActivity package
+const (
+	crossoverMiddlewareName      = "kotal-crossover"
+	crossoverMiddlewareNamespace = "kotal"
 )
 
 var (
@@ -47,11 +57,14 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) restErrors
 	middlewarePrefixes := make([]string, 0)
 	stripePrefixMiddlewareName := fmt.Sprintf("%s-strip-prefix", dto.Name)
 	basicAuthMiddlewareName := fmt.Sprintf("%s-basic-auth", dto.Name)
-
+	endpointPortIdLength, intErr := strconv.Atoi(config.Environment.EndpointPortIdLength)
+	if intErr != nil {
+		return restErrors.NewInternalServerError(intErr.Error())
+	}
 	for _, v := range svc.Spec.Ports {
 		if k8svc.AvailableProtocol(v.Name) {
 			ingressRoutePortDto := ingressroute.IngressRoutePortDto{
-				ID:   uuid.NewString(),
+				ID:   fmt.Sprintf("%s%s", strings.ToLower(security.GenerateRandomString(endpointPortIdLength)), strings.Replace(dto.UserId, "-", "", -1)),
 				Name: v.Name,
 			}
 			ingressRoutePorts = append(ingressRoutePorts, ingressRoutePortDto)                          //create ingressRoute ports
@@ -73,10 +86,17 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) restErrors
 		Ports:           ingressRoutePorts,
 		Middlewares: func() []ingressroute.IngressRouteMiddlewareRefDto {
 			refs := make([]ingressroute.IngressRouteMiddlewareRefDto, 0)
+			//append crossover  middleware
+			refs = append(refs, ingressroute.IngressRouteMiddlewareRefDto{
+				Name:      crossoverMiddlewareName,
+				Namespace: crossoverMiddlewareNamespace,
+			})
+			//append stripePrefix middleware
 			refs = append(refs, ingressroute.IngressRouteMiddlewareRefDto{
 				Name:      stripePrefixMiddlewareName,
 				Namespace: svc.Namespace,
 			})
+			//append basicAuth middleware
 			if dto.UseBasicAuth {
 				refs = append(refs, ingressroute.IngressRouteMiddlewareRefDto{
 					Name:      basicAuthMiddlewareName,
@@ -116,6 +136,7 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) restErrors
 		dErr := ingressRoutesService.Delete(dto.Name, svc.Namespace)
 		if dErr != nil {
 			go logger.Error(s.Create, dErr)
+			return dErr
 		}
 		return err
 	}
@@ -142,6 +163,7 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) restErrors
 			dErr := ingressRoutesService.Delete(dto.Name, svc.Namespace)
 			if dErr != nil {
 				go logger.Error(s.Create, dErr)
+				return dErr
 			}
 			return err
 		}
@@ -159,6 +181,49 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) restErrors
 			},
 		})
 		if err != nil {
+			dErr := ingressRoutesService.Delete(dto.Name, svc.Namespace)
+			if dErr != nil {
+				go logger.Error(s.Create, dErr)
+			}
+			return err
+		}
+	}
+
+	//create crossover middleware if it doesn't exist
+	_, err = k8MiddlewareService.Get(crossoverMiddlewareName, crossoverMiddlewareNamespace)
+	if err != nil {
+		if err.StatusCode() == http.StatusNotFound {
+			jsonBytes, intErr := json.Marshal(map[string]interface{}{
+				"APIKey":        config.Environment.CrossOverAPIKey,
+				"Pattern":       config.Environment.CrossOverPattern,
+				"RemoteAddress": config.Environment.CrossOverRemoteAddress,
+			})
+			if intErr != nil {
+				go logger.Error(s.Create, intErr)
+				return restErrors.NewInternalServerError("something went wrong")
+			}
+
+			err = k8MiddlewareService.Create(&middleware.CreateMiddlewareDto{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      crossoverMiddlewareName,
+					Namespace: crossoverMiddlewareNamespace,
+				},
+				MiddlewareSpec: v1alpha1.MiddlewareSpec{
+					Plugin: map[string]v1.JSON{
+						"crossover": {
+							Raw: jsonBytes,
+						},
+					},
+				},
+			})
+			if err != nil {
+				dErr := ingressRoutesService.Delete(dto.Name, svc.Namespace)
+				if dErr != nil {
+					go logger.Error(s.Create, dErr)
+				}
+				return err
+			}
+		} else {
 			dErr := ingressRoutesService.Delete(dto.Name, svc.Namespace)
 			if dErr != nil {
 				go logger.Error(s.Create, dErr)

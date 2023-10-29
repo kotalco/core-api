@@ -6,11 +6,12 @@ import (
 )
 
 const (
-	MigrateUserTable          = "MigrateUserTable"
-	MigrateVerificationTable  = "MigrateVerificationTable"
-	MigrateWorkspaceTable     = "MigrateWorkspaceTable"
-	MigrateWorkspaceUserTable = "MigrateWorkspaceUserTable"
-	MigrateSettingTable       = "MigrateSettingTable"
+	MigrateUserTable             = "MigrateUserTable"
+	MigrateVerificationTable     = "MigrateVerificationTable"
+	MigrateWorkspaceTable        = "MigrateWorkspaceTable"
+	MigrateWorkspaceUserTable    = "MigrateWorkspaceUserTable"
+	MigrateSettingTable          = "MigrateSettingTable"
+	MigrateEndpointActivityTable = "MigrateEndpointActivityTable"
 )
 
 type service struct {
@@ -61,6 +62,12 @@ func (service) Migrations() map[string]Definition {
 			Name: MigrateSettingTable,
 			Run: func() error {
 				return migrator.CreateSettingTable()
+			},
+		},
+		MigrateEndpointActivityTable: {
+			Name: MigrateEndpointActivityTable,
+			Run: func() error {
+				return migrator.CreateEndpointActivityTable()
 			},
 		},
 	}

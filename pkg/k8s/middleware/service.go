@@ -9,10 +9,12 @@ import (
 	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 type IK8Middleware interface {
 	Create(dto *CreateMiddlewareDto) restErrors.IRestErr
+	Get(name string, namespace string) (*traefikv1alpha1.Middleware, restErrors.IRestErr)
 }
 
 type k8Middleware struct{}
@@ -42,4 +44,22 @@ func (m *k8Middleware) Create(dto *CreateMiddlewareDto) restErrors.IRestErr {
 	}
 
 	return nil
+}
+
+func (m *k8Middleware) Get(name string, namespace string) (*traefikv1alpha1.Middleware, restErrors.IRestErr) {
+	var record traefikv1alpha1.Middleware
+	key := types.NamespacedName{
+		Namespace: namespace,
+		Name:      name,
+	}
+
+	err := k8s.K8sClient.Get(context.Background(), key, &record)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil, restErrors.NewNotFoundError(fmt.Sprintf("can't find middleware %s", name))
+		}
+		go logger.Error(m.Get, err)
+		return nil, restErrors.NewInternalServerError("something went wrong")
+	}
+	return &record, nil
 }

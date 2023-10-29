@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/kotalco/cloud-api/core/endpoint"
+	"github.com/kotalco/cloud-api/core/endpointactivity"
 	"github.com/kotalco/cloud-api/core/setting"
 	"github.com/kotalco/cloud-api/core/workspace"
 	"github.com/kotalco/cloud-api/pkg/k8s/secret"
 	k8svc "github.com/kotalco/cloud-api/pkg/k8s/svc"
 	"github.com/kotalco/cloud-api/pkg/token"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
+	"github.com/kotalco/community-api/pkg/logger"
 	"github.com/kotalco/community-api/pkg/shared"
 	"net/http"
 )
@@ -20,6 +22,7 @@ var (
 	availableProtocol = k8svc.AvailableProtocol
 	settingService    = setting.NewService()
 	secretService     = secret.NewService()
+	activityService   = endpointactivity.NewService()
 )
 
 // Create accept  endpoint.CreateEndpointDto , creates the endpoint and returns success or err if any
@@ -131,4 +134,51 @@ func Count(c *fiber.Ctx) error {
 	c.Set("X-Total-Count", fmt.Sprintf("%d", count))
 
 	return c.SendStatus(http.StatusOK)
+}
+
+func WriteStats(c *fiber.Ctx) error {
+	dto := new(endpointactivity.CreateEndpointActivityDto)
+	if err := c.BodyParser(dto); err != nil {
+		badReq := restErrors.NewBadRequestError("invalid request body")
+		go logger.Error("ENDPOINT_ACTIVITY_HANDLER_WRITE_STATS", err)
+		return c.SendStatus(badReq.StatusCode())
+	}
+
+	err := endpointactivity.Validate(dto)
+	if err != nil {
+		return c.Status(err.StatusCode()).JSON(err)
+	}
+
+	err = activityService.Create(dto.RequestId)
+	if err != nil {
+		go logger.Error("ENDPOINT_ACTIVITY_HANDLER_WRITE_STATS", err)
+		return c.SendStatus(err.StatusCode())
+	}
+	return c.SendStatus(http.StatusOK)
+}
+
+func ReadStats(c *fiber.Ctx) error {
+	workspaceModel := c.Locals("workspace").(workspace.Workspace)
+	endpointName := c.Params("name")
+
+	record, err := endpointService.Get(endpointName, workspaceModel.K8sNamespace)
+	if err != nil {
+		return c.Status(err.StatusCode()).JSON(err)
+	}
+
+	dto := map[string]endpointactivity.ActivityAggregations{}
+	for _, v := range record.Spec.Routes {
+		portName := v.Services[0].Port.StrVal
+		if k8svc.AvailableProtocol(portName) {
+			monthlyCount, err := activityService.MonthlyActivity(endpointactivity.GetEndpointId(v.Match))
+			if err != nil {
+				go logger.Error("ENDPOINT_ACTIVITY_HANDLER_READ_STATS", err)
+				return c.Status(err.StatusCode()).JSON(err)
+			}
+			dto[portName] = endpointactivity.ActivityAggregations{MonthlyHits: monthlyCount}
+		}
+
+	}
+
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(dto))
 }

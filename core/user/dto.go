@@ -60,6 +60,7 @@ type UserResponseDto struct {
 	PublicUserResponseDto
 	TwoFactorEnabled bool `json:"two_factor_enabled"`
 	PlatformAdmin    bool `json:"platform_admin"`
+	IsCustomer       bool `json:"is_customer"`
 }
 
 type PublicUserResponseDto struct {
