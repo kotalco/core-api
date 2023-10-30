@@ -92,11 +92,11 @@ func MapUrl(app *fiber.App) {
 
 	//settings group
 	settingGroup := v1.Group("settings")
-	settingGroup.Get("/", middleware.JWTProtected, middleware.TFAProtected, setting.Settings)
-	settingGroup.Post("/domain", middleware.JWTProtected, middleware.TFAProtected, setting.ConfigureDomain)
-	settingGroup.Post("/registration", middleware.JWTProtected, middleware.TFAProtected, setting.ConfigureRegistration)
+	settingGroup.Get("/", setting.Settings)
+	settingGroup.Post("/domain", setting.ConfigureDomain)
+	settingGroup.Post("/registration", setting.ConfigureRegistration)
 	//todo change the route /ip-address to /network-identifiers
-	settingGroup.Get("/ip-address", middleware.JWTProtected, middleware.TFAProtected, setting.NetworkIdentifiers)
+	settingGroup.Get("/ip-address", setting.NetworkIdentifiers)
 	mapDeploymentUrl(v1)
 }
 
