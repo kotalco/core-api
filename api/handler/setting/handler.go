@@ -34,18 +34,21 @@ func ConfigureDomain(c *fiber.Ctx) error {
 		return c.Status(restErr.StatusCode()).JSON(restErr)
 	}
 
-	ip, err := ipAddress()
+	ip, hostName, err := networkIdentifiers()
 	if err != nil {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	err = verifyDomainHost(dto.Domain, ip)
-	if err != nil {
-		return c.Status(err.StatusCode()).JSON(err)
-	}
-	err = verifyDomainHost(fmt.Sprintf("%s.%s", uuid.NewString(), dto.Domain), ip)
-	if err != nil {
-		return c.Status(err.StatusCode()).JSON(err)
+	if ip != "" {
+		err = verifyDomainIP(dto.Domain, ip)
+		if err != nil {
+			return c.Status(err.StatusCode()).JSON(err)
+		}
+	} else if hostName != "" {
+		err = verifyDomainHostName(fmt.Sprintf("%s.%s", uuid.NewString(), dto.Domain), hostName)
+		if err != nil {
+			return c.Status(err.StatusCode()).JSON(err)
+		}
 	}
 
 	txHandle := sqlclient.Begin()
@@ -121,15 +124,15 @@ func Settings(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(shared.NewResponse(marshalledList))
 }
 
-func IPAddress(c *fiber.Ctx) error {
-	record, err := ipAddress()
+func NetworkIdentifiers(c *fiber.Ctx) error {
+	ipAddress, hostName, err := networkIdentifiers()
 	if err != nil {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(&setting.IPAddressResponseDto{IPAddress: record}))
+	return c.Status(http.StatusOK).JSON(shared.NewResponse(&setting.NetworkIdentifierResponseDto{IPAddress: ipAddress, HostName: hostName}))
 }
 
-var ipAddress = func() (ip string, restErr restErrors.IRestErr) {
+var networkIdentifiers = func() (ip string, hostName string, restErr restErrors.IRestErr) {
 	record, restErr := k8service.Get("traefik", "traefik")
 	if restErr != nil {
 		if restErr.StatusCode() == http.StatusNotFound {
@@ -146,16 +149,17 @@ var ipAddress = func() (ip string, restErr restErrors.IRestErr) {
 
 	defer func() {
 		if err := recover(); err != nil {
-			restErr = restErrors.NewNotFoundError("can't get ip address, still provisioning!")
+			restErr = restErrors.NewNotFoundError("can't get network identifiers, still provisioning!")
 			return
 		}
 	}()
 	ip = record.Status.LoadBalancer.Ingress[0].IP
+	hostName = record.Status.LoadBalancer.Ingress[0].Hostname
 
 	return
 }
 
-var verifyDomainHost = func(domain string, ipAddress string) restErrors.IRestErr {
+var verifyDomainIP = func(domain string, ipAddress string) restErrors.IRestErr {
 	records, lookErr := net.LookupHost(domain)
 	if lookErr != nil {
 		go logger.Error("VERIFY_DOMAIN_A_RECORDS", lookErr)
@@ -170,6 +174,21 @@ var verifyDomainHost = func(domain string, ipAddress string) restErrors.IRestErr
 	}
 	if !verified {
 		badReqErr := restErrors.NewBadRequestError(fmt.Sprintf("Domain DNS records hasn't been updated with an A record that maps %s to %s.", domain, ipAddress))
+		return badReqErr
+	}
+	return nil
+}
+
+var verifyDomainHostName = func(domain string, hostName string) restErrors.IRestErr {
+	CName, lookErr := net.LookupCNAME(domain)
+	if lookErr != nil {
+		go logger.Error("VERIFY_DOMAIN_C_Name", lookErr)
+		badReq := restErrors.NewBadRequestError(lookErr.Error())
+		return badReq
+	}
+
+	if CName != hostName {
+		badReqErr := restErrors.NewBadRequestError(fmt.Sprintf("Domain hasn't been updated with a CName that maps %s to %s.", domain, hostName))
 		return badReqErr
 	}
 	return nil

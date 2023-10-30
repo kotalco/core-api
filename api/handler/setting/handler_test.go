@@ -169,6 +169,7 @@ func TestMain(m *testing.M) {
 	code := m.Run()
 	os.Exit(code)
 }
+
 func TestConfigureDomain(t *testing.T) {
 	userDetails := new(token.UserDetails)
 	userDetails.ID = "test@test.com"
@@ -178,16 +179,57 @@ func TestConfigureDomain(t *testing.T) {
 		"domain": "kotal.co",
 	}
 
-	tmpIpAddress := ipAddress
-	tmpVerifyDomainHost := verifyDomainHost
+	tmpNetworkIdentifiers := networkIdentifiers
+	tmpVerifyDomainIp := verifyDomainIP
+	tmpVerifyDomainHostName := verifyDomainHostName
 
 	var invalidDto = map[string]string{}
 
-	t.Run("ConfigureDomain should pass", func(t *testing.T) {
-		ipAddress = func() (ip string, restErr restErrors.IRestErr) {
-			return "1223", nil
+	t.Run("ConfigureDomain should pass with ip address", func(t *testing.T) {
+		networkIdentifiers = func() (ip string, hostName string, restErr restErrors.IRestErr) {
+			return "1223", "", nil
 		}
-		verifyDomainHost = func(domain string, ipAddress string) restErrors.IRestErr {
+		verifyDomainIP = func(domain string, ipAddress string) restErrors.IRestErr {
+			return nil
+		}
+		settingConfigureDomainFunc = func(dto *setting.ConfigureDomainRequestDto) restErrors.IRestErr {
+			return nil
+		}
+
+		ingressRouteGetFunc = func(name string, namespace string) (*traefikv1alpha1.IngressRoute, restErrors.IRestErr) {
+			return &traefikv1alpha1.IngressRoute{
+				TypeMeta:   metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{},
+				Spec: traefikv1alpha1.IngressRouteSpec{
+					Routes: []traefikv1alpha1.Route{{
+						Services: []traefikv1alpha1.Service{{
+							LoadBalancerSpec: traefikv1alpha1.LoadBalancerSpec{Name: "kotal-dashboard"},
+						}, {
+							LoadBalancerSpec: traefikv1alpha1.LoadBalancerSpec{Name: "kotal-api"},
+						}},
+					}},
+				},
+			}, nil
+		}
+
+		ingressRouteUpdateFunc = func(record *traefikv1alpha1.IngressRoute) restErrors.IRestErr {
+			return nil
+		}
+		body, resp := newFiberCtx(validDto, ConfigureDomain, locals)
+
+		var result map[string]shared.SuccessMessage
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
+		assert.EqualValues(t, "domain configured successfully!", result["data"].Message)
+	})
+	t.Run("ConfigureDomain should pass with hostname", func(t *testing.T) {
+		networkIdentifiers = func() (ip string, hostName string, restErr restErrors.IRestErr) {
+			return "", "hostname.amazon.com", nil
+		}
+		verifyDomainHostName = func(domain string, hostname string) restErrors.IRestErr {
 			return nil
 		}
 		settingConfigureDomainFunc = func(dto *setting.ConfigureDomainRequestDto) restErrors.IRestErr {
@@ -244,9 +286,9 @@ func TestConfigureDomain(t *testing.T) {
 		assert.Equal(t, badReqErr, result)
 		assert.EqualValues(t, http.StatusBadRequest, resp.StatusCode)
 	})
-	t.Run("ConfigureDomain should throw if can't get ip address", func(t *testing.T) {
-		ipAddress = func() (ip string, restErr restErrors.IRestErr) {
-			return "", restErrors.NewInternalServerError("can't get ip address")
+	t.Run("ConfigureDomain should throw if can't get ip address or hostname", func(t *testing.T) {
+		networkIdentifiers = func() (ip string, hostname string, restErr restErrors.IRestErr) {
+			return "", "", restErrors.NewInternalServerError("can't get ip address")
 		}
 
 		body, resp := newFiberCtx(validDto, ConfigureDomain, locals)
@@ -259,12 +301,30 @@ func TestConfigureDomain(t *testing.T) {
 		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
 		assert.EqualValues(t, "can't get ip address", result.Message)
 	})
-	t.Run("ConfigureDomain should throw if can't verify domain", func(t *testing.T) {
-		ipAddress = func() (ip string, restErr restErrors.IRestErr) {
-			return "", nil
+	t.Run("ConfigureDomain should throw if can't verify domain ip", func(t *testing.T) {
+		networkIdentifiers = func() (ip string, hostName string, restErr restErrors.IRestErr) {
+			return "1.2.3", "", nil
 		}
 
-		verifyDomainHost = func(domain string, ipAddress string) restErrors.IRestErr {
+		verifyDomainIP = func(domain string, ipAddress string) restErrors.IRestErr {
+			return restErrors.NewInternalServerError("can't verify domain")
+		}
+		body, resp := newFiberCtx(validDto, ConfigureDomain, locals)
+
+		var result restErrors.RestErr
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
+		assert.EqualValues(t, "can't verify domain", result.Message)
+	})
+	t.Run("ConfigureDomain should throw if can't verify domain hostname", func(t *testing.T) {
+		networkIdentifiers = func() (ip string, hostName string, restErr restErrors.IRestErr) {
+			return "", "111.amazon.com", nil
+		}
+
+		verifyDomainHostName = func(domain string, hostName string) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("can't verify domain")
 		}
 		body, resp := newFiberCtx(validDto, ConfigureDomain, locals)
@@ -278,10 +338,10 @@ func TestConfigureDomain(t *testing.T) {
 		assert.EqualValues(t, "can't verify domain", result.Message)
 	})
 	t.Run("configure domain should throw if service throws", func(t *testing.T) {
-		ipAddress = func() (ip string, restErr restErrors.IRestErr) {
-			return "1223", nil
+		networkIdentifiers = func() (ip string, hostName string, restErr restErrors.IRestErr) {
+			return "1223", "", nil
 		}
-		verifyDomainHost = func(domain string, ipAddress string) restErrors.IRestErr {
+		verifyDomainIP = func(domain string, ipAddress string) restErrors.IRestErr {
 			return nil
 		}
 		settingConfigureDomainFunc = func(dto *setting.ConfigureDomainRequestDto) restErrors.IRestErr {
@@ -296,10 +356,10 @@ func TestConfigureDomain(t *testing.T) {
 		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
 	})
 	t.Run("ConfigureDomain should throw if can't get kotal stack ingress-route", func(t *testing.T) {
-		ipAddress = func() (ip string, restErr restErrors.IRestErr) {
-			return "1223", nil
+		networkIdentifiers = func() (ip string, hostname string, restErr restErrors.IRestErr) {
+			return "1223", "", nil
 		}
-		verifyDomainHost = func(domain string, ipAddress string) restErrors.IRestErr {
+		verifyDomainIP = func(domain string, ipAddress string) restErrors.IRestErr {
 			return nil
 		}
 		settingConfigureDomainFunc = func(dto *setting.ConfigureDomainRequestDto) restErrors.IRestErr {
@@ -321,10 +381,10 @@ func TestConfigureDomain(t *testing.T) {
 		assert.EqualValues(t, "no such record", result.Message)
 	})
 	t.Run("ConfigureDomain should throw if can't update kotal stack", func(t *testing.T) {
-		ipAddress = func() (ip string, restErr restErrors.IRestErr) {
-			return "1223", nil
+		networkIdentifiers = func() (ip string, hostName string, restErr restErrors.IRestErr) {
+			return "1223", "", nil
 		}
-		verifyDomainHost = func(domain string, ipAddress string) restErrors.IRestErr {
+		verifyDomainIP = func(domain string, ipAddress string) restErrors.IRestErr {
 			return nil
 		}
 		settingConfigureDomainFunc = func(dto *setting.ConfigureDomainRequestDto) restErrors.IRestErr {
@@ -360,10 +420,11 @@ func TestConfigureDomain(t *testing.T) {
 		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
 		assert.EqualValues(t, "something went wrong", result.Message)
 	})
-	ipAddress = tmpIpAddress
-	verifyDomainHost = tmpVerifyDomainHost
-
+	networkIdentifiers = tmpNetworkIdentifiers
+	verifyDomainIP = tmpVerifyDomainIp
+	verifyDomainHostName = tmpVerifyDomainHostName
 }
+
 func TestConfigureRegistration(t *testing.T) {
 	userDetails := new(token.UserDetails)
 	userDetails.ID = "test@test.com"
@@ -461,7 +522,8 @@ func TestSettings(t *testing.T) {
 	})
 
 }
-func TestIPAddress(t *testing.T) {
+
+func TestNetworkIdentifiersAddress(t *testing.T) {
 	userDetails := new(token.UserDetails)
 	userDetails.ID = "test@test.com"
 	var locals = map[string]interface{}{}
@@ -473,29 +535,31 @@ func TestIPAddress(t *testing.T) {
 					LoadBalancer: corev1.LoadBalancerStatus{
 						Ingress: []corev1.LoadBalancerIngress{
 							{
-								IP: "1234",
+								IP:       "1234",
+								Hostname: "123.amazon.com",
 							},
 						},
 					},
 				},
 			}, nil
 		}
-		body, resp := newFiberCtx("", IPAddress, locals)
+		body, resp := newFiberCtx("", NetworkIdentifiers, locals)
 		fmt.Println(string(body))
 
-		var result map[string]setting.IPAddressResponseDto
+		var result map[string]setting.NetworkIdentifierResponseDto
 		err := json.Unmarshal(body, &result)
 		if err != nil {
 			panic(err.Error())
 		}
 		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
 		assert.EqualValues(t, "1234", result["data"].IPAddress)
+		assert.EqualValues(t, "123.amazon.com", result["data"].HostName)
 	})
 	t.Run("get ip address should throw if can't get traefik service", func(t *testing.T) {
 		k8svcGetFunc = func(name string, namespace string) (*corev1.Service, restErrors.IRestErr) {
 			return nil, restErrors.NewNotFoundError("can't get traefik service")
 		}
-		body, resp := newFiberCtx("", IPAddress, locals)
+		body, resp := newFiberCtx("", NetworkIdentifiers, locals)
 		fmt.Println(string(body))
 
 		var result restErrors.RestErr
@@ -516,7 +580,7 @@ func TestIPAddress(t *testing.T) {
 				},
 			}, nil
 		}
-		body, resp := newFiberCtx("", IPAddress, locals)
+		body, resp := newFiberCtx("", NetworkIdentifiers, locals)
 
 		var result restErrors.RestErr
 		err := json.Unmarshal(body, &result)
@@ -525,7 +589,7 @@ func TestIPAddress(t *testing.T) {
 		}
 		assert.EqualValues(t, http.StatusNotFound, resp.StatusCode)
 		assert.EqualValues(t, http.StatusNotFound, result.Status)
-		assert.EqualValues(t, "can't get ip address, still provisioning!", result.Message)
+		assert.EqualValues(t, "can't get network identifiers, still provisioning!", result.Message)
 	})
 
 }
@@ -534,13 +598,13 @@ func TestVerifyDomainHots(t *testing.T) {
 	t.Run("verify should throw err with non matching ip address", func(t *testing.T) {
 		domain := "example.com"
 		ipAddress := "192.168.0.1"
-		err := verifyDomainHost(domain, ipAddress)
+		err := verifyDomainIP(domain, ipAddress)
 		assert.EqualValues(t, "Domain DNS records hasn't been updated with an A record that maps example.com to 192.168.0.1.", err.Error())
 	})
 	t.Run("verify should throw err with invalid domain", func(t *testing.T) {
 		domain := "nonexistentdomain123.com"
 		ipAddress := "127.0.0.1"
-		err := verifyDomainHost(domain, ipAddress)
+		err := verifyDomainIP(domain, ipAddress)
 		assert.NotNil(t, err, "Expected an error")
 		assert.Equal(t, "lookup nonexistentdomain123.com: no such host", err.Error(), "Unexpected error message")
 
