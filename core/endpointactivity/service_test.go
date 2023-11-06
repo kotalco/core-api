@@ -16,7 +16,7 @@ var (
 	activityService        IService
 	WithTransactionFunc    func(txHandle *gorm.DB) IRepository
 	WithoutTransactionFunc func() IRepository
-	CreateFunc             func(activity *Activity) restErrors.IRestErr
+	CreateInBatchesFunc    func(activities []*Activity) restErrors.IRestErr
 	FindManyFunc           func(query interface{}, conditions ...interface{}) ([]*Activity, restErrors.IRestErr)
 	CountFunc              func(query interface{}, conditions ...interface{}) (int64, restErrors.IRestErr)
 )
@@ -30,8 +30,8 @@ func (r activityRepoMock) WithoutTransaction() IRepository {
 	return r
 }
 
-func (r activityRepoMock) Create(activity *Activity) restErrors.IRestErr {
-	return CreateFunc(activity)
+func (r activityRepoMock) CreateInBatches(activities []*Activity) restErrors.IRestErr {
+	return CreateInBatchesFunc(activities)
 }
 
 func (r activityRepoMock) FindMany(query interface{}, conditions ...interface{}) ([]*Activity, restErrors.IRestErr) {
@@ -49,20 +49,20 @@ func TestMain(m *testing.M) {
 
 func TestService_Create(t *testing.T) {
 	t.Run("create_should_pass", func(t *testing.T) {
-		CreateFunc = func(activity *Activity) restErrors.IRestErr {
+		CreateInBatchesFunc = func(activities []*Activity) restErrors.IRestErr {
 			return nil
 		}
 
-		restErr := activityService.Create(fmt.Sprintf("%s%s", strings.ToLower(security.GenerateRandomString(10)), strings.Replace(uuid.NewString(), "-", "", -1)))
+		restErr := activityService.Create(fmt.Sprintf("%s%s", strings.ToLower(security.GenerateRandomString(10)), strings.Replace(uuid.NewString(), "-", "", -1)), 1)
 		assert.Nil(t, restErr)
 	})
 
 	t.Run("create_should_throw_if_repos_throws", func(t *testing.T) {
-		CreateFunc = func(activity *Activity) restErrors.IRestErr {
+		CreateInBatchesFunc = func(activities []*Activity) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 
-		restErr := activityService.Create(fmt.Sprintf("%s%s", strings.ToLower(security.GenerateRandomString(10)), strings.Replace(uuid.NewString(), "-", "", -1)))
+		restErr := activityService.Create(fmt.Sprintf("%s%s", strings.ToLower(security.GenerateRandomString(10)), strings.Replace(uuid.NewString(), "-", "", -1)), 1)
 		assert.EqualValues(t, "something went wrong", restErr.Error())
 	})
 }

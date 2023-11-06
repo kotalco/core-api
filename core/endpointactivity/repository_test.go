@@ -29,7 +29,9 @@ func TestRepository_Create(t *testing.T) {
 	})
 	t.Run("update_should_throw_if_db_throws", func(t *testing.T) {
 		record := new(Activity)
-		restErr := repo.WithoutTransaction().Create(record)
+		restErr := repo.WithoutTransaction().CreateInBatches([]*Activity{
+			record,
+		})
 		assert.EqualValues(t, "something went wrong", restErr.Error())
 	})
 }
@@ -58,7 +60,10 @@ func createActivityRecord(t *testing.T) Activity {
 	record.ID = uuid.NewString()
 	record.EndpointId = uuid.NewString()
 	record.Timestamp = time.Now().Unix()
-	restErr := repo.WithoutTransaction().Create(record)
+	activities := []*Activity{
+		record,
+	}
+	restErr := repo.WithoutTransaction().CreateInBatches(activities)
 	assert.Nil(t, restErr)
 	return *record
 }

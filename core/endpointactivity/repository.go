@@ -19,7 +19,7 @@ type repository struct {
 type IRepository interface {
 	WithTransaction(txHandle *gorm.DB) IRepository
 	WithoutTransaction() IRepository
-	Create(activity *Activity) restErrors.IRestErr
+	CreateInBatches(activities []*Activity) restErrors.IRestErr
 	FindMany(query interface{}, conditions ...interface{}) ([]*Activity, restErrors.IRestErr)
 	Count(query interface{}, conditions ...interface{}) (int64, restErrors.IRestErr)
 }
@@ -39,10 +39,10 @@ func (r repository) WithoutTransaction() IRepository {
 	return r
 }
 
-func (r repository) Create(activity *Activity) restErrors.IRestErr {
-	res := r.db.Create(activity)
+func (r repository) CreateInBatches(activities []*Activity) restErrors.IRestErr {
+	res := r.db.CreateInBatches(activities, 10)
 	if res.Error != nil {
-		go logger.Error(r.Create, res.Error)
+		go logger.Error(r.CreateInBatches, res.Error)
 		return restErrors.NewInternalServerError("something went wrong")
 	}
 	return nil
