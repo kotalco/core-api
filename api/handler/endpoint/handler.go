@@ -149,7 +149,7 @@ func WriteStats(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	err = activityService.Create(dto.RequestId)
+	err = activityService.Create(dto.RequestId, dto.Count)
 	if err != nil {
 		go logger.Error("ENDPOINT_ACTIVITY_HANDLER_WRITE_STATS", err)
 		return c.SendStatus(err.StatusCode())

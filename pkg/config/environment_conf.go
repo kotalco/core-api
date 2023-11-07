@@ -30,6 +30,7 @@ var (
 		DatabaseMaxIdleConnections             string
 		DatabaseMaxLifetimeConnections         string
 		DatabaseMaxIdleLifetimeConnections     string
+		DatabaseInsertBatchSize                string
 		VerificationTokenLength                string
 		VerificationTokenExpiryHours           string
 		SendgridSenderName                     string
@@ -58,6 +59,7 @@ var (
 		DatabaseMaxIdleConnections:             getenv("DB_MAX_IDLE_CONNECTIONS", "100"),
 		DatabaseMaxIdleLifetimeConnections:     getenv("DB_MAX_IDLE_LIFETIME_CONNECTIONS", "10"),
 		DatabaseMaxLifetimeConnections:         getenv("DB_MAX_LIFETIME_CONNECTIONS", "10"),
+		DatabaseInsertBatchSize:                getenv("DB_INSERT_BATCH_SIZE", "50"),
 		VerificationTokenLength:                getenv("VERIFICATION_TOKEN_LENGTH", "80"),
 		VerificationTokenExpiryHours:           getenv("VERIFICATION_TOKEN_EXPIRY_HOURS", "24"),
 		SendgridSenderName:                     getenv("SEND_GRID_SENDER_NAME", "Kotal Notifications"),

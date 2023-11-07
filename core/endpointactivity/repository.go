@@ -1,10 +1,12 @@
 package endpointactivity
 
 import (
+	"github.com/kotalco/cloud-api/pkg/config"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
 	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/kotalco/community-api/pkg/logger"
 	"gorm.io/gorm"
+	"strconv"
 )
 
 var (
@@ -19,7 +21,7 @@ type repository struct {
 type IRepository interface {
 	WithTransaction(txHandle *gorm.DB) IRepository
 	WithoutTransaction() IRepository
-	Create(activity *Activity) restErrors.IRestErr
+	CreateInBatches(activities []*Activity) restErrors.IRestErr
 	FindMany(query interface{}, conditions ...interface{}) ([]*Activity, restErrors.IRestErr)
 	Count(query interface{}, conditions ...interface{}) (int64, restErrors.IRestErr)
 }
@@ -39,10 +41,16 @@ func (r repository) WithoutTransaction() IRepository {
 	return r
 }
 
-func (r repository) Create(activity *Activity) restErrors.IRestErr {
-	res := r.db.Create(activity)
+func (r repository) CreateInBatches(activities []*Activity) restErrors.IRestErr {
+	batchSize, err := strconv.Atoi(config.Environment.DatabaseInsertBatchSize)
+	if err != nil {
+		logger.Warn("CreateInBatches", err)
+		batchSize = len(activities)
+	}
+
+	res := r.db.CreateInBatches(activities, batchSize)
 	if res.Error != nil {
-		go logger.Error(r.Create, res.Error)
+		go logger.Error(r.CreateInBatches, res.Error)
 		return restErrors.NewInternalServerError("something went wrong")
 	}
 	return nil

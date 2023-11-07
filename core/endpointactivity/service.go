@@ -14,7 +14,7 @@ type service struct{}
 type IService interface {
 	WithTransaction(txHandle *gorm.DB) IService
 	WithoutTransaction() IService
-	Create(endpointId string) restErrors.IRestErr
+	Create(endpointId string, count int) restErrors.IRestErr
 	MonthlyActivity(endpointId string) (int64, restErrors.IRestErr)
 	UserMinuteActivity(userId string) (int64, restErrors.IRestErr)
 }
@@ -35,21 +35,28 @@ func (s service) WithoutTransaction() IService {
 	return s
 }
 
-func (s service) Create(endpointId string) restErrors.IRestErr {
+func (s service) Create(endpointId string, count int) restErrors.IRestErr {
 	endpointPortIdLength, err := strconv.Atoi(config.Environment.EndpointPortIdLength)
 	if err != nil {
 		return restErrors.NewInternalServerError(err.Error())
 	}
-	record := new(Activity)
-	record.ID = uuid.NewString()
-	record.EndpointId = endpointId
+
 	parsedUUID, err := uuid.Parse(endpointId[endpointPortIdLength:])
 	if err != nil {
 		return restErrors.NewInternalServerError(err.Error())
 	}
-	record.UserId = parsedUUID.String()
-	record.Timestamp = time.Now().Unix()
-	return activityRepository.Create(record)
+
+	activities := make([]*Activity, 0)
+	for i := 0; i < count; i++ {
+		record := new(Activity)
+		record.ID = uuid.NewString()
+		record.EndpointId = endpointId
+		record.UserId = parsedUUID.String()
+		record.Timestamp = time.Now().Unix()
+		activities = append(activities, record)
+	}
+
+	return activityRepository.CreateInBatches(activities)
 }
 
 func (s service) MonthlyActivity(endpointId string) (int64, restErrors.IRestErr) {

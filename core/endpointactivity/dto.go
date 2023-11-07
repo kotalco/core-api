@@ -12,6 +12,7 @@ type ActivityAggregations struct {
 
 type CreateEndpointActivityDto struct {
 	RequestId string `json:"request_id" validate:"required"`
+	Count     int    `json:"count" validate:"required"`
 }
 
 func Validate(dto interface{}) restErrors.IRestErr {
