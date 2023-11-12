@@ -3,7 +3,6 @@ package setting
 import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
 	"github.com/kotalco/cloud-api/core/setting"
 	"github.com/kotalco/cloud-api/pkg/k8s/ingressroute"
 	k8svc "github.com/kotalco/cloud-api/pkg/k8s/svc"
@@ -45,7 +44,7 @@ func ConfigureDomain(c *fiber.Ctx) error {
 			return c.Status(err.StatusCode()).JSON(err)
 		}
 	} else if hostName != "" {
-		err = verifyDomainHostName(fmt.Sprintf("%s.%s", uuid.NewString(), dto.Domain), hostName)
+		err = verifyDomainHostName(dto.Domain, hostName)
 		if err != nil {
 			return c.Status(err.StatusCode()).JSON(err)
 		}
