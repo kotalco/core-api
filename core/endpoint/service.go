@@ -73,17 +73,12 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) restErrors
 	}
 
 	//create ingress-route
-	component := strings.Split(svc.Labels["app.kubernetes.io/component"], "-")
-	kind := component[len(component)-1]
 	ingressRouteObject, err := ingressRoutesService.Create(&ingressroute.IngressRouteDto{
-		Name:            dto.Name,
-		Namespace:       svc.Namespace,
-		ServiceName:     svc.Name,
-		ServiceKind:     kind,
-		ServiceProtocol: svc.Labels["kotal.io/protocol"],
-		ServiceNetwork:  svc.Labels["kotal.io/network"],
-		ServiceID:       string(svc.UID),
-		Ports:           ingressRoutePorts,
+		Name:        dto.Name,
+		Namespace:   svc.Namespace,
+		ServiceName: svc.Name,
+		ServiceID:   string(svc.UID),
+		Ports:       ingressRoutePorts,
 		Middlewares: func() []ingressroute.IngressRouteMiddlewareRefDto {
 			refs := make([]ingressroute.IngressRouteMiddlewareRefDto, 0)
 			//append crossover  middleware
@@ -106,7 +101,18 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) restErrors
 			return refs
 		}(),
 		OwnersRef: svc.OwnerReferences,
-		UserId:    dto.UserId,
+		Labels: func() map[string]string {
+			if dto.Labels == nil {
+				dto.Labels = map[string]string{}
+			}
+			component := strings.Split(svc.Labels["app.kubernetes.io/component"], "-")
+			dto.Labels["app.kubernetes.io/created-by"] = "kotal-api"
+			dto.Labels["kotal.io/protocol"] = svc.Labels["kotal.io/protocol"]
+			dto.Labels["kotal.io/network"] = svc.Labels["kotal.io/network"]
+			dto.Labels["kotal.io/user-id"] = dto.UserId
+			dto.Labels["kotal.io/kind"] = component[len(component)-1]
+			return dto.Labels
+		}(),
 	})
 	if err != nil {
 		return err

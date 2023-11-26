@@ -10,17 +10,14 @@ const (
 // IngressRouteDto defines the desired state of the traefikv1alpha1.IngressRoute
 // IngressRouteDto is the struct that matches the CRD implementation of a Traefik HTTP Router.
 type IngressRouteDto struct {
-	Name            string                // is the name of the ingress-route chosen by the user
-	Namespace       string                // is the namespace the user wishes to create the ingress-route in
-	ServiceName     string                // is the name of the service created by kotal operator
-	ServiceProtocol string                // is the protocol of which responsible for creating this service
-	ServiceNetwork  string                // is the network of which responsible for creating this service
-	ServiceKind     string                // is the kind of service created by kotal operator
-	ServiceID       string                // id of the service created by kotal operator
-	Ports           []IngressRoutePortDto // the corresponding ports of the targeted service
-	Middlewares     []IngressRouteMiddlewareRefDto
-	OwnersRef       []metav1.OwnerReference
-	UserId          string
+	Name        string                // is the name of the ingress-route chosen by the user
+	Namespace   string                // is the namespace the user wishes to create the ingress-route in
+	ServiceName string                // is the name of the service created by kotal operator
+	ServiceID   string                // id of the service created by kotal operator
+	Ports       []IngressRoutePortDto // the corresponding ports of the targeted service
+	Middlewares []IngressRouteMiddlewareRefDto
+	OwnersRef   []metav1.OwnerReference
+	Labels      map[string]string
 }
 
 type IngressRouteMiddlewareRefDto struct {

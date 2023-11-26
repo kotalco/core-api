@@ -17,6 +17,7 @@ type CreateEndpointDto struct {
 	ServiceName  string `json:"service_name" validate:"required"`
 	UseBasicAuth bool   `json:"use_basic_auth"`
 	UserId       string
+	Labels       map[string]string
 }
 
 type EndpointMetaDto struct {
