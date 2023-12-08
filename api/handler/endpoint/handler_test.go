@@ -141,29 +141,23 @@ func (s secretServiceMock) Get(name string, namespace string) (*corev1.Secret, r
 }
 
 var (
-	activityCreateFunc             func(endpointId string, count int) restErrors.IRestErr
-	activityMonthlyActivity        func(endpointId string) (int64, restErrors.IRestErr)
-	activityUserMinuteActivityFunc func(userId string) (int64, restErrors.IRestErr)
+	activityCreateFunc func(endpointId string, count int) restErrors.IRestErr
+	activityStatsFunc  func(endpointId string) (*endpointactivity.ActivityAggregations, restErrors.IRestErr)
 )
 
 type activityServiceMock struct{}
 
-func (s activityServiceMock) UserMinuteActivity(userId string) (int64, restErrors.IRestErr) {
-	return activityUserMinuteActivityFunc(userId)
+func (s activityServiceMock) Stats(endpointId string) (*endpointactivity.ActivityAggregations, restErrors.IRestErr) {
+	return activityStatsFunc(endpointId)
 }
-
 func (s activityServiceMock) WithoutTransaction() endpointactivity.IService {
 	return s
 }
-
 func (s activityServiceMock) WithTransaction(txHandle *gorm.DB) endpointactivity.IService {
 	return s
 }
 func (s activityServiceMock) Create(endpointId string, count int) restErrors.IRestErr {
 	return activityCreateFunc(endpointId, count)
-}
-func (s activityServiceMock) MonthlyActivity(endpointId string) (int64, restErrors.IRestErr) {
-	return activityMonthlyActivity(endpointId)
 }
 
 func newFiberCtx(dto interface{}, method func(c *fiber.Ctx) error, locals map[string]interface{}) ([]byte, *http.Response) {
@@ -537,9 +531,12 @@ func TestReadStats(t *testing.T) {
 			}}}, nil
 		}
 
-		activityMonthlyActivity = func(endpointId string) (int64, restErrors.IRestErr) {
-			var counter int64 = 1
-			return counter, nil
+		activityStatsFunc = func(endpointId string) (*endpointactivity.ActivityAggregations, restErrors.IRestErr) {
+			return &endpointactivity.ActivityAggregations{
+				MonthlyHits: 0,
+				WeeklyHits:  0,
+				DailyHits:   0,
+			}, nil
 		}
 
 		body, resp := newFiberCtx("", ReadStats, locals)
@@ -562,27 +559,4 @@ func TestReadStats(t *testing.T) {
 		assert.EqualValues(t, http.StatusNotFound, resp.StatusCode)
 		assert.NotNil(t, "no such record", result.Message)
 	})
-
-	t.Run("read endpoint stats should throw if can't get the endpoint activity", func(t *testing.T) {
-		endpointServiceGetFunc = func(name string, namespace string) (*v1alpha1.IngressRoute, restErrors.IRestErr) {
-			return &v1alpha1.IngressRoute{Spec: v1alpha1.IngressRouteSpec{Routes: []v1alpha1.Route{
-				{
-					Match: "",
-					Services: []v1alpha1.Service{{LoadBalancerSpec: v1alpha1.LoadBalancerSpec{
-						Port: intstr.IntOrString{StrVal: "api"},
-					}}},
-				},
-			}}}, nil
-		}
-		activityMonthlyActivity = func(endpointId string) (int64, restErrors.IRestErr) {
-			return 0, restErrors.NewNotFoundError("no such record")
-		}
-		body, resp := newFiberCtx("", ReadStats, locals)
-		var result restErrors.RestErr
-		err := json.Unmarshal(body, &result)
-		assert.Nil(t, err)
-		assert.EqualValues(t, http.StatusNotFound, resp.StatusCode)
-		assert.NotNil(t, "no such record", result.Message)
-	})
-
 }

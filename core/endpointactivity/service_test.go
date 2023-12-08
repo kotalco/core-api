@@ -17,8 +17,7 @@ var (
 	WithTransactionFunc    func(txHandle *gorm.DB) IRepository
 	WithoutTransactionFunc func() IRepository
 	CreateInBatchesFunc    func(activities []*Activity) restErrors.IRestErr
-	FindManyFunc           func(query interface{}, conditions ...interface{}) ([]*Activity, restErrors.IRestErr)
-	CountFunc              func(query interface{}, conditions ...interface{}) (int64, restErrors.IRestErr)
+	RawQueryFunc           func(query string, dest interface{}, conditions ...interface{}) restErrors.IRestErr
 )
 
 type activityRepoMock struct{}
@@ -34,12 +33,10 @@ func (r activityRepoMock) CreateInBatches(activities []*Activity) restErrors.IRe
 	return CreateInBatchesFunc(activities)
 }
 
-func (r activityRepoMock) FindMany(query interface{}, conditions ...interface{}) ([]*Activity, restErrors.IRestErr) {
-	return FindManyFunc(query, conditions)
+func (r activityRepoMock) RawQuery(query string, dest interface{}, conditions ...interface{}) restErrors.IRestErr {
+	return RawQueryFunc(query, dest, conditions...)
 }
-func (r activityRepoMock) Count(query interface{}, conditions ...interface{}) (int64, restErrors.IRestErr) {
-	return CountFunc(query, conditions)
-}
+
 func TestMain(m *testing.M) {
 	activityRepository = &activityRepoMock{}
 	activityService = NewService()
@@ -67,22 +64,21 @@ func TestService_Create(t *testing.T) {
 	})
 }
 
-func TestService_MonthlyActivity(t *testing.T) {
-	t.Run("monthly activity should pass", func(t *testing.T) {
-		CountFunc = func(query interface{}, conditions ...interface{}) (int64, restErrors.IRestErr) {
-			return 1, nil
+func TestService_Stats(t *testing.T) {
+	t.Run("stats_should_pass", func(t *testing.T) {
+		RawQueryFunc = func(query string, dest interface{}, conditions ...interface{}) restErrors.IRestErr {
+			return nil
 		}
-		count, err := activityService.MonthlyActivity("123")
-		assert.Nil(t, err)
-		assert.EqualValues(t, 1, count)
+		activity, restErr := activityService.Stats("123")
+		assert.Nil(t, restErr)
+		assert.NotNil(t, activity)
 	})
-
-	t.Run(" monthly activity should throw if repo throws", func(t *testing.T) {
-		CountFunc = func(query interface{}, conditions ...interface{}) (int64, restErrors.IRestErr) {
-			return 0, restErrors.NewInternalServerError("something went wrong")
+	t.Run("stats_should_throw", func(t *testing.T) {
+		RawQueryFunc = func(query string, dest interface{}, conditions ...interface{}) restErrors.IRestErr {
+			return restErrors.NewInternalServerError("some thing went wrong!")
 		}
-		_, err := activityService.MonthlyActivity("123")
-
-		assert.EqualValues(t, "something went wrong", err.Error())
+		activity, restErr := activityService.Stats("123")
+		assert.NotNil(t, restErr)
+		assert.Nil(t, activity)
 	})
 }

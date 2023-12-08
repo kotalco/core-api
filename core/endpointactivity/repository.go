@@ -10,8 +10,14 @@ import (
 )
 
 var (
-	queryGetMonthlyActivity    = "date_trunc('month', (timestamp 'epoch' + timestamp * interval '1 second')) = date_trunc('month', current_date) AND endpoint_id = ?"
-	queryGetUserMinuteActivity = "date_trunc('minute', to_timestamp(timestamp)) = date_trunc('minute', current_timestamp) AND user_id = ?"
+	rawStatsQuery = `SELECT
+	  COUNT(id) FILTER (WHERE date_trunc('month', to_timestamp(timestamp)) = date_trunc('month', current_date)) AS monthly_hits,
+	  COUNT(id) FILTER (WHERE date_trunc('week', to_timestamp(timestamp)) = date_trunc('week', current_date)) AS weekly_hits,
+	  COUNT(id) FILTER (WHERE date_trunc('day', to_timestamp(timestamp)) = date_trunc('day', current_date)) AS daily_hits
+	FROM
+	  activities
+	WHERE
+	  endpoint_id = ?`
 )
 
 type repository struct {
@@ -22,8 +28,7 @@ type IRepository interface {
 	WithTransaction(txHandle *gorm.DB) IRepository
 	WithoutTransaction() IRepository
 	CreateInBatches(activities []*Activity) restErrors.IRestErr
-	FindMany(query interface{}, conditions ...interface{}) ([]*Activity, restErrors.IRestErr)
-	Count(query interface{}, conditions ...interface{}) (int64, restErrors.IRestErr)
+	RawQuery(query string, dest interface{}, conditions ...interface{}) restErrors.IRestErr
 }
 
 func NewRepository() IRepository {
@@ -36,6 +41,7 @@ func (r repository) WithTransaction(txHandle *gorm.DB) IRepository {
 	r.db = txHandle
 	return r
 }
+
 func (r repository) WithoutTransaction() IRepository {
 	r.db = sqlclient.OpenDBConnection()
 	return r
@@ -56,22 +62,11 @@ func (r repository) CreateInBatches(activities []*Activity) restErrors.IRestErr 
 	return nil
 }
 
-func (r repository) FindMany(query interface{}, conditions ...interface{}) ([]*Activity, restErrors.IRestErr) {
-	var records []*Activity
-	result := r.db.Where(query, conditions...).Find(&records)
+func (r repository) RawQuery(query string, dest interface{}, conditions ...interface{}) restErrors.IRestErr {
+	result := r.db.Raw(query, conditions...).Scan(dest)
 	if result.Error != nil {
-		go logger.Error(repository.FindMany, result.Error)
-		return nil, restErrors.NewInternalServerError("something went wrong")
+		go logger.Error(repository.RawQuery, result.Error)
+		return restErrors.NewInternalServerError("something went wrong")
 	}
-	return records, nil
-}
-
-func (r repository) Count(query interface{}, conditions ...interface{}) (int64, restErrors.IRestErr) {
-	var count int64
-	result := r.db.Table("activities").Where(query, conditions...).Count(&count)
-	if result.Error != nil {
-		go logger.Error(repository.Count, result.Error)
-		return 0, restErrors.NewInternalServerError("something went wrong")
-	}
-	return count, nil
+	return nil
 }

@@ -15,8 +15,7 @@ type IService interface {
 	WithTransaction(txHandle *gorm.DB) IService
 	WithoutTransaction() IService
 	Create(endpointId string, count int) restErrors.IRestErr
-	MonthlyActivity(endpointId string) (int64, restErrors.IRestErr)
-	UserMinuteActivity(userId string) (int64, restErrors.IRestErr)
+	Stats(endpointId string) (*ActivityAggregations, restErrors.IRestErr)
 }
 
 var activityRepository = NewRepository()
@@ -59,17 +58,11 @@ func (s service) Create(endpointId string, count int) restErrors.IRestErr {
 	return activityRepository.CreateInBatches(activities)
 }
 
-func (s service) MonthlyActivity(endpointId string) (int64, restErrors.IRestErr) {
-	count, err := activityRepository.Count(queryGetMonthlyActivity, endpointId)
+func (s service) Stats(endpointId string) (*ActivityAggregations, restErrors.IRestErr) {
+	activity := &ActivityAggregations{}
+	err := activityRepository.RawQuery(rawStatsQuery, activity, endpointId)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	return count, nil
-}
-func (s service) UserMinuteActivity(userId string) (int64, restErrors.IRestErr) {
-	count, err := activityRepository.Count(queryGetUserMinuteActivity, userId)
-	if err != nil {
-		return 0, err
-	}
-	return count, nil
+	return activity, nil
 }
