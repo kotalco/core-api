@@ -22,12 +22,12 @@ func cleanUp(activity Activity) {
 }
 
 func TestRepository_Create(t *testing.T) {
-	t.Run("Update_should_pass_and_create_new_record", func(t *testing.T) {
+	t.Run("create_should_pass_and_create_new_record", func(t *testing.T) {
 		record := createActivityRecord(t)
 		assert.NotNil(t, record)
 		cleanUp(record)
 	})
-	t.Run("update_should_throw_if_db_throws", func(t *testing.T) {
+	t.Run("create_should_throw_if_db_throws", func(t *testing.T) {
 		record := new(Activity)
 		restErr := repo.WithoutTransaction().CreateInBatches([]*Activity{
 			record,
@@ -36,22 +36,24 @@ func TestRepository_Create(t *testing.T) {
 	})
 }
 
-func TestRepository_FindMany(t *testing.T) {
-	t.Run("find many should pass", func(t *testing.T) {
+func TestRepository_RawQuery(t *testing.T) {
+	t.Run("raw_query_should_pass", func(t *testing.T) {
 		record := createActivityRecord(t)
-		list, err := repo.WithoutTransaction().FindMany(queryGetMonthlyActivity, record.EndpointId)
-		assert.Nil(t, err)
-		assert.EqualValues(t, 1, len(list))
+		assert.NotNil(t, record)
+		type dailyAggregation struct {
+			Day   int
+			Count int
+		}
+		now := time.Now()
+		currentYear, currentMonth, _ := now.Date()
+		location := now.Location()
+		firstOfMonth := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, location)
+		lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
+
+		dest := new([]dailyAggregation)
+		restErr := repo.WithoutTransaction().RawQuery(rawStatsQuery, dest, record.EndpointId, firstOfMonth, lastOfMonth)
+		assert.Nil(t, restErr)
 		cleanUp(record)
-	})
-	t.Run("find many should return empty list if endpointId don't match", func(t *testing.T) {
-		list, err := repo.WithoutTransaction().FindMany(queryGetMonthlyActivity, "")
-		assert.Nil(t, err)
-		assert.EqualValues(t, 0, len(list))
-	})
-	t.Run("find many should throw if db throws", func(t *testing.T) {
-		_, err := repo.WithoutTransaction().FindMany("", "")
-		assert.EqualValues(t, "something went wrong", err.Error())
 	})
 }
 
@@ -59,7 +61,7 @@ func createActivityRecord(t *testing.T) Activity {
 	record := new(Activity)
 	record.ID = uuid.NewString()
 	record.EndpointId = uuid.NewString()
-	record.Timestamp = time.Now().Unix()
+	record.Timestamp = time.Now()
 	activities := []*Activity{
 		record,
 	}

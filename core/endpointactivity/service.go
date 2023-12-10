@@ -15,8 +15,7 @@ type IService interface {
 	WithTransaction(txHandle *gorm.DB) IService
 	WithoutTransaction() IService
 	Create(endpointId string, count int) restErrors.IRestErr
-	MonthlyActivity(endpointId string) (int64, restErrors.IRestErr)
-	UserMinuteActivity(userId string) (int64, restErrors.IRestErr)
+	Stats(endpointId string) (*ActivityAggregations, restErrors.IRestErr)
 }
 
 var activityRepository = NewRepository()
@@ -52,24 +51,37 @@ func (s service) Create(endpointId string, count int) restErrors.IRestErr {
 		record.ID = uuid.NewString()
 		record.EndpointId = endpointId
 		record.UserId = parsedUUID.String()
-		record.Timestamp = time.Now().Unix()
+		record.Timestamp = time.Now()
 		activities = append(activities, record)
 	}
 
 	return activityRepository.CreateInBatches(activities)
 }
 
-func (s service) MonthlyActivity(endpointId string) (int64, restErrors.IRestErr) {
-	count, err := activityRepository.Count(queryGetMonthlyActivity, endpointId)
-	if err != nil {
-		return 0, err
+func (s service) Stats(endpointId string) (*ActivityAggregations, restErrors.IRestErr) {
+	now := time.Now()
+	currentYear, currentMonth, _ := now.Date()
+	location := now.Location()
+	firstOfMonth := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, location)
+	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
+
+	type dailyAggregation struct {
+		Day   int
+		Count int
 	}
-	return count, nil
-}
-func (s service) UserMinuteActivity(userId string) (int64, restErrors.IRestErr) {
-	count, err := activityRepository.Count(queryGetUserMinuteActivity, userId)
+
+	dest := new([]dailyAggregation)
+	err := activityRepository.RawQuery(rawStatsQuery, dest, endpointId, firstOfMonth, lastOfMonth)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	return count, nil
+
+	activity := new(ActivityAggregations)
+	activity.DailyAggregation = make([]uint, lastOfMonth.Day())
+	for _, v := range *dest {
+		index := v.Day - 1
+		activity.DailyAggregation[index] = uint(v.Count)
+	}
+
+	return activity, nil
 }
