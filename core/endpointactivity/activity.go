@@ -1,8 +1,10 @@
 package endpointactivity
 
+import "time"
+
 type Activity struct {
 	ID         string `gorm:"uniqueIndex"`
-	EndpointId string
+	EndpointId string `gorm:"index"`
 	UserId     string
-	Timestamp  int64
+	Timestamp  time.Time
 }

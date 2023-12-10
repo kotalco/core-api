@@ -7,9 +7,7 @@ import (
 )
 
 type ActivityAggregations struct {
-	MonthlyHits int64 `json:"monthly_hits"`
-	WeeklyHits  int64 `json:"weekly_hits"`
-	DailyHits   int64 `json:"daily_hits"`
+	DailyAggregation []uint `json:"daily_aggregation"`
 }
 
 type CreateEndpointActivityDto struct {

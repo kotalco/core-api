@@ -51,7 +51,7 @@ func (s service) Create(endpointId string, count int) restErrors.IRestErr {
 		record.ID = uuid.NewString()
 		record.EndpointId = endpointId
 		record.UserId = parsedUUID.String()
-		record.Timestamp = time.Now().Unix()
+		record.Timestamp = time.Now()
 		activities = append(activities, record)
 	}
 
@@ -59,10 +59,29 @@ func (s service) Create(endpointId string, count int) restErrors.IRestErr {
 }
 
 func (s service) Stats(endpointId string) (*ActivityAggregations, restErrors.IRestErr) {
-	activity := &ActivityAggregations{}
-	err := activityRepository.RawQuery(rawStatsQuery, activity, endpointId)
+	now := time.Now()
+	currentYear, currentMonth, _ := now.Date()
+	location := now.Location()
+	firstOfMonth := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, location)
+	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
+
+	type dailyAggregation struct {
+		Day   int
+		Count int
+	}
+
+	dest := new([]dailyAggregation)
+	err := activityRepository.RawQuery(rawStatsQuery, dest, endpointId, firstOfMonth, lastOfMonth)
 	if err != nil {
 		return nil, err
 	}
+
+	activity := new(ActivityAggregations)
+	activity.DailyAggregation = make([]uint, lastOfMonth.Day())
+	for _, v := range *dest {
+		index := v.Day - 1
+		activity.DailyAggregation[index] = uint(v.Count)
+	}
+
 	return activity, nil
 }

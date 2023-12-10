@@ -40,9 +40,20 @@ func TestRepository_RawQuery(t *testing.T) {
 	t.Run("raw_query_should_pass", func(t *testing.T) {
 		record := createActivityRecord(t)
 		assert.NotNil(t, record)
-		dto := &ActivityAggregations{}
-		restErr := repo.WithoutTransaction().RawQuery(rawStatsQuery, dto, record.EndpointId)
+		type dailyAggregation struct {
+			Day   int
+			Count int
+		}
+		now := time.Now()
+		currentYear, currentMonth, _ := now.Date()
+		location := now.Location()
+		firstOfMonth := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, location)
+		lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
+
+		dest := new([]dailyAggregation)
+		restErr := repo.WithoutTransaction().RawQuery(rawStatsQuery, dest, record.EndpointId, firstOfMonth, lastOfMonth)
 		assert.Nil(t, restErr)
+		cleanUp(record)
 	})
 }
 
@@ -50,7 +61,7 @@ func createActivityRecord(t *testing.T) Activity {
 	record := new(Activity)
 	record.ID = uuid.NewString()
 	record.EndpointId = uuid.NewString()
-	record.Timestamp = time.Now().Unix()
+	record.Timestamp = time.Now()
 	activities := []*Activity{
 		record,
 	}

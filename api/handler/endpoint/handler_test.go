@@ -533,9 +533,7 @@ func TestReadStats(t *testing.T) {
 
 		activityStatsFunc = func(endpointId string) (*endpointactivity.ActivityAggregations, restErrors.IRestErr) {
 			return &endpointactivity.ActivityAggregations{
-				MonthlyHits: 0,
-				WeeklyHits:  0,
-				DailyHits:   0,
+				DailyAggregation: []uint{},
 			}, nil
 		}
 

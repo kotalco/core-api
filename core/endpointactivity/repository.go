@@ -10,14 +10,7 @@ import (
 )
 
 var (
-	rawStatsQuery = `SELECT
-	  COUNT(id) FILTER (WHERE date_trunc('month', to_timestamp(timestamp)) = date_trunc('month', current_date)) AS monthly_hits,
-	  COUNT(id) FILTER (WHERE date_trunc('week', to_timestamp(timestamp)) = date_trunc('week', current_date)) AS weekly_hits,
-	  COUNT(id) FILTER (WHERE date_trunc('day', to_timestamp(timestamp)) = date_trunc('day', current_date)) AS daily_hits
-	FROM
-	  activities
-	WHERE
-	  endpoint_id = ?`
+	rawStatsQuery = "SELECT EXTRACT(DAY FROM timestamp) AS day, COUNT(*) AS count FROM activities WHERE endpoint_id = $1 AND timestamp >= $2 AND timestamp <= $3 GROUP BY day ORDER BY day"
 )
 
 type repository struct {
