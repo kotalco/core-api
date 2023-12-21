@@ -10,7 +10,8 @@ import (
 )
 
 var (
-	rawStatsQuery = "SELECT EXTRACT(DAY FROM timestamp) AS day, COUNT(*) AS count FROM activities WHERE endpoint_id = $1 AND timestamp >= $2 AND timestamp <= $3 GROUP BY day ORDER BY day"
+	rawDailyStatsQuery  = "SELECT EXTRACT(DAY FROM timestamp) AS day, COUNT(*) AS count FROM activities WHERE endpoint_id = $1 AND timestamp >= $2 AND timestamp <= $3 GROUP BY day ORDER BY day"
+	rawWeeklyStatsQuery = "SELECT EXTRACT(WEEK FROM timestamp) AS week, COUNT(*) AS count FROM activities WHERE endpoint_id = $1 AND timestamp >= $2 AND timestamp <= $3 GROUP BY week ORDER BY week;"
 )
 
 type repository struct {
