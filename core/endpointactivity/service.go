@@ -65,12 +65,10 @@ func (s service) Stats(endpointId string) (*ActivityAggregations, restErrors.IRe
 	firstOfMonth := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, location)
 	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
 
-	//daily aggregation
 	type dailyAggregation struct {
 		Day   int
 		Count int
 	}
-	//weekly aggregation
 	type weeklyAggregation struct {
 		Week  int
 		Count int
