@@ -69,18 +69,33 @@ func (s service) Stats(endpointId string) (*ActivityAggregations, restErrors.IRe
 		Day   int
 		Count int
 	}
+	type weeklyAggregation struct {
+		Week  int
+		Count int
+	}
 
-	dest := new([]dailyAggregation)
-	err := activityRepository.RawQuery(rawStatsQuery, dest, endpointId, firstOfMonth, lastOfMonth)
+	dailyDest := new([]dailyAggregation)
+	err := activityRepository.RawQuery(rawDailyStatsQuery, dailyDest, endpointId, firstOfMonth, lastOfMonth)
+	if err != nil {
+		return nil, err
+	}
+
+	weekDest := new([]weeklyAggregation)
+	err = activityRepository.RawQuery(rawWeeklyStatsQuery, weekDest, endpointId, firstOfMonth, lastOfMonth)
 	if err != nil {
 		return nil, err
 	}
 
 	activity := new(ActivityAggregations)
 	activity.DailyAggregation = make([]uint, lastOfMonth.Day())
-	for _, v := range *dest {
+	activity.WeeklyAggregation = make([]uint, 4)
+
+	for _, v := range *dailyDest {
 		index := v.Day - 1
 		activity.DailyAggregation[index] = uint(v.Count)
+	}
+	for i, v := range *weekDest {
+		activity.WeeklyAggregation[i] = uint(v.Count)
 	}
 
 	return activity, nil

@@ -7,7 +7,8 @@ import (
 )
 
 type ActivityAggregations struct {
-	DailyAggregation []uint `json:"daily_aggregation"`
+	DailyAggregation  []uint `json:"daily_aggregation"`
+	WeeklyAggregation []uint `json:"weekly_aggregation"`
 }
 
 type CreateEndpointActivityDto struct {

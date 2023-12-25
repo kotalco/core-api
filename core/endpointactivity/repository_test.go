@@ -51,7 +51,7 @@ func TestRepository_RawQuery(t *testing.T) {
 		lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
 
 		dest := new([]dailyAggregation)
-		restErr := repo.WithoutTransaction().RawQuery(rawStatsQuery, dest, record.EndpointId, firstOfMonth, lastOfMonth)
+		restErr := repo.WithoutTransaction().RawQuery(rawDailyStatsQuery, dest, record.EndpointId, firstOfMonth, lastOfMonth)
 		assert.Nil(t, restErr)
 		cleanUp(record)
 	})
