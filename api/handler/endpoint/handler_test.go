@@ -141,7 +141,7 @@ func (s secretServiceMock) Get(name string, namespace string) (*corev1.Secret, r
 }
 
 var (
-	activityCreateFunc func(endpointId string, count int) restErrors.IRestErr
+	activityCreateFunc func([]endpointactivity.CreateEndpointActivityDto) restErrors.IRestErr
 	activityStatsFunc  func(endpointId string) (*endpointactivity.ActivityAggregations, restErrors.IRestErr)
 )
 
@@ -156,8 +156,8 @@ func (s activityServiceMock) WithoutTransaction() endpointactivity.IService {
 func (s activityServiceMock) WithTransaction(txHandle *gorm.DB) endpointactivity.IService {
 	return s
 }
-func (s activityServiceMock) Create(endpointId string, count int) restErrors.IRestErr {
-	return activityCreateFunc(endpointId, count)
+func (s activityServiceMock) Create(dto []endpointactivity.CreateEndpointActivityDto) restErrors.IRestErr {
+	return activityCreateFunc(dto)
 }
 
 func newFiberCtx(dto interface{}, method func(c *fiber.Ctx) error, locals map[string]interface{}) ([]byte, *http.Response) {
@@ -475,13 +475,11 @@ func TestCount(t *testing.T) {
 }
 
 func TestWriteStats(t *testing.T) {
-	var validDto = map[string]string{
-		"request_id": "12345678",
-	}
-	var invalidDto = map[string]string{}
+	var validDto = []map[string]interface{}{{"request_id": "12345678", "count": 1}}
+	var invalidDto = []map[string]interface{}{{}}
 
 	t.Run("WriteStats_should_pass", func(t *testing.T) {
-		activityCreateFunc = func(endpointId string, count int) restErrors.IRestErr {
+		activityCreateFunc = func([]endpointactivity.CreateEndpointActivityDto) restErrors.IRestErr {
 			return nil
 		}
 		_, resp := newFiberCtx(validDto, WriteStats, map[string]interface{}{})
@@ -489,7 +487,7 @@ func TestWriteStats(t *testing.T) {
 		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
 	})
 	t.Run("WriteStats_should_throw_bad_request_err", func(t *testing.T) {
-		activityCreateFunc = func(endpointId string, count int) restErrors.IRestErr {
+		activityCreateFunc = func([]endpointactivity.CreateEndpointActivityDto) restErrors.IRestErr {
 			return nil
 		}
 		_, resp := newFiberCtx("", WriteStats, map[string]interface{}{})
@@ -504,7 +502,7 @@ func TestWriteStats(t *testing.T) {
 	})
 
 	t.Run("WriteStats_should_throw_if_can't_create_endpoint_activity", func(t *testing.T) {
-		activityCreateFunc = func(endpointId string, count int) restErrors.IRestErr {
+		activityCreateFunc = func([]endpointactivity.CreateEndpointActivityDto) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 

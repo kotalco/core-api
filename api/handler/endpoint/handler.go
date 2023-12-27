@@ -137,19 +137,21 @@ func Count(c *fiber.Ctx) error {
 }
 
 func WriteStats(c *fiber.Ctx) error {
-	dto := new(endpointactivity.CreateEndpointActivityDto)
-	if err := c.BodyParser(dto); err != nil {
+	var dtos []endpointactivity.CreateEndpointActivityDto
+	if err := c.BodyParser(&dtos); err != nil {
 		badReq := restErrors.NewBadRequestError("invalid request body")
 		go logger.Error("ENDPOINT_ACTIVITY_HANDLER_WRITE_STATS", err)
 		return c.SendStatus(badReq.StatusCode())
 	}
 
-	err := endpointactivity.Validate(dto)
-	if err != nil {
-		return c.Status(err.StatusCode()).JSON(err)
+	for _, dto := range dtos {
+		err := endpointactivity.Validate(dto)
+		if err != nil {
+			return c.Status(err.StatusCode()).JSON(err)
+		}
 	}
 
-	err = activityService.Create(dto.RequestId, dto.Count)
+	err := activityService.Create(dtos)
 	if err != nil {
 		go logger.Error("ENDPOINT_ACTIVITY_HANDLER_WRITE_STATS", err)
 		return c.SendStatus(err.StatusCode())
