@@ -50,7 +50,7 @@ func TestService_Create(t *testing.T) {
 			return nil
 		}
 
-		restErr := activityService.Create(fmt.Sprintf("%s%s", strings.ToLower(security.GenerateRandomString(10)), strings.Replace(uuid.NewString(), "-", "", -1)), 1)
+		restErr := activityService.Create([]CreateEndpointActivityDto{{fmt.Sprintf("%s%s", strings.ToLower(security.GenerateRandomString(10)), strings.Replace(uuid.NewString(), "-", "", -1)), 1}})
 		assert.Nil(t, restErr)
 	})
 
@@ -59,7 +59,7 @@ func TestService_Create(t *testing.T) {
 			return restErrors.NewInternalServerError("something went wrong")
 		}
 
-		restErr := activityService.Create(fmt.Sprintf("%s%s", strings.ToLower(security.GenerateRandomString(10)), strings.Replace(uuid.NewString(), "-", "", -1)), 1)
+		restErr := activityService.Create([]CreateEndpointActivityDto{{fmt.Sprintf("%s%s", strings.ToLower(security.GenerateRandomString(10)), strings.Replace(uuid.NewString(), "-", "", -1)), 1}})
 		assert.EqualValues(t, "something went wrong", restErr.Error())
 	})
 }

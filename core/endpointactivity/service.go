@@ -14,7 +14,7 @@ type service struct{}
 type IService interface {
 	WithTransaction(txHandle *gorm.DB) IService
 	WithoutTransaction() IService
-	Create(endpointId string, count int) restErrors.IRestErr
+	Create([]CreateEndpointActivityDto) restErrors.IRestErr
 	Stats(endpointId string) (*ActivityAggregations, restErrors.IRestErr)
 }
 
@@ -34,25 +34,27 @@ func (s service) WithoutTransaction() IService {
 	return s
 }
 
-func (s service) Create(endpointId string, count int) restErrors.IRestErr {
+func (s service) Create(activitiesDto []CreateEndpointActivityDto) restErrors.IRestErr {
 	endpointPortIdLength, err := strconv.Atoi(config.Environment.EndpointPortIdLength)
 	if err != nil {
 		return restErrors.NewInternalServerError(err.Error())
 	}
 
-	parsedUUID, err := uuid.Parse(endpointId[endpointPortIdLength:])
-	if err != nil {
-		return restErrors.NewInternalServerError(err.Error())
-	}
-
 	activities := make([]*Activity, 0)
-	for i := 0; i < count; i++ {
-		record := new(Activity)
-		record.ID = uuid.NewString()
-		record.EndpointId = endpointId
-		record.UserId = parsedUUID.String()
-		record.Timestamp = time.Now()
-		activities = append(activities, record)
+	for _, v := range activitiesDto {
+		parsedUUID, err := uuid.Parse(v.RequestId[endpointPortIdLength:])
+		if err != nil {
+			return restErrors.NewInternalServerError(err.Error())
+		}
+
+		for i := 0; i < v.Count; i++ {
+			record := new(Activity)
+			record.ID = uuid.NewString()
+			record.EndpointId = v.RequestId
+			record.UserId = parsedUUID.String()
+			record.Timestamp = time.Now()
+			activities = append(activities, record)
+		}
 	}
 
 	return activityRepository.CreateInBatches(activities)
