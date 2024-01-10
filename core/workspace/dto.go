@@ -2,9 +2,9 @@ package workspace
 
 import (
 	"github.com/go-playground/validator/v10"
+	restErrors "github.com/kotalco/cloud-api/pkg/errors"
+	"github.com/kotalco/cloud-api/pkg/logger"
 	"github.com/kotalco/cloud-api/pkg/roles"
-	restErrors "github.com/kotalco/community-api/pkg/errors"
-	"github.com/kotalco/community-api/pkg/logger"
 )
 
 const DefaultWorkspaceName = "default"

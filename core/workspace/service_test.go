@@ -3,8 +3,8 @@ package workspace
 import (
 	"github.com/google/uuid"
 	"github.com/kotalco/cloud-api/core/workspaceuser"
+	restErrors "github.com/kotalco/cloud-api/pkg/errors"
 	"github.com/kotalco/cloud-api/pkg/roles"
-	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 	"net/http"

@@ -2,9 +2,9 @@ package setting
 
 import (
 	"fmt"
+	restErrors "github.com/kotalco/cloud-api/pkg/errors"
+	"github.com/kotalco/cloud-api/pkg/logger"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
-	restErrors "github.com/kotalco/community-api/pkg/errors"
-	"github.com/kotalco/community-api/pkg/logger"
 	"gorm.io/gorm"
 	"regexp"
 )

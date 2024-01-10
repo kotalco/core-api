@@ -1,10 +1,10 @@
 package endpoint
 
 import (
-	"github.com/kotalco/cloud-api/pkg/k8s/ingressroute"
-	"github.com/kotalco/cloud-api/pkg/k8s/middleware"
-	"github.com/kotalco/cloud-api/pkg/k8s/secret"
-	restErrors "github.com/kotalco/community-api/pkg/errors"
+	"github.com/kotalco/cloud-api/k8s/ingressroute"
+	"github.com/kotalco/cloud-api/k8s/middleware"
+	"github.com/kotalco/cloud-api/k8s/secret"
+	restErrors "github.com/kotalco/cloud-api/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	corev1 "k8s.io/api/core/v1"

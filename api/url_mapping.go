@@ -3,28 +3,28 @@ package api
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/websocket/v2"
+	"github.com/kotalco/cloud-api/api/handler/aptos"
+	"github.com/kotalco/cloud-api/api/handler/bitcoin"
+	"github.com/kotalco/cloud-api/api/handler/chainlink"
 	"github.com/kotalco/cloud-api/api/handler/endpoint"
+	"github.com/kotalco/cloud-api/api/handler/ethereum"
+	"github.com/kotalco/cloud-api/api/handler/ethereum2/beacon_node"
+	"github.com/kotalco/cloud-api/api/handler/ethereum2/validator"
+	"github.com/kotalco/cloud-api/api/handler/filecoin"
+	"github.com/kotalco/cloud-api/api/handler/ipfs/ipfs_cluster_peer"
+	"github.com/kotalco/cloud-api/api/handler/ipfs/ipfs_peer"
+	"github.com/kotalco/cloud-api/api/handler/near"
+	"github.com/kotalco/cloud-api/api/handler/polkadot"
+	"github.com/kotalco/cloud-api/api/handler/secret"
 	"github.com/kotalco/cloud-api/api/handler/setting"
+	"github.com/kotalco/cloud-api/api/handler/shared"
+	"github.com/kotalco/cloud-api/api/handler/stacks"
+	"github.com/kotalco/cloud-api/api/handler/storage_class"
 	"github.com/kotalco/cloud-api/api/handler/sts"
 	"github.com/kotalco/cloud-api/api/handler/svc"
 	"github.com/kotalco/cloud-api/api/handler/user"
 	"github.com/kotalco/cloud-api/api/handler/workspace"
 	"github.com/kotalco/cloud-api/pkg/middleware"
-	"github.com/kotalco/community-api/api/handlers/aptos"
-	"github.com/kotalco/community-api/api/handlers/bitcoin"
-	"github.com/kotalco/community-api/api/handlers/chainlink"
-	"github.com/kotalco/community-api/api/handlers/core/secret"
-	"github.com/kotalco/community-api/api/handlers/core/storage_class"
-	"github.com/kotalco/community-api/api/handlers/ethereum"
-	"github.com/kotalco/community-api/api/handlers/ethereum2/beacon_node"
-	"github.com/kotalco/community-api/api/handlers/ethereum2/validator"
-	"github.com/kotalco/community-api/api/handlers/filecoin"
-	"github.com/kotalco/community-api/api/handlers/ipfs/ipfs_cluster_peer"
-	"github.com/kotalco/community-api/api/handlers/ipfs/ipfs_peer"
-	"github.com/kotalco/community-api/api/handlers/near"
-	"github.com/kotalco/community-api/api/handlers/polkadot"
-	"github.com/kotalco/community-api/api/handlers/shared"
-	"github.com/kotalco/community-api/api/handlers/stacks"
 )
 
 // MapUrl abstracted function to map and register all the url for the application
@@ -88,11 +88,12 @@ func MapUrl(app *fiber.App) {
 	settingGroup.Post("/registration", setting.ConfigureRegistration)
 	//todo change the route /ip-address to /network-identifiers
 	settingGroup.Get("/ip-address", setting.NetworkIdentifiers)
-	mapDeploymentUrl(v1)
-}
 
-func mapDeploymentUrl(v1 fiber.Router) {
-	// chainlink group
+	/*
+	*** deployments
+	 */
+
+	//chainlink group
 	chainlinkGroup := v1.Group("chainlink", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership)
 	chainlinkNodes := chainlinkGroup.Group("nodes")
 

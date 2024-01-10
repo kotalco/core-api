@@ -3,19 +3,19 @@ package endpoint
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kotalco/cloud-api/pkg/config"
+	"github.com/kotalco/cloud-api/config"
+	ingressroute2 "github.com/kotalco/cloud-api/k8s/ingressroute"
+	middleware2 "github.com/kotalco/cloud-api/k8s/middleware"
+	secret2 "github.com/kotalco/cloud-api/k8s/secret"
+	k8svc "github.com/kotalco/cloud-api/k8s/svc"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"net/http"
 	"strconv"
 	"strings"
 
-	"github.com/kotalco/cloud-api/pkg/k8s/ingressroute"
-	"github.com/kotalco/cloud-api/pkg/k8s/middleware"
-	"github.com/kotalco/cloud-api/pkg/k8s/secret"
-	k8svc "github.com/kotalco/cloud-api/pkg/k8s/svc"
+	restErrors "github.com/kotalco/cloud-api/pkg/errors"
+	"github.com/kotalco/cloud-api/pkg/logger"
 	"github.com/kotalco/cloud-api/pkg/security"
-	restErrors "github.com/kotalco/community-api/pkg/errors"
-	"github.com/kotalco/community-api/pkg/logger"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -29,9 +29,9 @@ const (
 )
 
 var (
-	ingressRoutesService = ingressroute.NewIngressRoutesService()
-	k8MiddlewareService  = middleware.NewK8Middleware()
-	secretService        = secret.NewService()
+	ingressRoutesService = ingressroute2.NewIngressRoutesService()
+	k8MiddlewareService  = middleware2.NewK8Middleware()
+	secretService        = secret2.NewService()
 )
 
 type service struct{}
@@ -53,7 +53,7 @@ func NewService() IService {
 }
 
 func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) restErrors.IRestErr {
-	ingressRoutePorts := make([]ingressroute.IngressRoutePortDto, 0)
+	ingressRoutePorts := make([]ingressroute2.IngressRoutePortDto, 0)
 	middlewarePrefixes := make([]string, 0)
 	stripePrefixMiddlewareName := fmt.Sprintf("%s-strip-prefix", dto.Name)
 	basicAuthMiddlewareName := fmt.Sprintf("%s-basic-auth", dto.Name)
@@ -63,7 +63,7 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) restErrors
 	}
 	for _, v := range svc.Spec.Ports {
 		if k8svc.AvailableProtocol(v.Name) {
-			ingressRoutePortDto := ingressroute.IngressRoutePortDto{
+			ingressRoutePortDto := ingressroute2.IngressRoutePortDto{
 				ID:   fmt.Sprintf("%s%s", strings.ToLower(security.GenerateRandomString(endpointPortIdLength)), strings.Replace(dto.UserId, "-", "", -1)),
 				Name: v.Name,
 			}
@@ -73,27 +73,27 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) restErrors
 	}
 
 	//create ingress-route
-	ingressRouteObject, err := ingressRoutesService.Create(&ingressroute.IngressRouteDto{
+	ingressRouteObject, err := ingressRoutesService.Create(&ingressroute2.IngressRouteDto{
 		Name:        dto.Name,
 		Namespace:   svc.Namespace,
 		ServiceName: svc.Name,
 		ServiceID:   string(svc.UID),
 		Ports:       ingressRoutePorts,
-		Middlewares: func() []ingressroute.IngressRouteMiddlewareRefDto {
-			refs := make([]ingressroute.IngressRouteMiddlewareRefDto, 0)
+		Middlewares: func() []ingressroute2.IngressRouteMiddlewareRefDto {
+			refs := make([]ingressroute2.IngressRouteMiddlewareRefDto, 0)
 			//append crossover  middleware
-			refs = append(refs, ingressroute.IngressRouteMiddlewareRefDto{
+			refs = append(refs, ingressroute2.IngressRouteMiddlewareRefDto{
 				Name:      crossoverMiddlewareName,
 				Namespace: crossoverMiddlewareNamespace,
 			})
 			//append stripePrefix middleware
-			refs = append(refs, ingressroute.IngressRouteMiddlewareRefDto{
+			refs = append(refs, ingressroute2.IngressRouteMiddlewareRefDto{
 				Name:      stripePrefixMiddlewareName,
 				Namespace: svc.Namespace,
 			})
 			//append basicAuth middleware
 			if dto.UseBasicAuth {
-				refs = append(refs, ingressroute.IngressRouteMiddlewareRefDto{
+				refs = append(refs, ingressroute2.IngressRouteMiddlewareRefDto{
 					Name:      basicAuthMiddlewareName,
 					Namespace: svc.Namespace,
 				})
@@ -119,14 +119,14 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) restErrors
 	}
 
 	ingressRouteOwnerRef := metav1.OwnerReference{
-		APIVersion: ingressroute.APIVersion,
-		Kind:       ingressroute.Kind,
+		APIVersion: ingressroute2.APIVersion,
+		Kind:       ingressroute2.Kind,
 		Name:       ingressRouteObject.Name,
 		UID:        ingressRouteObject.UID,
 	}
 
 	//create the strip prefix-middleware
-	err = k8MiddlewareService.Create(&middleware.CreateMiddlewareDto{
+	err = k8MiddlewareService.Create(&middleware2.CreateMiddlewareDto{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            stripePrefixMiddlewareName,
 			Namespace:       svc.Namespace,
@@ -153,7 +153,7 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) restErrors
 		//since the endpoint name is unique, and we have 1 secret per endpoint
 		//we can create secret name with the key secret+ endpointName
 		secretName := fmt.Sprintf("%s-secret", dto.Name)
-		err := secretService.Create(&secret.CreateSecretDto{
+		err := secretService.Create(&secret2.CreateSecretDto{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:            secretName,
 				Namespace:       svc.Namespace,
@@ -174,7 +174,7 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) restErrors
 			return err
 		}
 		//create basic auth middleware
-		err = k8MiddlewareService.Create(&middleware.CreateMiddlewareDto{
+		err = k8MiddlewareService.Create(&middleware2.CreateMiddlewareDto{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:            basicAuthMiddlewareName,
 				Namespace:       svc.Namespace,
@@ -209,7 +209,7 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) restErrors
 				return restErrors.NewInternalServerError("something went wrong")
 			}
 
-			err = k8MiddlewareService.Create(&middleware.CreateMiddlewareDto{
+			err = k8MiddlewareService.Create(&middleware2.CreateMiddlewareDto{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      crossoverMiddlewareName,
 					Namespace: crossoverMiddlewareNamespace,

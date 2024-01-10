@@ -2,8 +2,8 @@ package endpointactivity
 
 import (
 	"github.com/google/uuid"
-	"github.com/kotalco/cloud-api/pkg/config"
-	restErrors "github.com/kotalco/community-api/pkg/errors"
+	"github.com/kotalco/cloud-api/config"
+	restErrors "github.com/kotalco/cloud-api/pkg/errors"
 	"gorm.io/gorm"
 	"strconv"
 	"time"

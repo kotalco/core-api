@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/kotalco/cloud-api/pkg/config"
+	"github.com/kotalco/cloud-api/config"
 	"net/http"
 )
 

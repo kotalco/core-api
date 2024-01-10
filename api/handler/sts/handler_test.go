@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/gofiber/fiber/v2"
-	restErrors "github.com/kotalco/community-api/pkg/errors"
+	restErrors "github.com/kotalco/cloud-api/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	appsv1 "k8s.io/api/apps/v1"

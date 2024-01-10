@@ -4,12 +4,12 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"github.com/kotalco/cloud-api/config"
 	"strings"
 
 	"github.com/kotalco/cloud-api/core/setting"
-	"github.com/kotalco/cloud-api/pkg/config"
-	restErrors "github.com/kotalco/community-api/pkg/errors"
-	"github.com/kotalco/community-api/pkg/logger"
+	restErrors "github.com/kotalco/cloud-api/pkg/errors"
+	"github.com/kotalco/cloud-api/pkg/logger"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 )
 

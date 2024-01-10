@@ -7,19 +7,19 @@ import (
 	"github.com/kotalco/cloud-api/core/endpointactivity"
 	"github.com/kotalco/cloud-api/core/setting"
 	"github.com/kotalco/cloud-api/core/workspace"
-	"github.com/kotalco/cloud-api/pkg/k8s/secret"
-	k8svc "github.com/kotalco/cloud-api/pkg/k8s/svc"
+	"github.com/kotalco/cloud-api/k8s/secret"
+	"github.com/kotalco/cloud-api/k8s/svc"
+	restErrors "github.com/kotalco/cloud-api/pkg/errors"
+	"github.com/kotalco/cloud-api/pkg/logger"
+	"github.com/kotalco/cloud-api/pkg/pagination"
 	"github.com/kotalco/cloud-api/pkg/token"
-	restErrors "github.com/kotalco/community-api/pkg/errors"
-	"github.com/kotalco/community-api/pkg/logger"
-	"github.com/kotalco/community-api/pkg/shared"
 	"net/http"
 )
 
 var (
 	endpointService   = endpoint.NewService()
-	svcService        = k8svc.NewService()
-	availableProtocol = k8svc.AvailableProtocol
+	svcService        = svc.NewService()
+	availableProtocol = svc.AvailableProtocol
 	settingService    = setting.NewService()
 	secretService     = secret.NewService()
 	activityService   = endpointactivity.NewService()
@@ -68,7 +68,7 @@ func Create(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
-	return c.Status(http.StatusCreated).JSON(shared.NewResponse(shared.SuccessMessage{
+	return c.Status(http.StatusCreated).JSON(pagination.NewResponse(pagination.SuccessMessage{
 		Message: "Endpoint has been created",
 	}))
 }
@@ -89,7 +89,7 @@ func List(c *fiber.Ctx) error {
 	c.Set("Access-Control-Expose-Headers", "X-Total-Count")
 	c.Set("X-Total-Count", fmt.Sprintf("%d", len(marshalledDto)))
 
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(marshalledDto))
+	return c.Status(http.StatusOK).JSON(pagination.NewResponse(marshalledDto))
 }
 
 // Get accept namespace and name , returns a record of type ingressroute.Ingressroute or err if any
@@ -107,7 +107,7 @@ func Get(c *fiber.Ctx) error {
 	v1Secret, _ := secretService.Get(secretName, workspaceModel.K8sNamespace)
 	endpointDto := new(endpoint.EndpointDto).Marshall(record, v1Secret)
 
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(endpointDto))
+	return c.Status(http.StatusOK).JSON(pagination.NewResponse(endpointDto))
 }
 
 // Delete accept namespace and the name of the ingress-route ,deletes it , returns success message or err if any
@@ -119,7 +119,7 @@ func Delete(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{Message: "Endpoint Deleted"}))
+	return c.Status(http.StatusOK).JSON(pagination.NewResponse(pagination.SuccessMessage{Message: "Endpoint Deleted"}))
 }
 
 func Count(c *fiber.Ctx) error {
@@ -171,11 +171,11 @@ func ReadStats(c *fiber.Ctx) error {
 	dto := map[string]*endpointactivity.ActivityAggregations{}
 	for _, v := range record.Spec.Routes {
 		portName := v.Services[0].Port.StrVal
-		if k8svc.AvailableProtocol(portName) {
+		if svc.AvailableProtocol(portName) {
 			stats, _ := activityService.Stats(endpointactivity.GetEndpointId(v.Match))
 			dto[portName] = stats
 		}
 	}
 
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(dto))
+	return c.Status(http.StatusOK).JSON(pagination.NewResponse(dto))
 }

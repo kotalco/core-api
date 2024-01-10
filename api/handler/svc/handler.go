@@ -3,14 +3,14 @@ package svc
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/kotalco/cloud-api/core/workspace"
-	k8svc "github.com/kotalco/cloud-api/pkg/k8s/svc"
-	"github.com/kotalco/community-api/pkg/shared"
+	"github.com/kotalco/cloud-api/k8s/svc"
+	"github.com/kotalco/cloud-api/pkg/pagination"
 	"net/http"
 )
 
 var (
-	svcService        = k8svc.NewService()
-	availableProtocol = k8svc.AvailableProtocol
+	svcService        = svc.NewService()
+	availableProtocol = svc.AvailableProtocol
 )
 
 // List accept namespace, returns a list of names of corv1.Service
@@ -23,7 +23,7 @@ func List(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	responseDto := make([]k8svc.SvcDto, 0)
+	responseDto := make([]svc.SvcDto, 0)
 	for _, corv1Service := range svcList.Items { // iterate over corv1.ServiceList to create svcDto
 		ApiEnabled := false
 		for _, port := range corv1Service.Spec.Ports { // iterate over service ports
@@ -32,9 +32,9 @@ func List(c *fiber.Ctx) error {
 			}
 		}
 		if ApiEnabled == true {
-			responseDto = append(responseDto, k8svc.SvcDto{Name: corv1Service.Name, Protocol: corv1Service.Labels["kotal.io/protocol"]})
+			responseDto = append(responseDto, svc.SvcDto{Name: corv1Service.Name, Protocol: corv1Service.Labels["kotal.io/protocol"]})
 		}
 	}
 
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(responseDto))
+	return c.Status(http.StatusOK).JSON(pagination.NewResponse(responseDto))
 }

@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/kotalco/cloud-api/core/setting"
-	"github.com/kotalco/cloud-api/pkg/k8s/ingressroute"
-	"github.com/kotalco/cloud-api/pkg/k8s/middleware"
+	"github.com/kotalco/cloud-api/k8s/ingressroute"
+	"github.com/kotalco/cloud-api/k8s/middleware"
+	restErrors "github.com/kotalco/cloud-api/pkg/errors"
+	"github.com/kotalco/cloud-api/pkg/pagination"
 	"github.com/kotalco/cloud-api/pkg/token"
-	restErrors "github.com/kotalco/community-api/pkg/errors"
-	"github.com/kotalco/community-api/pkg/shared"
 	"github.com/stretchr/testify/assert"
 	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"gorm.io/gorm"
@@ -217,7 +217,7 @@ func TestConfigureDomain(t *testing.T) {
 		}
 		body, resp := newFiberCtx(validDto, ConfigureDomain, locals)
 
-		var result map[string]shared.SuccessMessage
+		var result map[string]pagination.SuccessMessage
 		err := json.Unmarshal(body, &result)
 		if err != nil {
 			panic(err.Error())
@@ -257,7 +257,7 @@ func TestConfigureDomain(t *testing.T) {
 		}
 		body, resp := newFiberCtx(validDto, ConfigureDomain, locals)
 
-		var result map[string]shared.SuccessMessage
+		var result map[string]pagination.SuccessMessage
 		err := json.Unmarshal(body, &result)
 		if err != nil {
 			panic(err.Error())
@@ -443,7 +443,7 @@ func TestConfigureRegistration(t *testing.T) {
 
 		fmt.Println(string(body), resp)
 
-		var result map[string]shared.SuccessMessage
+		var result map[string]pagination.SuccessMessage
 		err := json.Unmarshal(body, &result)
 		if err != nil {
 			panic(err.Error())
