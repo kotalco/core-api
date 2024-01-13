@@ -3,8 +3,8 @@ package middleware
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/kotalco/cloud-api/core/workspace"
+	restErrors "github.com/kotalco/cloud-api/pkg/errors"
 	"github.com/kotalco/cloud-api/pkg/token"
-	restErrors "github.com/kotalco/community-api/pkg/errors"
 )
 
 var workspaceRepo = workspace.NewRepository()

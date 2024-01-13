@@ -3,9 +3,9 @@ package endpoint
 import (
 	"fmt"
 	validate "github.com/go-playground/validator/v10"
-	restErrors "github.com/kotalco/community-api/pkg/errors"
-	"github.com/kotalco/community-api/pkg/logger"
-	"github.com/kotalco/community-api/pkg/shared"
+	restErrors "github.com/kotalco/cloud-api/pkg/errors"
+	"github.com/kotalco/cloud-api/pkg/logger"
+	"github.com/kotalco/cloud-api/pkg/time"
 	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"regexp"
@@ -81,7 +81,7 @@ func (endpoint *EndpointMetaDto) Marshall(dtoIngressRoute *traefikv1alpha1.Ingre
 	endpoint.Name = dtoIngressRoute.Name
 	endpoint.Protocol = dtoIngressRoute.Labels["kotal.io/protocol"]
 	endpoint.Network = dtoIngressRoute.Labels["kotal.io/network"]
-	endpoint.CreatedAt = dtoIngressRoute.CreationTimestamp.UTC().Format(shared.JavascriptISOString)
+	endpoint.CreatedAt = dtoIngressRoute.CreationTimestamp.UTC().Format(time.JavascriptISOString)
 	return endpoint
 }
 
@@ -90,7 +90,7 @@ func (endpoint *EndpointDto) Marshall(dtoIngressRoute *traefikv1alpha1.IngressRo
 	endpoint.Routes = make([]*RouteDto, 0)
 	endpoint.Protocol = dtoIngressRoute.Labels["kotal.io/protocol"]
 	endpoint.Network = dtoIngressRoute.Labels["kotal.io/network"]
-	endpoint.CreatedAt = dtoIngressRoute.CreationTimestamp.UTC().Format(shared.JavascriptISOString)
+	endpoint.CreatedAt = dtoIngressRoute.CreationTimestamp.UTC().Format(time.JavascriptISOString)
 	for _, route := range dtoIngressRoute.Spec.Routes {
 		str := strings.ReplaceAll(route.Match, "Host(`", "")
 		str = strings.ReplaceAll(str, "`)", "")

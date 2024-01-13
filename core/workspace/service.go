@@ -3,9 +3,9 @@ package workspace
 import (
 	"github.com/google/uuid"
 	"github.com/kotalco/cloud-api/core/workspaceuser"
+	restErrors "github.com/kotalco/cloud-api/pkg/errors"
 	"github.com/kotalco/cloud-api/pkg/roles"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
-	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"gorm.io/gorm"
 	"net/http"
 )

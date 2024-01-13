@@ -6,13 +6,13 @@ import (
 	"github.com/kotalco/cloud-api/core/user"
 	"github.com/kotalco/cloud-api/core/workspace"
 	"github.com/kotalco/cloud-api/core/workspaceuser"
-	"github.com/kotalco/cloud-api/pkg/k8s"
+	"github.com/kotalco/cloud-api/k8s"
+	restErrors "github.com/kotalco/cloud-api/pkg/errors"
+	"github.com/kotalco/cloud-api/pkg/pagination"
 	"github.com/kotalco/cloud-api/pkg/roles"
 	"github.com/kotalco/cloud-api/pkg/sendgrid"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
 	"github.com/kotalco/cloud-api/pkg/token"
-	restErrors "github.com/kotalco/community-api/pkg/errors"
-	"github.com/kotalco/community-api/pkg/shared"
 	"net/http"
 )
 
@@ -54,7 +54,7 @@ func Create(c *fiber.Ctx) error {
 
 	sqlclient.Commit(txHandle)
 
-	return c.Status(http.StatusCreated).JSON(shared.NewResponse(new(workspace.WorkspaceResponseDto).Marshall(model)))
+	return c.Status(http.StatusCreated).JSON(pagination.NewResponse(new(workspace.WorkspaceResponseDto).Marshall(model)))
 
 }
 
@@ -84,7 +84,7 @@ func Update(c *fiber.Ctx) error {
 	}
 	sqlclient.Commit(txHandle)
 
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(new(workspace.WorkspaceResponseDto).Marshall(&model)))
+	return c.Status(http.StatusOK).JSON(pagination.NewResponse(new(workspace.WorkspaceResponseDto).Marshall(&model)))
 }
 
 // Delete deletes user workspace and associated namespace
@@ -133,7 +133,7 @@ func GetByUserId(c *fiber.Ctx) error {
 		marshalled = append(marshalled, *record)
 	}
 
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(marshalled))
+	return c.Status(http.StatusOK).JSON(pagination.NewResponse(marshalled))
 }
 
 // GetById find workspaces by Id
@@ -144,7 +144,7 @@ func GetById(c *fiber.Ctx) error {
 	marshalled := new(workspace.WorkspaceResponseDto).Marshall(&model)
 	marshalled.Role = workspaceUser.Role
 
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(marshalled))
+	return c.Status(http.StatusOK).JSON(pagination.NewResponse(marshalled))
 }
 
 // AddMember adds new member to workspace
@@ -189,7 +189,7 @@ func AddMember(c *fiber.Ctx) error {
 	mailRequestDto.WorkspaceId = model.ID
 	go mailService.WorkspaceInvitation(mailRequestDto)
 
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{
+	return c.Status(http.StatusOK).JSON(pagination.NewResponse(pagination.SuccessMessage{
 		Message: "user has been added to the workspace",
 	}))
 }
@@ -224,7 +224,7 @@ func Leave(c *fiber.Ctx) error {
 
 	sqlclient.Commit(txHandle)
 
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{
+	return c.Status(http.StatusOK).JSON(pagination.NewResponse(pagination.SuccessMessage{
 		Message: "You're no longer member of this workspace",
 	}))
 }
@@ -261,7 +261,7 @@ func RemoveMember(c *fiber.Ctx) error {
 
 	sqlclient.Commit(txHandle)
 
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{
+	return c.Status(http.StatusOK).JSON(pagination.NewResponse(pagination.SuccessMessage{
 		Message: "User has been removed from workspace",
 	}))
 }
@@ -291,7 +291,7 @@ func Members(c *fiber.Ctx) error {
 		}
 	}
 
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(result))
+	return c.Status(http.StatusOK).JSON(pagination.NewResponse(result))
 }
 
 // UpdateWorkspaceUser enables user to assign specific
@@ -343,7 +343,7 @@ func UpdateWorkspaceUser(c *fiber.Ctx) error {
 
 	sqlclient.Commit(txHandle)
 
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{
+	return c.Status(http.StatusOK).JSON(pagination.NewResponse(pagination.SuccessMessage{
 		Message: "User role changed successfully",
 	}))
 }

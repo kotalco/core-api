@@ -25,7 +25,7 @@ import (
 
 	"github.com/kotalco/cloud-api/core/user"
 	"github.com/kotalco/cloud-api/core/verification"
-	restErrors "github.com/kotalco/community-api/pkg/errors"
+	restErrors "github.com/kotalco/cloud-api/pkg/errors"
 )
 
 /*

@@ -1,11 +1,11 @@
 package monitor
 
 import (
+	"github.com/kotalco/cloud-api/config"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/monitor"
-	"github.com/kotalco/cloud-api/pkg/config"
 )
 
 func NewMonitor(a *fiber.App) {

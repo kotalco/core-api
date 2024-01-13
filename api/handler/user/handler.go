@@ -8,13 +8,13 @@ import (
 	"github.com/kotalco/cloud-api/core/user"
 	"github.com/kotalco/cloud-api/core/verification"
 	"github.com/kotalco/cloud-api/core/workspace"
-	"github.com/kotalco/cloud-api/pkg/k8s"
+	"github.com/kotalco/cloud-api/k8s"
+	restErrors "github.com/kotalco/cloud-api/pkg/errors"
+	"github.com/kotalco/cloud-api/pkg/logger"
+	"github.com/kotalco/cloud-api/pkg/pagination"
 	"github.com/kotalco/cloud-api/pkg/sendgrid"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
 	"github.com/kotalco/cloud-api/pkg/token"
-	restErrors "github.com/kotalco/community-api/pkg/errors"
-	"github.com/kotalco/community-api/pkg/logger"
-	"github.com/kotalco/community-api/pkg/shared"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -132,7 +132,7 @@ func SignUp(c *fiber.Ctx) error {
 		}
 	}()
 
-	return c.Status(http.StatusCreated).JSON(shared.NewResponse(new(user.UserResponseDto).Marshall(model)))
+	return c.Status(http.StatusCreated).JSON(pagination.NewResponse(new(user.UserResponseDto).Marshall(model)))
 }
 
 // SignIn creates bearer token for the yse
@@ -154,7 +154,7 @@ func SignIn(c *fiber.Ctx) error {
 		return c.Status(restErr.StatusCode()).JSON(restErr)
 	}
 
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(session))
+	return c.Status(http.StatusOK).JSON(pagination.NewResponse(session))
 }
 
 // SendEmailVerification send email verification for user who
@@ -200,7 +200,7 @@ func SendEmailVerification(c *fiber.Ctx) error {
 		Message: "email verification sent successfully",
 	}
 
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(resp))
+	return c.Status(http.StatusOK).JSON(pagination.NewResponse(resp))
 }
 
 // VerifyEmail verify user email by email and token hash send to it's  email
@@ -247,7 +247,7 @@ func VerifyEmail(c *fiber.Ctx) error {
 		Message: "email verified",
 	}
 
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(resp))
+	return c.Status(http.StatusOK).JSON(pagination.NewResponse(resp))
 }
 
 // ForgetPassword send verification token to user email to reset password
@@ -285,7 +285,7 @@ func ForgetPassword(c *fiber.Ctx) error {
 		Message: "reset password has been sent to your email",
 	}
 
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(resp))
+	return c.Status(http.StatusOK).JSON(pagination.NewResponse(resp))
 }
 
 // ResetPassword resets user password by accepting token hash and new password
@@ -337,7 +337,7 @@ func ResetPassword(c *fiber.Ctx) error {
 		Message: "password reset successfully",
 	}
 
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(resp))
+	return c.Status(http.StatusOK).JSON(pagination.NewResponse(resp))
 }
 
 // ChangePassword change user password
@@ -372,7 +372,7 @@ func ChangePassword(c *fiber.Ctx) error {
 	}{
 		Message: "password changed successfully",
 	}
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(resp))
+	return c.Status(http.StatusOK).JSON(pagination.NewResponse(resp))
 }
 
 // ChangeEmail change user email and send verification token to the user email
@@ -421,7 +421,7 @@ func ChangeEmail(c *fiber.Ctx) error {
 	}{
 		Message: "email changed successfully",
 	}
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(resp))
+	return c.Status(http.StatusOK).JSON(pagination.NewResponse(resp))
 }
 
 func Whoami(c *fiber.Ctx) error {
@@ -431,7 +431,7 @@ func Whoami(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(new(user.UserResponseDto).Marshall(userDetails)))
+	return c.Status(http.StatusOK).JSON(pagination.NewResponse(new(user.UserResponseDto).Marshall(userDetails)))
 
 }
 
@@ -491,7 +491,7 @@ func EnableTwoFactorAuth(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(new(user.UserResponseDto).Marshall(model)))
+	return c.Status(http.StatusOK).JSON(pagination.NewResponse(new(user.UserResponseDto).Marshall(model)))
 }
 
 // VerifyTOTP used after the login if the user enabled 2fa his bearer token will be limited to specific functions including this one
@@ -514,7 +514,7 @@ func VerifyTOTP(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(session))
+	return c.Status(http.StatusOK).JSON(pagination.NewResponse(session))
 }
 
 func DisableTwoFactorAuth(c *fiber.Ctx) error {
@@ -547,5 +547,5 @@ func DisableTwoFactorAuth(c *fiber.Ctx) error {
 		Message: "2FA disabled",
 	}
 
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(resp))
+	return c.Status(http.StatusOK).JSON(pagination.NewResponse(resp))
 }

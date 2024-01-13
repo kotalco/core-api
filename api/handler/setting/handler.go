@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/kotalco/cloud-api/core/setting"
-	"github.com/kotalco/cloud-api/pkg/k8s/ingressroute"
-	k8svc "github.com/kotalco/cloud-api/pkg/k8s/svc"
+	"github.com/kotalco/cloud-api/k8s/ingressroute"
+	k8svc "github.com/kotalco/cloud-api/k8s/svc"
+	restErrors "github.com/kotalco/cloud-api/pkg/errors"
+	"github.com/kotalco/cloud-api/pkg/logger"
+	"github.com/kotalco/cloud-api/pkg/pagination"
 	"github.com/kotalco/cloud-api/pkg/sqlclient"
-	restErrors "github.com/kotalco/community-api/pkg/errors"
-	"github.com/kotalco/community-api/pkg/logger"
-	"github.com/kotalco/community-api/pkg/shared"
 	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"net"
 	"net/http"
@@ -89,7 +89,7 @@ func ConfigureDomain(c *fiber.Ctx) error {
 	}
 
 	sqlclient.Commit(txHandle)
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{Message: "domain configured successfully!"}))
+	return c.Status(http.StatusOK).JSON(pagination.NewResponse(pagination.SuccessMessage{Message: "domain configured successfully!"}))
 }
 
 func ConfigureRegistration(c *fiber.Ctx) error {
@@ -107,7 +107,7 @@ func ConfigureRegistration(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(shared.SuccessMessage{Message: "registration configured successfully!"}))
+	return c.Status(http.StatusOK).JSON(pagination.NewResponse(pagination.SuccessMessage{Message: "registration configured successfully!"}))
 }
 
 func Settings(c *fiber.Ctx) error {
@@ -120,7 +120,7 @@ func Settings(c *fiber.Ctx) error {
 	for _, v := range list {
 		marshalledList = append(marshalledList, new(setting.SettingResponseDto).Marshall(v))
 	}
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(marshalledList))
+	return c.Status(http.StatusOK).JSON(pagination.NewResponse(marshalledList))
 }
 
 func NetworkIdentifiers(c *fiber.Ctx) error {
@@ -128,7 +128,7 @@ func NetworkIdentifiers(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
-	return c.Status(http.StatusOK).JSON(shared.NewResponse(&setting.NetworkIdentifierResponseDto{IPAddress: ipAddress, HostName: hostName}))
+	return c.Status(http.StatusOK).JSON(pagination.NewResponse(&setting.NetworkIdentifierResponseDto{IPAddress: ipAddress, HostName: hostName}))
 }
 
 var networkIdentifiers = func() (ip string, hostName string, restErr restErrors.IRestErr) {

@@ -3,8 +3,8 @@ package endpointactivity
 import (
 	"fmt"
 	"github.com/google/uuid"
+	restErrors "github.com/kotalco/cloud-api/pkg/errors"
 	"github.com/kotalco/cloud-api/pkg/security"
-	restErrors "github.com/kotalco/community-api/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 	"os"

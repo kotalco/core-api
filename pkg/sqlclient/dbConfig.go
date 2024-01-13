@@ -1,8 +1,8 @@
 package sqlclient
 
 import (
-	"github.com/kotalco/cloud-api/pkg/config"
-	"github.com/kotalco/community-api/pkg/logger"
+	"github.com/kotalco/cloud-api/config"
+	"github.com/kotalco/cloud-api/pkg/logger"
 	"gorm.io/gorm"
 	"strconv"
 	"time"

@@ -1,9 +1,9 @@
 package token
 
 import (
+	"github.com/kotalco/cloud-api/config"
 	"testing"
 
-	"github.com/kotalco/cloud-api/pkg/config"
 	"github.com/stretchr/testify/assert"
 )
 

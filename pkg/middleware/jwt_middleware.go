@@ -5,8 +5,8 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/kotalco/cloud-api/core/user"
+	restErrors "github.com/kotalco/cloud-api/pkg/errors"
 	"github.com/kotalco/cloud-api/pkg/token"
-	restErrors "github.com/kotalco/community-api/pkg/errors"
 )
 
 var userRepository = user.NewRepository()

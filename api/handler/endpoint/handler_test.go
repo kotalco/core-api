@@ -8,10 +8,10 @@ import (
 	"github.com/kotalco/cloud-api/core/endpointactivity"
 	"github.com/kotalco/cloud-api/core/setting"
 	"github.com/kotalco/cloud-api/core/workspace"
-	"github.com/kotalco/cloud-api/pkg/k8s/secret"
+	"github.com/kotalco/cloud-api/k8s/secret"
+	restErrors "github.com/kotalco/cloud-api/pkg/errors"
+	"github.com/kotalco/cloud-api/pkg/pagination"
 	"github.com/kotalco/cloud-api/pkg/token"
-	restErrors "github.com/kotalco/community-api/pkg/errors"
-	"github.com/kotalco/community-api/pkg/shared"
 	"github.com/stretchr/testify/assert"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"gorm.io/gorm"
@@ -231,7 +231,7 @@ func TestCreate(t *testing.T) {
 			return true
 		}
 		body, resp := newFiberCtx(validDto, Create, locals)
-		var result map[string]shared.SuccessMessage
+		var result map[string]pagination.SuccessMessage
 		err := json.Unmarshal(body, &result)
 		assert.Nil(t, err)
 
@@ -429,7 +429,7 @@ func TestDelete(t *testing.T) {
 			return nil
 		}
 		body, resp := newFiberCtx("", Delete, locals)
-		var result map[string]shared.SuccessMessage
+		var result map[string]pagination.SuccessMessage
 		err := json.Unmarshal(body, &result)
 		assert.Nil(t, err)
 		assert.EqualValues(t, http.StatusOK, resp.StatusCode)

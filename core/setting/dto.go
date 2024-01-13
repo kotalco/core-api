@@ -2,9 +2,9 @@ package setting
 
 import (
 	"github.com/go-playground/validator/v10"
-	k8svc "github.com/kotalco/cloud-api/pkg/k8s/svc"
-	restErrors "github.com/kotalco/community-api/pkg/errors"
-	"github.com/kotalco/community-api/pkg/logger"
+	k8svc "github.com/kotalco/cloud-api/k8s/svc"
+	restErrors "github.com/kotalco/cloud-api/pkg/errors"
+	"github.com/kotalco/cloud-api/pkg/logger"
 )
 
 const (

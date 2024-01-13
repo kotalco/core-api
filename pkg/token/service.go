@@ -2,15 +2,15 @@ package token
 
 import (
 	"fmt"
+	"github.com/kotalco/cloud-api/config"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
-	"github.com/kotalco/cloud-api/pkg/config"
-	restErrors "github.com/kotalco/community-api/pkg/errors"
-	"github.com/kotalco/community-api/pkg/logger"
+	restErrors "github.com/kotalco/cloud-api/pkg/errors"
+	"github.com/kotalco/cloud-api/pkg/logger"
 )
 
 type token struct{}
