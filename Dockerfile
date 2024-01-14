@@ -35,4 +35,4 @@ COPY --from=builder /api/server /home/kotal/api/server
 WORKDIR /home/kotal
 EXPOSE 8080
 ENV ETCD_UNSUPPORTED_ARCH=arm64
-ENTRYPOINT [ "./api/server" ]
+ENTRYPOINT [ "./api/server/cloud-api" ]
