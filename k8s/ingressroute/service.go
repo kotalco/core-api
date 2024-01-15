@@ -3,12 +3,12 @@ package ingressroute
 import (
 	"context"
 	"fmt"
-	"github.com/kotalco/cloud-api/core/setting"
-	"github.com/kotalco/cloud-api/k8s"
+	"github.com/kotalco/core-api/core/setting"
+	"github.com/kotalco/core-api/k8s"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	restErrors "github.com/kotalco/cloud-api/pkg/errors"
-	"github.com/kotalco/cloud-api/pkg/logger"
+	restErrors "github.com/kotalco/core-api/pkg/errors"
+	"github.com/kotalco/core-api/pkg/logger"
 	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

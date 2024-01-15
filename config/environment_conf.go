@@ -13,7 +13,6 @@ func getenv(name, defaultValue string) string {
 }
 
 var (
-	ECCPublicKey   string
 	SendgridAPIKey string
 	Environment    = struct {
 		ServerPort                             string
@@ -39,7 +38,6 @@ var (
 		TwoFactorSecret                        string
 		RatelimiterPerMinute                   string
 		SubscriptionAPIBaseURL                 string
-		ECCPublicKey                           string
 		CrossOverAPIKey                        string
 		CrossOverPattern                       string
 		CrossOverRemoteAddress                 string
@@ -54,7 +52,7 @@ var (
 		JwtSecretKeyExpireHoursCount:           getenv("JWT_SECRET_KEY_EXPIRE_HOURS_COUNT", "24"),
 		JwtSecretKeyExpireHoursCountRememberMe: getenv("JWT_SECRET_KEY_EXPIRE_HOURS_COUNT_REMEMBER_ME", "168"),
 		DatabaseServerURL:                      os.Getenv("DB_SERVER_URL"),
-		DatabaseTestingServerURL:               getenv("DB_TESTING_SERVER_URL", "postgres://postgres:somePassword@localhost:5432/testing-cloud-api?sslmode=disable"),
+		DatabaseTestingServerURL:               getenv("DB_TESTING_SERVER_URL", "postgres://postgres:somePassword@localhost:5432/testing-core-api?sslmode=disable"),
 		DatabaseMaxConnections:                 getenv("DB_MAX_CONNECTIONS", "100"),
 		DatabaseMaxIdleConnections:             getenv("DB_MAX_IDLE_CONNECTIONS", "100"),
 		DatabaseMaxIdleLifetimeConnections:     getenv("DB_MAX_IDLE_LIFETIME_CONNECTIONS", "10"),
@@ -68,7 +66,6 @@ var (
 		TwoFactorSecret:                        getenv("2_FACTOR_SECRET", "secret"), // TODO: change 2fa secret default value
 		RatelimiterPerMinute:                   getenv("RATE_LIMITER_PER_MINUTE", "100"),
 		SubscriptionAPIBaseURL:                 getenv("SUBSCRIPTION_API_BASE_URL", "http://localhost:8081"),
-		ECCPublicKey:                           os.Getenv("ECC_PUBLIC_KEY"),
 		CrossOverAPIKey:                        os.Getenv("CROSSOVER_API_KEY"),
 		CrossOverPattern:                       os.Getenv("CROSSOVER_PATTERN"),
 		CrossOverRemoteAddress:                 os.Getenv("CROSSOVER_REMOTE_ADDRESS"),
@@ -79,9 +76,8 @@ var (
 func init() {
 
 	// If runtime environment is production
-	// Set sendgrid api key and ec public key from build-time variables
+	// Set sendgrid api key from build-time variables
 	if Environment.Environment == "production" {
-		Environment.ECCPublicKey = ECCPublicKey
 		Environment.SendgridAPIKey = SendgridAPIKey
 	}
 

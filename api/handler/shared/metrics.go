@@ -5,16 +5,16 @@ import (
 	"fmt"
 	"time"
 
-	restError "github.com/kotalco/cloud-api/pkg/errors"
-	"github.com/kotalco/cloud-api/pkg/logger"
-	"github.com/kotalco/cloud-api/pkg/pagination"
+	restError "github.com/kotalco/core-api/pkg/errors"
+	"github.com/kotalco/core-api/pkg/logger"
+	"github.com/kotalco/core-api/pkg/pagination"
 	appsv1 "k8s.io/api/apps/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/gofiber/websocket/v2"
-	"github.com/kotalco/cloud-api/k8s"
+	"github.com/kotalco/core-api/k8s"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 )

@@ -3,9 +3,9 @@ package stacks
 import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
-	"github.com/kotalco/cloud-api/core/stacks"
-	restErrors "github.com/kotalco/cloud-api/pkg/errors"
-	"github.com/kotalco/cloud-api/pkg/pagination"
+	"github.com/kotalco/core-api/core/stacks"
+	restErrors "github.com/kotalco/core-api/pkg/errors"
+	"github.com/kotalco/core-api/pkg/pagination"
 	stacksv1alpha1 "github.com/kotalco/kotal/apis/stacks/v1alpha1"
 	"k8s.io/apimachinery/pkg/types"
 	"net/http"

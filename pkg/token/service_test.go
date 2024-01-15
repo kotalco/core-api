@@ -1,7 +1,7 @@
 package token
 
 import (
-	"github.com/kotalco/cloud-api/config"
+	"github.com/kotalco/core-api/config"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

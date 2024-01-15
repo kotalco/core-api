@@ -3,9 +3,9 @@ package endpoint
 import (
 	"fmt"
 	validate "github.com/go-playground/validator/v10"
-	restErrors "github.com/kotalco/cloud-api/pkg/errors"
-	"github.com/kotalco/cloud-api/pkg/logger"
-	"github.com/kotalco/cloud-api/pkg/time"
+	restErrors "github.com/kotalco/core-api/pkg/errors"
+	"github.com/kotalco/core-api/pkg/logger"
+	"github.com/kotalco/core-api/pkg/time"
 	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"regexp"

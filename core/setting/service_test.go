@@ -1,8 +1,8 @@
 package setting
 
 import (
-	restErrors "github.com/kotalco/cloud-api/pkg/errors"
-	"github.com/kotalco/cloud-api/pkg/sqlclient"
+	restErrors "github.com/kotalco/core-api/pkg/errors"
+	"github.com/kotalco/core-api/pkg/sqlclient"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 	"os"

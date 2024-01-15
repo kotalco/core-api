@@ -1,8 +1,8 @@
 package secret
 
 import (
-	"github.com/kotalco/cloud-api/k8s"
-	"github.com/kotalco/cloud-api/pkg/time"
+	"github.com/kotalco/core-api/k8s"
+	"github.com/kotalco/core-api/pkg/time"
 	corev1 "k8s.io/api/core/v1"
 )
 

@@ -3,9 +3,9 @@ package stacks
 import (
 	"context"
 	"fmt"
-	"github.com/kotalco/cloud-api/k8s"
-	restErrors "github.com/kotalco/cloud-api/pkg/errors"
-	"github.com/kotalco/cloud-api/pkg/logger"
+	"github.com/kotalco/core-api/k8s"
+	restErrors "github.com/kotalco/core-api/pkg/errors"
+	"github.com/kotalco/core-api/pkg/logger"
 	stacksv1alpha1 "github.com/kotalco/kotal/apis/stacks/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"

@@ -1,8 +1,8 @@
 package polkadot
 
 import (
-	"github.com/kotalco/cloud-api/k8s"
-	"github.com/kotalco/cloud-api/pkg/time"
+	"github.com/kotalco/core-api/k8s"
+	"github.com/kotalco/core-api/pkg/time"
 	polkadotv1alpha1 "github.com/kotalco/kotal/apis/polkadot/v1alpha1"
 	sharedAPI "github.com/kotalco/kotal/apis/shared"
 )

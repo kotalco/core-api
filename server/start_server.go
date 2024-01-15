@@ -2,13 +2,13 @@ package server
 
 import (
 	"fmt"
-	"github.com/kotalco/cloud-api/config"
+	"github.com/kotalco/core-api/config"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/kotalco/cloud-api/pkg/logger"
+	"github.com/kotalco/core-api/pkg/logger"
 )
 
 // StartServerWithGracefulShutdown function for starting server with a graceful shutdown.

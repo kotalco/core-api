@@ -2,7 +2,7 @@ package user
 
 import (
 	"github.com/go-playground/validator/v10"
-	restErrors "github.com/kotalco/cloud-api/pkg/errors"
+	restErrors "github.com/kotalco/core-api/pkg/errors"
 )
 
 type SignUpRequestDto struct {

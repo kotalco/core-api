@@ -2,12 +2,12 @@ package sqlclient
 
 import (
 	"database/sql"
-	"github.com/kotalco/cloud-api/config"
+	"github.com/kotalco/core-api/config"
 	"sync"
 
 	glogger "gorm.io/gorm/logger"
 
-	"github.com/kotalco/cloud-api/pkg/logger"
+	"github.com/kotalco/core-api/pkg/logger"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )

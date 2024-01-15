@@ -3,9 +3,9 @@ package filecoin
 import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
-	"github.com/kotalco/cloud-api/core/filecoin"
-	restErrors "github.com/kotalco/cloud-api/pkg/errors"
-	"github.com/kotalco/cloud-api/pkg/pagination"
+	"github.com/kotalco/core-api/core/filecoin"
+	restErrors "github.com/kotalco/core-api/pkg/errors"
+	"github.com/kotalco/core-api/pkg/pagination"
 	filecoinv1alpha1 "github.com/kotalco/kotal/apis/filecoin/v1alpha1"
 	"k8s.io/apimachinery/pkg/types"
 	"net/http"

@@ -1,7 +1,7 @@
 package setting
 
 import (
-	restErrors "github.com/kotalco/cloud-api/pkg/errors"
+	restErrors "github.com/kotalco/core-api/pkg/errors"
 	"gorm.io/gorm"
 	"net/http"
 	"strconv"

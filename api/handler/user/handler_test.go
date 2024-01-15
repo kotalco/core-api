@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/kotalco/cloud-api/core/setting"
-	"github.com/kotalco/cloud-api/core/workspace"
-	"github.com/kotalco/cloud-api/core/workspaceuser"
-	"github.com/kotalco/cloud-api/pkg/sqlclient"
-	"github.com/kotalco/cloud-api/pkg/token"
+	"github.com/kotalco/core-api/core/setting"
+	"github.com/kotalco/core-api/core/workspace"
+	"github.com/kotalco/core-api/core/workspaceuser"
+	"github.com/kotalco/core-api/pkg/sqlclient"
+	"github.com/kotalco/core-api/pkg/token"
 	"gorm.io/gorm"
 	"io/ioutil"
 	corev1 "k8s.io/api/core/v1"
@@ -19,13 +19,13 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/kotalco/cloud-api/pkg/sendgrid"
+	"github.com/kotalco/core-api/pkg/sendgrid"
 
 	"github.com/gofiber/fiber/v2"
 
-	"github.com/kotalco/cloud-api/core/user"
-	"github.com/kotalco/cloud-api/core/verification"
-	restErrors "github.com/kotalco/cloud-api/pkg/errors"
+	"github.com/kotalco/core-api/core/user"
+	"github.com/kotalco/core-api/core/verification"
+	restErrors "github.com/kotalco/core-api/pkg/errors"
 )
 
 /*

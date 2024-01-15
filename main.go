@@ -3,14 +3,14 @@ package main
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/pprof"
-	"github.com/kotalco/cloud-api/api"
-	"github.com/kotalco/cloud-api/config"
-	"github.com/kotalco/cloud-api/pkg/middleware"
-	"github.com/kotalco/cloud-api/pkg/migration"
-	"github.com/kotalco/cloud-api/pkg/monitor"
-	"github.com/kotalco/cloud-api/pkg/seeder"
-	"github.com/kotalco/cloud-api/pkg/sqlclient"
-	"github.com/kotalco/cloud-api/server"
+	"github.com/kotalco/core-api/api"
+	"github.com/kotalco/core-api/config"
+	"github.com/kotalco/core-api/pkg/middleware"
+	"github.com/kotalco/core-api/pkg/migration"
+	"github.com/kotalco/core-api/pkg/monitor"
+	"github.com/kotalco/core-api/pkg/seeder"
+	"github.com/kotalco/core-api/pkg/sqlclient"
+	"github.com/kotalco/core-api/server"
 )
 
 func main() {
