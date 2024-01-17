@@ -2,7 +2,7 @@ package verification
 
 import (
 	"fmt"
-	"github.com/kotalco/cloud-api/config"
+	"github.com/kotalco/core-api/config"
 	"net/http"
 	"strconv"
 	"time"
@@ -10,9 +10,9 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/google/uuid"
-	restErrors "github.com/kotalco/cloud-api/pkg/errors"
-	"github.com/kotalco/cloud-api/pkg/logger"
-	"github.com/kotalco/cloud-api/pkg/security"
+	restErrors "github.com/kotalco/core-api/pkg/errors"
+	"github.com/kotalco/core-api/pkg/logger"
+	"github.com/kotalco/core-api/pkg/security"
 )
 
 type service struct{}

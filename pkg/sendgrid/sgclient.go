@@ -1,7 +1,7 @@
 package sendgrid
 
 import (
-	"github.com/kotalco/cloud-api/config"
+	"github.com/kotalco/core-api/config"
 	"sync"
 
 	"github.com/sendgrid/sendgrid-go"

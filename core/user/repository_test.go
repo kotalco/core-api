@@ -2,8 +2,8 @@ package user
 
 import (
 	"github.com/google/uuid"
-	"github.com/kotalco/cloud-api/pkg/security"
-	"github.com/kotalco/cloud-api/pkg/sqlclient"
+	"github.com/kotalco/core-api/pkg/security"
+	"github.com/kotalco/core-api/pkg/sqlclient"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"

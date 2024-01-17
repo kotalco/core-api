@@ -1,7 +1,7 @@
 package monitor
 
 import (
-	"github.com/kotalco/cloud-api/config"
+	"github.com/kotalco/core-api/config"
 	"time"
 
 	"github.com/gofiber/fiber/v2"

@@ -2,9 +2,9 @@ package svc
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/kotalco/cloud-api/core/workspace"
-	"github.com/kotalco/cloud-api/k8s/svc"
-	"github.com/kotalco/cloud-api/pkg/pagination"
+	"github.com/kotalco/core-api/core/workspace"
+	"github.com/kotalco/core-api/k8s/svc"
+	"github.com/kotalco/core-api/pkg/pagination"
 	"net/http"
 )
 

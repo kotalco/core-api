@@ -1,8 +1,8 @@
 package setting
 
 import (
-	restErrors "github.com/kotalco/cloud-api/pkg/errors"
-	"github.com/kotalco/cloud-api/pkg/sqlclient"
+	restErrors "github.com/kotalco/core-api/pkg/errors"
+	"github.com/kotalco/core-api/pkg/sqlclient"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 	"os"
@@ -170,55 +170,5 @@ func TestService_IsRegistrationEnabled(t *testing.T) {
 			return "", restErrors.NewInternalServerError("something went wrong")
 		}
 		assert.False(t, settingService.IsRegistrationEnabled())
-	})
-}
-func TestService_ConfigureActivationKey(t *testing.T) {
-	t.Run("configure activation key should pass with and create new record", func(t *testing.T) {
-		settingGetFunc = func(key string) (string, restErrors.IRestErr) {
-			return "", restErrors.NewNotFoundError("no such record")
-		}
-		settingCreateFunc = func(key string, value string) restErrors.IRestErr {
-			return nil
-		}
-		err := settingService.ConfigureActivationKey("new key")
-		assert.Nil(t, err)
-	})
-	t.Run("configure activation key  should pass with and update the old record", func(t *testing.T) {
-		settingGetFunc = func(key string) (string, restErrors.IRestErr) {
-			return "value", nil
-		}
-		settingUpdateFunc = func(key string, value string) restErrors.IRestErr {
-			return nil
-		}
-		err := settingService.ConfigureActivationKey("key")
-		assert.Nil(t, err)
-	})
-
-	t.Run("configure activation key should throw if repo throws", func(t *testing.T) {
-		settingGetFunc = func(key string) (string, restErrors.IRestErr) {
-			return "", restErrors.NewNotFoundError("")
-		}
-		settingCreateFunc = func(key string, value string) restErrors.IRestErr {
-			return restErrors.NewInternalServerError("something went wrong")
-		}
-		err := settingService.ConfigureActivationKey("key")
-		assert.EqualValues(t, "something went wrong", err.Error())
-	})
-}
-func TestService_GetActivationKey(t *testing.T) {
-	t.Run("get activation key  should pass", func(t *testing.T) {
-		settingGetFunc = func(key string) (string, restErrors.IRestErr) {
-			return "value", nil
-		}
-		record, err := settingService.GetActivationKey()
-		assert.Nil(t, err)
-		assert.EqualValues(t, "value", record)
-	})
-	t.Run("get activation key  should throw", func(t *testing.T) {
-		settingGetFunc = func(key string) (string, restErrors.IRestErr) {
-			return "", restErrors.NewNotFoundError("no such record")
-		}
-		_, err := settingService.GetActivationKey()
-		assert.EqualValues(t, "no such record", err.Error())
 	})
 }

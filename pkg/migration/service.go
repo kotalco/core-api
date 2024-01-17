@@ -1,7 +1,7 @@
 package migration
 
 import (
-	"github.com/kotalco/cloud-api/pkg/logger"
+	"github.com/kotalco/core-api/pkg/logger"
 	"gorm.io/gorm"
 )
 

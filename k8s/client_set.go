@@ -1,8 +1,8 @@
 package k8s
 
 import (
-	"github.com/kotalco/cloud-api/config"
-	"github.com/kotalco/cloud-api/pkg/logger"
+	"github.com/kotalco/core-api/config"
+	"github.com/kotalco/core-api/pkg/logger"
 	"k8s.io/client-go/kubernetes"
 	"sync"
 )

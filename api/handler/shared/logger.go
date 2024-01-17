@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gofiber/websocket/v2"
-	"github.com/kotalco/cloud-api/k8s"
+	"github.com/kotalco/core-api/k8s"
 	corev1 "k8s.io/api/core/v1"
 )
 

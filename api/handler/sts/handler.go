@@ -2,8 +2,8 @@ package sts
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/kotalco/cloud-api/k8s/statefulset"
-	"github.com/kotalco/cloud-api/pkg/pagination"
+	"github.com/kotalco/core-api/k8s/statefulset"
+	"github.com/kotalco/core-api/pkg/pagination"
 	"net/http"
 )
 

@@ -1,10 +1,10 @@
 package endpointactivity
 
 import (
-	"github.com/kotalco/cloud-api/config"
-	restErrors "github.com/kotalco/cloud-api/pkg/errors"
-	"github.com/kotalco/cloud-api/pkg/logger"
-	"github.com/kotalco/cloud-api/pkg/sqlclient"
+	"github.com/kotalco/core-api/config"
+	restErrors "github.com/kotalco/core-api/pkg/errors"
+	"github.com/kotalco/core-api/pkg/logger"
+	"github.com/kotalco/core-api/pkg/sqlclient"
 	"gorm.io/gorm"
 	"strconv"
 )

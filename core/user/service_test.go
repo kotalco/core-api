@@ -3,8 +3,8 @@ package user
 import (
 	"bytes"
 	"errors"
-	restErrors "github.com/kotalco/cloud-api/pkg/errors"
-	"github.com/kotalco/cloud-api/pkg/token"
+	restErrors "github.com/kotalco/core-api/pkg/errors"
+	"github.com/kotalco/core-api/pkg/token"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 	"net/http"

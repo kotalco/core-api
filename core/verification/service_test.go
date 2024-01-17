@@ -2,12 +2,12 @@ package verification
 
 import (
 	"errors"
-	"github.com/kotalco/cloud-api/config"
+	"github.com/kotalco/core-api/config"
 	"os"
 	"testing"
 	"time"
 
-	restErrors "github.com/kotalco/cloud-api/pkg/errors"
+	restErrors "github.com/kotalco/core-api/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 )

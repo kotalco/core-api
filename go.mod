@@ -1,4 +1,4 @@
-module github.com/kotalco/cloud-api
+module github.com/kotalco/core-api
 
 go 1.19
 

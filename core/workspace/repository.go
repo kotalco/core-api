@@ -2,10 +2,10 @@ package workspace
 
 import (
 	"errors"
-	"github.com/kotalco/cloud-api/core/workspaceuser"
-	restErrors "github.com/kotalco/cloud-api/pkg/errors"
-	"github.com/kotalco/cloud-api/pkg/logger"
-	"github.com/kotalco/cloud-api/pkg/sqlclient"
+	"github.com/kotalco/core-api/core/workspaceuser"
+	restErrors "github.com/kotalco/core-api/pkg/errors"
+	"github.com/kotalco/core-api/pkg/logger"
+	"github.com/kotalco/core-api/pkg/sqlclient"
 	"gorm.io/gorm"
 )
 
