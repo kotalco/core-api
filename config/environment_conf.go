@@ -13,8 +13,7 @@ func getenv(name, defaultValue string) string {
 }
 
 var (
-	SendgridAPIKey string
-	Environment    = struct {
+	Environment = struct {
 		ServerPort                             string
 		Environment                            string
 		LogOutput                              string
@@ -37,7 +36,6 @@ var (
 		SendgridAPIKey                         string
 		TwoFactorSecret                        string
 		RatelimiterPerMinute                   string
-		SubscriptionAPIBaseURL                 string
 		CrossOverAPIKey                        string
 		CrossOverPattern                       string
 		CrossOverRemoteAddress                 string
@@ -65,20 +63,9 @@ var (
 		SendgridAPIKey:                         os.Getenv("SEND_GRID_API_KEY"),
 		TwoFactorSecret:                        getenv("2_FACTOR_SECRET", "secret"), // TODO: change 2fa secret default value
 		RatelimiterPerMinute:                   getenv("RATE_LIMITER_PER_MINUTE", "100"),
-		SubscriptionAPIBaseURL:                 getenv("SUBSCRIPTION_API_BASE_URL", "http://localhost:8081"),
 		CrossOverAPIKey:                        os.Getenv("CROSSOVER_API_KEY"),
 		CrossOverPattern:                       os.Getenv("CROSSOVER_PATTERN"),
 		CrossOverRemoteAddress:                 os.Getenv("CROSSOVER_REMOTE_ADDRESS"),
 		EndpointPortIdLength:                   getenv("ENDPOINT_PORT_ID_LENGTH", "10"),
 	}
 )
-
-func init() {
-
-	// If runtime environment is production
-	// Set sendgrid api key from build-time variables
-	if Environment.Environment == "production" {
-		Environment.SendgridAPIKey = SendgridAPIKey
-	}
-
-}

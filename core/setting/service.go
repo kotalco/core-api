@@ -17,9 +17,6 @@ type IService interface {
 	IsDomainConfigured() bool
 	ConfigureRegistration(dto *ConfigureRegistrationRequestDto) restErrors.IRestErr
 	IsRegistrationEnabled() bool
-	//ConfigureActivationKey create or update the current subscription activation key
-	ConfigureActivationKey(key string) restErrors.IRestErr
-	GetActivationKey() (string, restErrors.IRestErr)
 }
 
 var (
@@ -84,21 +81,4 @@ func (s service) IsRegistrationEnabled() bool {
 		return true
 	}
 	return false
-}
-
-func (s service) ConfigureActivationKey(key string) restErrors.IRestErr {
-	_, err := settingRepo.Get(ActivationKey)
-	if err != nil {
-		if err.StatusCode() == http.StatusNotFound {
-			//the record doesn't exist create new one
-			return settingRepo.Create(ActivationKey, key)
-		}
-		return err
-	}
-	//record exits update it
-	return settingRepo.Update(ActivationKey, key)
-}
-
-func (s service) GetActivationKey() (string, restErrors.IRestErr) {
-	return settingRepo.Get(ActivationKey)
 }

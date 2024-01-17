@@ -12,9 +12,7 @@ COPY . .
 
 ARG SENDGRID_API_KEY
 
-RUN --mount=type=secret,id=SENDGRID_API_KEY \
-    export SENDGRID_API_KEY=$(cat /run/secrets/SENDGRID_API_KEY) && \
-    CGO_ENABLED=0 go build -ldflags="-X 'github.com/kotalco/core-api/config.SendgridAPIKey=${SENDGRID_API_KEY}'" -v -o server
+RUN CGO_ENABLED=0 go build -v -o server
 
 FROM alpine
 
