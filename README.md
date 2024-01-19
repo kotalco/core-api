@@ -33,8 +33,8 @@ docker run -p 3000:3000 -e MOCK=true kotalco/core-api:develop
 This is a list of the environment variables you need to use the software.
 
 ### Mendatory Envrionment Variables
-- `SEND_GRID_API_KEY` This key is crucial for verifying user accounts within your workspace, excluding administrative accounts
-- `DB_SERVER_URL`  postgres://postgres:secret@localhost:5432/db-name-goes-here
+- `SEND_GRID_API_KEY` This key is used for verifying user account  (The app will panic if not provided)
+- `DB_SERVER_URL`  postgres://postgres:secret@localhost:5432/db-name-goes-here  (The app will panic if not provided)
 
 ### Optional Envrionment Variables
 - `CORE_API_SERVER_PORT`
@@ -48,7 +48,7 @@ This is a list of the environment variables you need to use the software.
 - `DB_MAX_IDLE_CONNECTIONS`
 - `DB_MAX_LIFETIME_CONNECTIONS`
 - `VERIFICATION_TOKEN_LENGTH` the length of the verification tokens used by the system idl > 50 chars
-- `VERIFICATION_TOKEN_EXPIRY_HOURS` 
+- `VERIFICATION_TOKEN_EXPIRY_HOURS`
 - `SEND_GRID_SENDER_NAME` the username of the emails sent to the users
 - `SEND_GRID_SENDER_EMAIL` the email address used to send the emails with
 - `2_FACTOR_SECRET` symmetric key used to sign the user verification key
