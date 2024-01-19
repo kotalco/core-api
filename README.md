@@ -32,11 +32,11 @@ docker run -p 3000:3000 -e MOCK=true kotalco/core-api:develop
 ## :closed_lock_with_key:	 Environment Variables
 This is a list of the environment variables you need to use the software.
 
-### Mendatory Envrionment Variables
-- `SEND_GRID_API_KEY` This key is used for verifying user account  (The app will panic if not provided)
-- `DB_SERVER_URL`  postgres://postgres:secret@localhost:5432/db-name-goes-here  (The app will panic if not provided)
+### Mandatory Environment Variables (The app will panic if not provided)
+- `SEND_GRID_API_KEY` This key is used for verifying user account
+- `DB_SERVER_URL`  postgres://postgres:secret@localhost:5432/db-name-goes-here
 
-### Optional Envrionment Variables
+### Optional Environment Variables
 - `CORE_API_SERVER_PORT`
 - `ENVIRONMENT` could be development or production
 - `SERVER_READ_TIMEOUT`
