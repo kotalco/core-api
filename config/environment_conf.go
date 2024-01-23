@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 )
 
@@ -10,6 +11,14 @@ func getenv(name, defaultValue string) string {
 		return value
 	}
 	return defaultValue
+}
+
+func mustGetEnv(name string) string {
+	value, exists := os.LookupEnv(name)
+	if !exists {
+		panic(fmt.Sprintf("required environment variable %s is empty", name))
+	}
+	return value
 }
 
 var (
@@ -41,7 +50,7 @@ var (
 		CrossOverRemoteAddress                 string
 		EndpointPortIdLength                   string
 	}{
-		ServerPort:                             getenv("CLOUD_API_SERVER_PORT", "6000"),
+		ServerPort:                             getenv("CORE_API_SERVER_PORT", "6000"),
 		Environment:                            getenv("ENVIRONMENT", "development"),
 		LogOutput:                              getenv("LOG_OUTPUT", "stdout"),
 		LogLevel:                               getenv("LOG_LEVEL", "info"),
@@ -49,8 +58,7 @@ var (
 		AccessSecret:                           getenv("ACCESS_SECRET", "secret"), // TODO: change access secret default value
 		JwtSecretKeyExpireHoursCount:           getenv("JWT_SECRET_KEY_EXPIRE_HOURS_COUNT", "24"),
 		JwtSecretKeyExpireHoursCountRememberMe: getenv("JWT_SECRET_KEY_EXPIRE_HOURS_COUNT_REMEMBER_ME", "168"),
-		DatabaseServerURL:                      os.Getenv("DB_SERVER_URL"),
-		DatabaseTestingServerURL:               getenv("DB_TESTING_SERVER_URL", "postgres://postgres:somePassword@localhost:5432/testing-core-api?sslmode=disable"),
+		DatabaseServerURL:                      mustGetEnv("DB_SERVER_URL"),
 		DatabaseMaxConnections:                 getenv("DB_MAX_CONNECTIONS", "100"),
 		DatabaseMaxIdleConnections:             getenv("DB_MAX_IDLE_CONNECTIONS", "100"),
 		DatabaseMaxIdleLifetimeConnections:     getenv("DB_MAX_IDLE_LIFETIME_CONNECTIONS", "10"),
@@ -60,7 +68,7 @@ var (
 		VerificationTokenExpiryHours:           getenv("VERIFICATION_TOKEN_EXPIRY_HOURS", "24"),
 		SendgridSenderName:                     getenv("SEND_GRID_SENDER_NAME", "Kotal Notifications"),
 		SendgridsenderEmail:                    getenv("SEND_GRID_SENDER_EMAIL", "notifications@kotal.co"),
-		SendgridAPIKey:                         os.Getenv("SEND_GRID_API_KEY"),
+		SendgridAPIKey:                         mustGetEnv("SEND_GRID_API_KEY"),
 		TwoFactorSecret:                        getenv("2_FACTOR_SECRET", "secret"), // TODO: change 2fa secret default value
 		RatelimiterPerMinute:                   getenv("RATE_LIMITER_PER_MINUTE", "100"),
 		CrossOverAPIKey:                        os.Getenv("CROSSOVER_API_KEY"),
