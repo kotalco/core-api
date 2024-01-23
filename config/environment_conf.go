@@ -16,7 +16,7 @@ func getenv(name, defaultValue string) string {
 func mustGetEnv(name string) string {
 	value, exists := os.LookupEnv(name)
 	if !exists {
-		panic(fmt.Sprintf("environment variable %s doens't exist", name))
+		panic(fmt.Sprintf("required environment variable %s is empty", name))
 	}
 	return value
 }
