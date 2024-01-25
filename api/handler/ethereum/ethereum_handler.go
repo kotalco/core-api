@@ -10,6 +10,7 @@ import (
 	"github.com/kotalco/core-api/core/ethereum"
 	restErrors "github.com/kotalco/core-api/pkg/errors"
 	"github.com/kotalco/core-api/pkg/pagination"
+	"github.com/kotalco/core-api/pkg/responder"
 	ethereumv1alpha1 "github.com/kotalco/kotal/apis/ethereum/v1alpha1"
 	"github.com/ybbus/jsonrpc/v2"
 	"k8s.io/apimachinery/pkg/types"
@@ -34,7 +35,7 @@ var service = ethereum.NewEthereumService()
 func Get(c *fiber.Ctx) error {
 	node := c.Locals("node").(ethereumv1alpha1.Node)
 
-	return c.JSON(pagination.NewResponse(new(ethereum.EthereumDto).FromEthereumNode(node)))
+	return c.JSON(responder.NewResponse(new(ethereum.EthereumDto).FromEthereumNode(node)))
 }
 
 // Create creates ethereum node from the given spec
@@ -60,7 +61,7 @@ func Create(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	return c.Status(http.StatusCreated).JSON(pagination.NewResponse(new(ethereum.EthereumDto).FromEthereumNode(node)))
+	return c.Status(http.StatusCreated).JSON(responder.NewResponse(new(ethereum.EthereumDto).FromEthereumNode(node)))
 }
 
 // Update updates a single ethereum node by name from spec
@@ -82,7 +83,7 @@ func Update(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(new(ethereum.EthereumDto).FromEthereumNode(node)))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(new(ethereum.EthereumDto).FromEthereumNode(node)))
 }
 
 // List returns all ethereum nodes
@@ -108,7 +109,7 @@ func List(c *fiber.Ctx) error {
 		return nodes.Items[j].CreationTimestamp.Before(&nodes.Items[i].CreationTimestamp)
 	})
 
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(new(ethereum.EthereumListDto).FromEthereumNode(nodes.Items[start:end])))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(new(ethereum.EthereumListDto).FromEthereumNode(nodes.Items[start:end])))
 }
 
 // Delete a single ethereum node by name

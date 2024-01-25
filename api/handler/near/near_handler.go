@@ -10,6 +10,7 @@ import (
 	"github.com/kotalco/core-api/k8s"
 	restErrors "github.com/kotalco/core-api/pkg/errors"
 	"github.com/kotalco/core-api/pkg/pagination"
+	"github.com/kotalco/core-api/pkg/responder"
 	nearv1alpha1 "github.com/kotalco/kotal/apis/near/v1alpha1"
 	"github.com/ybbus/jsonrpc/v2"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -36,7 +37,7 @@ var (
 func Get(c *fiber.Ctx) error {
 	node := c.Locals("node").(nearv1alpha1.Node)
 
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(new(near.NearDto).FromNEARNode(node)))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(new(near.NearDto).FromNEARNode(node)))
 }
 
 // List returns all NEAR nodes
@@ -61,7 +62,7 @@ func List(c *fiber.Ctx) error {
 		return nodes.Items[j].CreationTimestamp.Before(&nodes.Items[i].CreationTimestamp)
 	})
 
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(new(near.NearListDto).FromNEARNode(nodes.Items[start:end])))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(new(near.NearListDto).FromNEARNode(nodes.Items[start:end])))
 }
 
 // Create creates NEAR node from spec
@@ -89,7 +90,7 @@ func Create(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	return c.Status(http.StatusCreated).JSON(pagination.NewResponse(new(near.NearDto).FromNEARNode(node)))
+	return c.Status(http.StatusCreated).JSON(responder.NewResponse(new(near.NearDto).FromNEARNode(node)))
 }
 
 // Delete deletes NEAR node by name
@@ -126,7 +127,7 @@ func Update(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(new(near.NearDto).FromNEARNode(node)))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(new(near.NearDto).FromNEARNode(node)))
 }
 
 // Count returns total number of nodes

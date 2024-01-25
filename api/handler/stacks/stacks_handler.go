@@ -6,6 +6,7 @@ import (
 	"github.com/kotalco/core-api/core/stacks"
 	restErrors "github.com/kotalco/core-api/pkg/errors"
 	"github.com/kotalco/core-api/pkg/pagination"
+	"github.com/kotalco/core-api/pkg/responder"
 	stacksv1alpha1 "github.com/kotalco/kotal/apis/stacks/v1alpha1"
 	"k8s.io/apimachinery/pkg/types"
 	"net/http"
@@ -42,13 +43,13 @@ func Create(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	return c.Status(http.StatusCreated).JSON(pagination.NewResponse(new(stacks.StacksDto).FromStacksNode(node)))
+	return c.Status(http.StatusCreated).JSON(responder.NewResponse(new(stacks.StacksDto).FromStacksNode(node)))
 }
 
 // Get returns a single stacks node by name
 func Get(c *fiber.Ctx) error {
 	node := c.Locals("node").(stacksv1alpha1.Node)
-	return c.JSON(pagination.NewResponse(new(stacks.StacksDto).FromStacksNode(node)))
+	return c.JSON(responder.NewResponse(new(stacks.StacksDto).FromStacksNode(node)))
 }
 
 // List returns all stacks nodes
@@ -70,7 +71,7 @@ func List(c *fiber.Ctx) error {
 	c.Set("Access-Control-Expose-Headers", "X-Total-Count")
 	c.Set("X-Total-Count", fmt.Sprintf("%d", len(nodeList.Items)))
 
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(new(stacks.StacksListDto).FromStacksNode(nodeList.Items[start:end])))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(new(stacks.StacksListDto).FromStacksNode(nodeList.Items[start:end])))
 }
 
 // Update updates a single stacks node by name from spec
@@ -88,7 +89,7 @@ func Update(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(new(stacks.StacksDto).FromStacksNode(node)))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(new(stacks.StacksDto).FromStacksNode(node)))
 }
 
 // Count returns total number of nodes

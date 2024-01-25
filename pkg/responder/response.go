@@ -1,4 +1,4 @@
-package pagination
+package responder
 
 type response struct {
 	Data interface{} `json:"data"`

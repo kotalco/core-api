@@ -8,6 +8,7 @@ import (
 	"github.com/kotalco/core-api/core/secret"
 	restErrors "github.com/kotalco/core-api/pkg/errors"
 	"github.com/kotalco/core-api/pkg/pagination"
+	"github.com/kotalco/core-api/pkg/responder"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"net/http"
@@ -62,7 +63,7 @@ func List(c *fiber.Ctx) error {
 	c.Set("Access-Control-Expose-Headers", "X-Total-Count")
 	c.Set("X-Total-Count", fmt.Sprintf("%d", len(secretListDto)))
 
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(secretListDto))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(secretListDto))
 }
 
 // Create creates k8s secret from spec
@@ -89,7 +90,7 @@ func Create(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	return c.Status(http.StatusCreated).JSON(pagination.NewResponse(new(secret.SecretDto).FromCoreSecret(secretModel)))
+	return c.Status(http.StatusCreated).JSON(responder.NewResponse(new(secret.SecretDto).FromCoreSecret(secretModel)))
 }
 
 // Delete deletes k8s secret by name

@@ -11,6 +11,7 @@ import (
 	"github.com/kotalco/core-api/k8s"
 	restErrors "github.com/kotalco/core-api/pkg/errors"
 	"github.com/kotalco/core-api/pkg/pagination"
+	"github.com/kotalco/core-api/pkg/responder"
 	aptosv1alpha1 "github.com/kotalco/kotal/apis/aptos/v1alpha1"
 	"io/ioutil"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -44,7 +45,7 @@ var (
 // Get returns a single aptos node by name
 func Get(c *fiber.Ctx) error {
 	node := c.Locals("node").(aptosv1alpha1.Node)
-	return c.JSON(pagination.NewResponse(new(aptos.AptosDto).FromAptosNode(node)))
+	return c.JSON(responder.NewResponse(new(aptos.AptosDto).FromAptosNode(node)))
 }
 
 // List returns all aptos nodes
@@ -66,7 +67,7 @@ func List(c *fiber.Ctx) error {
 	c.Set("Access-Control-Expose-Headers", "X-Total-Count")
 	c.Set("X-Total-Count", fmt.Sprintf("%d", len(nodeList.Items)))
 
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(new(aptos.AptosListDto).FromAptosNode(nodeList.Items[start:end])))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(new(aptos.AptosListDto).FromAptosNode(nodeList.Items[start:end])))
 }
 
 // Create created aptos node from given specs
@@ -86,7 +87,7 @@ func Create(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
-	return c.Status(http.StatusCreated).JSON(pagination.NewResponse(new(aptos.AptosDto).FromAptosNode(node)))
+	return c.Status(http.StatusCreated).JSON(responder.NewResponse(new(aptos.AptosDto).FromAptosNode(node)))
 }
 
 // Update updates a single aptos node by name from spec
@@ -104,7 +105,7 @@ func Update(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(new(aptos.AptosDto).FromAptosNode(node)))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(new(aptos.AptosDto).FromAptosNode(node)))
 }
 
 // Count returns total number of nodes

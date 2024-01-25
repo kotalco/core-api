@@ -6,6 +6,7 @@ import (
 	"github.com/kotalco/core-api/core/filecoin"
 	restErrors "github.com/kotalco/core-api/pkg/errors"
 	"github.com/kotalco/core-api/pkg/pagination"
+	"github.com/kotalco/core-api/pkg/responder"
 	filecoinv1alpha1 "github.com/kotalco/kotal/apis/filecoin/v1alpha1"
 	"k8s.io/apimachinery/pkg/types"
 	"net/http"
@@ -25,7 +26,7 @@ var service = filecoin.NewFilecoinService()
 func Get(c *fiber.Ctx) error {
 	node := c.Locals("node").(filecoinv1alpha1.Node)
 
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(new(filecoin.FilecoinDto).FromFilecoinNode(node)))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(new(filecoin.FilecoinDto).FromFilecoinNode(node)))
 }
 
 // List returns all Filecoin nodes
@@ -50,7 +51,7 @@ func List(c *fiber.Ctx) error {
 		return nodes.Items[j].CreationTimestamp.Before(&nodes.Items[i].CreationTimestamp)
 	})
 
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(new(filecoin.FilecoinListDto).FromFilecoinNode(nodes.Items[start:end])))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(new(filecoin.FilecoinListDto).FromFilecoinNode(nodes.Items[start:end])))
 }
 
 // Create creates Filecoin node from spec
@@ -77,7 +78,7 @@ func Create(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	return c.Status(http.StatusCreated).JSON(pagination.NewResponse(new(filecoin.FilecoinDto).FromFilecoinNode(node)))
+	return c.Status(http.StatusCreated).JSON(responder.NewResponse(new(filecoin.FilecoinDto).FromFilecoinNode(node)))
 }
 
 // Delete deletes Filecoin node by name
@@ -114,7 +115,7 @@ func Update(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(new(filecoin.FilecoinDto).FromFilecoinNode(node)))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(new(filecoin.FilecoinDto).FromFilecoinNode(node)))
 }
 
 // Count returns total number of nodes

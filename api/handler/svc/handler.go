@@ -4,7 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/kotalco/core-api/core/workspace"
 	"github.com/kotalco/core-api/k8s/svc"
-	"github.com/kotalco/core-api/pkg/pagination"
+	"github.com/kotalco/core-api/pkg/responder"
 	"net/http"
 )
 
@@ -36,5 +36,5 @@ func List(c *fiber.Ctx) error {
 		}
 	}
 
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(responseDto))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(responseDto))
 }
