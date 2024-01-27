@@ -5,6 +5,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/kotalco/core-api/core/storage_class"
 	"github.com/kotalco/core-api/pkg/pagination"
+	"github.com/kotalco/core-api/pkg/responder"
 	storagev1 "k8s.io/api/storage/v1"
 	"net/http"
 	"sort"
@@ -48,7 +49,7 @@ func List(c *fiber.Ctx) error {
 	c.Set("Access-Control-Expose-Headers", "X-Total-Count")
 	c.Set("X-Total-Count", fmt.Sprintf("%d", len(storageClassList.Items)))
 
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(new(storage_class.StorageClassListDto).FromCoreSecret(storageClassList.Items[start:end])))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(new(storage_class.StorageClassListDto).FromCoreSecret(storageClassList.Items[start:end])))
 }
 
 // Create creates k8s storage class from spec

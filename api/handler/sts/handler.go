@@ -3,7 +3,7 @@ package sts
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/kotalco/core-api/k8s/statefulset"
-	"github.com/kotalco/core-api/pkg/pagination"
+	"github.com/kotalco/core-api/pkg/responder"
 	"net/http"
 )
 
@@ -22,5 +22,5 @@ func Count(c *fiber.Ctx) error {
 		result[protocol]++
 	}
 
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(result))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(result))
 }

@@ -5,7 +5,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 	restErrors "github.com/kotalco/core-api/pkg/errors"
 	"github.com/kotalco/core-api/pkg/logger"
-	"github.com/kotalco/core-api/pkg/pagination"
+	"github.com/kotalco/core-api/pkg/responder"
 
 	"strconv"
 	"time"
@@ -43,7 +43,7 @@ func FiberLimiter() fiber.Handler {
 		},
 		LimitReached: func(c *fiber.Ctx) error {
 			err := restErrors.NewTooManyRequestsError("too many requests")
-			return c.Status(fiber.StatusTooManyRequests).JSON(pagination.NewResponse(err))
+			return c.Status(fiber.StatusTooManyRequests).JSON(responder.NewResponse(err))
 		},
 		SkipFailedRequests:     false,
 		SkipSuccessfulRequests: false,

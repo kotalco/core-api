@@ -9,7 +9,7 @@ import (
 	"github.com/kotalco/core-api/core/workspace"
 	"github.com/kotalco/core-api/core/workspaceuser"
 	restErrors "github.com/kotalco/core-api/pkg/errors"
-	"github.com/kotalco/core-api/pkg/pagination"
+	"github.com/kotalco/core-api/pkg/responder"
 	"github.com/kotalco/core-api/pkg/roles"
 	"github.com/kotalco/core-api/pkg/sendgrid"
 	"github.com/kotalco/core-api/pkg/sqlclient"
@@ -653,7 +653,7 @@ func TestAddMemberToWorkspace(t *testing.T) {
 		}
 
 		result, resp := newFiberCtx(validDto, AddMember, locals)
-		var responseMessage map[string]pagination.SuccessMessage
+		var responseMessage map[string]responder.SuccessMessage
 		err := json.Unmarshal(result, &responseMessage)
 		if err != nil {
 			panic(err)
@@ -777,7 +777,7 @@ func TestLeaveWorkspace(t *testing.T) {
 			return nil
 		}
 		result, resp := newFiberCtx("", Leave, locals)
-		var responseMessage map[string]pagination.SuccessMessage
+		var responseMessage map[string]responder.SuccessMessage
 		err := json.Unmarshal(result, &responseMessage)
 		if err != nil {
 			panic(err)
@@ -844,7 +844,7 @@ func TestRemoveMemberWorkspace(t *testing.T) {
 		}
 
 		result, resp := newFiberCtx("", RemoveMember, locals)
-		var responseMessage map[string]pagination.SuccessMessage
+		var responseMessage map[string]responder.SuccessMessage
 		err := json.Unmarshal(result, &responseMessage)
 		if err != nil {
 			panic(err)
@@ -1006,7 +1006,7 @@ func TestUpdateWorkspaceUser(t *testing.T) {
 		}
 
 		result, resp := newFiberCtx(validDto, UpdateWorkspaceUser, locals)
-		var responseMessage map[string]pagination.SuccessMessage
+		var responseMessage map[string]responder.SuccessMessage
 		err := json.Unmarshal(result, &responseMessage)
 		if err != nil {
 			panic(err)

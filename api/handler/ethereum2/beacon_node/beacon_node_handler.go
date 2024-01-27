@@ -11,6 +11,7 @@ import (
 	"github.com/kotalco/core-api/k8s"
 	restErrors "github.com/kotalco/core-api/pkg/errors"
 	"github.com/kotalco/core-api/pkg/pagination"
+	"github.com/kotalco/core-api/pkg/responder"
 	ethereum2v1alpha1 "github.com/kotalco/kotal/apis/ethereum2/v1alpha1"
 	"io/ioutil"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -46,7 +47,7 @@ var (
 func Get(c *fiber.Ctx) error {
 	node := c.Locals("node").(ethereum2v1alpha1.BeaconNode)
 
-	return c.JSON(pagination.NewResponse(new(beacon_node.BeaconNodeDto).FromEthereum2BeaconNode(node)))
+	return c.JSON(responder.NewResponse(new(beacon_node.BeaconNodeDto).FromEthereum2BeaconNode(node)))
 }
 
 // List returns all ethereum 2.0 beacon nodes
@@ -71,7 +72,7 @@ func List(c *fiber.Ctx) error {
 		return nodes.Items[j].CreationTimestamp.Before(&nodes.Items[i].CreationTimestamp)
 	})
 
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(new(beacon_node.BeaconNodeListDto).FromEthereum2BeaconNode(nodes.Items[start:end])))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(new(beacon_node.BeaconNodeListDto).FromEthereum2BeaconNode(nodes.Items[start:end])))
 }
 
 // Create creates ethereum 2.0 beacon node from spec
@@ -97,7 +98,7 @@ func Create(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	return c.Status(http.StatusCreated).JSON(pagination.NewResponse(new(beacon_node.BeaconNodeDto).FromEthereum2BeaconNode(node)))
+	return c.Status(http.StatusCreated).JSON(responder.NewResponse(new(beacon_node.BeaconNodeDto).FromEthereum2BeaconNode(node)))
 }
 
 // Delete deletes ethereum 2.0 beacon node by name
@@ -135,7 +136,7 @@ func Update(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(new(beacon_node.BeaconNodeDto).FromEthereum2BeaconNode(beaconnode)))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(new(beacon_node.BeaconNodeDto).FromEthereum2BeaconNode(beaconnode)))
 }
 
 // Count returns total number of beacon nodes

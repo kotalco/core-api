@@ -11,7 +11,7 @@ import (
 	"github.com/kotalco/core-api/k8s/svc"
 	restErrors "github.com/kotalco/core-api/pkg/errors"
 	"github.com/kotalco/core-api/pkg/logger"
-	"github.com/kotalco/core-api/pkg/pagination"
+	"github.com/kotalco/core-api/pkg/responder"
 	"github.com/kotalco/core-api/pkg/token"
 	"net/http"
 )
@@ -68,7 +68,7 @@ func Create(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
-	return c.Status(http.StatusCreated).JSON(pagination.NewResponse(pagination.SuccessMessage{
+	return c.Status(http.StatusCreated).JSON(responder.NewResponse(responder.SuccessMessage{
 		Message: "Endpoint has been created",
 	}))
 }
@@ -89,7 +89,7 @@ func List(c *fiber.Ctx) error {
 	c.Set("Access-Control-Expose-Headers", "X-Total-Count")
 	c.Set("X-Total-Count", fmt.Sprintf("%d", len(marshalledDto)))
 
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(marshalledDto))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(marshalledDto))
 }
 
 // Get accept namespace and name , returns a record of type ingressroute.Ingressroute or err if any
@@ -107,7 +107,7 @@ func Get(c *fiber.Ctx) error {
 	v1Secret, _ := secretService.Get(secretName, workspaceModel.K8sNamespace)
 	endpointDto := new(endpoint.EndpointDto).Marshall(record, v1Secret)
 
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(endpointDto))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(endpointDto))
 }
 
 // Delete accept namespace and the name of the ingress-route ,deletes it , returns success message or err if any
@@ -119,7 +119,7 @@ func Delete(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(pagination.SuccessMessage{Message: "Endpoint Deleted"}))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(responder.SuccessMessage{Message: "Endpoint Deleted"}))
 }
 
 func Count(c *fiber.Ctx) error {
@@ -177,5 +177,5 @@ func ReadStats(c *fiber.Ctx) error {
 		}
 	}
 
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(dto))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(dto))
 }

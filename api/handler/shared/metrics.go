@@ -3,11 +3,11 @@ package shared
 import (
 	"context"
 	"fmt"
+	"github.com/kotalco/core-api/pkg/responder"
 	"time"
 
 	restError "github.com/kotalco/core-api/pkg/errors"
 	"github.com/kotalco/core-api/pkg/logger"
-	"github.com/kotalco/core-api/pkg/pagination"
 	appsv1 "k8s.io/api/apps/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -52,7 +52,7 @@ podCheck:
 		stsErr := k8sClient.Get(context.Background(), stsKey, sts)
 		if apierrors.IsNotFound(stsErr) {
 			go logger.Info("METRICS_STS_NOTFOUND", stsErr.Error())
-			c.WriteJSON(pagination.NewResponse(restError.NewNotFoundError(stsErr.Error())))
+			c.WriteJSON(responder.NewResponse(restError.NewNotFoundError(stsErr.Error())))
 			return
 		}
 		time.Sleep(3 * time.Second)

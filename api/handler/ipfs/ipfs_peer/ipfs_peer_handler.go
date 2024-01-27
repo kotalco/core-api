@@ -13,6 +13,7 @@ import (
 	"github.com/kotalco/core-api/k8s"
 	restErrors "github.com/kotalco/core-api/pkg/errors"
 	"github.com/kotalco/core-api/pkg/pagination"
+	"github.com/kotalco/core-api/pkg/responder"
 	ipfsv1alpha1 "github.com/kotalco/kotal/apis/ipfs/v1alpha1"
 	"io/ioutil"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -48,7 +49,7 @@ var (
 func Get(c *fiber.Ctx) error {
 	peer := c.Locals("peer").(ipfsv1alpha1.Peer)
 
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(new(ipfs_peer.PeerDto).FromIPFSPeer(peer)))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(new(ipfs_peer.PeerDto).FromIPFSPeer(peer)))
 }
 
 // List returns all IPFS peers
@@ -73,7 +74,7 @@ func List(c *fiber.Ctx) error {
 		return peers.Items[j].CreationTimestamp.Before(&peers.Items[i].CreationTimestamp)
 	})
 
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(new(ipfs_peer.PeerListDto).FromIPFSPeer(peers.Items[start:end])))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(new(ipfs_peer.PeerListDto).FromIPFSPeer(peers.Items[start:end])))
 }
 
 // Create creates IPFS peer from spec
@@ -100,7 +101,7 @@ func Create(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	return c.Status(http.StatusCreated).JSON(pagination.NewResponse(new(ipfs_peer.PeerDto).FromIPFSPeer(peer)))
+	return c.Status(http.StatusCreated).JSON(responder.NewResponse(new(ipfs_peer.PeerDto).FromIPFSPeer(peer)))
 }
 
 // Delete deletes IPFS peer by name
@@ -137,7 +138,7 @@ func Update(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(new(ipfs_peer.PeerDto).FromIPFSPeer(peer)))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(new(ipfs_peer.PeerDto).FromIPFSPeer(peer)))
 }
 
 // Count returns total number of peers

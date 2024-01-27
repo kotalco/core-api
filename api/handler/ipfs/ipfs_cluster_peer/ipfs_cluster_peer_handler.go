@@ -8,6 +8,7 @@ import (
 	"github.com/kotalco/core-api/core/ipfs/ipfs_cluster_peer"
 	restErrors "github.com/kotalco/core-api/pkg/errors"
 	"github.com/kotalco/core-api/pkg/pagination"
+	"github.com/kotalco/core-api/pkg/responder"
 	ipfsv1alpha1 "github.com/kotalco/kotal/apis/ipfs/v1alpha1"
 	"k8s.io/apimachinery/pkg/types"
 	"net/http"
@@ -27,7 +28,7 @@ var service = ipfs_cluster_peer.NewIpfsClusterPeerService()
 func Get(c *fiber.Ctx) error {
 	peer := c.Locals("peer").(ipfsv1alpha1.ClusterPeer)
 
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(new(ipfs_cluster_peer.ClusterPeerDto).FromIPFSClusterPeer(peer)))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(new(ipfs_cluster_peer.ClusterPeerDto).FromIPFSClusterPeer(peer)))
 }
 
 // List returns all IPFS cluster peers
@@ -52,7 +53,7 @@ func List(c *fiber.Ctx) error {
 		return peers.Items[j].CreationTimestamp.Before(&peers.Items[i].CreationTimestamp)
 	})
 
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(new(ipfs_cluster_peer.ClusterPeerListDto).FromIPFSClusterPeer(peers.Items[start:end])))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(new(ipfs_cluster_peer.ClusterPeerListDto).FromIPFSClusterPeer(peers.Items[start:end])))
 }
 
 // Create creates IPFS cluster peer from spec
@@ -78,7 +79,7 @@ func Create(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	return c.Status(http.StatusCreated).JSON(pagination.NewResponse(new(ipfs_cluster_peer.ClusterPeerDto).FromIPFSClusterPeer(peer)))
+	return c.Status(http.StatusCreated).JSON(responder.NewResponse(new(ipfs_cluster_peer.ClusterPeerDto).FromIPFSClusterPeer(peer)))
 }
 
 // Delete deletes IPFS cluster peer by name
@@ -116,7 +117,7 @@ func Update(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(new(ipfs_cluster_peer.ClusterPeerDto).FromIPFSClusterPeer(peer)))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(new(ipfs_cluster_peer.ClusterPeerDto).FromIPFSClusterPeer(peer)))
 }
 
 // Count returns total number of cluster peers

@@ -10,7 +10,7 @@ import (
 	"github.com/kotalco/core-api/core/workspace"
 	"github.com/kotalco/core-api/k8s/secret"
 	restErrors "github.com/kotalco/core-api/pkg/errors"
-	"github.com/kotalco/core-api/pkg/pagination"
+	"github.com/kotalco/core-api/pkg/responder"
 	"github.com/kotalco/core-api/pkg/token"
 	"github.com/stretchr/testify/assert"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
@@ -231,7 +231,7 @@ func TestCreate(t *testing.T) {
 			return true
 		}
 		body, resp := newFiberCtx(validDto, Create, locals)
-		var result map[string]pagination.SuccessMessage
+		var result map[string]responder.SuccessMessage
 		err := json.Unmarshal(body, &result)
 		assert.Nil(t, err)
 
@@ -429,7 +429,7 @@ func TestDelete(t *testing.T) {
 			return nil
 		}
 		body, resp := newFiberCtx("", Delete, locals)
-		var result map[string]pagination.SuccessMessage
+		var result map[string]responder.SuccessMessage
 		err := json.Unmarshal(body, &result)
 		assert.Nil(t, err)
 		assert.EqualValues(t, http.StatusOK, resp.StatusCode)

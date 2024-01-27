@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/kotalco/core-api/pkg/responder"
 	"net/http"
 	"os"
 	"sort"
@@ -37,7 +38,7 @@ var (
 func Get(c *fiber.Ctx) error {
 	node := c.Locals("node").(polkadotv1alpha1.Node)
 
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(new(polkadot.PolkadotDto).FromPolkadotNode(node)))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(new(polkadot.PolkadotDto).FromPolkadotNode(node)))
 }
 
 // List returns all Polkadot nodes
@@ -58,7 +59,7 @@ func List(c *fiber.Ctx) error {
 		return nodes.Items[j].CreationTimestamp.Before(&nodes.Items[i].CreationTimestamp)
 	})
 
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(new(polkadot.PolkadotListDto).FromPolkadotNode(nodes.Items[start:end])))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(new(polkadot.PolkadotListDto).FromPolkadotNode(nodes.Items[start:end])))
 }
 
 // Create creates Polkadot node from spec
@@ -82,7 +83,7 @@ func Create(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	return c.Status(http.StatusCreated).JSON(pagination.NewResponse(new(polkadot.PolkadotDto).FromPolkadotNode(node)))
+	return c.Status(http.StatusCreated).JSON(responder.NewResponse(new(polkadot.PolkadotDto).FromPolkadotNode(node)))
 }
 
 // Delete deletes Polkadot node by name
@@ -112,7 +113,7 @@ func Update(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(new(polkadot.PolkadotDto).FromPolkadotNode(node)))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(new(polkadot.PolkadotDto).FromPolkadotNode(node)))
 }
 
 // Count returns total number of nodes

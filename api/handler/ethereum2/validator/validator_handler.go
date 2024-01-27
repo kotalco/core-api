@@ -6,6 +6,7 @@ import (
 	"github.com/kotalco/core-api/core/ethereum2/validator"
 	restErrors "github.com/kotalco/core-api/pkg/errors"
 	"github.com/kotalco/core-api/pkg/pagination"
+	"github.com/kotalco/core-api/pkg/responder"
 	ethereum2v1alpha1 "github.com/kotalco/kotal/apis/ethereum2/v1alpha1"
 	"k8s.io/apimachinery/pkg/types"
 	"net/http"
@@ -25,7 +26,7 @@ var service = validator.NewValidatorService()
 func Get(c *fiber.Ctx) error {
 	validatorNode := c.Locals("validator").(ethereum2v1alpha1.Validator)
 
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(new(validator.ValidatorDto).FromEthereum2Validator(validatorNode)))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(new(validator.ValidatorDto).FromEthereum2Validator(validatorNode)))
 }
 
 // List returns all Ethereum 2.0 validator clients
@@ -50,7 +51,7 @@ func List(c *fiber.Ctx) error {
 		return validatorList.Items[j].CreationTimestamp.Before(&validatorList.Items[i].CreationTimestamp)
 	})
 
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(new(validator.ValidatorListDto).FromEthereum2Validator(validatorList.Items[start:end])))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(new(validator.ValidatorListDto).FromEthereum2Validator(validatorList.Items[start:end])))
 }
 
 // Create creates Ethereum 2.0 validator client from spec
@@ -77,7 +78,7 @@ func Create(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(new(validator.ValidatorDto).FromEthereum2Validator(validatorNode)))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(new(validator.ValidatorDto).FromEthereum2Validator(validatorNode)))
 }
 
 // Delete deletes Ethereum 2.0 validator client by name
@@ -115,7 +116,7 @@ func Update(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(new(validator.ValidatorDto).FromEthereum2Validator(validatorNode)))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(new(validator.ValidatorDto).FromEthereum2Validator(validatorNode)))
 }
 
 // Count returns total number of validators

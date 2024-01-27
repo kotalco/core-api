@@ -8,7 +8,7 @@ import (
 	k8svc "github.com/kotalco/core-api/k8s/svc"
 	restErrors "github.com/kotalco/core-api/pkg/errors"
 	"github.com/kotalco/core-api/pkg/logger"
-	"github.com/kotalco/core-api/pkg/pagination"
+	"github.com/kotalco/core-api/pkg/responder"
 	"github.com/kotalco/core-api/pkg/sqlclient"
 	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"net"
@@ -89,7 +89,7 @@ func ConfigureDomain(c *fiber.Ctx) error {
 	}
 
 	sqlclient.Commit(txHandle)
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(pagination.SuccessMessage{Message: "domain configured successfully!"}))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(responder.SuccessMessage{Message: "domain configured successfully!"}))
 }
 
 func ConfigureRegistration(c *fiber.Ctx) error {
@@ -107,7 +107,7 @@ func ConfigureRegistration(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(pagination.SuccessMessage{Message: "registration configured successfully!"}))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(responder.SuccessMessage{Message: "registration configured successfully!"}))
 }
 
 func Settings(c *fiber.Ctx) error {
@@ -120,7 +120,7 @@ func Settings(c *fiber.Ctx) error {
 	for _, v := range list {
 		marshalledList = append(marshalledList, new(setting.SettingResponseDto).Marshall(v))
 	}
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(marshalledList))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(marshalledList))
 }
 
 func NetworkIdentifiers(c *fiber.Ctx) error {
@@ -128,7 +128,7 @@ func NetworkIdentifiers(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
-	return c.Status(http.StatusOK).JSON(pagination.NewResponse(&setting.NetworkIdentifierResponseDto{IPAddress: ipAddress, HostName: hostName}))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(&setting.NetworkIdentifierResponseDto{IPAddress: ipAddress, HostName: hostName}))
 }
 
 var networkIdentifiers = func() (ip string, hostName string, restErr restErrors.IRestErr) {
