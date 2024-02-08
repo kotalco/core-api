@@ -3,11 +3,26 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 )
 
 // getenv returns environment variable by name or default value
-func getenv(name, defaultValue string) string {
-	if value := os.Getenv(name); value != "" {
+func getenv[T any](name string, defaultValue T) T {
+	valueStr := os.Getenv(name)
+	if valueStr != "" {
+		var value T
+		switch any(defaultValue).(type) {
+		case string:
+			value = any(valueStr).(T)
+		case int:
+			parsedValue, err := strconv.Atoi(valueStr)
+			if err != nil {
+				return defaultValue
+			}
+			value = any(parsedValue).(T)
+		default:
+			panic("Unsupported type")
+		}
 		return value
 	}
 	return defaultValue
@@ -48,6 +63,13 @@ var (
 		CrossOverAPIKey                        string
 		CrossOverPattern                       string
 		CrossOverRemoteAddress                 string
+		CrossOverActivityBufferSize            int
+		CrossOverActivityBatchSize             int
+		CrossOverActivityFlushInterval         int
+		CrossOverCacheRedisAddress             string
+		CrossOverCacheRedisAuth                string
+		CrossOverCacheRedisPoolSize            int
+		CrossOverCacheRedisCacheExpiry         int
 		EndpointPortIdLength                   string
 	}{
 		ServerPort:                             getenv("CORE_API_SERVER_PORT", "6000"),
@@ -74,6 +96,13 @@ var (
 		CrossOverAPIKey:                        os.Getenv("CROSSOVER_API_KEY"),
 		CrossOverPattern:                       os.Getenv("CROSSOVER_PATTERN"),
 		CrossOverRemoteAddress:                 os.Getenv("CROSSOVER_REMOTE_ADDRESS"),
+		CrossOverActivityBufferSize:            getenv("CROSSOVER_ACTIVITY_BUFFER_SIZE", 100000),
+		CrossOverActivityBatchSize:             getenv("CROSSOVER_ACTIVITY_BATCH_SIZE", 20),
+		CrossOverActivityFlushInterval:         getenv("CROSSOVER_ACTIVITY_FLUSH_INTERVAL", 2),
+		CrossOverCacheRedisAddress:             getenv("CROSSOVER_CACHE_REDIS_ADDRESS", "localhost:6379"),
+		CrossOverCacheRedisAuth:                getenv("CROSSOVER_CACHE_REDIS_AUTH", "123456"),
+		CrossOverCacheRedisPoolSize:            getenv("CROSSOVER_CACHE_REDIS_POOL_SIZE", 50),
+		CrossOverCacheRedisCacheExpiry:         getenv("CROSSOVER_CACHE_REDIS_CACHE_EXPIRY", 10),
 		EndpointPortIdLength:                   getenv("ENDPOINT_PORT_ID_LENGTH", "10"),
 	}
 )
