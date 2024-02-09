@@ -66,10 +66,10 @@ var (
 		CrossOverActivityBufferSize            int
 		CrossOverActivityBatchSize             int
 		CrossOverActivityFlushInterval         int
-		CrossOverCacheRedisAddress             string
-		CrossOverCacheRedisAuth                string
-		CrossOverCacheRedisPoolSize            int
-		CrossOverCacheRedisCacheExpiry         int
+		CrossOverRedisAddress                  string
+		CrossOverRedisAuth                     string
+		CrossOverRedisPoolSize                 int
+		CrossOverRedisCacheExpiry              int
 		EndpointPortIdLength                   string
 	}{
 		ServerPort:                             getenv("CORE_API_SERVER_PORT", "6000"),
@@ -99,10 +99,10 @@ var (
 		CrossOverActivityBufferSize:            getenv("CROSSOVER_ACTIVITY_BUFFER_SIZE", 100000),
 		CrossOverActivityBatchSize:             getenv("CROSSOVER_ACTIVITY_BATCH_SIZE", 20),
 		CrossOverActivityFlushInterval:         getenv("CROSSOVER_ACTIVITY_FLUSH_INTERVAL", 2),
-		CrossOverCacheRedisAddress:             getenv("CROSSOVER_CACHE_REDIS_ADDRESS", "localhost:6379"),
-		CrossOverCacheRedisAuth:                getenv("CROSSOVER_CACHE_REDIS_AUTH", "123456"),
-		CrossOverCacheRedisPoolSize:            getenv("CROSSOVER_CACHE_REDIS_POOL_SIZE", 50),
-		CrossOverCacheRedisCacheExpiry:         getenv("CROSSOVER_CACHE_REDIS_CACHE_EXPIRY", 10),
+		CrossOverRedisAddress:                  getenv("CROSSOVER_REDIS_ADDRESS", "localhost:6379"),
+		CrossOverRedisAuth:                     getenv("CROSSOVER_REDIS_AUTH", "123456"),
+		CrossOverRedisPoolSize:                 getenv("CROSSOVER_REDIS_POOL_SIZE", 50),
+		CrossOverRedisCacheExpiry:              getenv("CROSSOVER_REDIS_CACHE_EXPIRY", 10),
 		EndpointPortIdLength:                   getenv("ENDPOINT_PORT_ID_LENGTH", "10"),
 	}
 )

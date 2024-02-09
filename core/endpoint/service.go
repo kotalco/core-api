@@ -252,10 +252,10 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) restErrors
 	if err != nil {
 		if err.StatusCode() == http.StatusNotFound {
 			jsonBytes, intErr := json.Marshal(map[string]interface{}{
-				"RedisAddress":  config.Environment.CrossOverCacheRedisAddress,
-				"RedisAuth":     config.Environment.CrossOverCacheRedisAuth,
-				"RedisPoolSize": config.Environment.CrossOverCacheRedisPoolSize,
-				"CacheExpiry":   config.Environment.CrossOverCacheRedisCacheExpiry,
+				"RedisAddress":  config.Environment.CrossOverRedisAddress,
+				"RedisAuth":     config.Environment.CrossOverRedisAuth,
+				"RedisPoolSize": config.Environment.CrossOverRedisPoolSize,
+				"CacheExpiry":   config.Environment.CrossOverRedisCacheExpiry,
 			})
 			if intErr != nil {
 				go logger.Error(s.Create, intErr)
