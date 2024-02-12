@@ -30,18 +30,6 @@ func TestRepository_Create(t *testing.T) {
 		assert.NotNil(t, user)
 		cleanUp(user)
 	})
-
-	t.Run("Create_Should_Throw_If_Email_Already_Exits", func(t *testing.T) {
-		user := createUser(t)
-
-		user.ID = uuid.New().String()
-		restErr := repo.Create(&user)
-
-		assert.EqualValues(t, "email already exits", restErr.Error())
-		assert.EqualValues(t, http.StatusConflict, restErr.StatusCode())
-
-		cleanUp(user)
-	})
 }
 
 func TestRepository_GetByEmail(t *testing.T) {

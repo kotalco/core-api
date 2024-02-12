@@ -375,6 +375,9 @@ func TestSignUp(t *testing.T) {
 		settingIsRegistrationEnabledFunc = func() bool {
 			return true
 		}
+		GetByEmailFunc = func(email string) (*user.User, restErrors.IRestErr) {
+			return nil, nil
+		}
 		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, restErrors.IRestErr) {
 			newUser := new(user.User)
 			newUser.Email = "test@test.com"
@@ -466,6 +469,9 @@ func TestSignUp(t *testing.T) {
 		settingIsRegistrationEnabledFunc = func() bool {
 			return true
 		}
+		GetByEmailFunc = func(email string) (*user.User, restErrors.IRestErr) {
+			return nil, nil
+		}
 		usersCountFunc = func() (int64, restErrors.IRestErr) {
 			return 1, nil
 		}
@@ -487,6 +493,9 @@ func TestSignUp(t *testing.T) {
 	t.Run("Sign_Up_Should_Throw_if_Count_Fun_throws", func(t *testing.T) {
 		settingIsRegistrationEnabledFunc = func() bool {
 			return true
+		}
+		GetByEmailFunc = func(email string) (*user.User, restErrors.IRestErr) {
+			return nil, nil
 		}
 		SignUpFunc = func(dto *user.SignUpRequestDto) (*user.User, restErrors.IRestErr) {
 			newUser := new(user.User)
@@ -513,6 +522,9 @@ func TestSignUp(t *testing.T) {
 		assert.EqualValues(t, "count users throws", result.Message)
 	})
 	t.Run("Sign_Up_Should_Throw_if_Count_Fun_Pass_But_verification_verify_throws", func(t *testing.T) {
+		GetByEmailFunc = func(email string) (*user.User, restErrors.IRestErr) {
+			return nil, nil
+		}
 		settingIsRegistrationEnabledFunc = func() bool {
 			return true
 		}
@@ -544,6 +556,9 @@ func TestSignUp(t *testing.T) {
 		assert.EqualValues(t, "verification verify error", result.Message)
 	})
 	t.Run("Sign_Up_Should_Throw_if_Count_Fun_Pass_and_verification_pass_but_user_service_verifyEmail_throws", func(t *testing.T) {
+		GetByEmailFunc = func(email string) (*user.User, restErrors.IRestErr) {
+			return nil, nil
+		}
 		settingIsRegistrationEnabledFunc = func() bool {
 			return true
 		}
@@ -578,6 +593,9 @@ func TestSignUp(t *testing.T) {
 		assert.EqualValues(t, "user service verify email pass", result.Message)
 	})
 	t.Run("Sign_Up_Should_Throw_if_set_as_platform_admin_throws", func(t *testing.T) {
+		GetByEmailFunc = func(email string) (*user.User, restErrors.IRestErr) {
+			return nil, nil
+		}
 		settingIsRegistrationEnabledFunc = func() bool {
 			return true
 		}
@@ -615,6 +633,9 @@ func TestSignUp(t *testing.T) {
 		assert.EqualValues(t, "can't set as platform admin", result.Message)
 	})
 	t.Run("Sign_Up_Should_Throw_if_configureRegistrationThrows", func(t *testing.T) {
+		GetByEmailFunc = func(email string) (*user.User, restErrors.IRestErr) {
+			return nil, nil
+		}
 		settingIsRegistrationEnabledFunc = func() bool {
 			return true
 		}
@@ -656,6 +677,9 @@ func TestSignUp(t *testing.T) {
 	})
 
 	t.Run("Sign_Up_Should_Throw_if_create_user_Throws", func(t *testing.T) {
+		GetByEmailFunc = func(email string) (*user.User, restErrors.IRestErr) {
+			return nil, nil
+		}
 		settingIsRegistrationEnabledFunc = func() bool {
 			return true
 		}
@@ -682,6 +706,9 @@ func TestSignUp(t *testing.T) {
 		assert.EqualValues(t, result.Message, "create user service errors")
 	})
 	t.Run("sign up should throw if can't create user default workspace", func(t *testing.T) {
+		GetByEmailFunc = func(email string) (*user.User, restErrors.IRestErr) {
+			return nil, nil
+		}
 		settingIsRegistrationEnabledFunc = func() bool {
 			return true
 		}
@@ -714,6 +741,9 @@ func TestSignUp(t *testing.T) {
 	})
 
 	t.Run("Sign_Up_Should_throw_if_can't_create_user_default_name_space", func(t *testing.T) {
+		GetByEmailFunc = func(email string) (*user.User, restErrors.IRestErr) {
+			return nil, nil
+		}
 		settingIsRegistrationEnabledFunc = func() bool {
 			return true
 		}

@@ -47,6 +47,12 @@ func SignUp(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
+	exists, _ := userService.GetByEmail(dto.Email)
+	if exists != nil {
+		err := restErrors.NewConflictError("email already exits")
+		return c.Status(err.StatusCode()).JSON(err)
+	}
+
 	txRead := sqlclient.Begin(&sql.TxOptions{
 		Isolation: sql.LevelReadUncommitted,
 	})
