@@ -49,7 +49,7 @@ func SignUp(c *fiber.Ctx) error {
 
 	exists, _ := userService.GetByEmail(dto.Email)
 	if exists != nil {
-		err := restErrors.NewConflictError("email already exits")
+		err := restErrors.NewConflictError("email already exist")
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
