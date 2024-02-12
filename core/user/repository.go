@@ -2,9 +2,6 @@ package user
 
 import (
 	"fmt"
-	"net/http"
-	"regexp"
-
 	"gorm.io/gorm"
 
 	restErrors "github.com/kotalco/core-api/pkg/errors"
@@ -45,19 +42,9 @@ func (r repository) WithoutTransaction() IRepository {
 func (r repository) Create(user *User) restErrors.IRestErr {
 	res := r.db.Create(user)
 	if res.Error != nil {
-		duplicateEmail, _ := regexp.Match("duplicate key", []byte(res.Error.Error()))
-		if duplicateEmail {
-			//todo create conflict error in error pkg
-			return &restErrors.RestErr{
-				Message: "email already exits",
-				Status:  http.StatusConflict,
-				Name:    "Conflict",
-			}
-		}
 		go logger.Error(repository.Create, res.Error)
-		return restErrors.NewInternalServerError("can't create user")
+		return restErrors.NewInternalServerError("error processing your request")
 	}
-
 	return nil
 }
 
