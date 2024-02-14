@@ -36,7 +36,7 @@ func MapUrl(app *fiber.App) {
 	v1.Post("sessions", user.SignIn)
 	users := v1.Group("users")
 	users.Post("/", user.SignUp)
-	users.Post("/resend_email_verification", user.SendEmailVerification)
+	users.Post("/resend_email_verification", middleware.SendGridLimiter(), user.SendEmailVerification)
 	users.Post("/forget_password", user.ForgetPassword)
 	users.Post("/reset_password", user.ResetPassword)
 	users.Post("/verify_email", user.VerifyEmail)
