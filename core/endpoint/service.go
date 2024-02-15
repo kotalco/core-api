@@ -24,8 +24,8 @@ import (
 
 // The crossover middleware is a plugin used to store statistics for each endpoint, utilizing the endpointActivity package
 const (
-	crossoverMiddlewareName      = "kotal-crossover"
-	crossoverMiddlewareNamespace = "kotal"
+	crossoverActivityMiddlewareName = "crossover-activity"
+	crossoverMiddlewareNamespace    = "kotal"
 )
 
 var (
@@ -81,9 +81,9 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) restErrors
 		Ports:       ingressRoutePorts,
 		Middlewares: func() []ingressroute2.IngressRouteMiddlewareRefDto {
 			refs := make([]ingressroute2.IngressRouteMiddlewareRefDto, 0)
-			//append crossover  middleware
+			//append crossover-activity  middleware
 			refs = append(refs, ingressroute2.IngressRouteMiddlewareRefDto{
-				Name:      crossoverMiddlewareName,
+				Name:      crossoverActivityMiddlewareName,
 				Namespace: crossoverMiddlewareNamespace,
 			})
 			//append stripePrefix middleware
@@ -195,14 +195,17 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) restErrors
 		}
 	}
 
-	//create crossover middleware if it doesn't exist
-	_, err = k8MiddlewareService.Get(crossoverMiddlewareName, crossoverMiddlewareNamespace)
+	//create crossover-activity middleware if it doesn't exist
+	_, err = k8MiddlewareService.Get(crossoverActivityMiddlewareName, crossoverMiddlewareNamespace)
 	if err != nil {
 		if err.StatusCode() == http.StatusNotFound {
 			jsonBytes, intErr := json.Marshal(map[string]interface{}{
 				"APIKey":        config.Environment.CrossOverAPIKey,
 				"Pattern":       config.Environment.CrossOverPattern,
 				"RemoteAddress": config.Environment.CrossOverRemoteAddress,
+				"BufferSize":    config.Environment.CrossOverActivityBufferSize,
+				"BatchSize":     config.Environment.CrossOverActivityBatchSize,
+				"FlushInterval": config.Environment.CrossOverActivityFlushInterval,
 			})
 			if intErr != nil {
 				go logger.Error(s.Create, intErr)
@@ -211,12 +214,12 @@ func (s *service) Create(dto *CreateEndpointDto, svc *corev1.Service) restErrors
 
 			err = k8MiddlewareService.Create(&middleware2.CreateMiddlewareDto{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      crossoverMiddlewareName,
+					Name:      crossoverActivityMiddlewareName,
 					Namespace: crossoverMiddlewareNamespace,
 				},
 				MiddlewareSpec: v1alpha1.MiddlewareSpec{
 					Plugin: map[string]v1.JSON{
-						"crossover": {
+						crossoverActivityMiddlewareName: {
 							Raw: jsonBytes,
 						},
 					},
