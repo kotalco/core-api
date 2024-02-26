@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"time"
 )
 
 var (
@@ -180,11 +181,17 @@ func ReadStats(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
+	now := time.Now()
+	currentYear, currentMonth, _ := now.Date()
+	location := now.Location()
+	firstOfMonth := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, location)
+	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
+
 	dto := map[string]*endpointactivity.ActivityAggregations{}
 	for _, v := range record.Spec.Routes {
 		portName := v.Services[0].Port.StrVal
 		if svc.AvailableProtocol(portName) {
-			stats, _ := activityService.Stats(endpointactivity.GetEndpointId(v.Match))
+			stats, _ := activityService.Stats(firstOfMonth, lastOfMonth, endpointactivity.GetEndpointId(v.Match))
 			dto[portName] = stats
 		}
 	}

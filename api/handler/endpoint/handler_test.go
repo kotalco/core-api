@@ -22,6 +22,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 )
 
 /*
@@ -142,19 +143,20 @@ func (s secretServiceMock) Get(name string, namespace string) (*corev1.Secret, r
 
 var (
 	activityCreateFunc func([]endpointactivity.CreateEndpointActivityDto) restErrors.IRestErr
-	activityStatsFunc  func(endpointId string) (*endpointactivity.ActivityAggregations, restErrors.IRestErr)
+	activityStatsFunc  func(startDate time.Time, endDate time.Time, endpointId string) (*endpointactivity.ActivityAggregations, restErrors.IRestErr)
 )
 
 type activityServiceMock struct{}
 
-func (s activityServiceMock) Stats(endpointId string) (*endpointactivity.ActivityAggregations, restErrors.IRestErr) {
-	return activityStatsFunc(endpointId)
-}
 func (s activityServiceMock) WithoutTransaction() endpointactivity.IService {
 	return s
 }
 func (s activityServiceMock) WithTransaction(txHandle *gorm.DB) endpointactivity.IService {
 	return s
+}
+
+func (s activityServiceMock) Stats(startDate time.Time, endDate time.Time, endpointId string) (*endpointactivity.ActivityAggregations, restErrors.IRestErr) {
+	return activityStatsFunc(startDate, endDate, endpointId)
 }
 func (s activityServiceMock) Create(dto []endpointactivity.CreateEndpointActivityDto) restErrors.IRestErr {
 	return activityCreateFunc(dto)
@@ -529,7 +531,7 @@ func TestReadStats(t *testing.T) {
 			}}}, nil
 		}
 
-		activityStatsFunc = func(endpointId string) (*endpointactivity.ActivityAggregations, restErrors.IRestErr) {
+		activityStatsFunc = func(startDate time.Time, endDate time.Time, endpointId string) (*endpointactivity.ActivityAggregations, restErrors.IRestErr) {
 			return &endpointactivity.ActivityAggregations{
 				DailyAggregation: []uint{},
 			}, nil

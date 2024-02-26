@@ -10,6 +10,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 var (
@@ -69,7 +70,9 @@ func TestService_Stats(t *testing.T) {
 		RawQueryFunc = func(query string, dest interface{}, conditions ...interface{}) restErrors.IRestErr {
 			return nil
 		}
-		activity, restErr := activityService.Stats("123")
+		startDate := time.Now()
+		endDate := time.Now().AddDate(0, 1, -1)
+		activity, restErr := activityService.Stats(startDate, endDate, "123")
 		assert.Nil(t, restErr)
 		assert.NotNil(t, activity)
 	})
@@ -77,7 +80,9 @@ func TestService_Stats(t *testing.T) {
 		RawQueryFunc = func(query string, dest interface{}, conditions ...interface{}) restErrors.IRestErr {
 			return restErrors.NewInternalServerError("some thing went wrong!")
 		}
-		activity, restErr := activityService.Stats("123")
+		startDate := time.Now()
+		endDate := time.Now().AddDate(0, 1, -1)
+		activity, restErr := activityService.Stats(startDate, endDate, "123")
 		assert.NotNil(t, restErr)
 		assert.Nil(t, activity)
 	})
