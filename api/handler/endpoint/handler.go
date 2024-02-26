@@ -11,9 +11,12 @@ import (
 	"github.com/kotalco/core-api/k8s/svc"
 	restErrors "github.com/kotalco/core-api/pkg/errors"
 	"github.com/kotalco/core-api/pkg/logger"
+	"github.com/kotalco/core-api/pkg/pagination"
 	"github.com/kotalco/core-api/pkg/responder"
 	"github.com/kotalco/core-api/pkg/token"
 	"net/http"
+	"sort"
+	"strconv"
 )
 
 var (
@@ -75,19 +78,28 @@ func Create(c *fiber.Ctx) error {
 
 // List accept namespace , returns a list of ingressroute.Ingressroute  or err if any
 func List(c *fiber.Ctx) error {
+	// default page to 0
+	page, _ := strconv.Atoi(c.Query("page"))
+	limit, _ := strconv.Atoi(c.Query("limit"))
 	workspaceModel := c.Locals("workspace").(workspace.Workspace)
+
 	list, err := endpointService.List(workspaceModel.K8sNamespace, map[string]string{"app.kubernetes.io/created-by": "kotal-api"})
 	if err != nil {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	marshalledDto := make([]*endpoint.EndpointMetaDto, 0)
-	for _, item := range list.Items {
-		marshalledDto = append(marshalledDto, new(endpoint.EndpointMetaDto).Marshall(&item))
-	}
+	start, end := pagination.Page(uint(len(list.Items)), uint(page), uint(limit))
+	sort.Slice(list.Items[:], func(i, j int) bool {
+		return list.Items[j].CreationTimestamp.Before(&list.Items[i].CreationTimestamp)
+	})
 
 	c.Set("Access-Control-Expose-Headers", "X-Total-Count")
-	c.Set("X-Total-Count", fmt.Sprintf("%d", len(marshalledDto)))
+	c.Set("X-Total-Count", fmt.Sprintf("%d", len(list.Items)))
+
+	marshalledDto := make([]*endpoint.EndpointMetaDto, 0)
+	for _, item := range list.Items[start:end] {
+		marshalledDto = append(marshalledDto, new(endpoint.EndpointMetaDto).Marshall(&item))
+	}
 
 	return c.Status(http.StatusOK).JSON(responder.NewResponse(marshalledDto))
 }
