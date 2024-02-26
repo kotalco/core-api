@@ -101,9 +101,6 @@ func List(c *fiber.Ctx) error {
 		marshalledDto = append(marshalledDto, new(endpoint.EndpointMetaDto).Marshall(&item))
 	}
 
-	c.Set("Access-Control-Expose-Headers", "X-Total-Count")
-	c.Set("X-Total-Count", fmt.Sprintf("%d", len(marshalledDto)))
-
 	return c.Status(http.StatusOK).JSON(responder.NewResponse(marshalledDto))
 }
 
