@@ -4,17 +4,23 @@ import (
 	"github.com/go-playground/validator/v10"
 	restErrors "github.com/kotalco/core-api/pkg/errors"
 	"regexp"
+	"time"
 )
 
 type ActivityAggregations struct {
-	DailyAggregation  []uint `json:"daily_aggregation"`
-	WeeklyAggregation []uint `json:"weekly_aggregation"`
+	Date     time.Time `json:"date"`
+	Activity int       `json:"activity"`
 }
 
 type CreateEndpointActivityDto struct {
 	RequestId string `json:"request_id" validate:"required"`
 	Count     int    `json:"count" validate:"required"`
 }
+
+const (
+	LastMonth = "last_month"
+	LastWeek  = "last_week"
+)
 
 func Validate(dto interface{}) restErrors.IRestErr {
 	newValidator := validator.New()

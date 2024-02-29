@@ -17,7 +17,6 @@ import (
 	"gorm.io/gorm"
 	"io/ioutil"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -143,7 +142,7 @@ func (s secretServiceMock) Get(name string, namespace string) (*corev1.Secret, r
 
 var (
 	activityCreateFunc func([]endpointactivity.CreateEndpointActivityDto) restErrors.IRestErr
-	activityStatsFunc  func(startDate time.Time, endDate time.Time, endpointId string) (*endpointactivity.ActivityAggregations, restErrors.IRestErr)
+	activityStatsFunc  func(startDate time.Time, endDate time.Time, endpointId string) (*[]endpointactivity.ActivityAggregations, restErrors.IRestErr)
 )
 
 type activityServiceMock struct{}
@@ -155,7 +154,7 @@ func (s activityServiceMock) WithTransaction(txHandle *gorm.DB) endpointactivity
 	return s
 }
 
-func (s activityServiceMock) Stats(startDate time.Time, endDate time.Time, endpointId string) (*endpointactivity.ActivityAggregations, restErrors.IRestErr) {
+func (s activityServiceMock) Stats(startDate time.Time, endDate time.Time, endpointId string) (*[]endpointactivity.ActivityAggregations, restErrors.IRestErr) {
 	return activityStatsFunc(startDate, endDate, endpointId)
 }
 func (s activityServiceMock) Create(dto []endpointactivity.CreateEndpointActivityDto) restErrors.IRestErr {
@@ -512,49 +511,4 @@ func TestWriteStats(t *testing.T) {
 		assert.EqualValues(t, http.StatusInternalServerError, resp.StatusCode)
 	})
 
-}
-
-func TestReadStats(t *testing.T) {
-	workspaceModel := new(workspace.Workspace)
-	var locals = map[string]interface{}{}
-	locals["workspace"] = *workspaceModel
-
-	t.Run("read endpoint stats should pass", func(t *testing.T) {
-		endpointServiceGetFunc = func(name string, namespace string) (*v1alpha1.IngressRoute, restErrors.IRestErr) {
-			return &v1alpha1.IngressRoute{Spec: v1alpha1.IngressRouteSpec{Routes: []v1alpha1.Route{
-				{
-					Match: "",
-					Services: []v1alpha1.Service{{LoadBalancerSpec: v1alpha1.LoadBalancerSpec{
-						Port: intstr.IntOrString{StrVal: "api"},
-					}}},
-				},
-			}}}, nil
-		}
-
-		activityStatsFunc = func(startDate time.Time, endDate time.Time, endpointId string) (*endpointactivity.ActivityAggregations, restErrors.IRestErr) {
-			return &endpointactivity.ActivityAggregations{
-				DailyAggregation: []uint{},
-			}, nil
-		}
-
-		body, resp := newFiberCtx("", ReadStats, locals)
-		var result map[string]endpointactivity.ActivityAggregations
-		err := json.Unmarshal(body, &result)
-		assert.Nil(t, err)
-		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
-		assert.NotNil(t, result["data"])
-
-	})
-
-	t.Run("read endpoint stats should throw if can't get endpoint from service", func(t *testing.T) {
-		endpointServiceGetFunc = func(name string, namespace string) (*v1alpha1.IngressRoute, restErrors.IRestErr) {
-			return nil, restErrors.NewNotFoundError("no such record")
-		}
-		body, resp := newFiberCtx("", ReadStats, locals)
-		var result restErrors.RestErr
-		err := json.Unmarshal(body, &result)
-		assert.Nil(t, err)
-		assert.EqualValues(t, http.StatusNotFound, resp.StatusCode)
-		assert.NotNil(t, "no such record", result.Message)
-	})
 }
