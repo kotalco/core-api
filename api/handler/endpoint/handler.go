@@ -13,6 +13,7 @@ import (
 	"github.com/kotalco/core-api/pkg/logger"
 	"github.com/kotalco/core-api/pkg/pagination"
 	"github.com/kotalco/core-api/pkg/responder"
+	timepkg "github.com/kotalco/core-api/pkg/time"
 	"github.com/kotalco/core-api/pkg/token"
 	"net/http"
 	"sort"
@@ -210,11 +211,11 @@ func ReadStats(c *fiber.Ctx) error {
 			activities, _ := activityService.Stats(startDate, endDate, endpointactivity.GetEndpointId(v.Match))
 			activitiesMap := make(map[string]int)
 			for _, activity := range *activities {
-				activitiesMap[activity.Date.Format(time.DateOnly)] = activity.Activity
+				activitiesMap[activity.Date.Format(timepkg.DateOnly)] = activity.Activity
 			}
 
 			for dt := startDate; !dt.After(endDate); dt = dt.AddDate(0, 0, 1) {
-				dtString := dt.Format(time.DateOnly)
+				dtString := dt.Format(timepkg.DateOnly)
 				activity, ok := activitiesMap[dtString]
 				if !ok {
 					activity = 0
