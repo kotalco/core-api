@@ -21,8 +21,6 @@ import (
 	"time"
 )
 
-const ActivityDateLayout = "02-01-2006"
-
 var (
 	endpointService   = endpoint.NewService()
 	svcService        = svc.NewService()
