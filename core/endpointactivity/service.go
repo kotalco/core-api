@@ -15,7 +15,7 @@ type IService interface {
 	WithTransaction(txHandle *gorm.DB) IService
 	WithoutTransaction() IService
 	Create([]CreateEndpointActivityDto) restErrors.IRestErr
-	Stats(startDate time.Time, endDate time.Time, endpointId string) (*ActivityAggregations, restErrors.IRestErr)
+	Stats(startDate time.Time, endDate time.Time, endpointId string) (*[]ActivityAggregations, restErrors.IRestErr)
 }
 
 var activityRepository = NewRepository()
@@ -60,39 +60,12 @@ func (s service) Create(activitiesDto []CreateEndpointActivityDto) restErrors.IR
 	return activityRepository.CreateInBatches(activities)
 }
 
-func (s service) Stats(startDate time.Time, endDate time.Time, endpointId string) (*ActivityAggregations, restErrors.IRestErr) {
-	type dailyAggregation struct {
-		Day   int
-		Count int
-	}
-	type weeklyAggregation struct {
-		Week  int
-		Count int
-	}
-
-	dailyDest := new([]dailyAggregation)
-	err := activityRepository.RawQuery(rawDailyStatsQuery, dailyDest, endpointId, startDate, endDate)
+func (s service) Stats(startDate time.Time, endDate time.Time, endpointId string) (*[]ActivityAggregations, restErrors.IRestErr) {
+	activityDest := new([]ActivityAggregations)
+	err := activityRepository.RawQuery(activityBetweenDates, activityDest, endpointId, startDate, endDate)
 	if err != nil {
 		return nil, err
 	}
 
-	weekDest := new([]weeklyAggregation)
-	err = activityRepository.RawQuery(rawWeeklyStatsQuery, weekDest, endpointId, startDate, endDate)
-	if err != nil {
-		return nil, err
-	}
-
-	activity := new(ActivityAggregations)
-	activity.DailyAggregation = make([]uint, endDate.Day())
-	activity.WeeklyAggregation = make([]uint, 4)
-
-	for _, v := range *dailyDest {
-		index := v.Day - 1
-		activity.DailyAggregation[index] = uint(v.Count)
-	}
-	for i, v := range *weekDest {
-		activity.WeeklyAggregation[i] = uint(v.Count)
-	}
-
-	return activity, nil
+	return activityDest, nil
 }

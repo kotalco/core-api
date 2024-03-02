@@ -13,6 +13,7 @@ import (
 	"github.com/kotalco/core-api/pkg/logger"
 	"github.com/kotalco/core-api/pkg/pagination"
 	"github.com/kotalco/core-api/pkg/responder"
+	timepkg "github.com/kotalco/core-api/pkg/time"
 	"github.com/kotalco/core-api/pkg/token"
 	"net/http"
 	"sort"
@@ -176,22 +177,50 @@ func ReadStats(c *fiber.Ctx) error {
 	workspaceModel := c.Locals("workspace").(workspace.Workspace)
 	endpointName := c.Params("name")
 
+	statsType := c.Query("type")
+	if statsType == "" {
+		badReq := restErrors.NewBadRequestError("query parameter 'type' cannot be empty")
+		return c.Status(badReq.StatusCode()).JSON(badReq)
+	}
+
+	var endDate = time.Now()
+	var startDate time.Time
+
+	switch statsType {
+	case endpointactivity.LastMonth:
+		startDate = endDate.AddDate(0, -1, 0)
+	case endpointactivity.LastWeek:
+		startDate = endDate.AddDate(0, 0, -7)
+	default:
+		badReq := restErrors.NewBadRequestError(fmt.Sprintf("query parameter 'type' must be '%s' or '%s'", endpointactivity.LastMonth, endpointactivity.LastWeek))
+		return c.Status(badReq.StatusCode()).JSON(badReq)
+	}
+
 	record, err := endpointService.Get(endpointName, workspaceModel.K8sNamespace)
 	if err != nil {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	now := time.Now()
-	currentYear, currentMonth, _ := now.Date()
-	location := now.Location()
-	firstOfMonth := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, location)
-	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
-
-	dto := map[string]*endpointactivity.ActivityAggregations{}
+	dto := map[string][]map[time.Time]int{}
 	for _, v := range record.Spec.Routes {
 		portName := v.Services[0].Port.StrVal
 		if svc.AvailableProtocol(portName) {
-			stats, _ := activityService.Stats(firstOfMonth, lastOfMonth, endpointactivity.GetEndpointId(v.Match))
+			stats := make([]map[time.Time]int, 0)
+			activities, _ := activityService.Stats(startDate, endDate, endpointactivity.GetEndpointId(v.Match))
+			activitiesMap := make(map[string]int)
+			for _, activity := range *activities {
+				activitiesMap[activity.Date.Format(timepkg.DateOnly)] = activity.Activity
+			}
+
+			for dt := startDate; !dt.After(endDate); dt = dt.AddDate(0, 0, 1) {
+				dtString := dt.Format(timepkg.DateOnly)
+				activity, ok := activitiesMap[dtString]
+				if !ok {
+					activity = 0
+				}
+				stats = append(stats, map[time.Time]int{dt: activity})
+			}
+
 			dto[portName] = stats
 		}
 	}
