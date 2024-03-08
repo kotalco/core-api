@@ -75,9 +75,9 @@ func ConfigureDomain(c *fiber.Ctx) error {
 	for i, v := range kotalStackIR.Spec.Routes {
 		switch v.Services[0].Name {
 		case "kotal-dashboard":
-			kotalStackIR.Spec.Routes[i].Match = fmt.Sprintf("Host(`%s`) && PathPrefix(`/`)", dto.Domain)
+			kotalStackIR.Spec.Routes[i].Match = fmt.Sprintf("Host(`app.%s`) && PathPrefix(`/`)", dto.Domain)
 		case "kotal-api":
-			kotalStackIR.Spec.Routes[i].Match = fmt.Sprintf("Host(`%s`) && PathPrefix(`/api`)", dto.Domain)
+			kotalStackIR.Spec.Routes[i].Match = fmt.Sprintf("Host(`app.%s`) && PathPrefix(`/api`)", dto.Domain)
 		}
 	}
 
