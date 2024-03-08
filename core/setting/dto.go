@@ -73,9 +73,9 @@ func GetDomainBaseUrl() (string, restErrors.IRestErr) {
 	}
 
 	k8service := k8svc.NewService()
-	record, err := k8service.Get("traefik", "traefik")
+	record, err := k8service.Get("kotal-traefik", "traefik")
 	if err != nil {
-		go logger.Error("SEND_GRID_GET_DOMAIN_BASE_URL", err)
+		go logger.Error("GET_DOMAIN_BASE_URL", err)
 		return "", restErrors.NewInternalServerError("can't get traefik service")
 	}
 	return record.Status.LoadBalancer.Ingress[0].IP, nil
