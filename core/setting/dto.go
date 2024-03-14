@@ -10,7 +10,8 @@ import (
 const (
 	DomainKey       = "domain"
 	RegistrationKey = "registration_is_enabled"
-	ActivationKey   = "activation_key"
+	LetsEncryptTLS  = "lets-encrypt"
+	TlsSecret       = "tls-secret"
 )
 
 type ConfigureDomainRequestDto struct {

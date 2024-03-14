@@ -17,6 +17,7 @@ var k8sClient = k8s.NewClientService()
 type ISecret interface {
 	Create(dto *CreateSecretDto) restErrors.IRestErr
 	Get(name string, namespace string) (*corev1.Secret, restErrors.IRestErr)
+	Delete(name string, namespace string) restErrors.IRestErr
 }
 
 type secret struct {
@@ -35,6 +36,7 @@ func (s *secret) Create(dto *CreateSecretDto) restErrors.IRestErr {
 			Namespace:       dto.Namespace,
 			OwnerReferences: dto.OwnerReferences,
 		},
+		Data:       dto.Data,
 		StringData: dto.StringData,
 		Immutable:  &t,
 	}
@@ -64,4 +66,19 @@ func (s *secret) Get(name string, namespace string) (*corev1.Secret, restErrors.
 		return nil, restErrors.NewInternalServerError(err.Error())
 	}
 	return record, nil
+}
+
+func (s *secret) Delete(name string, namespace string) restErrors.IRestErr {
+	record, err := s.Get(name, namespace)
+	if err != nil {
+		return err
+	}
+
+	intErr := k8sClient.Delete(context.Background(), record)
+	if intErr != nil {
+		go logger.Error(s.Delete, intErr)
+		return restErrors.NewInternalServerError("something went wrong")
+	}
+
+	return nil
 }

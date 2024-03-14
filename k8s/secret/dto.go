@@ -9,5 +9,6 @@ type CreateSecretDto struct {
 	metav1.ObjectMeta
 	Type       v1.SecretType
 	StringData map[string]string
+	Data       map[string][]byte
 	OwnersRef  []metav1.OwnerReference
 }
