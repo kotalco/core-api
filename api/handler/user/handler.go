@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/kotalco/core-api/config"
 	"github.com/kotalco/core-api/core/setting"
 	"github.com/kotalco/core-api/core/user"
 	"github.com/kotalco/core-api/core/verification"
@@ -79,7 +80,25 @@ func SignUp(c *fiber.Ctx) error {
 
 	var defaultWorkspaceName = workspace.DefaultWorkspaceName
 	var defaultNamespaceName = uuid.NewString()
-	if reflect.ValueOf(usersCount).IsZero() { //check if this user is first user in the cluster=>verify email address
+
+	//create the user default workspace
+	_, restErr = workspaceService.WithTransaction(txHandle).Create(&workspace.CreateWorkspaceRequestDto{Name: defaultWorkspaceName}, model.ID, defaultNamespaceName)
+	if restErr != nil {
+		sqlclient.Rollback(txHandle)
+		return c.Status(restErr.StatusCode()).JSON(restErr)
+	}
+	//create the user default namespace
+	//we shouldn't try to create the default namespace "default" it's always there
+	if defaultNamespaceName != "default" {
+		restErr = namespaceService.Create(defaultNamespaceName)
+		if restErr != nil {
+			sqlclient.Rollback(txHandle)
+			return c.Status(restErr.StatusCode()).JSON(restErr)
+		}
+	}
+
+	switch {
+	case reflect.ValueOf(usersCount).IsZero():
 		restErr = verificationService.WithTransaction(txHandle).Verify(model.ID, token)
 		if restErr != nil {
 			sqlclient.Rollback(txHandle)
@@ -107,36 +126,29 @@ func SignUp(c *fiber.Ctx) error {
 		}
 		//since this is the first user in the cluster, it's default workspace should be bound with the default namespace
 		defaultNamespaceName = "default"
-	}
-
-	//create the user default workspace
-	_, restErr = workspaceService.WithTransaction(txHandle).Create(&workspace.CreateWorkspaceRequestDto{Name: defaultWorkspaceName}, model.ID, defaultNamespaceName)
-	if restErr != nil {
-		sqlclient.Rollback(txHandle)
-		return c.Status(restErr.StatusCode()).JSON(restErr)
-	}
-	//create the user default namespace
-	//we shouldn't try to create the default namespace "default" it's always there
-	if defaultNamespaceName != "default" {
-		restErr = namespaceService.Create(defaultNamespaceName)
+	case config.Environment.SendgridAPIKey == "":
+		restErr = verificationService.WithTransaction(txHandle).Verify(model.ID, token)
 		if restErr != nil {
 			sqlclient.Rollback(txHandle)
 			return c.Status(restErr.StatusCode()).JSON(restErr)
 		}
+		restErr = userService.WithTransaction(txHandle).VerifyEmail(model)
+		if restErr != nil {
+			sqlclient.Rollback(txHandle)
+			return c.Status(restErr.StatusCode()).JSON(restErr)
+		}
+	default:
+		//send email verification
+		mailRequest := new(sendgrid.MailRequestDto)
+		mailRequest.Token = token
+		mailRequest.Email = model.Email
+		err := mailService.SignUp(mailRequest)
+		if err != nil {
+			logger.Error("SIGNUP_HANDLER", err)
+		}
 	}
 
 	sqlclient.Commit(txHandle)
-
-	//section that user don't need to wait for
-	go func() {
-		if usersCount > 1 { // if this user isn't the first user in the cluster send verification email
-			//send email verification
-			mailRequest := new(sendgrid.MailRequestDto)
-			mailRequest.Token = token
-			mailRequest.Email = model.Email
-			mailService.SignUp(mailRequest)
-		}
-	}()
 
 	return c.Status(http.StatusCreated).JSON(responder.NewResponse(new(user.UserResponseDto).Marshall(model)))
 }
