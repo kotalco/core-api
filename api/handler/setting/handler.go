@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
+	"github.com/kotalco/core-api/config"
 	"github.com/kotalco/core-api/core/setting"
 	"github.com/kotalco/core-api/k8s/deployment"
 	"github.com/kotalco/core-api/k8s/ingressroute"
@@ -122,14 +123,14 @@ func ConfigureRegistration(c *fiber.Ctx) error {
 
 func ConfigureTLS(c *fiber.Ctx) error {
 	//get ingressRoute
-	kotalStackIR, err := ingressRouteService.Get("kotal-stack", "kotal")
+	kotalStackIR, err := ingressRouteService.Get(config.Environment.KotalStackIR, config.Environment.KotalStackNamespace)
 	if err != nil {
 		go logger.Warn("CONFIGURE_TLS", err)
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
 	//get deployment
-	traefikDep, err := deploymentService.Get(types.NamespacedName{Namespace: "traefik", Name: "kotal-traefik"})
+	traefikDep, err := deploymentService.Get(types.NamespacedName{Name: config.Environment.TraefikStackDeployment, Namespace: config.Environment.TraefikStackNamespace})
 	if err != nil {
 		go logger.Warn("CONFIGURE_TLS", err)
 		return c.Status(err.StatusCode()).JSON(err)
@@ -137,7 +138,7 @@ func ConfigureTLS(c *fiber.Ctx) error {
 
 	//remove certificate static configuration if exit
 	for i, container := range traefikDep.Spec.Template.Spec.Containers {
-		if container.Name == "kotal-traefik" {
+		if container.Name == config.Environment.TraefikStackDeployment {
 			var newArgs []string
 			for _, arg := range container.Args {
 				if !strings.Contains(arg, "certificatesresolvers") {
@@ -150,7 +151,7 @@ func ConfigureTLS(c *fiber.Ctx) error {
 	}
 
 	//remove custom tls secret if exist
-	_ = secretService.Delete(setting.CustomTLS, "kotal")
+	_ = secretService.Delete(setting.CustomTLS, config.Environment.KotalStackNamespace)
 
 	tlsType := c.FormValue("tls_type")
 	switch tlsType {
@@ -159,17 +160,12 @@ func ConfigureTLS(c *fiber.Ctx) error {
 			CertResolver: "myresolver",
 		}
 		for i, container := range traefikDep.Spec.Template.Spec.Containers {
-			if container.Name == "kotal-traefik" {
-				letEncryptConf := []string{
-					"--certificatesresolvers.myresolver.acme.tlschallenge",
-					"--certificatesresolvers.myresolver.acme.email=letsencrypt@kotal.co",
-					"--certificatesresolvers.myresolver.acme.storage=/data/acme.json",
-				}
-				traefikDep.Spec.Template.Spec.Containers[i].Args = append(traefikDep.Spec.Template.Spec.Containers[i].Args, letEncryptConf...)
+			if container.Name == config.Environment.TraefikStackDeployment {
+
+				traefikDep.Spec.Template.Spec.Containers[i].Args = append(traefikDep.Spec.Template.Spec.Containers[i].Args, config.Environment.LetsEncryptStaticConfiguration...)
 				break
 			}
 		}
-
 	case setting.CustomTLS:
 		//Get Files
 		fileHeaderCert, err := c.FormFile("cert")
@@ -236,7 +232,6 @@ func ConfigureTLS(c *fiber.Ctx) error {
 		kotalStackIR.Spec.TLS = &traefikv1alpha1.TLS{
 			SecretName: setting.CustomTLS,
 		}
-
 	default:
 		badReq := restErrors.NewBadRequestError("invalid tls_type")
 		return c.Status(badReq.StatusCode()).JSON(badReq)

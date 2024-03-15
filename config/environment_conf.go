@@ -67,6 +67,11 @@ var (
 		CrossOverActivityBatchSize             int
 		CrossOverActivityFlushInterval         int
 		EndpointPortIdLength                   string
+		TraefikStackDeployment                 string
+		TraefikStackNamespace                  string
+		LetsEncryptStaticConfiguration         []string
+		KotalStackNamespace                    string
+		KotalStackIR                           string
 	}{
 		ServerPort:                             getenv("CORE_API_SERVER_PORT", "6000"),
 		Environment:                            getenv("ENVIRONMENT", "development"),
@@ -96,5 +101,13 @@ var (
 		CrossOverActivityBatchSize:             getenv("CROSSOVER_ACTIVITY_BATCH_SIZE", 20),
 		CrossOverActivityFlushInterval:         getenv("CROSSOVER_ACTIVITY_FLUSH_INTERVAL", 2),
 		EndpointPortIdLength:                   getenv("ENDPOINT_PORT_ID_LENGTH", "10"),
+		TraefikStackDeployment:                 getenv("TRAEFIK_STACK_DEPLOYMENT", "kotal-traefik"),
+		TraefikStackNamespace:                  getenv("TRAEFIK_STACK_NAMESPACE", "traefik"),
+		LetsEncryptStaticConfiguration: getenv("LETS_ENCRYPT_STATIC_CONFIGURAION", []string{
+			"--certificatesresolvers.myresolver.acme.tlschallenge",
+			"--certificatesresolvers.myresolver.acme.email=letsencrypt@kotal.co",
+			"--certificatesresolvers.myresolver.acme.storage=/data/acme.json"}),
+		KotalStackNamespace: getenv("KOTAL_STACK_NAMESPACE", "kotal"),
+		KotalStackIR:        getenv("KOTAL_STACK_IR", "kotal-stack"),
 	}
 )
