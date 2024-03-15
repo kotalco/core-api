@@ -11,7 +11,7 @@ const (
 	DomainKey       = "domain"
 	RegistrationKey = "registration_is_enabled"
 	LetsEncryptTLS  = "lets-encrypt"
-	TlsSecret       = "tls-secret"
+	CustomTLS       = "custom-tls"
 )
 
 type ConfigureDomainRequestDto struct {
