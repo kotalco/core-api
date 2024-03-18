@@ -189,7 +189,9 @@ func SendEmailVerification(c *fiber.Ctx) error {
 		return c.Status(badReq.StatusCode()).JSON(badReq)
 	}
 
-	token, err := verificationService.WithoutTransaction().Resend(userModel.ID)
+	txHandle := sqlclient.Begin()
+
+	token, err := verificationService.WithTransaction(txHandle).Resend(userModel.ID)
 	if err != nil {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
@@ -198,16 +200,14 @@ func SendEmailVerification(c *fiber.Ctx) error {
 	mailRequest.Token = token
 	mailRequest.Email = userModel.Email
 
-	go mailService.ResendEmailVerification(mailRequest)
-
-	//todo create shared successMessage struct in shared pkg
-	resp := struct {
-		Message string `json:"message"`
-	}{
-		Message: "email verification sent successfully",
+	err = mailService.ResendEmailVerification(mailRequest)
+	if err != nil {
+		sqlclient.Rollback(txHandle)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
+	sqlclient.Commit(txHandle)
 
-	return c.Status(http.StatusOK).JSON(responder.NewResponse(resp))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(responder.SuccessMessage{Message: "email verification sent successfully"}))
 }
 
 // VerifyEmail verify user email by email and token hash send to it's  email
@@ -248,13 +248,7 @@ func VerifyEmail(c *fiber.Ctx) error {
 
 	sqlclient.Commit(txHandle)
 
-	resp := struct {
-		Message string `json:"message"`
-	}{
-		Message: "email verified",
-	}
-
-	return c.Status(http.StatusOK).JSON(responder.NewResponse(resp))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(responder.SuccessMessage{Message: "email verified"}))
 }
 
 // ForgetPassword send verification token to user email to reset password
@@ -275,7 +269,9 @@ func ForgetPassword(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	token, err := verificationService.WithoutTransaction().Resend(userModel.ID)
+	txHandle := sqlclient.Begin()
+
+	token, err := verificationService.WithTransaction(txHandle).Resend(userModel.ID)
 	if err != nil {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
@@ -284,15 +280,14 @@ func ForgetPassword(c *fiber.Ctx) error {
 	mailRequest.Token = token
 	mailRequest.Email = userModel.Email
 
-	go mailService.ForgetPassword(mailRequest)
-
-	resp := struct {
-		Message string `json:"message"`
-	}{
-		Message: "reset password has been sent to your email",
+	err = mailService.ForgetPassword(mailRequest)
+	if err != nil {
+		sqlclient.Rollback(txHandle)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
+	sqlclient.Commit(txHandle)
 
-	return c.Status(http.StatusOK).JSON(responder.NewResponse(resp))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(responder.SuccessMessage{Message: "reset password has been sent to your email"}))
 }
 
 // ResetPassword resets user password by accepting token hash and new password
@@ -314,13 +309,8 @@ func ResetPassword(c *fiber.Ctx) error {
 	}
 
 	if !userModel.IsEmailVerified {
-		//todo change it to new forbidden once error deployed as package
-		forbidErr := &restErrors.RestErr{
-			Message: "email not verified",
-			Status:  403,
-			Name:    "Forbidden",
-		}
-		return c.Status(forbidErr.Status).JSON(forbidErr)
+		forbidErr := restErrors.NewForbiddenError("email not verified")
+		return c.Status(forbidErr.StatusCode()).JSON(forbidErr)
 	}
 
 	txHandle := sqlclient.Begin()
@@ -338,13 +328,7 @@ func ResetPassword(c *fiber.Ctx) error {
 
 	sqlclient.Commit(txHandle)
 
-	resp := struct {
-		Message string `json:"message"`
-	}{
-		Message: "password reset successfully",
-	}
-
-	return c.Status(http.StatusOK).JSON(responder.NewResponse(resp))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(responder.SuccessMessage{Message: "password reset successfully"}))
 }
 
 // ChangePassword change user password
@@ -372,14 +356,7 @@ func ChangePassword(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	//todo remove all user logins from redis authorization cache
-
-	resp := struct {
-		Message string `json:"message"`
-	}{
-		Message: "password changed successfully",
-	}
-	return c.Status(http.StatusOK).JSON(responder.NewResponse(resp))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(responder.SuccessMessage{Message: "password changed successfully"}))
 }
 
 // ChangeEmail change user email and send verification token to the user email
@@ -415,20 +392,19 @@ func ChangeEmail(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	sqlclient.Commit(txHandle)
-
 	mailRequest := new(sendgrid.MailRequestDto)
 	mailRequest.Token = token
 	mailRequest.Email = userDetails.Email
 
-	go mailService.ResendEmailVerification(mailRequest)
-
-	resp := struct {
-		Message string `json:"message"`
-	}{
-		Message: "email changed successfully",
+	err = mailService.ResendEmailVerification(mailRequest)
+	if err != nil {
+		sqlclient.Rollback(txHandle)
+		return c.Status(err.StatusCode()).JSON(err)
 	}
-	return c.Status(http.StatusOK).JSON(responder.NewResponse(resp))
+
+	sqlclient.Commit(txHandle)
+
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(responder.SuccessMessage{Message: "email changed successfully"}))
 }
 
 func Whoami(c *fiber.Ctx) error {
@@ -548,11 +524,5 @@ func DisableTwoFactorAuth(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	resp := struct {
-		Message string `json:"message"`
-	}{
-		Message: "2FA disabled",
-	}
-
-	return c.Status(http.StatusOK).JSON(responder.NewResponse(resp))
+	return c.Status(http.StatusOK).JSON(responder.NewResponse(responder.SuccessMessage{Message: "2FA disabled"}))
 }
