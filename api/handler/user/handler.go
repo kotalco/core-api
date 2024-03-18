@@ -125,18 +125,19 @@ func SignUp(c *fiber.Ctx) error {
 		}
 	}
 
-	sqlclient.Commit(txHandle)
-
 	//section that user don't need to wait for
-	go func() {
-		if usersCount > 1 { // if this user isn't the first user in the cluster send verification email
-			//send email verification
-			mailRequest := new(sendgrid.MailRequestDto)
-			mailRequest.Token = token
-			mailRequest.Email = model.Email
-			mailService.SignUp(mailRequest)
+	if usersCount > 1 { // if this user isn't the first user in the cluster send verification email
+		//send email verification
+		mailRequest := new(sendgrid.MailRequestDto)
+		mailRequest.Token = token
+		mailRequest.Email = model.Email
+		restErr = mailService.SignUp(mailRequest)
+		if restErr != nil {
+			sqlclient.Rollback(txHandle)
+			return c.Status(restErr.StatusCode()).JSON(restErr)
 		}
-	}()
+	}
+	sqlclient.Commit(txHandle)
 
 	return c.Status(http.StatusCreated).JSON(responder.NewResponse(new(user.UserResponseDto).Marshall(model)))
 }
