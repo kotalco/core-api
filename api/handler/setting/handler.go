@@ -9,6 +9,7 @@ import (
 	restErrors "github.com/kotalco/core-api/pkg/errors"
 	"github.com/kotalco/core-api/pkg/logger"
 	"github.com/kotalco/core-api/pkg/responder"
+	"github.com/kotalco/core-api/pkg/sendgrid"
 	"github.com/kotalco/core-api/pkg/sqlclient"
 	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"net"
@@ -19,6 +20,7 @@ var (
 	settingService      = setting.NewService()
 	k8service           = k8svc.NewService()
 	ingressRouteService = ingressroute.NewIngressRoutesService()
+	sendGridService     = sendgrid.NewService()
 )
 
 func ConfigureDomain(c *fiber.Ctx) error {
@@ -103,7 +105,12 @@ func ConfigureRegistration(c *fiber.Ctx) error {
 		return c.Status(restErr.StatusCode()).JSON(restErr)
 	}
 
-	err := settingService.WithoutTransaction().ConfigureRegistration(dto)
+	err := sendGridService.Ping()
+	if err != nil {
+		return c.Status(err.StatusCode()).JSON(err)
+	}
+
+	err = settingService.WithoutTransaction().ConfigureRegistration(dto)
 	if err != nil {
 		return c.Status(err.StatusCode()).JSON(err)
 	}

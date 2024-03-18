@@ -5,12 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"github.com/kotalco/core-api/config"
-	"strings"
-
 	"github.com/kotalco/core-api/core/setting"
 	restErrors "github.com/kotalco/core-api/pkg/errors"
 	"github.com/kotalco/core-api/pkg/logger"
+	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
+	"net/http"
+	"strings"
 )
 
 type service struct{}
@@ -20,6 +21,7 @@ type IService interface {
 	ResendEmailVerification(dto *MailRequestDto) restErrors.IRestErr
 	ForgetPassword(dto *MailRequestDto) restErrors.IRestErr
 	WorkspaceInvitation(dto *WorkspaceInvitationMailRequestDto) restErrors.IRestErr
+	Ping() restErrors.IRestErr
 }
 
 var (
@@ -38,6 +40,25 @@ var (
 func NewService() IService {
 	newService := &service{}
 	return newService
+}
+
+func (service) Ping() restErrors.IRestErr {
+	if config.Environment.SendgridAPIKey == "" {
+		restErr := restErrors.NewForbiddenError("the API key provided is not valid.")
+		return restErr
+	}
+	request := sendgrid.GetRequest(config.Environment.SendgridAPIKey, "/v3/user/profile", "")
+	request.Method = http.MethodGet
+
+	response, err := sendgrid.API(request)
+	if err != nil {
+		return restErrors.NewForbiddenError(err.Error())
+	} else {
+		if response.StatusCode == http.StatusUnauthorized {
+			return restErrors.NewForbiddenError("the API key provided is not valid.")
+		}
+		return nil
+	}
 }
 
 func (service) SignUp(dto *MailRequestDto) restErrors.IRestErr {

@@ -208,6 +208,7 @@ var (
 	ResendEmailVerificationFunc func(dto *sendgrid.MailRequestDto) restErrors.IRestErr
 	ForgetPasswordMailFunc      func(dto *sendgrid.MailRequestDto) restErrors.IRestErr
 	WorkspaceInvitationFunc     func(dto *sendgrid.WorkspaceInvitationMailRequestDto) restErrors.IRestErr
+	PingFunc                    func() restErrors.IRestErr
 )
 
 type mailServiceMock struct{}
@@ -223,6 +224,9 @@ func (mailServiceMock) ForgetPassword(dto *sendgrid.MailRequestDto) restErrors.I
 }
 func (mailServiceMock) WorkspaceInvitation(dto *sendgrid.WorkspaceInvitationMailRequestDto) restErrors.IRestErr {
 	return WorkspaceInvitationFunc(dto)
+}
+func (m mailServiceMock) Ping() restErrors.IRestErr {
+	return PingFunc()
 }
 
 func newFiberCtx(dto interface{}, method func(c *fiber.Ctx) error, locals map[string]interface{}) ([]byte, *http.Response) {
