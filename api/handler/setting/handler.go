@@ -79,7 +79,7 @@ func ConfigureDomain(c *fiber.Ctx) error {
 
 	//update ingress-route
 	kotalStackIR.Spec.TLS = &traefikv1alpha1.TLS{
-		CertResolver: "myresolver",
+		CertResolver: config.Environment.LetsEncryptResolverName,
 	}
 	kotalStackIR.Spec.EntryPoints = []string{"websecure"}
 
