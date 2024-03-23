@@ -44,7 +44,7 @@ func NewService() IService {
 
 func (service) Ping() restErrors.IRestErr {
 	if config.Environment.SendgridAPIKey == "" {
-		restErr := restErrors.NewForbiddenError("Sendgrid API key is not valid")
+		restErr := restErrors.NewForbiddenError("Sendgrid is not configured")
 		return restErr
 	}
 	request := sendgrid.GetRequest(config.Environment.SendgridAPIKey, "/v3/user/profile", "")
