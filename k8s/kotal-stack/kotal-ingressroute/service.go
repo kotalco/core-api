@@ -3,6 +3,7 @@ package kotal_ingressroute
 import (
 	"context"
 	"fmt"
+	"github.com/kotalco/core-api/config"
 	"github.com/kotalco/core-api/k8s"
 	restErrors "github.com/kotalco/core-api/pkg/errors"
 	"github.com/kotalco/core-api/pkg/logger"
@@ -15,7 +16,7 @@ var k8sClient = k8s.NewClientService()
 
 type KotalIR interface {
 	Get() (*traefikv1alpha1.IngressRoute, restErrors.IRestErr)
-	SetCertResolver() restErrors.IRestErr
+	SetCertResolver(resolverName string) restErrors.IRestErr
 	SetTLSSecret(secretName string) restErrors.IRestErr
 }
 
@@ -30,8 +31,8 @@ func NewService() KotalIR {
 func (s *kotalIR) Get() (*traefikv1alpha1.IngressRoute, restErrors.IRestErr) {
 	var record traefikv1alpha1.IngressRoute
 	key := types.NamespacedName{
-		Namespace: "kotal",
-		Name:      "kotal-stack",
+		Namespace: config.Environment.KotalNamespace,
+		Name:      config.Environment.KotalIngressRouteName,
 	}
 
 	err := k8sClient.Get(context.Background(), key, &record)
@@ -45,13 +46,13 @@ func (s *kotalIR) Get() (*traefikv1alpha1.IngressRoute, restErrors.IRestErr) {
 	return &record, nil
 }
 
-func (s *kotalIR) SetCertResolver() restErrors.IRestErr {
+func (s *kotalIR) SetCertResolver(resolverName string) restErrors.IRestErr {
 	ingressRoute, restErr := s.Get()
 	if restErr != nil {
 		return restErr
 	}
 	ingressRoute.Spec.TLS = &traefikv1alpha1.TLS{
-		CertResolver: "kotalletsresolver",
+		CertResolver: resolverName,
 	}
 	err := k8sClient.Update(context.Background(), ingressRoute)
 	if err != nil {

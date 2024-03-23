@@ -16,7 +16,7 @@ var k8sClient = k8s.NewClientService()
 
 type ITraefik interface {
 	Get() (*appsv1.Deployment, restErrors.IRestErr)
-	SetLetsEncryptStaticConfiguration(acmeEmail string) restErrors.IRestErr
+	SetLetsEncryptStaticConfiguration(resolverName string, acmeEmail string) restErrors.IRestErr
 	DeleteLetsEncryptStaticConfiguration() restErrors.IRestErr
 }
 
@@ -39,16 +39,17 @@ func (s *traefik) Get() (*appsv1.Deployment, restErrors.IRestErr) {
 	return record, nil
 }
 
-func (s *traefik) SetLetsEncryptStaticConfiguration(acmeEmail string) restErrors.IRestErr {
+func (s *traefik) SetLetsEncryptStaticConfiguration(resolverNme string, acmeEmail string) restErrors.IRestErr {
 	deploy, restErr := s.Get()
 	if restErr != nil {
 		return restErr
 	}
+
 	for i, container := range deploy.Spec.Template.Spec.Containers {
 		if container.Name == config.Environment.TraefikDeploymentName {
-			container.Args = append(container.Args, "--certificatesresolvers.kotalletsresolver.acme.tlschallenge")
-			container.Args = append(container.Args, fmt.Sprintf("--certificatesresolvers.kotalletsresolver.acme.email=%s", acmeEmail))
-			container.Args = append(container.Args, "--certificatesresolvers.kotalletsresolver.acme.storage=/data/acme.json")
+			container.Args = append(container.Args, fmt.Sprintf("--certificatesresolvers.%s.acme.tlschallenge", resolverNme))
+			container.Args = append(container.Args, fmt.Sprintf("--certificatesresolvers.%s.acme.email=%s", resolverNme, acmeEmail))
+			container.Args = append(container.Args, fmt.Sprintf("--certificatesresolvers.%s.acme.storage=/data/acme.json", resolverNme))
 			deploy.Spec.Template.Spec.Containers[i].Args = container.Args
 			break
 		}

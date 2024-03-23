@@ -72,7 +72,7 @@ func ConfigureDomain(c *fiber.Ctx) error {
 
 	//Update API and dashboard ingress routes
 	//get ingressRoute
-	kotalStackIR, err := ingressRouteService.Get("kotal-stack", "kotal")
+	kotalStackIR, err := ingressRouteService.Get(config.Environment.KotalIngressRouteName, config.Environment.KotalNamespace)
 	if err != nil {
 		go logger.Warn("CONFIGURE_DOMAIN", err)
 		sqlclient.Rollback(txHandle)
@@ -81,7 +81,7 @@ func ConfigureDomain(c *fiber.Ctx) error {
 
 	//update ingress-route
 	kotalStackIR.Spec.TLS = &traefikv1alpha1.TLS{
-		CertResolver: config.Environment.LetsEncryptResolverName,
+		CertResolver: setting.KotalLetsResolverName,
 	}
 	kotalStackIR.Spec.EntryPoints = []string{"websecure"}
 
@@ -137,12 +137,12 @@ func ConfigureTLS(c *fiber.Ctx) error {
 			return c.Status(restErr.StatusCode()).JSON(restErr)
 		}
 
-		restErr = kotalTraefikService.SetLetsEncryptStaticConfiguration(userDetails.Email)
+		restErr = kotalTraefikService.SetLetsEncryptStaticConfiguration(setting.KotalLetsResolverName, userDetails.Email)
 		if err != nil {
 			return c.Status(err.StatusCode()).JSON(err)
 		}
 
-		restErr = kotalIngressrouteService.SetCertResolver()
+		restErr = kotalIngressrouteService.SetCertResolver(setting.KotalLetsResolverName)
 		if err != nil {
 			return c.Status(err.StatusCode()).JSON(err)
 		}

@@ -69,8 +69,6 @@ var (
 		EndpointPortIdLength                   string
 		TraefikDeploymentName                  string
 		TraefikNamespace                       string
-		LetsEncryptResolverName                string
-		LetsEncryptStaticConfiguration         []string
 		KotalNamespace                         string
 		KotalIngressRouteName                  string
 	}{
@@ -104,12 +102,7 @@ var (
 		EndpointPortIdLength:                   getenv("ENDPOINT_PORT_ID_LENGTH", "10"),
 		TraefikDeploymentName:                  getenv("TRAEFIK_DEPLOYMENT_NAME", "kotal-traefik"),
 		TraefikNamespace:                       getenv("TRAEFIK_NAMESPACE", "traefik"),
-		LetsEncryptResolverName:                getenv("LETS_ENCRYPT_RESOLVER_NAME", "myresolver"),
-		LetsEncryptStaticConfiguration: getenv("LETS_ENCRYPT_STATIC_CONFIGURAION", []string{
-			"--certificatesresolvers.myresolver.acme.tlschallenge",
-			"--certificatesresolvers.myresolver.acme.email=letsencrypt@kotal.co",
-			"--certificatesresolvers.myresolver.acme.storage=/data/acme.json"}),
-		KotalNamespace:        getenv("KOTAL_NAMESPACE", "kotal"),
-		KotalIngressRouteName: getenv("KOTAL_INGRESS_ROUTE_NAME", "kotal-stack"),
+		KotalNamespace:                         getenv("KOTAL_NAMESPACE", "kotal"),
+		KotalIngressRouteName:                  getenv("KOTAL_INGRESS_ROUTE_NAME", "kotal-stack"),
 	}
 )
