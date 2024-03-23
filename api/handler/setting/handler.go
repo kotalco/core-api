@@ -198,7 +198,7 @@ func ConfigureTLS(c *fiber.Ctx) error {
 			return c.Status(restErr.StatusCode()).JSON(restErr)
 		}
 	default:
-		badReq := restErrors.NewBadRequestError("invalid tls_provider can be only be letsencrypt or secret")
+		badReq := restErrors.NewBadRequestError("tls_provider can be only be letsencrypt or secret")
 		return c.Status(badReq.StatusCode()).JSON(badReq)
 	}
 	return c.Status(http.StatusOK).JSON(responder.SuccessMessage{Message: "tls certificate configured successfully"})
