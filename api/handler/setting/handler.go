@@ -1,35 +1,37 @@
 package setting
 
 import (
-	"crypto/tls"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/kotalco/core-api/config"
 	"github.com/kotalco/core-api/core/setting"
-	"github.com/kotalco/core-api/k8s/deployment"
+	"github.com/kotalco/core-api/core/user"
 	"github.com/kotalco/core-api/k8s/ingressroute"
+	kotal_ingressroute "github.com/kotalco/core-api/k8s/kotal-stack/kotal-ingressroute"
+	"github.com/kotalco/core-api/k8s/kotal-stack/kotal-traefik"
 	"github.com/kotalco/core-api/k8s/secret"
 	k8svc "github.com/kotalco/core-api/k8s/svc"
 	restErrors "github.com/kotalco/core-api/pkg/errors"
 	"github.com/kotalco/core-api/pkg/logger"
 	"github.com/kotalco/core-api/pkg/responder"
+	"github.com/kotalco/core-api/pkg/security"
 	"github.com/kotalco/core-api/pkg/sqlclient"
+	"github.com/kotalco/core-api/pkg/token"
 	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
-	"io"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"net"
 	"net/http"
-	"strings"
 )
 
 var (
-	settingService      = setting.NewService()
-	k8service           = k8svc.NewService()
-	ingressRouteService = ingressroute.NewIngressRoutesService()
-	secretService       = secret.NewService()
-	deploymentService   = deployment.NewService()
+	settingService           = setting.NewService()
+	k8service                = k8svc.NewService()
+	ingressRouteService      = ingressroute.NewIngressRoutesService()
+	secretService            = secret.NewService()
+	kotalIngressrouteService = kotal_ingressroute.NewService()
+	kotalTraefikService      = kotal_traefik.NewService()
+	userService              = user.NewService()
 )
 
 func ConfigureDomain(c *fiber.Ctx) error {
@@ -122,48 +124,29 @@ func ConfigureRegistration(c *fiber.Ctx) error {
 }
 
 func ConfigureTLS(c *fiber.Ctx) error {
-	//get ingressRoute
-	kotalStackIR, err := ingressRouteService.Get(config.Environment.KotalIngressRouteName, config.Environment.KotalNamespace)
+	userId := c.Locals("user").(token.UserDetails).ID
+	userDetails, err := userService.WithoutTransaction().GetById(userId)
 	if err != nil {
-		go logger.Warn("CONFIGURE_TLS", err)
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
-	//get deployment
-	traefikDep, err := deploymentService.Get(types.NamespacedName{Name: config.Environment.TraefikDeploymentName, Namespace: config.Environment.TraefikNamespace})
-	if err != nil {
-		go logger.Warn("CONFIGURE_TLS", err)
-		return c.Status(err.StatusCode()).JSON(err)
-	}
-
-	//remove certificate static configuration if exit
-	for i, container := range traefikDep.Spec.Template.Spec.Containers {
-		if container.Name == config.Environment.TraefikDeploymentName {
-			var newArgs []string
-			for _, arg := range container.Args {
-				if !strings.Contains(arg, config.Environment.LetsEncryptResolverName) {
-					newArgs = append(newArgs, arg)
-				}
-			}
-			traefikDep.Spec.Template.Spec.Containers[i].Args = newArgs
-			break
-		}
-	}
-
-	tlsType := c.FormValue("tls_type")
-	switch tlsType {
+	switch c.FormValue("tls_provider") {
 	case "letsencrypt":
-		kotalStackIR.Spec.TLS = &traefikv1alpha1.TLS{
-			CertResolver: config.Environment.LetsEncryptResolverName,
+		restErr := kotalTraefikService.DeleteLetsEncryptStaticConfiguration()
+		if restErr != nil {
+			return c.Status(restErr.StatusCode()).JSON(restErr)
 		}
-		for i, container := range traefikDep.Spec.Template.Spec.Containers {
-			if container.Name == config.Environment.TraefikDeploymentName {
-				traefikDep.Spec.Template.Spec.Containers[i].Args = append(traefikDep.Spec.Template.Spec.Containers[i].Args, config.Environment.LetsEncryptStaticConfiguration...)
-				break
-			}
+
+		restErr = kotalTraefikService.SetLetsEncryptStaticConfiguration(userDetails.Email)
+		if err != nil {
+			return c.Status(err.StatusCode()).JSON(err)
+		}
+
+		restErr = kotalIngressrouteService.SetCertResolver()
+		if err != nil {
+			return c.Status(err.StatusCode()).JSON(err)
 		}
 	case "secret":
-		//Get Files
 		fileHeaderCert, err := c.FormFile("cert")
 		if err != nil {
 			badReq := restErrors.NewBadRequestError("missing cert file")
@@ -175,45 +158,29 @@ func ConfigureTLS(c *fiber.Ctx) error {
 			return c.Status(badReq.StatusCode()).JSON(badReq)
 		}
 
-		//Open Files
-		certFile, err := fileHeaderCert.Open()
+		certBytes, err := security.ValidateFile(fileHeaderCert)
 		if err != nil {
-			badReq := restErrors.NewBadRequestError("couldn't open cert file")
-			return c.Status(badReq.StatusCode()).JSON(badReq)
-		}
-		defer certFile.Close()
-		keyFile, err := fileHeaderKey.Open()
-		if err != nil {
-			badReq := restErrors.NewBadRequestError("couldn't open key file")
-			return c.Status(badReq.StatusCode()).JSON(badReq)
-		}
-		defer keyFile.Close()
-
-		//Read Files
-		certBytes, err := io.ReadAll(certFile)
-		if err != nil {
-			badReq := restErrors.NewBadRequestError("couldn't read cert file")
-			return c.Status(badReq.StatusCode()).JSON(badReq)
-		}
-		keyBytes, err := io.ReadAll(keyFile)
-		if err != nil {
-			badReq := restErrors.NewBadRequestError("couldn't read key file")
+			badReq := restErrors.NewBadRequestError(err.Error())
 			return c.Status(badReq.StatusCode()).JSON(badReq)
 		}
 
-		//validate tls files
-		_, err = tls.X509KeyPair(certBytes, keyBytes)
+		keyBytes, err := security.ValidateFile(fileHeaderKey)
 		if err != nil {
-			badReq := restErrors.NewBadRequestError(fmt.Sprintf("invalid key cert pair: %s", err.Error()))
+			badReq := restErrors.NewBadRequestError(err.Error())
 			return c.Status(badReq.StatusCode()).JSON(badReq)
 		}
 
-		//delete the old secret
-		_ = secretService.Delete(setting.CustomTLS, config.Environment.KotalNamespace)
-		//create secret
+		err = kotalTraefikService.DeleteLetsEncryptStaticConfiguration()
+		if err != nil {
+			badReq := restErrors.NewBadRequestError(err.Error())
+			return c.Status(badReq.StatusCode()).JSON(badReq)
+		}
+
+		_ = secretService.Delete(setting.CustomTLSSecretName, config.Environment.KotalNamespace)
+
 		restErr := secretService.Create(&secret.CreateSecretDto{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      setting.CustomTLS,
+				Name:      setting.CustomTLSSecretName,
 				Namespace: config.Environment.KotalNamespace,
 			},
 			Type: corev1.SecretTypeTLS,
@@ -226,27 +193,14 @@ func ConfigureTLS(c *fiber.Ctx) error {
 			return c.Status(restErr.StatusCode()).JSON(restErr)
 		}
 
-		//update ingress-route
-		kotalStackIR.Spec.TLS = &traefikv1alpha1.TLS{
-			SecretName: setting.CustomTLS,
+		restErr = kotalIngressrouteService.SetTLSSecret(setting.CustomTLSSecretName)
+		if restErr != nil {
+			return c.Status(restErr.StatusCode()).JSON(restErr)
 		}
 	default:
-		badReq := restErrors.NewBadRequestError("invalid tls_type can be only be letsencrypt or secret")
+		badReq := restErrors.NewBadRequestError("invalid tls_provider can be only be letsencrypt or secret")
 		return c.Status(badReq.StatusCode()).JSON(badReq)
 	}
-
-	err = ingressRouteService.Update(kotalStackIR)
-	if err != nil {
-		go logger.Warn("CONFIGURE_TLS", err)
-		return c.Status(err.StatusCode()).JSON(err)
-	}
-
-	err = deploymentService.Update(traefikDep)
-	if err != nil {
-		go logger.Warn("CONFIGURE_TLS", err)
-		return c.Status(err.StatusCode()).JSON(err)
-	}
-
 	return c.Status(http.StatusOK).JSON(responder.SuccessMessage{Message: "tls certificate configured successfully"})
 }
 

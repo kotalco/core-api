@@ -15,7 +15,8 @@ var k8sClient = k8s.NewClientService()
 
 type KotalIR interface {
 	Get() (*traefikv1alpha1.IngressRoute, restErrors.IRestErr)
-	SetCertResolver(ingressRoute *traefikv1alpha1.IngressRoute, key string) restErrors.IRestErr
+	SetCertResolver() restErrors.IRestErr
+	SetTLSSecret(secretName string) restErrors.IRestErr
 }
 
 type kotalIR struct {
@@ -44,25 +45,33 @@ func (s *kotalIR) Get() (*traefikv1alpha1.IngressRoute, restErrors.IRestErr) {
 	return &record, nil
 }
 
-func (s *kotalIR) SetCertResolver(ingressRoute *traefikv1alpha1.IngressRoute, key string) restErrors.IRestErr {
+func (s *kotalIR) SetCertResolver() restErrors.IRestErr {
+	ingressRoute, restErr := s.Get()
+	if restErr != nil {
+		return restErr
+	}
 	ingressRoute.Spec.TLS = &traefikv1alpha1.TLS{
-		CertResolver: key,
+		CertResolver: "kotalletsresolver",
 	}
 	err := k8sClient.Update(context.Background(), ingressRoute)
 	if err != nil {
-		go logger.Warn("CONFIGURE_TLS", err)
+		go logger.Warn(s.SetCertResolver, err)
 		return restErrors.NewInternalServerError(err.Error())
 	}
 	return nil
 }
 
-func (s *kotalIR) SetTLSSecret(ingressRoute *traefikv1alpha1.IngressRoute, secretName string) restErrors.IRestErr {
+func (s *kotalIR) SetTLSSecret(secretName string) restErrors.IRestErr {
+	ingressRoute, restErr := s.Get()
+	if restErr != nil {
+		return restErr
+	}
 	ingressRoute.Spec.TLS = &traefikv1alpha1.TLS{
 		SecretName: secretName,
 	}
 	err := k8sClient.Update(context.Background(), ingressRoute)
 	if err != nil {
-		go logger.Warn("CONFIGURE_TLS", err)
+		go logger.Warn(s.SetTLSSecret, err)
 		return restErrors.NewInternalServerError(err.Error())
 	}
 	return nil

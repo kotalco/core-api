@@ -1,4 +1,4 @@
-package traefik
+package kotal_traefik
 
 import (
 	"context"
@@ -16,8 +16,8 @@ var k8sClient = k8s.NewClientService()
 
 type ITraefik interface {
 	Get() (*appsv1.Deployment, restErrors.IRestErr)
-	SetLetsEncryptStaticConfiguration(deploy *appsv1.Deployment, acmeEmail string) restErrors.IRestErr
-	DeleteLetsEncryptStaticConfiguration(deploy *appsv1.Deployment) restErrors.IRestErr
+	SetLetsEncryptStaticConfiguration(acmeEmail string) restErrors.IRestErr
+	DeleteLetsEncryptStaticConfiguration() restErrors.IRestErr
 }
 
 type traefik struct {
@@ -39,14 +39,17 @@ func (s *traefik) Get() (*appsv1.Deployment, restErrors.IRestErr) {
 	return record, nil
 }
 
-func (s *traefik) SetLetsEncryptStaticConfiguration(deploy *appsv1.Deployment, acmeEmail string) restErrors.IRestErr {
+func (s *traefik) SetLetsEncryptStaticConfiguration(acmeEmail string) restErrors.IRestErr {
+	deploy, restErr := s.Get()
+	if restErr != nil {
+		return restErr
+	}
 	for i, container := range deploy.Spec.Template.Spec.Containers {
 		if container.Name == config.Environment.TraefikDeploymentName {
-			newArgs := container.Args
-			newArgs = append(container.Args, "--certificatesresolvers.kotalletsresolver.acme.tlschallenge")
-			newArgs = append(container.Args, fmt.Sprintf("--certificatesresolvers.kotalletsresolver.acme.email=%s", acmeEmail))
-			newArgs = append(container.Args, "--certificatesresolvers.kotalletsresolver.acme.storage=/data/acme.json")
-			deploy.Spec.Template.Spec.Containers[i].Args = newArgs
+			container.Args = append(container.Args, "--certificatesresolvers.kotalletsresolver.acme.tlschallenge")
+			container.Args = append(container.Args, fmt.Sprintf("--certificatesresolvers.kotalletsresolver.acme.email=%s", acmeEmail))
+			container.Args = append(container.Args, "--certificatesresolvers.kotalletsresolver.acme.storage=/data/acme.json")
+			deploy.Spec.Template.Spec.Containers[i].Args = container.Args
 			break
 		}
 	}
@@ -59,7 +62,11 @@ func (s *traefik) SetLetsEncryptStaticConfiguration(deploy *appsv1.Deployment, a
 	return nil
 }
 
-func (s *traefik) DeleteLetsEncryptStaticConfiguration(deploy *appsv1.Deployment) restErrors.IRestErr {
+func (s *traefik) DeleteLetsEncryptStaticConfiguration() restErrors.IRestErr {
+	deploy, restErr := s.Get()
+	if restErr != nil {
+		return restErr
+	}
 	for i, container := range deploy.Spec.Template.Spec.Containers {
 		if container.Name == config.Environment.TraefikDeploymentName {
 			var newArgs []string

@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	DomainKey       = "domain"
-	RegistrationKey = "registration_is_enabled"
-	CustomTLS       = "kotal-tls-secret-for-traefik"
+	DomainKey           = "domain"
+	RegistrationKey     = "registration_is_enabled"
+	CustomTLSSecretName = "kotal-tls-secret-for-traefik"
 )
 
 type ConfigureDomainRequestDto struct {
