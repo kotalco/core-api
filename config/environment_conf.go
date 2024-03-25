@@ -86,7 +86,7 @@ var (
 		VerificationTokenExpiryHours:           getenv("VERIFICATION_TOKEN_EXPIRY_HOURS", "24"),
 		SendgridSenderName:                     getenv("SEND_GRID_SENDER_NAME", "Kotal Notifications"),
 		SendgridsenderEmail:                    getenv("SEND_GRID_SENDER_EMAIL", "notifications@kotal.co"),
-		SendgridAPIKey:                         mustGetEnv("SEND_GRID_API_KEY"),
+		SendgridAPIKey:                         os.Getenv("SEND_GRID_API_KEY"),
 		TwoFactorSecret:                        getenv("2_FACTOR_SECRET", "secret"), // TODO: change 2fa secret default value
 		RatelimiterPerMinute:                   getenv("RATE_LIMITER_PER_MINUTE", "100"),
 		CrossOverAPIKey:                        os.Getenv("CROSSOVER_API_KEY"),
