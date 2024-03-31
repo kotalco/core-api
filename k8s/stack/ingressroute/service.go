@@ -1,4 +1,4 @@
-package kotal_ingressroute
+package ingressroute
 
 import (
 	"context"
@@ -14,21 +14,21 @@ import (
 
 var k8sClient = k8s.NewClientService()
 
-type KotalIR interface {
+type IngressRoute interface {
 	Get() (*traefikv1alpha1.IngressRoute, restErrors.IRestErr)
 	SetCertResolver(resolverName string) restErrors.IRestErr
 	SetTLSSecret(secretName string) restErrors.IRestErr
 }
 
-type kotalIR struct {
+type ingressRoute struct {
 }
 
-func NewService() KotalIR {
+func NewService() IngressRoute {
 
-	return &kotalIR{}
+	return &ingressRoute{}
 }
 
-func (s *kotalIR) Get() (*traefikv1alpha1.IngressRoute, restErrors.IRestErr) {
+func (s *ingressRoute) Get() (*traefikv1alpha1.IngressRoute, restErrors.IRestErr) {
 	var record traefikv1alpha1.IngressRoute
 	key := types.NamespacedName{
 		Namespace: config.Environment.KotalNamespace,
@@ -46,7 +46,7 @@ func (s *kotalIR) Get() (*traefikv1alpha1.IngressRoute, restErrors.IRestErr) {
 	return &record, nil
 }
 
-func (s *kotalIR) SetCertResolver(resolverName string) restErrors.IRestErr {
+func (s *ingressRoute) SetCertResolver(resolverName string) restErrors.IRestErr {
 	ingressRoute, restErr := s.Get()
 	if restErr != nil {
 		return restErr
@@ -62,7 +62,7 @@ func (s *kotalIR) SetCertResolver(resolverName string) restErrors.IRestErr {
 	return nil
 }
 
-func (s *kotalIR) SetTLSSecret(secretName string) restErrors.IRestErr {
+func (s *ingressRoute) SetTLSSecret(secretName string) restErrors.IRestErr {
 	ingressRoute, restErr := s.Get()
 	if restErr != nil {
 		return restErr

@@ -7,9 +7,9 @@ import (
 	"github.com/kotalco/core-api/core/setting"
 	"github.com/kotalco/core-api/core/user"
 	"github.com/kotalco/core-api/k8s/ingressroute"
-	kotal_ingressroute "github.com/kotalco/core-api/k8s/kotal-stack/kotal-ingressroute"
-	"github.com/kotalco/core-api/k8s/kotal-stack/kotal-traefik"
 	"github.com/kotalco/core-api/k8s/secret"
+	kotal_ingressroute "github.com/kotalco/core-api/k8s/stack/ingressroute"
+	"github.com/kotalco/core-api/k8s/stack/traefik"
 	k8svc "github.com/kotalco/core-api/k8s/svc"
 	restErrors "github.com/kotalco/core-api/pkg/errors"
 	"github.com/kotalco/core-api/pkg/logger"
@@ -30,7 +30,7 @@ var (
 	ingressRouteService      = ingressroute.NewIngressRoutesService()
 	secretService            = secret.NewService()
 	kotalIngressrouteService = kotal_ingressroute.NewService()
-	kotalTraefikService      = kotal_traefik.NewService()
+	kotalTraefikService      = traefik.NewService()
 	userService              = user.NewService()
 )
 
@@ -81,7 +81,7 @@ func ConfigureDomain(c *fiber.Ctx) error {
 
 	//update ingress-route
 	kotalStackIR.Spec.TLS = &traefikv1alpha1.TLS{
-		CertResolver: setting.KotalLetsResolverName,
+		CertResolver: setting.KotalLetsEncryptResolverName,
 	}
 	kotalStackIR.Spec.EntryPoints = []string{"websecure"}
 
@@ -137,12 +137,12 @@ func ConfigureTLS(c *fiber.Ctx) error {
 			return c.Status(restErr.StatusCode()).JSON(restErr)
 		}
 
-		restErr = kotalTraefikService.SetLetsEncryptStaticConfiguration(setting.KotalLetsResolverName, userDetails.Email)
+		restErr = kotalTraefikService.SetLetsEncryptStaticConfiguration(setting.KotalLetsEncryptResolverName, userDetails.Email)
 		if err != nil {
 			return c.Status(err.StatusCode()).JSON(err)
 		}
 
-		restErr = kotalIngressrouteService.SetCertResolver(setting.KotalLetsResolverName)
+		restErr = kotalIngressrouteService.SetCertResolver(setting.KotalLetsEncryptResolverName)
 		if err != nil {
 			return c.Status(err.StatusCode()).JSON(err)
 		}

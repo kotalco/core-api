@@ -1,4 +1,4 @@
-package kotal_traefik
+package traefik
 
 import (
 	"context"
