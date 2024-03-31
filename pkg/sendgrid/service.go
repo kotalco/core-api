@@ -5,12 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"github.com/kotalco/core-api/config"
-	"strings"
-
 	"github.com/kotalco/core-api/core/setting"
 	restErrors "github.com/kotalco/core-api/pkg/errors"
 	"github.com/kotalco/core-api/pkg/logger"
+	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
+	"net/http"
+	"strings"
 )
 
 type service struct{}
@@ -20,6 +21,7 @@ type IService interface {
 	ResendEmailVerification(dto *MailRequestDto) restErrors.IRestErr
 	ForgetPassword(dto *MailRequestDto) restErrors.IRestErr
 	WorkspaceInvitation(dto *WorkspaceInvitationMailRequestDto) restErrors.IRestErr
+	Ping() restErrors.IRestErr
 }
 
 var (
@@ -40,6 +42,25 @@ func NewService() IService {
 	return newService
 }
 
+func (service) Ping() restErrors.IRestErr {
+	if config.Environment.SendgridAPIKey == "" {
+		restErr := restErrors.NewForbiddenError("Sendgrid is not configured")
+		return restErr
+	}
+	request := sendgrid.GetRequest(config.Environment.SendgridAPIKey, "/v3/user/profile", "")
+	request.Method = http.MethodGet
+
+	response, err := sendgrid.API(request)
+	if err != nil {
+		return restErrors.NewForbiddenError(err.Error())
+	} else {
+		if response.StatusCode == http.StatusUnauthorized {
+			return restErrors.NewForbiddenError("Sendgrid API key is not valid")
+		}
+		return nil
+	}
+}
+
 func (service) SignUp(dto *MailRequestDto) restErrors.IRestErr {
 	from := mail.NewEmail(fromName, fromEmail)
 	subject := "Confirm Your Email"
@@ -49,7 +70,7 @@ func (service) SignUp(dto *MailRequestDto) restErrors.IRestErr {
 	if restErr != nil {
 		return restErr
 	}
-	baseUrl := fmt.Sprintf("https://%s/confirm-email?email=%s&token=%s", domainBaseUrl, dto.Email, dto.Token)
+	baseUrl := fmt.Sprintf("https://app.%s/confirm-email?email=%s&token=%s", domainBaseUrl, dto.Email, dto.Token)
 	content := strings.Replace(ConfirmEmailTemplate, "CALL_TO_ACTION_HREF", baseUrl, 1)
 	message := mail.NewSingleEmail(from, subject, to, plainTextContent, content)
 
@@ -75,7 +96,7 @@ func (service) ResendEmailVerification(dto *MailRequestDto) restErrors.IRestErr 
 	subject := "Confirm Your Email"
 	to := mail.NewEmail(greeting, dto.Email)
 	plainTextContent := ""
-	baseUrl := fmt.Sprintf("https://%s/confirm-email?email=%s&token=%s", domainBaseUrl, dto.Email, dto.Token)
+	baseUrl := fmt.Sprintf("https://app.%s/confirm-email?email=%s&token=%s", domainBaseUrl, dto.Email, dto.Token)
 	content := strings.Replace(ConfirmEmailTemplate, "CALL_TO_ACTION_HREF", baseUrl, 1)
 	message := mail.NewSingleEmail(from, subject, to, plainTextContent, content)
 
@@ -101,7 +122,7 @@ func (service) ForgetPassword(dto *MailRequestDto) restErrors.IRestErr {
 	subject := "Reset Your Password"
 	to := mail.NewEmail(greeting, dto.Email)
 	plainTextContent := ""
-	baseUrl := fmt.Sprintf("https://%s/reset-password?email=%s&token=%s", domainBaseUrl, dto.Email, dto.Token)
+	baseUrl := fmt.Sprintf("https://app.%s/reset-password?email=%s&token=%s", domainBaseUrl, dto.Email, dto.Token)
 	content := strings.Replace(ResetPasswordTemplate, "CALL_TO_ACTION_HREF", baseUrl, 1)
 	message := mail.NewSingleEmail(from, subject, to, plainTextContent, content)
 
@@ -127,7 +148,7 @@ func (service) WorkspaceInvitation(dto *WorkspaceInvitationMailRequestDto) restE
 	subject := "You're invited to join workspace"
 	to := mail.NewEmail(greeting, dto.Email)
 	plainTextContent := ""
-	baseUrl := fmt.Sprintf("https://%s/workspaces/%s", domainBaseUrl, dto.WorkspaceId)
+	baseUrl := fmt.Sprintf("https://app.%s/workspaces/%s", domainBaseUrl, dto.WorkspaceId)
 	content := strings.Replace(WorkspaceInvitationTemplate, "CALL_TO_ACTION_HREF", baseUrl, 1)
 	content = strings.Replace(content, "KOTAL_WORKSPACE_NAME", dto.WorkspaceName, 1)
 	message := mail.NewSingleEmail(from, subject, to, plainTextContent, content)

@@ -24,6 +24,7 @@ import (
 	"github.com/kotalco/core-api/api/handler/svc"
 	"github.com/kotalco/core-api/api/handler/user"
 	"github.com/kotalco/core-api/api/handler/workspace"
+	"github.com/kotalco/core-api/config"
 	"github.com/kotalco/core-api/pkg/middleware"
 )
 
@@ -32,6 +33,11 @@ func MapUrl(app *fiber.App) {
 	api := app.Group("api")
 	v1 := api.Group("v1")
 
+	//crossover group
+	crossover := v1.Group("crossover")
+	crossover.Post("/endpoints/stats", middleware.CrossoverAPIKeyProtected, endpoint.WriteStats)
+
+	v1.Use(config.FiberLimiter())
 	//users group
 	v1.Post("sessions", user.SignIn)
 	users := v1.Group("users")
@@ -78,7 +84,6 @@ func MapUrl(app *fiber.App) {
 	endpoints.Get("/", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership, middleware.IsReader, endpoint.List)
 	endpoints.Get("/:name", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership, middleware.IsReader, endpoint.Get)
 	endpoints.Delete("/:name", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership, middleware.IsAdmin, endpoint.Delete)
-	endpoints.Post("/stats", middleware.CrossoverAPIKeyProtected, endpoint.WriteStats)
 	endpoints.Get("/:name/stats", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership, middleware.IsReader, endpoint.ReadStats)
 
 	//settings group

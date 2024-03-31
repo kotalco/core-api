@@ -15,6 +15,7 @@ import (
 	"github.com/kotalco/core-api/pkg/logger"
 	"github.com/kotalco/core-api/pkg/responder"
 	"github.com/kotalco/core-api/pkg/security"
+	"github.com/kotalco/core-api/pkg/sendgrid"
 	"github.com/kotalco/core-api/pkg/sqlclient"
 	"github.com/kotalco/core-api/pkg/token"
 	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
@@ -32,6 +33,7 @@ var (
 	kotalIngressrouteService = kotal_ingressroute.NewService()
 	kotalTraefikService      = traefik.NewService()
 	userService              = user.NewService()
+	sendGridService          = sendgrid.NewService()
 )
 
 func ConfigureDomain(c *fiber.Ctx) error {
@@ -116,7 +118,12 @@ func ConfigureRegistration(c *fiber.Ctx) error {
 		return c.Status(restErr.StatusCode()).JSON(restErr)
 	}
 
-	err := settingService.WithoutTransaction().ConfigureRegistration(dto)
+	err := sendGridService.Ping()
+	if err != nil {
+		return c.Status(err.StatusCode()).JSON(err)
+	}
+
+	err = settingService.WithoutTransaction().ConfigureRegistration(dto)
 	if err != nil {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
