@@ -67,6 +67,10 @@ var (
 		CrossOverActivityBatchSize             int
 		CrossOverActivityFlushInterval         int
 		EndpointPortIdLength                   string
+		TraefikDeploymentName                  string
+		TraefikNamespace                       string
+		KotalNamespace                         string
+		KotalIngressRouteName                  string
 	}{
 		ServerPort:                             getenv("CORE_API_SERVER_PORT", "6000"),
 		Environment:                            getenv("ENVIRONMENT", "development"),
@@ -96,5 +100,9 @@ var (
 		CrossOverActivityBatchSize:             getenv("CROSSOVER_ACTIVITY_BATCH_SIZE", 20),
 		CrossOverActivityFlushInterval:         getenv("CROSSOVER_ACTIVITY_FLUSH_INTERVAL", 2),
 		EndpointPortIdLength:                   getenv("ENDPOINT_PORT_ID_LENGTH", "10"),
+		TraefikDeploymentName:                  getenv("TRAEFIK_DEPLOYMENT_NAME", "kotal-traefik"),
+		TraefikNamespace:                       getenv("TRAEFIK_NAMESPACE", "traefik"),
+		KotalNamespace:                         getenv("KOTAL_NAMESPACE", "kotal"),
+		KotalIngressRouteName:                  getenv("KOTAL_INGRESS_ROUTE_NAME", "kotal-stack"),
 	}
 )

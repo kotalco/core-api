@@ -131,6 +131,7 @@ type secretServiceMock struct{}
 var (
 	secretCreateFunc func(dto *secret.CreateSecretDto) restErrors.IRestErr
 	secretGetFunc    func(name string, namespace string) (*corev1.Secret, restErrors.IRestErr)
+	secretDeleteFunc func(name string, namespace string) restErrors.IRestErr
 )
 
 func (s secretServiceMock) Create(dto *secret.CreateSecretDto) restErrors.IRestErr {
@@ -138,6 +139,9 @@ func (s secretServiceMock) Create(dto *secret.CreateSecretDto) restErrors.IRestE
 }
 func (s secretServiceMock) Get(name string, namespace string) (*corev1.Secret, restErrors.IRestErr) {
 	return secretGetFunc(name, namespace)
+}
+func (s secretServiceMock) Delete(name string, namespace string) restErrors.IRestErr {
+	return secretDeleteFunc(name, namespace)
 }
 
 var (

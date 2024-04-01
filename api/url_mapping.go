@@ -87,9 +87,10 @@ func MapUrl(app *fiber.App) {
 	endpoints.Get("/:name/stats", middleware.JWTProtected, middleware.TFAProtected, middleware.WorkspaceProtected, middleware.ValidateWorkspaceMembership, middleware.IsReader, endpoint.ReadStats)
 
 	//settings group
-	settingGroup := v1.Group("settings")
+	settingGroup := v1.Group("settings", middleware.JWTProtected, middleware.TFAProtected)
 	settingGroup.Get("/", setting.Settings)
 	settingGroup.Post("/domain", setting.ConfigureDomain)
+	settingGroup.Post("/tls", setting.ConfigureTLS)
 	settingGroup.Post("/registration", setting.ConfigureRegistration)
 	//todo change the route /ip-address to /network-identifiers
 	settingGroup.Get("/ip-address", setting.NetworkIdentifiers)
