@@ -79,7 +79,7 @@ func (t *tlsCertificate) ConfigureCustomCertificate(secretName string) restError
 	record := &traefikv1alpha1.TLSStore{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "default",
-			Namespace: "traefik",
+			Namespace: config.Environment.TraefikNamespace,
 		},
 		Spec: traefikv1alpha1.TLSStoreSpec{
 			DefaultCertificate: &traefikv1alpha1.Certificate{SecretName: secretName},

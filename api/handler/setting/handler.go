@@ -131,13 +131,13 @@ func ConfigureRegistration(c *fiber.Ctx) error {
 }
 
 func ConfigureTLS(c *fiber.Ctx) error {
-	userId := c.Locals("user").(token.UserDetails).ID
-	userDetails, restErr := userService.WithoutTransaction().GetById(userId)
-	if restErr != nil {
-		return c.Status(restErr.StatusCode()).JSON(restErr)
-	}
 	switch c.FormValue("tls_provider") {
 	case "letsencrypt":
+		userId := c.Locals("user").(token.UserDetails).ID
+		userDetails, restErr := userService.WithoutTransaction().GetById(userId)
+		if restErr != nil {
+			return c.Status(restErr.StatusCode()).JSON(restErr)
+		}
 		//Sets LetsEncrypt static Configuration
 		restErr = tlsCertificateService.ConfigureLetsEncrypt(setting.KotalLetsEncryptResolverName, userDetails.Email)
 		if restErr != nil {
@@ -170,7 +170,7 @@ func ConfigureTLS(c *fiber.Ctx) error {
 
 		_ = secretService.Delete(setting.CustomTLSSecretName, config.Environment.KotalNamespace)
 
-		restErr = secretService.Create(&secret.CreateSecretDto{
+		restErr := secretService.Create(&secret.CreateSecretDto{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      setting.CustomTLSSecretName,
 				Namespace: config.Environment.KotalNamespace,
