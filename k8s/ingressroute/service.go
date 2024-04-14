@@ -77,9 +77,6 @@ func (i *ingressroute) Create(dto *IngressRouteDto) (*traefikv1alpha1.IngressRou
 		Spec: traefikv1alpha1.IngressRouteSpec{
 			EntryPoints: []string{"websecure"},
 			Routes:      routes,
-			TLS: &traefikv1alpha1.TLS{
-				CertResolver: "myresolver",
-			},
 		},
 	}
 	intErr := k8sClient.Create(context.Background(), record)

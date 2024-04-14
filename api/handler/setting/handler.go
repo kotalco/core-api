@@ -6,11 +6,11 @@ import (
 	"github.com/kotalco/core-api/config"
 	"github.com/kotalco/core-api/core/setting"
 	"github.com/kotalco/core-api/core/user"
+	"github.com/kotalco/core-api/k8s"
 	"github.com/kotalco/core-api/k8s/ingressroute"
 	"github.com/kotalco/core-api/k8s/secret"
-	kotal_ingressroute "github.com/kotalco/core-api/k8s/stack/ingressroute"
-	"github.com/kotalco/core-api/k8s/stack/traefik"
 	k8svc "github.com/kotalco/core-api/k8s/svc"
+	"github.com/kotalco/core-api/k8s/tlscertificate"
 	restErrors "github.com/kotalco/core-api/pkg/errors"
 	"github.com/kotalco/core-api/pkg/logger"
 	"github.com/kotalco/core-api/pkg/responder"
@@ -26,14 +26,14 @@ import (
 )
 
 var (
-	settingService           = setting.NewService()
-	k8service                = k8svc.NewService()
-	ingressRouteService      = ingressroute.NewIngressRoutesService()
-	secretService            = secret.NewService()
-	kotalIngressrouteService = kotal_ingressroute.NewService()
-	kotalTraefikService      = traefik.NewService()
-	userService              = user.NewService()
-	sendGridService          = sendgrid.NewService()
+	settingService        = setting.NewService()
+	k8service             = k8svc.NewService()
+	ingressRouteService   = ingressroute.NewIngressRoutesService()
+	secretService         = secret.NewService()
+	tlsCertificateService = tlscertificate.NewService()
+	userService           = user.NewService()
+	sendGridService       = sendgrid.NewService()
+	k8sClient             = k8s.NewClientService()
 )
 
 func ConfigureDomain(c *fiber.Ctx) error {
@@ -131,27 +131,18 @@ func ConfigureRegistration(c *fiber.Ctx) error {
 }
 
 func ConfigureTLS(c *fiber.Ctx) error {
-	userId := c.Locals("user").(token.UserDetails).ID
-	userDetails, err := userService.WithoutTransaction().GetById(userId)
-	if err != nil {
-		return c.Status(err.StatusCode()).JSON(err)
-	}
-
 	switch c.FormValue("tls_provider") {
 	case "letsencrypt":
-		restErr := kotalTraefikService.DeleteLetsEncryptStaticConfiguration()
+		userId := c.Locals("user").(token.UserDetails).ID
+		userDetails, restErr := userService.WithoutTransaction().GetById(userId)
 		if restErr != nil {
 			return c.Status(restErr.StatusCode()).JSON(restErr)
 		}
-
-		restErr = kotalTraefikService.SetLetsEncryptStaticConfiguration(setting.KotalLetsEncryptResolverName, userDetails.Email)
-		if err != nil {
-			return c.Status(err.StatusCode()).JSON(err)
-		}
-
-		restErr = kotalIngressrouteService.SetCertResolver(setting.KotalLetsEncryptResolverName)
-		if err != nil {
-			return c.Status(err.StatusCode()).JSON(err)
+		//Sets LetsEncrypt static Configuration
+		restErr = tlsCertificateService.ConfigureLetsEncrypt(setting.KotalLetsEncryptResolverName, userDetails.Email)
+		if restErr != nil {
+			logger.Error("CONFIGURE_TLS", restErr)
+			return c.Status(restErr.StatusCode()).JSON(restErr)
 		}
 	case "secret":
 		fileHeaderCert, err := c.FormFile("cert")
@@ -177,12 +168,6 @@ func ConfigureTLS(c *fiber.Ctx) error {
 			return c.Status(badReq.StatusCode()).JSON(badReq)
 		}
 
-		err = kotalTraefikService.DeleteLetsEncryptStaticConfiguration()
-		if err != nil {
-			badReq := restErrors.NewBadRequestError(err.Error())
-			return c.Status(badReq.StatusCode()).JSON(badReq)
-		}
-
 		_ = secretService.Delete(setting.CustomTLSSecretName, config.Environment.KotalNamespace)
 
 		restErr := secretService.Create(&secret.CreateSecretDto{
@@ -199,8 +184,7 @@ func ConfigureTLS(c *fiber.Ctx) error {
 		if restErr != nil {
 			return c.Status(restErr.StatusCode()).JSON(restErr)
 		}
-
-		restErr = kotalIngressrouteService.SetTLSSecret(setting.CustomTLSSecretName)
+		restErr = tlsCertificateService.ConfigureCustomCertificate(setting.CustomTLSSecretName)
 		if restErr != nil {
 			return c.Status(restErr.StatusCode()).JSON(restErr)
 		}
