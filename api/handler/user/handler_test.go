@@ -796,7 +796,6 @@ func TestVerifyEmail(t *testing.T) {
 	}
 	var invalidDto = map[string]string{
 		"email": "testcom",
-		"token": "Uv",
 	}
 
 	t.Run("Verify_Email_Should_Pass", func(t *testing.T) {
