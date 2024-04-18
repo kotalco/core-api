@@ -36,7 +36,7 @@ type SendEmailVerificationRequestDto struct {
 
 type EmailVerificationRequestDto struct {
 	Email string `json:"email" validate:"required,email,lte=100"`
-	Token string `json:"token" validate:"required,len=80"` //length of sent Token defined in env_conf
+	Token string `json:"token" validate:"required"` //length of sent Token defined in env_conf
 }
 
 type ChangeEmailRequestDto struct {
