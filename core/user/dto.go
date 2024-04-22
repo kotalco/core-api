@@ -21,7 +21,7 @@ type ResetPasswordRequestDto struct {
 	Email                string `json:"email" validate:"required,email,lte=100"`
 	Password             string `json:"password" validate:"gte=6,lte=100"`
 	PasswordConfirmation string `json:"password_confirmation" validate:"required,lte=255,eqcsfield=Password"`
-	Token                string `json:"token" validate:"required,len=80"` //length of sent Token defined in env_conf
+	Token                string `json:"token" validate:"required"` //length of sent Token defined in env_conf
 }
 
 type ChangePasswordRequestDto struct {

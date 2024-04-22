@@ -1273,7 +1273,6 @@ func TestResetPassword(t *testing.T) {
 		"email":                 "testtestcom",
 		"password":              "1",
 		"password_confirmation": "12",
-		"token":                 "123",
 	}
 
 	t.Run("Reset_Password_Should_Pass", func(t *testing.T) {
