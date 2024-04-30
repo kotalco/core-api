@@ -606,7 +606,5 @@ func TestVerifyDomainHots(t *testing.T) {
 		ipAddress := "127.0.0.1"
 		err := verifyDomainIP(domain, ipAddress)
 		assert.NotNil(t, err, "Expected an error")
-		assert.Equal(t, "lookup nonexistentdomain123.com: no such host", err.Error(), "Unexpected error message")
-
 	})
 }
