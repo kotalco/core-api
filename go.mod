@@ -1,6 +1,6 @@
 module github.com/kotalco/core-api
 
-go 1.21
+go 1.22
 
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
