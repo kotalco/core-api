@@ -18,7 +18,6 @@ import (
 	"github.com/kotalco/core-api/pkg/sendgrid"
 	"github.com/kotalco/core-api/pkg/sqlclient"
 	"github.com/kotalco/core-api/pkg/token"
-	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net"
@@ -82,9 +81,6 @@ func ConfigureDomain(c *fiber.Ctx) error {
 	}
 
 	//update ingress-route
-	kotalStackIR.Spec.TLS = &traefikv1alpha1.TLS{
-		CertResolver: setting.KotalLetsEncryptResolverName,
-	}
 	kotalStackIR.Spec.EntryPoints = []string{"websecure"}
 
 	for i, v := range kotalStackIR.Spec.Routes {
