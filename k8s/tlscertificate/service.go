@@ -98,7 +98,7 @@ func (t *tlsCertificate) ConfigureLetsEncrypt(resolverNme string, acmeEmail stri
 }
 
 func (t *tlsCertificate) ConfigureCustomCertificate(secretName string) restErrors.IRestErr {
-	//delete default if exists
+	//delete default tls-store if exists
 	tlsStore := &traefikv1alpha1.TLSStore{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "default",
