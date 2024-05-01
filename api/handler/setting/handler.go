@@ -36,13 +36,19 @@ var (
 )
 
 func ConfigureDomain(c *fiber.Ctx) error {
+	userId := c.Locals("user").(token.UserDetails).ID
+	userDetails, restErr := userService.WithoutTransaction().GetById(userId)
+	if restErr != nil {
+		return c.Status(restErr.StatusCode()).JSON(restErr)
+	}
+
 	dto := new(setting.ConfigureDomainRequestDto)
 	if err := c.BodyParser(dto); err != nil {
 		badReq := restErrors.NewBadRequestError("invalid request body")
 		return c.Status(badReq.StatusCode()).JSON(badReq)
 	}
 
-	restErr := setting.Validate(dto)
+	restErr = setting.Validate(dto)
 	if restErr != nil {
 		return c.Status(restErr.StatusCode()).JSON(restErr)
 	}
@@ -99,6 +105,14 @@ func ConfigureDomain(c *fiber.Ctx) error {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
 
+	//configure lets encrypt
+	restErr = tlsCertificateService.ConfigureLetsEncrypt(setting.KotalLetsEncryptResolverName, userDetails.Email)
+	if restErr != nil {
+		logger.Error("CONFIGURE_TLS", restErr)
+		sqlclient.Rollback(txHandle)
+		return c.Status(restErr.StatusCode()).JSON(restErr)
+	}
+
 	sqlclient.Commit(txHandle)
 	return c.Status(http.StatusOK).JSON(responder.NewResponse(responder.SuccessMessage{Message: "domain configured successfully!"}))
 }
@@ -123,19 +137,6 @@ func ConfigureRegistration(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
-
-	userId := c.Locals("user").(token.UserDetails).ID
-	userDetails, restErr := userService.WithoutTransaction().GetById(userId)
-	if restErr != nil {
-		return c.Status(restErr.StatusCode()).JSON(restErr)
-	}
-
-	restErr = tlsCertificateService.ConfigureLetsEncrypt(setting.KotalLetsEncryptResolverName, userDetails.Email)
-	if restErr != nil {
-		logger.Error("CONFIGURE_TLS", restErr)
-		return c.Status(restErr.StatusCode()).JSON(restErr)
-	}
-
 	return c.Status(http.StatusOK).JSON(responder.NewResponse(responder.SuccessMessage{Message: "registration configured successfully!"}))
 }
 
