@@ -40,7 +40,7 @@ func (t *tlsCertificate) GetTraefikDeployment() (*appsv1.Deployment, restErrors.
 }
 
 func (t *tlsCertificate) ConfigureLetsEncrypt(resolverNme string, acmeEmail string) restErrors.IRestErr {
-	//delete default if exists
+	//delete default tls-store if exists
 	tlsStore := &traefikv1alpha1.TLSStore{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "default",
