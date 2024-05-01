@@ -16,9 +16,9 @@ import (
 	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"gorm.io/gorm"
 	"io/ioutil"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -134,9 +134,24 @@ func (k k8MiddlewareServiceMock) Create(dto *middleware.CreateMiddlewareDto) res
 	return k8middlewareCreateFunc(dto)
 }
 
-/*
-User service Mocks
-*/
+type tlsCertificateServiceMock struct{}
+
+var (
+	tlsGetTraefikDeploymentFunc       func() (*appsv1.Deployment, restErrors.IRestErr)
+	tlsConfigureLetsEncryptFunc       func(resolverNme string, acmeEmail string) restErrors.IRestErr
+	tlsConfigureCustomCertificateFunc func(secretName string) restErrors.IRestErr
+)
+
+func (tls tlsCertificateServiceMock) GetTraefikDeployment() (*appsv1.Deployment, restErrors.IRestErr) {
+	return tlsGetTraefikDeploymentFunc()
+}
+func (tls tlsCertificateServiceMock) ConfigureLetsEncrypt(resolverNme string, acmeEmail string) restErrors.IRestErr {
+	return tlsConfigureLetsEncryptFunc(resolverNme, acmeEmail)
+}
+func (tls tlsCertificateServiceMock) ConfigureCustomCertificate(secretName string) restErrors.IRestErr {
+	return tlsConfigureCustomCertificateFunc(secretName)
+}
+
 var (
 	UserWithTransactionFunc     func(txHandle *gorm.DB) user.IService
 	SignUpFunc                  func(dto *user.SignUpRequestDto) (*user.User, restErrors.IRestErr)
@@ -257,6 +272,7 @@ func TestMain(m *testing.M) {
 	k8service = &k8sServiceMock{}
 	ingressRouteService = &ingressRouteServiceMock{}
 	userService = &userServiceMock{}
+	tlsCertificateService = &tlsCertificateServiceMock{}
 
 	code := m.Run()
 	os.Exit(code)
@@ -280,6 +296,9 @@ func TestConfigureDomain(t *testing.T) {
 	t.Run("ConfigureDomain should pass with ip address", func(t *testing.T) {
 		GetByIdFunc = func(Id string) (*user.User, restErrors.IRestErr) {
 			return &user.User{Email: "email.com"}, nil
+		}
+		tlsConfigureLetsEncryptFunc = func(resolverNme string, acmeEmail string) restErrors.IRestErr {
+			return nil
 		}
 		networkIdentifiers = func() (ip string, hostName string, restErr restErrors.IRestErr) {
 			return "1223", "", nil
@@ -312,19 +331,20 @@ func TestConfigureDomain(t *testing.T) {
 		}
 		body, resp := newFiberCtx(validDto, ConfigureDomain, locals)
 
-		log.Println(body, resp)
-
-		//var result map[string]responder.SuccessMessage
-		//err := json.Unmarshal(body, &result)
-		//if err != nil {
-		//	panic(err.Error())
-		//}
-		//assert.EqualValues(t, http.StatusOK, resp.StatusCode)
-		//assert.EqualValues(t, "domain configured successfully!", result["data"].Message)
+		var result map[string]responder.SuccessMessage
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			panic(err.Error())
+		}
+		assert.EqualValues(t, http.StatusOK, resp.StatusCode)
+		assert.EqualValues(t, "domain configured successfully!", result["data"].Message)
 	})
 	t.Run("ConfigureDomain should pass with hostname", func(t *testing.T) {
 		GetByIdFunc = func(Id string) (*user.User, restErrors.IRestErr) {
 			return &user.User{Email: "email.com"}, nil
+		}
+		tlsConfigureLetsEncryptFunc = func(resolverNme string, acmeEmail string) restErrors.IRestErr {
+			return nil
 		}
 		networkIdentifiers = func() (ip string, hostName string, restErr restErrors.IRestErr) {
 			return "", "hostname.amazon.com", nil
