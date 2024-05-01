@@ -123,6 +123,19 @@ func ConfigureRegistration(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(err.StatusCode()).JSON(err)
 	}
+
+	userId := c.Locals("user").(token.UserDetails).ID
+	userDetails, restErr := userService.WithoutTransaction().GetById(userId)
+	if restErr != nil {
+		return c.Status(restErr.StatusCode()).JSON(restErr)
+	}
+
+	restErr = tlsCertificateService.ConfigureLetsEncrypt(setting.KotalLetsEncryptResolverName, userDetails.Email)
+	if restErr != nil {
+		logger.Error("CONFIGURE_TLS", restErr)
+		return c.Status(restErr.StatusCode()).JSON(restErr)
+	}
+
 	return c.Status(http.StatusOK).JSON(responder.NewResponse(responder.SuccessMessage{Message: "registration configured successfully!"}))
 }
 

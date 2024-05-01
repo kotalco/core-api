@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"github.com/kotalco/core-api/config"
+	"github.com/kotalco/core-api/core/setting"
 	"github.com/kotalco/core-api/k8s"
 	restErrors "github.com/kotalco/core-api/pkg/errors"
 	"github.com/kotalco/core-api/pkg/logger"
 	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
+	"github.com/traefik/traefik/v2/pkg/tls"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -38,6 +40,27 @@ func (t *tlsCertificate) GetTraefikDeployment() (*appsv1.Deployment, restErrors.
 }
 
 func (t *tlsCertificate) ConfigureLetsEncrypt(resolverNme string, acmeEmail string) restErrors.IRestErr {
+	//delete default if exists
+	tlsStore := &traefikv1alpha1.TLSStore{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "default",
+			Namespace: config.Environment.TraefikNamespace,
+		},
+	}
+	_ = k8sClient.Delete(context.Background(), tlsStore)
+
+	//create tls store
+	tlsStore = &traefikv1alpha1.TLSStore{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "default",
+			Namespace: config.Environment.TraefikNamespace,
+		},
+		Spec: traefikv1alpha1.TLSStoreSpec{
+			DefaultGeneratedCert: &tls.GeneratedCert{Resolver: setting.KotalLetsEncryptResolverName},
+		},
+	}
+	_ = k8sClient.Create(context.Background(), tlsStore)
+
 	deploy, restErr := t.GetTraefikDeployment()
 	if restErr != nil {
 		return restErr
@@ -75,8 +98,17 @@ func (t *tlsCertificate) ConfigureLetsEncrypt(resolverNme string, acmeEmail stri
 }
 
 func (t *tlsCertificate) ConfigureCustomCertificate(secretName string) restErrors.IRestErr {
+	//delete default if exists
+	tlsStore := &traefikv1alpha1.TLSStore{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "default",
+			Namespace: config.Environment.TraefikNamespace,
+		},
+	}
+	_ = k8sClient.Delete(context.Background(), tlsStore)
+
 	//create tls store
-	record := &traefikv1alpha1.TLSStore{
+	tlsStore = &traefikv1alpha1.TLSStore{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "default",
 			Namespace: config.Environment.TraefikNamespace,
@@ -85,7 +117,7 @@ func (t *tlsCertificate) ConfigureCustomCertificate(secretName string) restError
 			DefaultCertificate: &traefikv1alpha1.Certificate{SecretName: secretName},
 		},
 	}
-	_ = k8sClient.Create(context.Background(), record)
+	_ = k8sClient.Create(context.Background(), tlsStore)
 
 	//remove letsEncrypt static configuration
 	deploy, restErr := t.GetTraefikDeployment()
