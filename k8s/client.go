@@ -2,6 +2,7 @@ package k8s
 
 import (
 	"context"
+	"flag"
 	"github.com/kotalco/core-api/config"
 	"github.com/kotalco/core-api/pkg/logger"
 	aptosv1alpha1 "github.com/kotalco/kotal/apis/aptos/v1alpha1"
@@ -18,7 +19,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sync"
 )
 
@@ -44,6 +47,13 @@ func newClient() client.Client {
 
 // newRuntimeClient creates new controller-runtime k8s client
 func newRuntimeClient() (client.Client, error) {
+	opts := zap.Options{
+		Development: true,
+	}
+	opts.BindFlags(flag.CommandLine)
+	flag.Parse()
+	controllerruntime.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+
 	config, err := config.KubeConfig()
 	if err != nil {
 		return nil, err
@@ -62,9 +72,9 @@ func newRuntimeClient() (client.Client, error) {
 	aptosv1alpha1.AddToScheme(RunTimeScheme)
 	traefikv1alpha1.AddToScheme(RunTimeScheme)
 
-	opts := client.Options{Scheme: RunTimeScheme}
+	clientOptions := client.Options{Scheme: RunTimeScheme}
 
-	return client.New(config, opts)
+	return client.New(config, clientOptions)
 }
 
 type k8sClientService struct{}
