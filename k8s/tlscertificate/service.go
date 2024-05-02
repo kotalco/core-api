@@ -116,7 +116,13 @@ func (t *tlsCertificate) ConfigureCustomCertificate(secretName string) restError
 			Namespace: config.Environment.TraefikNamespace,
 		},
 	}
-	_ = k8sClient.Delete(context.Background(), tlsStore)
+
+	err := k8sClient.Delete(context.Background(), tlsStore)
+	if err != nil {
+		if err != nil {
+			logger.Info(t.ConfigureCustomCertificate, err.Error())
+		}
+	}
 
 	//create tls store
 	tlsStore = &traefikv1alpha1.TLSStore{
@@ -128,7 +134,11 @@ func (t *tlsCertificate) ConfigureCustomCertificate(secretName string) restError
 			DefaultCertificate: &traefikv1alpha1.Certificate{SecretName: secretName},
 		},
 	}
-	_ = k8sClient.Create(context.Background(), tlsStore)
+	err = k8sClient.Create(context.Background(), tlsStore)
+	if err != nil {
+		go logger.Error(t.ConfigureCustomCertificate, err)
+		return restErrors.NewInternalServerError(err.Error())
+	}
 
 	//remove letsEncrypt static configuration
 	deploy, restErr := t.GetTraefikDeployment()
@@ -149,7 +159,7 @@ func (t *tlsCertificate) ConfigureCustomCertificate(secretName string) restError
 		}
 	}
 
-	err := k8sClient.Update(context.Background(), deploy)
+	err = k8sClient.Update(context.Background(), deploy)
 	if err != nil {
 		go logger.Warn(t.ConfigureCustomCertificate, err)
 		return restErrors.NewInternalServerError(err.Error())
