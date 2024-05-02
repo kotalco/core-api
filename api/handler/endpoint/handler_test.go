@@ -83,12 +83,17 @@ var (
 	settingConfigureDomainFunc        func(dto *setting.ConfigureDomainRequestDto) restErrors.IRestErr
 	settingIsDomainConfiguredFunc     func() bool
 	settingConfigureRegistrationFunc  func(dto *setting.ConfigureRegistrationRequestDto) restErrors.IRestErr
+	settingGetDomainFunc              func() (string, restErrors.IRestErr)
 	settingIsRegistrationEnabledFunc  func() bool
 	settingConfigureActivationKeyFunc func(key string) restErrors.IRestErr
 	settingGetActivationKeyFunc       func() (string, restErrors.IRestErr)
 )
 
 type settingServiceMock struct{}
+
+func (s settingServiceMock) GetDomain() (string, restErrors.IRestErr) {
+	return settingGetDomainFunc()
+}
 
 func (s settingServiceMock) ConfigureActivationKey(key string) restErrors.IRestErr {
 	return settingConfigureActivationKeyFunc(key)

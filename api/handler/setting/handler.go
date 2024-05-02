@@ -106,7 +106,7 @@ func ConfigureDomain(c *fiber.Ctx) error {
 	}
 
 	//configure lets encrypt
-	restErr = tlsCertificateService.ConfigureLetsEncrypt(setting.KotalLetsEncryptResolverName, userDetails.Email)
+	restErr = tlsCertificateService.ConfigureLetsEncrypt(dto.Domain, setting.KotalLetsEncryptResolverName, userDetails.Email)
 	if restErr != nil {
 		logger.Error("CONFIGURE_TLS", restErr)
 		sqlclient.Rollback(txHandle)
@@ -148,8 +148,14 @@ func ConfigureTLS(c *fiber.Ctx) error {
 		if restErr != nil {
 			return c.Status(restErr.StatusCode()).JSON(restErr)
 		}
+		//get domain
+		mainDomain, restErr := settingService.GetDomain()
+		if restErr != nil {
+			return c.Status(restErr.StatusCode()).JSON(restErr)
+		}
+
 		//Sets LetsEncrypt static Configuration
-		restErr = tlsCertificateService.ConfigureLetsEncrypt(setting.KotalLetsEncryptResolverName, userDetails.Email)
+		restErr = tlsCertificateService.ConfigureLetsEncrypt(mainDomain, setting.KotalLetsEncryptResolverName, userDetails.Email)
 		if restErr != nil {
 			logger.Error("CONFIGURE_TLS", restErr)
 			return c.Status(restErr.StatusCode()).JSON(restErr)
@@ -178,12 +184,12 @@ func ConfigureTLS(c *fiber.Ctx) error {
 			return c.Status(badReq.StatusCode()).JSON(badReq)
 		}
 
-		_ = secretService.Delete(setting.CustomTLSSecretName, config.Environment.KotalNamespace)
+		_ = secretService.Delete(setting.CustomTLSSecretName, config.Environment.TraefikNamespace)
 
 		restErr := secretService.Create(&secret.CreateSecretDto{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      setting.CustomTLSSecretName,
-				Namespace: config.Environment.KotalNamespace,
+				Namespace: config.Environment.TraefikNamespace,
 			},
 			Type: corev1.SecretTypeTLS,
 			Data: map[string][]byte{

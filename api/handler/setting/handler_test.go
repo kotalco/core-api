@@ -33,6 +33,7 @@ var (
 	settingConfigureDomainFunc        func(dto *setting.ConfigureDomainRequestDto) restErrors.IRestErr
 	settingIsDomainConfiguredFunc     func() bool
 	settingConfigureRegistrationFunc  func(dto *setting.ConfigureRegistrationRequestDto) restErrors.IRestErr
+	settingGetDomainFunc              func() (string, restErrors.IRestErr)
 	settingIsRegistrationEnabledFunc  func() bool
 	settingConfigureActivationKeyFunc func(key string) restErrors.IRestErr
 	settingGetActivationKey           func() (string, restErrors.IRestErr)
@@ -40,6 +41,9 @@ var (
 
 type settingServiceMocks struct{}
 
+func (s settingServiceMocks) GetDomain() (string, restErrors.IRestErr) {
+	return settingGetDomainFunc()
+}
 func (s settingServiceMocks) ConfigureActivationKey(key string) restErrors.IRestErr {
 	return settingConfigureActivationKeyFunc(key)
 }
@@ -138,15 +142,15 @@ type tlsCertificateServiceMock struct{}
 
 var (
 	tlsGetTraefikDeploymentFunc       func() (*appsv1.Deployment, restErrors.IRestErr)
-	tlsConfigureLetsEncryptFunc       func(resolverNme string, acmeEmail string) restErrors.IRestErr
+	tlsConfigureLetsEncryptFunc       func(domain string, resolverNme string, acmeEmail string) restErrors.IRestErr
 	tlsConfigureCustomCertificateFunc func(secretName string) restErrors.IRestErr
 )
 
 func (tls tlsCertificateServiceMock) GetTraefikDeployment() (*appsv1.Deployment, restErrors.IRestErr) {
 	return tlsGetTraefikDeploymentFunc()
 }
-func (tls tlsCertificateServiceMock) ConfigureLetsEncrypt(resolverNme string, acmeEmail string) restErrors.IRestErr {
-	return tlsConfigureLetsEncryptFunc(resolverNme, acmeEmail)
+func (tls tlsCertificateServiceMock) ConfigureLetsEncrypt(domain string, resolverNme string, acmeEmail string) restErrors.IRestErr {
+	return tlsConfigureLetsEncryptFunc(domain, resolverNme, acmeEmail)
 }
 func (tls tlsCertificateServiceMock) ConfigureCustomCertificate(secretName string) restErrors.IRestErr {
 	return tlsConfigureCustomCertificateFunc(secretName)
@@ -297,7 +301,7 @@ func TestConfigureDomain(t *testing.T) {
 		GetByIdFunc = func(Id string) (*user.User, restErrors.IRestErr) {
 			return &user.User{Email: "email.com"}, nil
 		}
-		tlsConfigureLetsEncryptFunc = func(resolverNme string, acmeEmail string) restErrors.IRestErr {
+		tlsConfigureLetsEncryptFunc = func(domain string, resolverNme string, acmeEmail string) restErrors.IRestErr {
 			return nil
 		}
 		networkIdentifiers = func() (ip string, hostName string, restErr restErrors.IRestErr) {
@@ -343,7 +347,7 @@ func TestConfigureDomain(t *testing.T) {
 		GetByIdFunc = func(Id string) (*user.User, restErrors.IRestErr) {
 			return &user.User{Email: "email.com"}, nil
 		}
-		tlsConfigureLetsEncryptFunc = func(resolverNme string, acmeEmail string) restErrors.IRestErr {
+		tlsConfigureLetsEncryptFunc = func(domain string, resolverNme string, acmeEmail string) restErrors.IRestErr {
 			return nil
 		}
 		networkIdentifiers = func() (ip string, hostName string, restErr restErrors.IRestErr) {
