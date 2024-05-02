@@ -10,6 +10,7 @@ import (
 	"github.com/kotalco/core-api/pkg/logger"
 	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"github.com/traefik/traefik/v2/pkg/tls"
+	types2 "github.com/traefik/traefik/v2/pkg/types"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -20,7 +21,7 @@ var k8sClient = k8s.NewClientService()
 
 type TLSCertificate interface {
 	GetTraefikDeployment() (*appsv1.Deployment, restErrors.IRestErr)
-	ConfigureLetsEncrypt(resolverNme string, acmeEmail string) restErrors.IRestErr
+	ConfigureLetsEncrypt(domain string, resolverNme string, acmeEmail string) restErrors.IRestErr
 	ConfigureCustomCertificate(secretName string) restErrors.IRestErr
 }
 
@@ -39,7 +40,7 @@ func (t *tlsCertificate) GetTraefikDeployment() (*appsv1.Deployment, restErrors.
 	return record, nil
 }
 
-func (t *tlsCertificate) ConfigureLetsEncrypt(resolverNme string, acmeEmail string) restErrors.IRestErr {
+func (t *tlsCertificate) ConfigureLetsEncrypt(domain string, resolverNme string, acmeEmail string) restErrors.IRestErr {
 	//delete default tls-store if exists
 	tlsStore := &traefikv1alpha1.TLSStore{
 		ObjectMeta: metav1.ObjectMeta{
@@ -56,7 +57,10 @@ func (t *tlsCertificate) ConfigureLetsEncrypt(resolverNme string, acmeEmail stri
 			Namespace: config.Environment.TraefikNamespace,
 		},
 		Spec: traefikv1alpha1.TLSStoreSpec{
-			DefaultGeneratedCert: &tls.GeneratedCert{Resolver: setting.KotalLetsEncryptResolverName},
+			DefaultGeneratedCert: &tls.GeneratedCert{Resolver: setting.KotalLetsEncryptResolverName, Domain: &types2.Domain{
+				Main: domain,
+				SANs: []string{fmt.Sprintf("app.%s", domain), fmt.Sprintf("endpoints.%s", domain)},
+			}},
 		},
 	}
 	_ = k8sClient.Create(context.Background(), tlsStore)

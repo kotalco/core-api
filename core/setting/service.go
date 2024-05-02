@@ -14,6 +14,7 @@ type IService interface {
 	WithoutTransaction() IService
 	Settings() ([]*Setting, restErrors.IRestErr)
 	ConfigureDomain(dto *ConfigureDomainRequestDto) restErrors.IRestErr
+	GetDomain() (string, restErrors.IRestErr)
 	IsDomainConfigured() bool
 	ConfigureRegistration(dto *ConfigureRegistrationRequestDto) restErrors.IRestErr
 	IsRegistrationEnabled() bool
@@ -52,6 +53,9 @@ func (s service) ConfigureDomain(dto *ConfigureDomainRequestDto) restErrors.IRes
 	}
 	//record exits update it
 	return settingRepo.Update(DomainKey, dto.Domain)
+}
+func (s service) GetDomain() (string, restErrors.IRestErr) {
+	return settingRepo.Get(DomainKey)
 }
 
 func (s service) IsDomainConfigured() bool {
