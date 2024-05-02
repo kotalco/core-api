@@ -48,7 +48,10 @@ func (t *tlsCertificate) ConfigureLetsEncrypt(domain string, resolverNme string,
 			Namespace: config.Environment.TraefikNamespace,
 		},
 	}
-	_ = k8sClient.Delete(context.Background(), tlsStore)
+	err := k8sClient.Delete(context.Background(), tlsStore)
+	if err != nil {
+		logger.Info(t.ConfigureLetsEncrypt, err.Error())
+	}
 
 	//create tls store
 	tlsStore = &traefikv1alpha1.TLSStore{
@@ -63,7 +66,11 @@ func (t *tlsCertificate) ConfigureLetsEncrypt(domain string, resolverNme string,
 			}},
 		},
 	}
-	_ = k8sClient.Create(context.Background(), tlsStore)
+	err = k8sClient.Create(context.Background(), tlsStore)
+	if err != nil {
+		go logger.Error(t.ConfigureLetsEncrypt, err)
+		return restErrors.NewInternalServerError(err.Error())
+	}
 
 	deploy, restErr := t.GetTraefikDeployment()
 	if restErr != nil {
@@ -93,7 +100,7 @@ func (t *tlsCertificate) ConfigureLetsEncrypt(domain string, resolverNme string,
 		}
 	}
 
-	err := k8sClient.Update(context.Background(), deploy)
+	err = k8sClient.Update(context.Background(), deploy)
 	if err != nil {
 		go logger.Warn(t.ConfigureLetsEncrypt, err)
 		return restErrors.NewInternalServerError(err.Error())
