@@ -59,7 +59,7 @@ func (t *tlsCertificate) ConfigureLetsEncrypt(domain string, resolverNme string,
 		Spec: traefikv1alpha1.TLSStoreSpec{
 			DefaultGeneratedCert: &tls.GeneratedCert{Resolver: setting.KotalLetsEncryptResolverName, Domain: &types2.Domain{
 				Main: domain,
-				SANs: []string{fmt.Sprintf("app.%s", domain)},
+				SANs: []string{fmt.Sprintf("app.%s", domain), fmt.Sprintf("endpoints.%s", domain)},
 			}},
 		},
 	}
