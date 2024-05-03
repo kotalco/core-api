@@ -260,7 +260,7 @@ var networkIdentifiers = func() (ip string, hostName string, restErr restErrors.
 }
 
 var verifyDomainIP = func(domain string, ipAddress string) restErrors.IRestErr {
-	records, lookErr := net.LookupHost(domain)
+	records, lookErr := net.LookupHost(fmt.Sprintf("app.%s", domain))
 	if lookErr != nil {
 		go logger.Error("VERIFY_DOMAIN_A_RECORDS", lookErr)
 		badReq := restErrors.NewBadRequestError(lookErr.Error())
