@@ -113,6 +113,13 @@ func ConfigureDomain(c *fiber.Ctx) error {
 		return c.Status(restErr.StatusCode()).JSON(restErr)
 	}
 
+	restErr = tlsCertificateService.EnableHttpsRedirects()
+	if restErr != nil {
+		logger.Error("ENABLE_HTTPS_REDIRECTS", restErr)
+		sqlclient.Rollback(txHandle)
+		return c.Status(restErr.StatusCode()).JSON(restErr)
+	}
+
 	sqlclient.Commit(txHandle)
 	return c.Status(http.StatusOK).JSON(responder.NewResponse(responder.SuccessMessage{Message: "domain configured successfully!"}))
 }
