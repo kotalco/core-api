@@ -175,20 +175,41 @@ func (t *tlsCertificate) EnableHttpsRedirects() restErrors.IRestErr {
 		return restErr
 	}
 
+	httpRedirctsArgs := []string{
+		"--entrypoints.web.http.redirections.entryPoint.to=:443",
+		"--entrypoints.web.http.redirections.entryPoint.scheme=https",
+		"--entrypoints.web.http.redirections.entryPoint.permanent=true",
+	}
+
+	var newArgs []string
 	for i, container := range deploy.Spec.Template.Spec.Containers {
 		if container.Name == config.Environment.TraefikDeploymentName {
-			container.Args = append(container.Args, "--entrypoints.web.http.redirections.entryPoint.to=:443")
-			container.Args = append(container.Args, "--entrypoints.web.http.redirections.entryPoint.scheme=https")
-			container.Args = append(container.Args, "--entrypoints.web.http.redirections.entryPoint.permanent=true")
-			deploy.Spec.Template.Spec.Containers[i].Args = container.Args
+			for _, arg := range httpRedirctsArgs {
+				if !contains(container.Args, arg) {
+					newArgs = append(newArgs, arg)
+				}
+			}
+			deploy.Spec.Template.Spec.Containers[i].Args = append(deploy.Spec.Template.Spec.Containers[i].Args, newArgs...)
 			break
 		}
 	}
 
-	err := k8sClient.Update(context.Background(), deploy)
-	if err != nil {
-		go logger.Warn(t.ConfigureLetsEncrypt, err)
-		return restErrors.NewInternalServerError(err.Error())
+	if len(newArgs) > 0 {
+		err := k8sClient.Update(context.Background(), deploy)
+		if err != nil {
+			go logger.Warn(t.ConfigureLetsEncrypt, err)
+			return restErrors.NewInternalServerError(err.Error())
+		}
 	}
+
 	return nil
+}
+
+func contains(slice []string, item string) bool {
+	for _, s := range slice {
+		if strings.TrimSpace(s) == strings.TrimSpace(item) {
+			return true
+		}
+	}
+	return false
 }

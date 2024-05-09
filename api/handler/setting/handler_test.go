@@ -144,6 +144,7 @@ var (
 	tlsGetTraefikDeploymentFunc       func() (*appsv1.Deployment, restErrors.IRestErr)
 	tlsConfigureLetsEncryptFunc       func(domain string, resolverNme string, acmeEmail string) restErrors.IRestErr
 	tlsConfigureCustomCertificateFunc func(secretName string) restErrors.IRestErr
+	tlsEnableHttpsRedirectsFunc       func() restErrors.IRestErr
 )
 
 func (tls tlsCertificateServiceMock) GetTraefikDeployment() (*appsv1.Deployment, restErrors.IRestErr) {
@@ -154,6 +155,9 @@ func (tls tlsCertificateServiceMock) ConfigureLetsEncrypt(domain string, resolve
 }
 func (tls tlsCertificateServiceMock) ConfigureCustomCertificate(secretName string) restErrors.IRestErr {
 	return tlsConfigureCustomCertificateFunc(secretName)
+}
+func (tls tlsCertificateServiceMock) EnableHttpsRedirects() restErrors.IRestErr {
+	return tlsEnableHttpsRedirectsFunc()
 }
 
 var (
@@ -304,6 +308,9 @@ func TestConfigureDomain(t *testing.T) {
 		tlsConfigureLetsEncryptFunc = func(domain string, resolverNme string, acmeEmail string) restErrors.IRestErr {
 			return nil
 		}
+		tlsEnableHttpsRedirectsFunc = func() restErrors.IRestErr {
+			return nil
+		}
 		networkIdentifiers = func() (ip string, hostName string, restErr restErrors.IRestErr) {
 			return "1223", "", nil
 		}
@@ -348,6 +355,9 @@ func TestConfigureDomain(t *testing.T) {
 			return &user.User{Email: "email.com"}, nil
 		}
 		tlsConfigureLetsEncryptFunc = func(domain string, resolverNme string, acmeEmail string) restErrors.IRestErr {
+			return nil
+		}
+		tlsEnableHttpsRedirectsFunc = func() restErrors.IRestErr {
 			return nil
 		}
 		networkIdentifiers = func() (ip string, hostName string, restErr restErrors.IRestErr) {
