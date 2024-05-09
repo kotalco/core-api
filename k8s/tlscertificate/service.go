@@ -23,6 +23,7 @@ type TLSCertificate interface {
 	GetTraefikDeployment() (*appsv1.Deployment, restErrors.IRestErr)
 	ConfigureLetsEncrypt(domain string, resolverNme string, acmeEmail string) restErrors.IRestErr
 	ConfigureCustomCertificate(secretName string) restErrors.IRestErr
+	EnableHttpsRedirects() restErrors.IRestErr
 }
 
 type tlsCertificate struct{}
@@ -166,4 +167,49 @@ func (t *tlsCertificate) ConfigureCustomCertificate(secretName string) restError
 	}
 
 	return nil
+}
+
+func (t *tlsCertificate) EnableHttpsRedirects() restErrors.IRestErr {
+	deploy, restErr := t.GetTraefikDeployment()
+	if restErr != nil {
+		return restErr
+	}
+
+	httpRedirctsArgs := []string{
+		"--entrypoints.web.http.redirections.entryPoint.to=:443",
+		"--entrypoints.web.http.redirections.entryPoint.scheme=https",
+		"--entrypoints.web.http.redirections.entryPoint.permanent=true",
+	}
+
+	var newArgs []string
+	for i, container := range deploy.Spec.Template.Spec.Containers {
+		if container.Name == config.Environment.TraefikDeploymentName {
+			for _, arg := range httpRedirctsArgs {
+				if !contains(container.Args, arg) {
+					newArgs = append(newArgs, arg)
+				}
+			}
+			deploy.Spec.Template.Spec.Containers[i].Args = append(deploy.Spec.Template.Spec.Containers[i].Args, newArgs...)
+			break
+		}
+	}
+
+	if len(newArgs) > 0 {
+		err := k8sClient.Update(context.Background(), deploy)
+		if err != nil {
+			go logger.Warn(t.ConfigureLetsEncrypt, err)
+			return restErrors.NewInternalServerError(err.Error())
+		}
+	}
+
+	return nil
+}
+
+func contains(slice []string, item string) bool {
+	for _, s := range slice {
+		if strings.TrimSpace(s) == strings.TrimSpace(item) {
+			return true
+		}
+	}
+	return false
 }
